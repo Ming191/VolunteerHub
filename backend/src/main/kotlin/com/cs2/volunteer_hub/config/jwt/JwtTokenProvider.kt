@@ -1,37 +1,32 @@
 package com.cs2.volunteer_hub.config.jwt
 
-import com.cs2.volunteer_hub.model.User
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.ExpiredJwtException
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.MalformedJwtException
-import io.jsonwebtoken.UnsupportedJwtException
+import io.jsonwebtoken.*
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
 import java.time.Instant
-import java.util.Date
+import java.util.*
 
 @Component
 class JwtTokenProvider(
-    @Value("\${jwt.secret}") private val secret: String,
-    @Value("\${jwt.expiration}") private val expiration: Long
+    @param:Value("\${jwt.secret}") private val secret: String,
+    @param:Value("\${jwt.expiration}") private val expiration: Long
 ) {
     private val logger = LoggerFactory.getLogger(JwtTokenProvider::class.java)
     private val secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret))
 
-    fun generateToken(user: User): String {
+    fun generateToken(userDetails: UserDetails): String {
         val now: Instant = Instant.now()
 
         return Jwts.builder()
-            .subject(user.email)
+            .subject(userDetails.username)
             .issuedAt(Date.from(now))
             .expiration(Date.from(now.plusMillis(expiration)))
 
-            .claim("id", user.id)
-            .claim("role", "USER")
+            .claim("roles", userDetails.authorities.map { it.authority })
 
             .signWith(secretKey)
             .compact()
