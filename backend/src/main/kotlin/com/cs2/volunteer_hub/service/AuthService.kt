@@ -25,7 +25,7 @@ class AuthService (
 
         val hashedPassword = passwordEncoder.encode(request.password)
         val user = User(
-            username = request.name,
+            username = request.username,
             email = request.email,
             passwordHash = hashedPassword
         )
