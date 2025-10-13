@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size
 
 data class RegisterRequest(
     @field:NotBlank(message = "Username is required")
-    val name: String,
+    val username: String,
 
     @field:NotBlank(message = "Email is required")
     @field:Email(message = "Email is required")
