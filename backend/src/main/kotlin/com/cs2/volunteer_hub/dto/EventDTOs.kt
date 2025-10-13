@@ -18,7 +18,7 @@ data class CreateEventRequest(
     val location: String,
 
     @field:Future(message = "Event date and time must be in the future")
-    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy'T'HH:mm:ss")
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val eventDateTime: LocalDateTime
 )
 
@@ -27,7 +27,7 @@ data class EventResponse(
     val title: String,
     val description: String,
     val location: String,
-    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy'T'HH:mm:ss")
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val eventDateTime: LocalDateTime,
     val isApproved: Boolean,
     val creatorName: String
@@ -42,6 +42,6 @@ data class UpdateEventRequest(
     val location: String?,
 
     @field:Future(message = "Event date and time must be in the future")
-    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy'T'HH:mm:ss")
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val eventDateTime: LocalDateTime?
 )

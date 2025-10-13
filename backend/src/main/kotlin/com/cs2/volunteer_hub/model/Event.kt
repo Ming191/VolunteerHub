@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.model
 
 import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonFormat
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -26,6 +27,7 @@ data class Event(
 
     var location: String,
 
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     var eventDateTime: LocalDateTime,
 
     var isApproved: Boolean = false,
