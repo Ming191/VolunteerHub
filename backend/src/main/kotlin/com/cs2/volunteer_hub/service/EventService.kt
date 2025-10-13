@@ -85,7 +85,7 @@ class EventService(
         eventRepository.delete(event)
     }
 
-    private fun mapToEventResponse(event: Event): EventResponse {
+    internal fun mapToEventResponse(event: Event): EventResponse {
         return EventResponse(
             id = event.id,
             title = event.title,
