@@ -10,4 +10,5 @@ interface RegistrationRepository : JpaRepository<Registration, Long> {
     fun existsByEventIdAndUserId(eventId: Long, userId: Long): Boolean
     fun findByEventIdAndUserId(eventId: Long, userId: Long): Optional<Registration>
     fun findAllByEventId(eventId: Long): List<Registration>
+    fun findAllByUserEmailOrderByEventEventDateTimeDesc(email: String): List<Registration>
 }

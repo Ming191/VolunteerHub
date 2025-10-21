@@ -10,21 +10,38 @@ import com.cs2.volunteer_hub.repository.RegistrationRepository
 import org.apache.coyote.BadRequestException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class EventManagerService(
     private val registrationRepository: RegistrationRepository,
     private val eventRepository: EventRepository
 ) {
-    // Hàm helper để kiểm tra Event Manager có sở hữu sự kiện không
     private fun checkEventOwnership(eventId: Long, managerEmail: String) {
         val event = eventRepository.findById(eventId)
             .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
         if (event.creator.email != managerEmail) {
-            throw UnauthorizedAccessException("Bạn không có quyền quản lý sự kiện này.")
+            throw UnauthorizedAccessException("You do not have permission to manage this event.")
         }
     }
 
+    @Transactional
+    fun markRegistrationAsCompleted(registrationId: Long, managerEmail: String) :  RegistrationResponse {
+        val registration = registrationRepository.findById(registrationId)
+            .orElseThrow { ResourceNotFoundException("Registration", "id", registrationId) }
+
+        checkEventOwnership(registration.event.id, managerEmail)
+
+        if (registration.status != RegistrationStatus.APPROVED) {
+            throw BadRequestException("Only approved registrations can be marked as completed.")
+        }
+        if (registration.event.eventDateTime.isAfter(LocalDateTime.now())) {
+            throw BadRequestException("Cannot mark as completed for events that have not occurred yet.")
+        }
+        registration.status = RegistrationStatus.COMPLETED
+        val savedRegistration = registrationRepository.save(registration)
+        return mapToRegistrationResponse(savedRegistration)
+    }
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         checkEventOwnership(eventId, managerEmail)
@@ -38,14 +55,12 @@ class EventManagerService(
         managerEmail: String
     ): RegistrationResponse {
         val registration = registrationRepository.findById(registrationId)
-            .orElseThrow { ResourceNotFoundException("Đăng ký", "id", registrationId) }
+            .orElseThrow { ResourceNotFoundException("Registration", "id", registrationId) }
 
-        // Kiểm tra quyền sở hữu gián tiếp qua sự kiện
         checkEventOwnership(registration.event.id, managerEmail)
 
-        // Logic nghiệp vụ: không cho phép đổi status tùy tiện
         if (newStatus !in listOf(RegistrationStatus.APPROVED, RegistrationStatus.REJECTED)) {
-            throw BadRequestException("Trạng thái không hợp lệ.")
+            throw BadRequestException("Invalid status.")
         }
 
         registration.status = newStatus
@@ -53,7 +68,7 @@ class EventManagerService(
         return mapToRegistrationResponse(savedRegistration)
     }
 
-    private fun mapToRegistrationResponse(registration: Registration): RegistrationResponse {
+    fun mapToRegistrationResponse(registration: Registration): RegistrationResponse {
         return RegistrationResponse(
             id = registration.id,
             eventId = registration.event.id,
