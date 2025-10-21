@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.dto
 
 import com.cs2.volunteer_hub.model.RegistrationStatus
+import jakarta.validation.constraints.NotBlank
 import java.time.LocalDateTime
 
 data class RegistrationResponse(
@@ -11,4 +12,9 @@ data class RegistrationResponse(
     val volunteerName: String,
     val status: RegistrationStatus,
     val registeredAt: LocalDateTime,
+)
+
+data class UpdateStatusRequest(
+    @field:NotBlank
+    val status: RegistrationStatus
 )
