@@ -7,14 +7,14 @@ import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
 
 data class CreateEventRequest(
-    @field:NotBlank(message = "Title can't be blank")
+    @field:NotBlank(message = "Title is required")
     @field:Size(max = 100, message = "Title must not exceed 100 characters")
     val title: String,
 
-    @field:NotBlank(message = "Description can't be blank")
+    @field:NotBlank(message = "Description is required")
     val description: String,
 
-    @field:NotBlank(message = "Location can't be blank")
+    @field:NotBlank(message = "Location is required")
     val location: String,
 
     @field:Future(message = "Event date and time must be in the future")
