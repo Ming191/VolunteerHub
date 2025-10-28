@@ -27,6 +27,7 @@ class CustomUserDetailsService(
             .username(user.email)
             .password(user.passwordHash)
             .roles(user.role.name)
+            .accountLocked(user.isLocked)
             .build()
 
         logger.info("UserDetails created with authorities: ${userDetails.authorities.map { it.authority }}")

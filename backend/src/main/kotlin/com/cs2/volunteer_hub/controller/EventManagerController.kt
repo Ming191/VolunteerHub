@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/manager")
-@PreAuthorize("hasRole('EVENT_ORGANIZER')") // <-- SỬA LỖI 1
+@PreAuthorize("hasRole('EVENT_ORGANIZER')")
 class EventManagerController(
     private val eventManagerService: EventManagerService
 ) {

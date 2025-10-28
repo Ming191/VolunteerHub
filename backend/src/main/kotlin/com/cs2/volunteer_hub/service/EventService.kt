@@ -93,7 +93,7 @@ class EventService(
             location = event.location,
             eventDateTime = event.eventDateTime,
             isApproved = event.isApproved,
-            creatorName = event.creator.username
+            creatorName = event.creator.name
         )
     }
 }

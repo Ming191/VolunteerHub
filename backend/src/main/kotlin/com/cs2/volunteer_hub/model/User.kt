@@ -18,7 +18,7 @@ data class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id : Long = 0,
-    val username: String,
+    val name: String,
 
     @Column(unique = true)
     var email: String,
@@ -26,6 +26,8 @@ data class User(
 
     @Enumerated(EnumType.STRING)
     var role: Role = Role.VOLUNTEER,
+
+    var isLocked: Boolean = false,
 
     @OneToMany(mappedBy = "creator", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     val createdEvents: List<Event> = mutableListOf()

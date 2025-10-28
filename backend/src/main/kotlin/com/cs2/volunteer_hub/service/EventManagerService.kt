@@ -74,7 +74,7 @@ class EventManagerService(
             eventId = registration.event.id,
             eventTitle = registration.event.title,
             volunteerId = registration.user.id,
-            volunteerName = registration.user.username,
+            volunteerName = registration.user.name,
             status = registration.status,
             registeredAt = registration.registeredAt
         )
