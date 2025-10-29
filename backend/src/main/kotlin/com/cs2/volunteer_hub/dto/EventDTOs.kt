@@ -30,7 +30,8 @@ data class EventResponse(
     @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val eventDateTime: LocalDateTime,
     val isApproved: Boolean,
-    val creatorName: String
+    val creatorName: String,
+    val imageUrls: List<String>
 )
 
 data class UpdateEventRequest(

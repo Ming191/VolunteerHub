@@ -7,6 +7,7 @@ import com.cs2.volunteer_hub.service.EventService
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -18,7 +19,9 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/events")
@@ -38,19 +41,15 @@ class EventController(private val eventService: EventService) {
         return ResponseEntity.ok(event)
     }
 
-    @PostMapping
+    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @PreAuthorize("hasRole('EVENT_ORGANIZER')")
     fun createEvent(
-        @Valid @RequestBody request: CreateEventRequest,
+        @RequestPart("request") @Valid request: CreateEventRequest,
+        @RequestPart("files", required = false) files: List<MultipartFile>?,
         @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<Any> {
-        logger.info("=== CREATE EVENT ENDPOINT CALLED ===")
-        logger.info("Current user: ${currentUser.username}")
-        logger.info("User authorities: ${currentUser.authorities.map { it.authority }}")
-        logger.info("Request: title=${request.title}, location=${request.location}, dateTime=${request.eventDateTime}")
+    ): ResponseEntity<EventResponse> {
 
-        val event = eventService.createEvent(request, currentUser.username)
-        logger.info("Event created successfully with ID: ${event.id}")
+        val event = eventService.createEvent(request, currentUser.username, files)
         return ResponseEntity.status(HttpStatus.CREATED).body(event)
     }
 

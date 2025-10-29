@@ -3,7 +3,6 @@
 version: '3.8' # Phiên bản của Docker Compose syntax
 
 services:
-  # Tên của dịch vụ, bạn có thể đặt tùy ý
   postgres-db:
     image: postgres:15-alpine
 
@@ -21,6 +20,16 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
     restart: always
+
+  rabbitmq:
+    image: rabbitmq:3.13-management 
+    container_name: volunteerhub_rabbitmq
+    ports:
+      - "5672:5672" 
+      - "15672:15672" 
+    environment:
+      - RABBITMQ_DEFAULT_USER=myuser
+      - RABBITMQ_DEFAULT_PASS=mypassword
 
 volumes:
   postgres_data:
