@@ -42,6 +42,9 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
 	implementation("org.apache.commons:commons-csv:1.10.0")
+    // https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage
+    implementation("com.google.cloud:google-cloud-storage:2.59.0")
+    implementation("org.springframework.boot:spring-boot-starter-amqp")
 }
 
 kotlin {
