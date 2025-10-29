@@ -5,7 +5,8 @@ import com.cs2.volunteer_hub.dto.LoginRequest
 import com.cs2.volunteer_hub.dto.RegisterRequest
 import com.cs2.volunteer_hub.model.User
 import com.cs2.volunteer_hub.repository.UserRepository
-import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
@@ -13,7 +14,9 @@ import org.springframework.stereotype.Service
 class AuthService (
     private val userRepository: UserRepository,
     private val passwordEncoder: PasswordEncoder,
-    private val jwtTokenProvider: JwtTokenProvider
+    private val jwtTokenProvider: JwtTokenProvider,
+    private val authenticationManager: AuthenticationManager,
+    private val userDetailsService: CustomUserDetailsService
 ) {
     fun registerUser(request: RegisterRequest) : User {
         if (userRepository.findByEmail(request.email) != null) {
@@ -22,7 +25,7 @@ class AuthService (
 
         val hashedPassword = passwordEncoder.encode(request.password)
         val user = User(
-            username = request.name,
+            name = request.username,
             email = request.email,
             passwordHash = hashedPassword
         )
@@ -30,13 +33,10 @@ class AuthService (
     }
 
     fun loginUser(request: LoginRequest) : String {
-        val user = userRepository.findByEmail(request.email)
-            ?: throw BadCredentialsException("Invalid email or password")
+        authenticationManager.authenticate(
+            UsernamePasswordAuthenticationToken(request.email, request.password)
+        )
 
-        if (!passwordEncoder.matches(request.password, user.passwordHash)) {
-            throw BadCredentialsException("Invalid email or password")
-        }
-
-        return jwtTokenProvider.generateToken(user)
-    }
+        val userDetails = userDetailsService.loadUserByUsername(request.email)
+        return jwtTokenProvider.generateToken(userDetails)    }
 }
