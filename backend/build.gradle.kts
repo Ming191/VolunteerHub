@@ -40,6 +40,8 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
     // https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
+
+	implementation("org.apache.commons:commons-csv:1.10.0")
 }
 
 kotlin {

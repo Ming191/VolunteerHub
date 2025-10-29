@@ -32,4 +32,15 @@ class GlobalExceptionHandler {
         )
         return ResponseEntity(errorDetails, HttpStatus.CONFLICT)
     }
+
+    @ExceptionHandler(BadRequestException::class)
+    fun handleBadRequestException(ex: BadRequestException): ResponseEntity<Map<String, Any>> {
+        val errorDetails = mapOf(
+            "timestamp" to LocalDateTime.now(),
+            "status" to HttpStatus.BAD_REQUEST.value(),
+            "error" to "Bad Request",
+            "message" to (ex.message ?: "Yêu cầu không hợp lệ")
+        )
+        return ResponseEntity(errorDetails, HttpStatus.BAD_REQUEST)
+    }
 }
