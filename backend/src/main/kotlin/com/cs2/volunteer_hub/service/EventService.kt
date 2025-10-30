@@ -5,13 +5,14 @@ import com.cs2.volunteer_hub.dto.CreateEventRequest
 import com.cs2.volunteer_hub.dto.EventCreationMessage
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
-import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.model.Event
-import com.cs2.volunteer_hub.model.Image
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.EventRepository
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.cache.annotation.Caching
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
@@ -24,22 +25,21 @@ import java.util.stream.Collectors
 class EventService(
     private val eventRepository: EventRepository,
     private val userRepository: UserRepository,
-    private val temporaryFileStorageService: TemporaryFileStorageService,
     private val rabbitTemplate: RabbitTemplate,
-    @Value("\${upload.max-file-size:10485760}") private val maxFileSize: Long = 10 * 1024 * 1024, // 10MB default
-    @Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
+    private val fileValidationService: FileValidationService,
+    @field:Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
     private val logger = LoggerFactory.getLogger(EventService::class.java)
 
-    private val ALLOWED_CONTENT_TYPES = setOf("image/jpeg", "image/png", "image/webp", "image/jpg")
 
+    @CacheEvict(value = ["events"], allEntries = true)
     @Transactional
     fun createEvent(request: CreateEventRequest, creatorEmail: String, files: List<MultipartFile>?): EventResponse {
         val creator = userRepository.findByEmail(creatorEmail)
             ?: throw ResourceNotFoundException("User", "email", creatorEmail)
 
         // Validate files
-        files?.let { validateFiles(it) }
+        files?.let { fileValidationService.validateFiles(it, maxFilesPerEvent) }
 
         val newEvent = Event(
             title = request.title,
@@ -51,16 +51,7 @@ class EventService(
         )
 
         if (!files.isNullOrEmpty()) {
-            files.forEach { file ->
-                val tempPath = temporaryFileStorageService.save(file)
-                val image = Image(
-                    event = newEvent,
-                    originalFileName = file.originalFilename ?: "unknown",
-                    contentType = file.contentType ?: "application/octet-stream",
-                    temporaryFilePath = tempPath
-                )
-                newEvent.images.add(image)
-            }
+            fileValidationService.processFilesForEvent(files, newEvent)
         }
 
         val savedEvent = eventRepository.save(newEvent)
@@ -85,35 +76,8 @@ class EventService(
         return mapToEventResponse(savedEvent)
     }
 
-    private fun validateFiles(files: List<MultipartFile>) {
-        if (files.size > maxFilesPerEvent) {
-            throw BadRequestException("Too many files. Maximum allowed: $maxFilesPerEvent, provided: ${files.size}")
-        }
 
-        files.forEach { file ->
-            // Check file size
-            if (file.size > maxFileSize) {
-                throw BadRequestException(
-                    "File '${file.originalFilename}' exceeds maximum size of ${maxFileSize / 1024 / 1024}MB. " +
-                    "Actual size: ${file.size / 1024 / 1024}MB"
-                )
-            }
-
-            // Check content type
-            if (file.contentType !in ALLOWED_CONTENT_TYPES) {
-                throw BadRequestException(
-                    "Unsupported file type: ${file.contentType}. " +
-                    "Allowed types: ${ALLOWED_CONTENT_TYPES.joinToString(", ")}"
-                )
-            }
-
-            // Check file is not empty
-            if (file.isEmpty) {
-                throw BadRequestException("File '${file.originalFilename}' is empty")
-            }
-        }
-    }
-
+    @Cacheable("events")
     @Transactional(readOnly = true)
     fun getAllApprovedEvents(): List<EventResponse> {
         return eventRepository.findAllByIsApprovedTrueOrderByEventDateTimeAsc()
@@ -122,6 +86,7 @@ class EventService(
             .collect(Collectors.toList())
     }
 
+    @Cacheable(value = ["event"], key = "#id")
     @Transactional(readOnly = true)
     fun getEventById(id: Long): EventResponse {
         val event = eventRepository.findById(id)
@@ -133,6 +98,11 @@ class EventService(
         return mapToEventResponse(event)
     }
 
+
+    @Caching(evict = [
+        CacheEvict(value = ["events"], allEntries = true),
+        CacheEvict(value = ["event"], key = "#id")
+    ])
     @Transactional
     fun updateEvent(id: Long, request: UpdateEventRequest, currentUserEmail: String): EventResponse {
         val event = eventRepository.findById(id)
@@ -152,6 +122,10 @@ class EventService(
         return mapToEventResponse(updatedEvent)
     }
 
+    @Caching(evict = [
+        CacheEvict(value = ["events"], allEntries = true),
+        CacheEvict(value = ["event"], key = "#id")
+    ])
     @Transactional
     fun deleteEvent(id: Long, currentUserEmail: String) {
         val event = eventRepository.findById(id)

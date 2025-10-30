@@ -1,13 +1,15 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.RegistrationResponse
+import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
-import org.apache.coyote.BadRequestException
+import org.springframework.cache.CacheManager
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -15,7 +17,8 @@ import java.time.LocalDateTime
 @Service
 class EventManagerService(
     private val registrationRepository: RegistrationRepository,
-    private val eventRepository: EventRepository
+    private val eventRepository: EventRepository,
+    private val cacheManager: CacheManager
 ) {
     private fun checkEventOwnership(eventId: Long, managerEmail: String) {
         val event = eventRepository.findById(eventId)
@@ -38,10 +41,15 @@ class EventManagerService(
         if (registration.event.eventDateTime.isAfter(LocalDateTime.now())) {
             throw BadRequestException("Cannot mark as completed for events that have not occurred yet.")
         }
+
+        evictRelatedCaches(registration)
+
         registration.status = RegistrationStatus.COMPLETED
         val savedRegistration = registrationRepository.save(registration)
         return mapToRegistrationResponse(savedRegistration)
     }
+
+    @Cacheable(value = ["eventRegistrations"], key = "#eventId")
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         checkEventOwnership(eventId, managerEmail)
@@ -63,9 +71,16 @@ class EventManagerService(
             throw BadRequestException("Invalid status.")
         }
 
+        evictRelatedCaches(registration)
+
         registration.status = newStatus
         val savedRegistration = registrationRepository.save(registration)
         return mapToRegistrationResponse(savedRegistration)
+    }
+
+    private fun evictRelatedCaches(registration: Registration) {
+        cacheManager.getCache("eventRegistrations")?.evict(registration.event.id)
+        cacheManager.getCache("userRegistrations")?.evict(registration.user.email)
     }
 
     fun mapToRegistrationResponse(registration: Registration): RegistrationResponse {

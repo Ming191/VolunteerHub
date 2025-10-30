@@ -7,7 +7,6 @@ import com.google.cloud.storage.Storage
 import com.cs2.volunteer_hub.exception.BadRequestException
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.springframework.web.multipart.MultipartFile
 import java.util.*
 
 @Service
@@ -15,17 +14,6 @@ class ImageUploadService(
     private val storage: Storage,
     @Value("\${gcs.bucket.name}") private val bucketName: String
 ) {
-    fun uploadImage(file: MultipartFile): String {
-        if (file.contentType !in listOf("image/jpeg", "image/png", "image/webp")) {
-            throw BadRequestException("Unsupported file type: ${file.contentType}")
-        }
-        return uploadImageFromBytes(file.bytes, file.contentType, file.originalFilename)
-    }
-
-    fun uploadImages(files: List<MultipartFile>): List<String> {
-        return files.map { uploadImage(it) }
-    }
-
     fun uploadImageFromBytes(fileBytes: ByteArray, contentType: String?, originalFilename: String?): String {
         val fileName = "images/${UUID.randomUUID()}-${originalFilename?.replace(" ", "_")}"
 
@@ -42,7 +30,6 @@ class ImageUploadService(
     }
 
     fun deleteImageByUrl(url: String) {
-        // Extract the file path from the GCS URL
         // URL format: https://storage.googleapis.com/{bucketName}/{filePath}
         val prefix = "https://storage.googleapis.com/$bucketName/"
         if (!url.startsWith(prefix)) {

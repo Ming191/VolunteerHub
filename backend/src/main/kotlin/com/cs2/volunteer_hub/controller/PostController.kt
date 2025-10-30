@@ -14,12 +14,11 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
-@RequestMapping("/api/events/{eventId}/posts")
+@RequestMapping("/api/posts")
 @PreAuthorize("isAuthenticated()")
 class PostController(private val postService: PostService) {
-
-    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
-    fun createPost(
+    @PostMapping(value = ["/event/{eventId}"], consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun createPostForEvent(
         @PathVariable eventId: Long,
         @RequestPart("request") @Valid postRequest: PostRequest,
         @RequestPart("files", required = false) files: List<MultipartFile>?,
@@ -29,12 +28,31 @@ class PostController(private val postService: PostService) {
         return ResponseEntity.status(HttpStatus.CREATED).body(newPost)
     }
 
-    @GetMapping
+    @GetMapping("/event/{eventId}")
     fun getPostsForEvent(
         @PathVariable eventId: Long,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<List<PostResponse>> {
         val posts = postService.getPostsForEvent(eventId, currentUser.username)
         return ResponseEntity.ok(posts)
+    }
+
+    @PutMapping("/{postId}")
+    fun updatePost(
+        @PathVariable postId: Long,
+        @Valid @RequestBody postRequest: PostRequest,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<PostResponse> {
+        val updatedPost = postService.updatePost(postId, postRequest, currentUser.username)
+        return ResponseEntity.ok(updatedPost)
+    }
+
+    @DeleteMapping("/{postId}")
+    fun deletePost(
+        @PathVariable postId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<Unit> {
+        postService.deletePost(postId, currentUser.username)
+        return ResponseEntity.noContent().build()
     }
 }

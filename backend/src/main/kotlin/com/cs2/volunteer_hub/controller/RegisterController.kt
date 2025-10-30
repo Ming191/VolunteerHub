@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/events/{eventId}/register")
+@PreAuthorize("isAuthenticated()")
 class RegistrationController(private val registrationService: RegistrationService) {
     @PostMapping
     @PreAuthorize("hasRole('VOLUNTEER')")

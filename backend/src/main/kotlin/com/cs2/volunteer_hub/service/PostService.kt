@@ -1,23 +1,25 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.config.RabbitMQConfig
-import com.cs2.volunteer_hub.dto.PostRequest
-import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.dto.AuthorResponse
 import com.cs2.volunteer_hub.dto.PostCreationMessage
-import com.cs2.volunteer_hub.exception.BadRequestException
+import com.cs2.volunteer_hub.dto.PostRequest
+import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
-import com.cs2.volunteer_hub.model.Image
 import com.cs2.volunteer_hub.model.Post
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.*
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.CacheManager
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
+import java.time.LocalDateTime
 
 @Service
 class PostService(
@@ -26,15 +28,15 @@ class PostService(
     private val userRepository: UserRepository,
     private val registrationRepository: RegistrationRepository,
     private val likeRepository: LikeRepository,
-    private val temporaryFileStorageService: TemporaryFileStorageService,
     private val rabbitTemplate: RabbitTemplate,
-    @Value("\${upload.max-file-size:10485760}") private val maxFileSize: Long = 10 * 1024 * 1024, // 10MB
-    @Value("\${upload.max-files-per-post:5}") private val maxFilesPerPost: Int = 5
+    private val fileValidationService: FileValidationService,
+    private val cacheManager: CacheManager,
+    @field:Value("\${upload.max-files-per-post:5}") private val maxFilesPerPost: Int = 5
 ) {
     private val logger = LoggerFactory.getLogger(PostService::class.java)
-    private val ALLOWED_CONTENT_TYPES = setOf("image/jpeg", "image/png", "image/webp", "image/jpg")
 
-    private fun checkPermissionToPost(eventId: Long, userId: Long) {
+
+    fun checkPermissionToPost(eventId: Long, userId: Long) {
         val event = eventRepository.findById(eventId)
             .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
 
@@ -48,6 +50,7 @@ class PostService(
         }
     }
 
+    @CacheEvict(value = ["posts"], key = "#eventId")
     @Transactional
     fun createPost(eventId: Long, request: PostRequest, files: List<MultipartFile>?, userEmail: String): PostResponse {
         val author = userRepository.findByEmail(userEmail)
@@ -57,8 +60,7 @@ class PostService(
 
         checkPermissionToPost(eventId, author.id)
 
-        // Validate files
-        files?.let { validateFiles(it) }
+        files?.let { fileValidationService.validateFiles(it, maxFilesPerPost) }
 
         val post = Post(
             content = request.content,
@@ -66,24 +68,13 @@ class PostService(
             event = event
         )
 
-        // Save files temporarily if present
         if (!files.isNullOrEmpty()) {
-            files.forEach { file ->
-                val tempPath = temporaryFileStorageService.save(file)
-                val image = Image(
-                    post = post,
-                    originalFileName = file.originalFilename ?: "unknown",
-                    contentType = file.contentType ?: "application/octet-stream",
-                    temporaryFilePath = tempPath
-                )
-                post.images.add(image)
-            }
+            fileValidationService.processFilesForPost(files, post)
         }
 
         val savedPost = postRepository.save(post)
         logger.info("Created post ID: ${savedPost.id} with ${savedPost.images.size} images pending upload")
 
-        // Send message to queue for async processing
         if (savedPost.images.isNotEmpty()) {
             val message = PostCreationMessage(postId = savedPost.id)
             rabbitTemplate.convertAndSend(
@@ -94,36 +85,7 @@ class PostService(
             logger.info("Sent post creation message to queue for Post ID: ${savedPost.id}")
         }
 
-        return mapToPostResponse(savedPost, author.id)
-    }
-
-    private fun validateFiles(files: List<MultipartFile>) {
-        if (files.size > maxFilesPerPost) {
-            throw BadRequestException("Too many files. Maximum allowed: $maxFilesPerPost, provided: ${files.size}")
-        }
-
-        files.forEach { file ->
-            // Check file size
-            if (file.size > maxFileSize) {
-                throw BadRequestException(
-                    "File '${file.originalFilename}' exceeds maximum size of ${maxFileSize / 1024 / 1024}MB. " +
-                    "Actual size: ${file.size / 1024 / 1024}MB"
-                )
-            }
-
-            // Check content type
-            if (file.contentType !in ALLOWED_CONTENT_TYPES) {
-                throw BadRequestException(
-                    "Unsupported file type: ${file.contentType}. " +
-                    "Allowed types: ${ALLOWED_CONTENT_TYPES.joinToString(", ")}"
-                )
-            }
-
-            // Check file is not empty
-            if (file.isEmpty) {
-                throw BadRequestException("File '${file.originalFilename}' is empty")
-            }
-        }
+        return mapToPostResponse(savedPost, false)
     }
 
     @Transactional(readOnly = true)
@@ -133,13 +95,64 @@ class PostService(
 
         checkPermissionToPost(eventId, user.id)
 
-        val posts = postRepository.findAllByEventIdOrderByCreatedAtDesc(eventId)
-        return posts.map { mapToPostResponse(it, user.id) }
+        val posts = getCachedPostsForEvent(eventId)
+        if (posts.isEmpty()) {
+            return emptyList()
+        }
+
+        val postIds = posts.map { it.id }
+        val likedPostIds = likeRepository.findLikedPostIdsByUser(user.id, postIds).toSet()
+
+        return posts.map { post ->
+            val isLiked = likedPostIds.contains(post.id)
+            mapToPostResponse(post, isLiked)
+        }
     }
 
-    private fun mapToPostResponse(post: Post, currentUserId: Long): PostResponse {
-        val isLiked = likeRepository.findByUserIdAndPostId(currentUserId, post.id).isPresent
 
+    @Cacheable(value = ["posts"], key = "#eventId")
+    internal fun getCachedPostsForEvent(eventId: Long): List<Post> {
+        logger.info("--- DATABASE HIT: Fetching post list for event $eventId ---")
+        return postRepository.findAllByEventIdOrderByCreatedAtDesc(eventId)
+    }
+
+    @Transactional
+    fun updatePost(postId: Long, request: PostRequest, userEmail: String): PostResponse {
+        val user = userRepository.findByEmail(userEmail)!!
+        val post = postRepository.findById(postId)
+            .orElseThrow { ResourceNotFoundException("Post", "id", postId) }
+
+        if (post.author.id != user.id) {
+            throw UnauthorizedAccessException("You don't have permission to update this post.")
+        }
+
+        cacheManager.getCache("posts")?.evict(post.event.id)
+
+        post.content = request.content
+        post.updatedAt = LocalDateTime.now()
+
+        val updatedPost = postRepository.save(post)
+
+        val isLiked = likeRepository.findByUserIdAndPostId(user.id, updatedPost.id).isPresent
+        return mapToPostResponse(updatedPost, isLiked)
+    }
+
+    @Transactional
+    fun deletePost(postId: Long, userEmail: String) {
+        val user = userRepository.findByEmail(userEmail)!!
+        val post = postRepository.findById(postId)
+            .orElseThrow { ResourceNotFoundException("Post", "id", postId) }
+
+        if (post.author.id != user.id) {
+            throw UnauthorizedAccessException("You don't have permission to delete this post.")
+        }
+
+        cacheManager.getCache("posts")?.evict(post.event.id)
+
+        postRepository.delete(post)
+    }
+
+    private fun mapToPostResponse(post: Post, isLikedByCurrentUser: Boolean): PostResponse {
         return PostResponse(
             id = post.id,
             content = post.content,
@@ -148,7 +161,7 @@ class PostService(
             author = AuthorResponse(id = post.author.id, name = post.author.name),
             totalLikes = post.likes.size,
             totalComments = post.comments.size,
-            isLikedByCurrentUser = isLiked,
+            isLikedByCurrentUser = isLikedByCurrentUser,
             imageUrls = post.images.mapNotNull { it.url }
         )
     }
