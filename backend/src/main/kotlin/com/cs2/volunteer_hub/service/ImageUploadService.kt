@@ -1,6 +1,5 @@
 package com.cs2.volunteer_hub.service
 
-import com.google.cloud.storage.Acl
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
@@ -22,15 +21,11 @@ class ImageUploadService(
             .setContentType(contentType)
             .build()
 
-        val blob = storage.create(blobInfo, fileBytes)
-
-        blob.createAcl(Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER))
-
+        storage.create(blobInfo, fileBytes)
         return "https://storage.googleapis.com/$bucketName/$fileName"
     }
 
     fun deleteImageByUrl(url: String) {
-        // URL format: https://storage.googleapis.com/{bucketName}/{filePath}
         val prefix = "https://storage.googleapis.com/$bucketName/"
         if (!url.startsWith(prefix)) {
             throw BadRequestException("Invalid GCS URL format: $url")

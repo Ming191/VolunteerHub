@@ -18,6 +18,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile
 import java.util.stream.Collectors
 
@@ -38,7 +40,6 @@ class EventService(
         val creator = userRepository.findByEmail(creatorEmail)
             ?: throw ResourceNotFoundException("User", "email", creatorEmail)
 
-        // Validate files
         files?.let { fileValidationService.validateFiles(it, maxFilesPerEvent) }
 
         val newEvent = Event(
@@ -57,25 +58,25 @@ class EventService(
         val savedEvent = eventRepository.save(newEvent)
         logger.info("Created event ID: ${savedEvent.id} with ${savedEvent.images.size} images pending upload")
 
-        // Send message to queue for async processing
         if (savedEvent.images.isNotEmpty()) {
             val message = EventCreationMessage(eventId = savedEvent.id)
-            rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.EVENT_CREATION_PENDING_ROUTING_KEY,
-                message
-            )
-            logger.info("Sent event creation message to queue for Event ID: ${savedEvent.id}")
+
+            TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
+                override fun afterCommit() {
+                    rabbitTemplate.convertAndSend(
+                        RabbitMQConfig.EXCHANGE_NAME,
+                        RabbitMQConfig.EVENT_CREATION_PENDING_ROUTING_KEY,
+                        message
+                    )
+                    logger.info("Sent event creation message to queue for Event ID: ${savedEvent.id}")
+                }
+            })
         } else {
-            // No images, auto-approve
-            savedEvent.isApproved = true
             eventRepository.save(savedEvent)
-            logger.info("Auto-approved event ID: ${savedEvent.id} (no images)")
         }
 
         return mapToEventResponse(savedEvent)
     }
-
 
     @Cacheable("events")
     @Transactional(readOnly = true)

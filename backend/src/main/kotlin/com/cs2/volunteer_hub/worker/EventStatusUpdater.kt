@@ -42,11 +42,10 @@ class EventStatusUpdater(
         }
 
         if (updated) {
-            // Check if all images are uploaded
             val allUploaded = event.images.all { it.status == ImageStatus.UPLOADED }
 
             if (allUploaded) {
-                logger.info("All images uploaded successfully. Auto-approving Event ID: $eventId")
+                logger.info("All images uploaded successfully. Event ID: $eventId")
             }
 
             eventRepository.save(event)
