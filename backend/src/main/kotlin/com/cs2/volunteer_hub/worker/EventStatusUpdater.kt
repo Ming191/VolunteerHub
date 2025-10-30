@@ -63,7 +63,6 @@ class EventStatusUpdater(
 
         logger.warn("Processing upload failure for Event ID: $eventId. Error: $error")
 
-        // Clean up successfully uploaded files from GCS
         if (uploadedUrls.isNotEmpty()) {
             logger.info("Cleaning up ${uploadedUrls.size} successfully uploaded images from GCS for Event ID: $eventId")
             uploadedUrls.values.forEach { url ->
@@ -72,12 +71,10 @@ class EventStatusUpdater(
                     logger.info("Successfully deleted image from GCS: $url")
                 } catch (e: Exception) {
                     logger.error("Failed to delete image from GCS: $url. Error: ${e.message}", e)
-                    // Continue cleanup even if one fails
                 }
             }
         }
 
-        // Delete event from database
         if (eventRepository.existsById(eventId)) {
             eventRepository.deleteById(eventId)
             logger.warn("Deleted Event ID: $eventId from database due to upload failure.")

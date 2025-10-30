@@ -45,6 +45,9 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage
     implementation("com.google.cloud:google-cloud-storage:2.59.0")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
+
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 }
 
 kotlin {

@@ -1,12 +1,13 @@
 package com.cs2.volunteer_hub.service
 
+import com.cs2.volunteer_hub.exception.BadRequestException
+import com.cs2.volunteer_hub.exception.ConflictException
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.model.Registration
-import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
-import org.apache.coyote.BadRequestException
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -17,18 +18,27 @@ class RegistrationService(
     private val userRepository: UserRepository,
     private val eventRepository: EventRepository
 ) {
+    @CacheEvict(value = ["userRegistrations"], key = "#userEmail")
     @Transactional
     fun registerForEvent(eventId: Long, userEmail: String) {
         val user = userRepository.findByEmail(userEmail)
-            ?: throw IllegalArgumentException("User not found with email: $userEmail")
+            ?: throw ResourceNotFoundException("User", "email", userEmail)
+
         val event = eventRepository.findById(eventId)
-            .orElseThrow { IllegalArgumentException("Event not found with id: $eventId") }
+            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
+
         if (!event.isApproved) {
-            throw IllegalArgumentException("Cannot register for an unapproved event.")
+            throw BadRequestException("Cannot register for unapproved event.")
         }
+
+        if (event.eventDateTime.isBefore(LocalDateTime.now())) {
+            throw BadRequestException("Cannot register for event that has already occurred.")
+        }
+
         if (registrationRepository.existsByEventIdAndUserId(eventId, user.id)) {
-            throw IllegalArgumentException("User is already registered for this event.")
+            throw ConflictException("You are already registered for this event.")
         }
+
         val registration = Registration(
             user = user,
             event = event
@@ -36,19 +46,17 @@ class RegistrationService(
         registrationRepository.save(registration)
     }
 
+    @CacheEvict(value = ["userRegistrations"], key = "#userEmail")
     @Transactional
     fun cancelRegistration(eventId: Long, userEmail: String) {
         val user = userRepository.findByEmail(userEmail)
             ?: throw ResourceNotFoundException("User", "email", userEmail)
 
         val registration = registrationRepository.findByEventIdAndUserId(eventId, user.id)
-            .orElseThrow { ResourceNotFoundException("Registration", "event and user", "does not exist") }
+            .orElseThrow { ResourceNotFoundException("Registration", "for this event and user", "not found") }
 
-        if (registration.status == RegistrationStatus.APPROVED) {
-
-        }
         if (registration.event.eventDateTime.isBefore(LocalDateTime.now())) {
-            throw BadRequestException("Cannot cancel registration for an event that has already occurred.")
+            throw BadRequestException("Cannot cancel registration for event that has already occurred.")
         }
         registrationRepository.delete(registration)
     }

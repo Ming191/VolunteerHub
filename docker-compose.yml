@@ -1,7 +1,3 @@
-# docker-compose.yml
-
-version: '3.8' # Phiên bản của Docker Compose syntax
-
 services:
   postgres-db:
     image: postgres:15-alpine
@@ -12,7 +8,6 @@ services:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=mypassword
       - POSTGRES_DB=volunteerhub
-
 
     ports:
       - '5432:5432'
@@ -30,7 +25,20 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=myuser
       - RABBITMQ_DEFAULT_PASS=mypassword
+  
+  redis:
+    image: redis:7-alpine 
+    container_name: volunteerhub_redis
+    ports:
+      - "6379:6379" 
+    volumes:
+      - redis_data:/data
+    restart: always
 
 volumes:
   postgres_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  redis_data:
     driver: local

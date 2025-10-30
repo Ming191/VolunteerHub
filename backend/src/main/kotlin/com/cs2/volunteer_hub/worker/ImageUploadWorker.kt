@@ -25,7 +25,6 @@ class ImageUploadWorker(
 ) {
     private val logger = LoggerFactory.getLogger(ImageUploadWorker::class.java)
 
-    // Idempotency tracking - in production, use Redis or database
     private val processedMessages = ConcurrentHashMap.newKeySet<String>()
 
     @RabbitListener(queues = [RabbitMQConfig.EVENT_CREATION_PENDING_QUEUE])
@@ -33,7 +32,6 @@ class ImageUploadWorker(
     fun handleEventCreation(message: EventCreationMessage) {
         val messageId = "event-${message.eventId}-retry-${message.retryCount}"
 
-        // Idempotency check
         if (!processedMessages.add(messageId)) {
             logger.warn("Duplicate message detected for Event ID: ${message.eventId}, skipping")
             return
