@@ -98,7 +98,6 @@ class EventService(
         return mapToEventResponse(event)
     }
 
-
     @Caching(evict = [
         CacheEvict(value = ["events"], allEntries = true),
         CacheEvict(value = ["event"], key = "#id")

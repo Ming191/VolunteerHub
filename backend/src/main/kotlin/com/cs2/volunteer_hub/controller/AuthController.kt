@@ -21,8 +21,12 @@ class AuthController (private val authService: AuthService) {
         @Valid @RequestBody
         request: RegisterRequest
     ): ResponseEntity<Any> {
-        authService.registerUser(request)
-        return ResponseEntity("Registration successful", HttpStatus.CREATED)
+        return try {
+            authService.registerUser(request)
+            ResponseEntity("Registration successful", HttpStatus.CREATED)
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity(mapOf("error" to e.message), HttpStatus.BAD_REQUEST)
+        }
     }
 
     @PostMapping("/login")
