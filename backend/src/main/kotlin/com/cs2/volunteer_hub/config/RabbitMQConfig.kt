@@ -72,7 +72,7 @@ class RabbitMQConfig {
         val factory = SimpleRabbitListenerContainerFactory()
         configurer.configure(factory, connectionFactory)
         factory.setMessageConverter(messageConverter())
-        factory.setDefaultRequeueRejected(false) // Send to DLQ instead of requeue
+        factory.setDefaultRequeueRejected(false)
         return factory
     }
 
@@ -81,7 +81,6 @@ class RabbitMQConfig {
         return TopicExchange(EXCHANGE_NAME)
     }
 
-    // Main Queues with DLQ configuration
     @Bean
     fun eventCreationPendingQueue(): Queue {
         return QueueBuilder.durable(EVENT_CREATION_PENDING_QUEUE)
@@ -109,7 +108,6 @@ class RabbitMQConfig {
             .build()
     }
 
-    // Dead Letter Queues
     @Bean
     fun eventCreationDlq(): Queue {
         return QueueBuilder.durable(EVENT_CREATION_DLQ).build()
