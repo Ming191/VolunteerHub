@@ -18,6 +18,8 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDateTime
 
@@ -77,12 +79,17 @@ class PostService(
 
         if (savedPost.images.isNotEmpty()) {
             val message = PostCreationMessage(postId = savedPost.id)
-            rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.POST_CREATION_PENDING_ROUTING_KEY,
-                message
-            )
-            logger.info("Sent post creation message to queue for Post ID: ${savedPost.id}")
+
+            TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
+                override fun afterCommit() {
+                    rabbitTemplate.convertAndSend(
+                        RabbitMQConfig.EXCHANGE_NAME,
+                        RabbitMQConfig.POST_CREATION_PENDING_ROUTING_KEY,
+                        message
+                    )
+                    logger.info("Sent post creation message to queue for Post ID: ${savedPost.id}")
+                }
+            })
         }
 
         return mapToPostResponse(savedPost, false)
