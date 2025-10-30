@@ -4,7 +4,9 @@ import com.cs2.volunteer_hub.config.jwt.JwtTokenProvider
 import com.cs2.volunteer_hub.dto.LoginRequest
 import com.cs2.volunteer_hub.dto.RegisterRequest
 import com.cs2.volunteer_hub.model.User
+import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.repository.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -18,18 +20,28 @@ class AuthService (
     private val authenticationManager: AuthenticationManager,
     private val userDetailsService: CustomUserDetailsService
 ) {
+    private val logger = LoggerFactory.getLogger(AuthService::class.java)
+
     fun registerUser(request: RegisterRequest) : User {
+        logger.info("Registration request received - email: ${request.email}, requested role: ${request.role}")
+
         if (userRepository.findByEmail(request.email) != null) {
             throw IllegalArgumentException("Email is already in use")
         }
 
         val hashedPassword = passwordEncoder.encode(request.password)
+        val assignedRole = request.role ?: Role.VOLUNTEER
+        logger.info("Assigning role: $assignedRole to user: ${request.email}")
+
         val user = User(
             name = request.username,
             email = request.email,
-            passwordHash = hashedPassword
+            passwordHash = hashedPassword,
+            role = assignedRole
         )
-        return userRepository.save(user)
+        val savedUser = userRepository.save(user)
+        logger.info("User saved with role: ${savedUser.role}")
+        return savedUser
     }
 
     fun loginUser(request: LoginRequest) : String {
