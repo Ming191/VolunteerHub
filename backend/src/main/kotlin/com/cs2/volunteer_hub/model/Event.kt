@@ -45,6 +45,12 @@ data class Event(
     @JsonManagedReference("event-images")
     val images: MutableList<Image> = mutableListOf(),
 
+    @OneToMany(mappedBy = "event", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("event-registrations")
+    val registrations: MutableList<Registration> = mutableListOf(),
+
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+
     @Version
     var version: Long = 0
 )
