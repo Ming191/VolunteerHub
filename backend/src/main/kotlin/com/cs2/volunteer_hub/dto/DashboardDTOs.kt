@@ -40,3 +40,29 @@ data class VolunteerDashboardResponse(
 
     val recentWallPosts: List<DashboardPostItem>
 )
+
+data class DashboardActionItem(
+    val id: Long,
+    val primaryText: String,
+    val secondaryText: String,
+    val timestamp: LocalDateTime
+)
+
+data class DashboardTopEventItem(
+    val id: Long,
+    val title: String,
+    val count: Long
+)
+
+data class OrganizerDashboardResponse(
+    val stats: Map<String, Long>,
+    val eventsPendingAdminApproval: List<DashboardEventItem>,
+    val recentPendingRegistrations: List<DashboardActionItem>,
+    val topEventsByRegistration: List<DashboardTopEventItem>
+)
+
+data class AdminDashboardResponse(
+    val stats: Map<String, Long>,
+    val userRoleCounts: Map<String, Long>,
+    val eventsToApprove: List<DashboardActionItem>
+)
