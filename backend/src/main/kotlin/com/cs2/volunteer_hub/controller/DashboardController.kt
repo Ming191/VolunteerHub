@@ -1,5 +1,6 @@
 package com.cs2.volunteer_hub.controller
 
+import com.cs2.volunteer_hub.dto.AdminDashboardResponse
 import com.cs2.volunteer_hub.dto.OrganizerDashboardResponse
 import com.cs2.volunteer_hub.dto.VolunteerDashboardResponse
 import com.cs2.volunteer_hub.service.DashboardService
