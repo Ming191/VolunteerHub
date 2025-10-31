@@ -1,10 +1,15 @@
 package com.cs2.volunteer_hub.service
 
+import com.cs2.volunteer_hub.dto.AdminDashboardResponse
+import com.cs2.volunteer_hub.dto.DashboardActionItem
 import com.cs2.volunteer_hub.dto.DashboardEventItem
 import com.cs2.volunteer_hub.dto.DashboardPendingRegistrationItem
 import com.cs2.volunteer_hub.dto.DashboardPostItem
+import com.cs2.volunteer_hub.dto.DashboardTopEventItem
+import com.cs2.volunteer_hub.dto.OrganizerDashboardResponse
 import com.cs2.volunteer_hub.dto.VolunteerDashboardResponse
 import com.cs2.volunteer_hub.model.RegistrationStatus
+import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.PostRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
@@ -63,6 +68,78 @@ class DashboardService(
             newlyApprovedEvents = newlyApprovedEvents,
             trendingEvents = trendingEvents,
             recentWallPosts = recentWallPosts
+        )
+    }
+
+    @Cacheable(value = ["organizer_dashboard"], key = "#userEmail")
+    @Transactional(readOnly = true)
+    fun getOrganizerDashboard(userEmail: String): OrganizerDashboardResponse {
+        val user = userRepository.findByEmail(userEmail)!!
+
+        val pendingRegistrationsCount = registrationRepository.countPendingRegistrationsByCreatorId(user.id)
+        val eventsPendingAdminApprovalCount = eventRepository.countByCreatorIdAndIsApprovedFalse(user.id)
+
+        val stats = mapOf(
+            "pendingRegistrations" to pendingRegistrationsCount,
+            "eventsPendingAdminApproval" to eventsPendingAdminApprovalCount
+        )
+
+        val eventsPendingAdminApproval = eventRepository.findByCreatorIdAndIsApprovedFalse(user.id)
+            .map { event -> DashboardEventItem(event.id, event.title, event.eventDateTime, event.location) }
+
+        val recentPendingRegistrations = registrationRepository.findRecentPendingRegistrationsByCreatorId(user.id, PageRequest.of(0, 5))
+            .map { reg ->
+                DashboardActionItem(
+                    id = reg.id,
+                    primaryText = reg.user.name,
+                    secondaryText = reg.event.title,
+                    timestamp = reg.registeredAt
+                )
+            }
+
+        val topEventsByRegistration = eventRepository.findTop3EventsByRegistrations(user.id, PageRequest.of(0, 3))
+            .map { event ->
+                DashboardTopEventItem(
+                    id = event.id,
+                    title = event.title,
+                    count = event.registrations.size.toLong()
+                )
+            }
+
+        return OrganizerDashboardResponse(
+            stats = stats,
+            eventsPendingAdminApproval = eventsPendingAdminApproval,
+            recentPendingRegistrations = recentPendingRegistrations,
+            topEventsByRegistration = topEventsByRegistration
+        )
+    }
+
+    @Cacheable("admin_dashboard")
+    @Transactional(readOnly = true)
+    fun getAdminDashboard(): AdminDashboardResponse {
+        val userRoleCounts = userRepository.countUsersByRole()
+            .associate { (role, count) -> (role as Role).name to (count as Long) }
+
+        val totalEvents = eventRepository.count()
+        val totalRegistrations = registrationRepository.count()
+        val totalUsers = userRepository.count()
+
+        val eventsToApprove = eventRepository.findByIsApprovedFalse()
+            .map { event -> DashboardActionItem(
+                id = event.id,
+                primaryText = event.title,
+                secondaryText = "bởi " + event.creator.name,
+                timestamp = event.createdAt
+            )}
+
+        return AdminDashboardResponse(
+            stats = mapOf(
+                "totalUsers" to totalUsers,
+                "totalEvents" to totalEvents,
+                "totalRegistrations" to totalRegistrations
+            ),
+            userRoleCounts = userRoleCounts,
+            eventsToApprove = eventsToApprove
         )
     }
 }

@@ -24,4 +24,18 @@ interface EventRepository : JpaRepository<Event, Long> {
         ORDER BY COUNT(r.id) DESC
     """)
     fun findTrendingEvents(since: LocalDateTime, pageable: Pageable): List<DashboardTrendingEventItem>
+
+    fun countByCreatorIdAndIsApprovedFalse(creatorId: Long): Long
+
+    fun findByCreatorIdAndIsApprovedFalse(creatorId: Long): List<Event>
+
+    @Query("""
+        SELECT e FROM Event e LEFT JOIN e.registrations r 
+        WHERE e.creator.id = :creatorId 
+        GROUP BY e.id 
+        ORDER BY COUNT(r.id) DESC
+    """)
+    fun findTop3EventsByRegistrations(creatorId: Long, pageable: Pageable): List<Event>
+
+    fun findByIsApprovedFalse(): List<Event>
 }

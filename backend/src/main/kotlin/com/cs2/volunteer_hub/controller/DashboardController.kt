@@ -1,5 +1,6 @@
 package com.cs2.volunteer_hub.controller
 
+import com.cs2.volunteer_hub.dto.OrganizerDashboardResponse
 import com.cs2.volunteer_hub.dto.VolunteerDashboardResponse
 import com.cs2.volunteer_hub.service.DashboardService
 import org.springframework.http.ResponseEntity
@@ -13,13 +14,28 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/dashboard")
 class DashboardController(private val dashboardService: DashboardService) {
-
     @GetMapping("/volunteer")
     @PreAuthorize("hasRole('VOLUNTEER')")
     fun getVolunteerDashboard(
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<VolunteerDashboardResponse> {
         val dashboardData = dashboardService.getVolunteerDashboard(currentUser.username)
+        return ResponseEntity.ok(dashboardData)
+    }
+
+    @GetMapping("/organizer")
+    @PreAuthorize("hasRole('EVENT_ORGANIZER')")
+    fun getOrganizerDashboard(
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<OrganizerDashboardResponse> {
+        val dashboardData = dashboardService.getOrganizerDashboard(currentUser.username)
+        return ResponseEntity.ok(dashboardData)
+    }
+
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun getAdminDashboard(): ResponseEntity<AdminDashboardResponse> {
+        val dashboardData = dashboardService.getAdminDashboard()
         return ResponseEntity.ok(dashboardData)
     }
 }
