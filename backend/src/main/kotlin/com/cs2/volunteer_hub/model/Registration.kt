@@ -1,5 +1,6 @@
 package com.cs2.volunteer_hub.model
 
+import com.fasterxml.jackson.annotation.JsonBackReference
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -26,6 +27,7 @@ data class Registration(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
+    @JsonBackReference("event-registrations")
     val event: Event,
 
     @Enumerated(EnumType.STRING)
