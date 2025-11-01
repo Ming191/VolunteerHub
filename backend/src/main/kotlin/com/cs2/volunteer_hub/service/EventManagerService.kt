@@ -1,6 +1,8 @@
 package com.cs2.volunteer_hub.service
 
+import com.cs2.volunteer_hub.config.RabbitMQConfig
 import com.cs2.volunteer_hub.dto.RegistrationResponse
+import com.cs2.volunteer_hub.dto.RegistrationStatusUpdateMessage
 import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
@@ -8,6 +10,7 @@ import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
@@ -18,8 +21,11 @@ import java.time.LocalDateTime
 class EventManagerService(
     private val registrationRepository: RegistrationRepository,
     private val eventRepository: EventRepository,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val rabbitTemplate: RabbitTemplate
 ) {
+    private val logger = org.slf4j.LoggerFactory.getLogger(EventManagerService::class.java)
+
     private fun checkEventOwnership(eventId: Long, managerEmail: String) {
         val event = eventRepository.findById(eventId)
             .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
@@ -46,6 +52,10 @@ class EventManagerService(
 
         registration.status = RegistrationStatus.COMPLETED
         val savedRegistration = registrationRepository.save(registration)
+
+        // Queue notification for status update
+        queueRegistrationStatusUpdate(registrationId)
+
         return mapToRegistrationResponse(savedRegistration)
     }
 
@@ -75,7 +85,26 @@ class EventManagerService(
 
         registration.status = newStatus
         val savedRegistration = registrationRepository.save(registration)
+
+        // Queue notification for status update
+        queueRegistrationStatusUpdate(registrationId)
+
         return mapToRegistrationResponse(savedRegistration)
+    }
+
+    private fun queueRegistrationStatusUpdate(registrationId: Long) {
+        try {
+            val message = RegistrationStatusUpdateMessage(registrationId = registrationId)
+            rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_NAME,
+                RabbitMQConfig.REGISTRATION_STATUS_UPDATED_ROUTING_KEY,
+                message
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to send registration status update message to RabbitMQ for registrationId: $registrationId", e)
+            // Log error but don't fail the transaction
+            // The registration status is still updated in the database
+        }
     }
 
     private fun evictRelatedCaches(registration: Registration) {
