@@ -48,6 +48,11 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    // Bucket4j for rate limiting with Redis support
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.15.0")
+    implementation("com.bucket4j:bucket4j_jdk17-redis-common:8.15.0")
+    implementation("com.bucket4j:bucket4j_jdk17-lettuce:8.15.0")
 }
 
 kotlin {
