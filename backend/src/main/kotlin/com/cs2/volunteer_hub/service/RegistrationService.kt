@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.service
 import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.exception.ConflictException
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
@@ -28,8 +29,8 @@ class RegistrationService(
         val event = eventRepository.findById(eventId)
             .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
 
-        if (!event.isApproved) {
-            throw BadRequestException("Cannot register for unapproved event.")
+        if (event.status != EventStatus.APPROVED) {
+            throw BadRequestException("Cannot register for an event that is not approved.")
         }
 
         if (event.eventDateTime.isBefore(LocalDateTime.now())) {

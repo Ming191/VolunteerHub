@@ -1,17 +1,21 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.config.RabbitMQConfig
+import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.RegistrationResponse
 import com.cs2.volunteer_hub.dto.RegistrationStatusUpdateMessage
 import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
+import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.mapper.RegistrationMapper
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.specification.EventSpecifications
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.CacheManager
@@ -28,7 +32,8 @@ class EventManagerService(
     private val userRepository: UserRepository,
     private val cacheManager: CacheManager,
     private val rabbitTemplate: RabbitTemplate,
-    private val registrationMapper: RegistrationMapper
+    private val registrationMapper: RegistrationMapper,
+    private val eventMapper: EventMapper
 ) {
     private val logger = org.slf4j.LoggerFactory.getLogger(EventManagerService::class.java)
 
@@ -164,6 +169,25 @@ class EventManagerService(
         queueRegistrationStatusUpdate(registrationId)
 
         return registrationMapper.toRegistrationResponse(savedRegistration)
+    }
+
+    /**
+     * Get organizer's own events, optionally filtered by status
+     * Example: Get all my pending events awaiting approval
+     */
+    @Transactional(readOnly = true)
+    fun getMyEventsByStatus(managerEmail: String, status: EventStatus?): List<EventResponse> {
+        val manager = userRepository.findByEmail(managerEmail)
+            ?: throw ResourceNotFoundException("Manager", "email", managerEmail)
+
+        var spec = EventSpecifications.hasCreator(manager.id)
+
+        status?.let {
+            spec = spec.and(EventSpecifications.hasStatus(it))
+        }
+
+        return eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+            .map(eventMapper::toEventResponse)
     }
 
     private fun queueRegistrationStatusUpdate(registrationId: Long) {

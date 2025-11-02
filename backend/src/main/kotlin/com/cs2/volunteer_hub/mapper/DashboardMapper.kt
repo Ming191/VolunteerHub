@@ -5,10 +5,12 @@ import com.cs2.volunteer_hub.dto.DashboardEventItem
 import com.cs2.volunteer_hub.dto.DashboardPendingRegistrationItem
 import com.cs2.volunteer_hub.dto.DashboardPostItem
 import com.cs2.volunteer_hub.dto.DashboardTopEventItem
+import com.cs2.volunteer_hub.dto.DashboardTrendingEventItem
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.Post
 import com.cs2.volunteer_hub.model.Registration
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 
 /**
  * Mapper for Dashboard DTOs
@@ -129,5 +131,33 @@ class DashboardMapper {
     fun toDashboardTopEventItemList(events: List<Event>): List<DashboardTopEventItem> {
         return events.map { toDashboardTopEventItem(it) }
     }
-}
 
+    /**
+     * Map Event to DashboardTrendingEventItem
+     * Counts registrations after a specific date
+     */
+    fun toDashboardTrendingEventItem(event: Event, since: LocalDateTime): DashboardTrendingEventItem {
+        val registrationCount = event.registrations.count {
+            it.registeredAt.isAfter(since)
+        }.toLong()
+
+        return DashboardTrendingEventItem(
+            id = event.id,
+            title = event.title,
+            eventDateTime = event.eventDateTime,
+            location = event.location,
+            registrationCount = registrationCount
+        )
+    }
+
+    /**
+     * Map list of Events to list of DashboardTrendingEventItems
+     * Sorts by registration count descending and takes the top items
+     */
+    fun toDashboardTrendingEventItemList(events: List<Event>, since: java.time.LocalDateTime, limit: Int = 5): List<com.cs2.volunteer_hub.dto.DashboardTrendingEventItem> {
+        return events
+            .map { toDashboardTrendingEventItem(it, since) }
+            .sortedByDescending { it.registrationCount }
+            .take(limit)
+    }
+}

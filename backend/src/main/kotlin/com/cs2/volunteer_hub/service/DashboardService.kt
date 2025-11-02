@@ -1,9 +1,11 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.AdminDashboardResponse
+import com.cs2.volunteer_hub.dto.DashboardTrendingEventItem
 import com.cs2.volunteer_hub.dto.OrganizerDashboardResponse
 import com.cs2.volunteer_hub.dto.VolunteerDashboardResponse
 import com.cs2.volunteer_hub.mapper.DashboardMapper
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.repository.EventRepository
@@ -43,16 +45,19 @@ class DashboardService(
             .findTop3ByUserIdAndStatusOrderByEventEventDateTimeAsc(user.id, RegistrationStatus.PENDING)
             .let { dashboardMapper.toDashboardPendingRegistrationItemList(it) }
 
-        // Get newly approved events
+        // Get newly approved events using specification
         val newlyApprovedEvents = eventRepository
-            .findTop5ByIsApprovedTrueOrderByCreatedAtDesc()
+            .findTop5ByStatusOrderByCreatedAtDesc(EventStatus.APPROVED)
             .let { dashboardMapper.toDashboardEventItemList(it) }
 
-        // Get trending events
-        val trendingEvents = eventRepository.findTrendingEvents(
-            LocalDateTime.now().minusDays(7),
-            PageRequest.of(0, 5)
-        )
+        // Get trending events using specification and mapper
+        val trendingSpec = EventSpecifications.hasStatus(EventStatus.APPROVED)
+            .and(EventSpecifications.hasRegistrationsAfter(LocalDateTime.now().minusDays(7)))
+
+        val trendingEvents = eventRepository
+            .findAll(trendingSpec, PageRequest.of(0, 5))
+            .content
+            .let { dashboardMapper.toDashboardTrendingEventItemList(it, LocalDateTime.now().minusDays(7), 5) }
 
         // Get recent posts from approved event registrations
         val approvedEventIds = registrationRepository
@@ -110,9 +115,16 @@ class DashboardService(
             .take(5)
             .let { dashboardMapper.registrationsToDashboardActionItemList(it) }
 
-        // Get top events by registration count using mapper
-        val topEventsByRegistration = eventRepository
-            .findTop3EventsByRegistrations(user.id, PageRequest.of(0, 3))
+        // Get top events by registration count using specification
+        val topEventsSpec = EventSpecifications.byCreatorWithRegistrations(user.id)
+
+        val topEventsByRegistration = eventRepository.findAll(
+            topEventsSpec,
+            PageRequest.of(0, 3)
+        ).content
+            .groupBy { it.id }
+            .map { (_, events) -> events.first() }
+            .sortedByDescending { event -> event.registrations.size }
             .let { dashboardMapper.toDashboardTopEventItemList(it) }
 
         return OrganizerDashboardResponse(

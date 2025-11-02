@@ -9,6 +9,7 @@ import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.model.Event
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.EventRepository
 import org.springframework.cache.annotation.CacheEvict
@@ -33,7 +34,7 @@ class EventService(
     private val rabbitTemplate: RabbitTemplate,
     private val fileValidationService: FileValidationService,
     private val eventMapper: EventMapper,
-    @field:Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
+    @field:Value($$"${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
     private val logger = LoggerFactory.getLogger(EventService::class.java)
 
@@ -50,8 +51,15 @@ class EventService(
             description = request.description,
             location = request.location,
             eventDateTime = request.eventDateTime,
+            eventEndDateTime = request.eventEndDateTime,
+            category = request.category,
+            maxVolunteers = request.maxVolunteers,
+            minVolunteers = request.minVolunteers,
+            registrationDeadline = request.registrationDeadline,
+            requirements = request.requirements,
+            benefits = request.benefits,
             creator = creator,
-            isApproved = false
+            status = EventStatus.PENDING
         )
 
         if (!files.isNullOrEmpty()) {
@@ -84,7 +92,7 @@ class EventService(
     @Cacheable("events")
     @Transactional(readOnly = true)
     fun getAllApprovedEvents(): List<EventResponse> {
-        return eventRepository.findAllByIsApprovedTrueOrderByEventDateTimeAsc()
+        return eventRepository.findAllByStatusOrderByEventDateTimeAsc(EventStatus.APPROVED)
             .stream()
             .map(eventMapper::toEventResponse)
             .collect(Collectors.toList())
@@ -95,7 +103,7 @@ class EventService(
      */
     @Transactional(readOnly = true)
     fun getAllApprovedEvents(pageable: Pageable): Page<EventResponse> {
-        return eventRepository.findAllByIsApprovedTrueOrderByEventDateTimeAsc(pageable)
+        return eventRepository.findAllByStatusOrderByEventDateTimeAsc(EventStatus.APPROVED, pageable)
             .map(eventMapper::toEventResponse)
     }
 
@@ -104,10 +112,6 @@ class EventService(
     fun getEventById(id: Long): EventResponse {
         val event = eventRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Event", "id", id) }
-
-        if (!event.isApproved) {
-            throw ResourceNotFoundException("Event", "id", id)
-        }
         return eventMapper.toEventResponse(event)
     }
 
@@ -128,6 +132,13 @@ class EventService(
         request.description?.let { event.description = it }
         request.location?.let { event.location = it }
         request.eventDateTime?.let { event.eventDateTime = it }
+        request.eventEndDateTime?.let { event.eventEndDateTime = it }
+        request.category?.let { event.category = it }
+        request.maxVolunteers?.let { event.maxVolunteers = it }
+        request.minVolunteers?.let { event.minVolunteers = it }
+        request.registrationDeadline?.let { event.registrationDeadline = it }
+        request.requirements?.let { event.requirements = it }
+        request.benefits?.let { event.benefits = it }
 
         val updatedEvent = eventRepository.save(event)
         logger.info("Updated event ID: $id by user: $currentUserEmail")
