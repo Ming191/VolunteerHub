@@ -1,19 +1,15 @@
 package com.cs2.volunteer_hub.model
 
-import jakarta.persistence.CascadeType
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.OneToMany
-import jakarta.persistence.Table
+import jakarta.persistence.*
 
 @Entity
-@Table(name = "users")
+@Table(
+    name = "users",
+    indexes = [
+        Index(name = "idx_users_email", columnList = "email", unique = true),
+        Index(name = "idx_users_role", columnList = "role")
+    ]
+)
 data class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

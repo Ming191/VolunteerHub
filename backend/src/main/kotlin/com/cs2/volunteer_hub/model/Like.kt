@@ -5,7 +5,11 @@ import jakarta.persistence.*
 @Entity
 @Table(
     name = "post_likes",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "post_id"])]
+    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "post_id"])],
+    indexes = [
+        Index(name = "idx_likes_post_id", columnList = "post_id"),
+        Index(name = "idx_likes_post_user", columnList = "post_id, user_id")
+    ]
 )
 data class Like(
     @Id
