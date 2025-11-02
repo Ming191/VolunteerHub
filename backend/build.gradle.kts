@@ -1,6 +1,6 @@
 plugins {
-	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25"
+    kotlin("jvm") version "2.2.0"
+    kotlin("plugin.spring") version "1.9.25"
 	id("org.springframework.boot") version "3.5.6"
 	id("io.spring.dependency-management") version "1.1.7"
 	kotlin("plugin.jpa") version "1.9.25"
@@ -57,6 +57,15 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.firebase/firebase-admin
     implementation("com.google.firebase:firebase-admin:9.7.0")
     implementation("org.springframework.boot:spring-boot-starter-aop")
+
+    // https://mvnrepository.com/artifact/org.webjars/swagger-ui
+    implementation("org.webjars:swagger-ui:5.30.1")
+
+    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-api
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.13")
+
+    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
 }
 
 kotlin {

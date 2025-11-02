@@ -5,6 +5,10 @@ import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
 import com.cs2.volunteer_hub.service.EventSearchService
 import com.cs2.volunteer_hub.service.EventService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -27,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/events")
+@Tag(name = "Events", description = "Event management endpoints")
 class EventController(
     private val eventService: EventService,
     private val eventSearchService: EventSearchService
@@ -34,6 +39,7 @@ class EventController(
 
     private val logger = LoggerFactory.getLogger(EventController::class.java)
 
+    @Operation(summary = "Get all approved events", description = "Retrieve all events that have been approved by admin")
     @GetMapping
     fun getAllEvents(): ResponseEntity<List<EventResponse>> {
         val events = eventService.getAllApprovedEvents()
@@ -44,9 +50,15 @@ class EventController(
      * Search approved events with optional filters
      * Example: GET /api/events/search?q=volunteer&upcoming=true
      */
+    @Operation(
+        summary = "Search events",
+        description = "Search approved events with optional filters. Can search by text (title, description, location) and filter for upcoming events only."
+    )
     @GetMapping("/search")
     fun searchEvents(
+        @Parameter(description = "Search text (max 100 characters)")
         @RequestParam(required = false) q: String?,
+        @Parameter(description = "Only return upcoming events")
         @RequestParam(defaultValue = "false") upcoming: Boolean
     ): ResponseEntity<List<EventResponse>> {
         if (q != null) {
@@ -67,16 +79,27 @@ class EventController(
         return ResponseEntity.ok(events)
     }
 
+    @Operation(summary = "Get event by ID", description = "Retrieve detailed information about a specific event")
     @GetMapping("/{id}")
-    fun getEventById(@PathVariable id: Long): ResponseEntity<EventResponse> {
+    fun getEventById(
+        @Parameter(description = "Event ID", required = true)
+        @PathVariable id: Long
+    ): ResponseEntity<EventResponse> {
         val event = eventService.getEventById(id)
         return ResponseEntity.ok(event)
     }
 
+    @Operation(
+        summary = "Create event",
+        description = "Create a new event (requires EVENT_ORGANIZER role). Event will be pending admin approval. Supports image uploads."
+    )
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @PreAuthorize("hasRole('EVENT_ORGANIZER')")
     fun createEvent(
+        @Parameter(description = "Event details in JSON format")
         @RequestPart("request") @Valid request: CreateEventRequest,
+        @Parameter(description = "Optional event images")
         @RequestPart("files", required = false) files: List<MultipartFile>?,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<EventResponse> {
@@ -85,9 +108,15 @@ class EventController(
         return ResponseEntity.status(HttpStatus.CREATED).body(event)
     }
 
+    @Operation(
+        summary = "Update event",
+        description = "Update an existing event (requires EVENT_ORGANIZER role and must be event creator). All fields are optional."
+    )
+    @SecurityRequirement(name = "bearerAuth")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('EVENT_ORGANIZER')")
     fun updateEvent(
+        @Parameter(description = "Event ID", required = true)
         @PathVariable id: Long,
         @Valid @RequestBody request: UpdateEventRequest,
         @AuthenticationPrincipal currentUser: UserDetails
@@ -100,6 +129,11 @@ class EventController(
         return ResponseEntity.ok(updatedEvent)
     }
 
+    @Operation(
+        summary = "Delete event",
+        description = "Delete an event (requires EVENT_ORGANIZER role and must be event creator)"
+    )
+    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('EVENT_ORGANIZER')")
     fun deleteEvent(
