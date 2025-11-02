@@ -11,9 +11,11 @@ import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
+import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -61,11 +63,86 @@ class EventManagerService(
         return registrationMapper.toRegistrationResponse(savedRegistration)
     }
 
+    /**
+     * Bulk mark all approved registrations for past events as completed
+     * Uses forPastEvents() specification to find eligible registrations
+     * Useful for scheduled jobs or bulk operations
+     */
+    @Transactional
+    fun bulkCompleteRegistrationsForPastEvents(managerEmail: String): Int {
+        val manager = eventRepository.findAll()
+            .firstOrNull { it.creator.email == managerEmail }
+            ?.creator
+            ?: throw ResourceNotFoundException("Manager", "email", managerEmail)
+
+        // Use specifications to find approved registrations for past events created by this manager
+        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
+            .and(RegistrationSpecifications.hasStatus(RegistrationStatus.APPROVED))
+            .and(RegistrationSpecifications.forPastEvents())
+
+        val registrationsToComplete = registrationRepository.findAll(spec)
+
+        if (registrationsToComplete.isEmpty()) {
+            return 0
+        }
+
+        // Mark all as completed
+        registrationsToComplete.forEach { registration ->
+            evictRelatedCaches(registration)
+            registration.status = RegistrationStatus.COMPLETED
+            registrationRepository.save(registration)
+            queueRegistrationStatusUpdate(registration.id)
+        }
+
+        logger.info("Bulk completed ${registrationsToComplete.size} registrations for past events by manager ${manager.id}")
+        return registrationsToComplete.size
+    }
+
     @Cacheable(value = ["eventRegistrations"], key = "#eventId")
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         checkEventOwnership(eventId, managerEmail)
-        return registrationRepository.findAllByEventId(eventId)
+
+        // Use specification instead of repository method
+        val spec = RegistrationSpecifications.forEvent(eventId)
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+            .map(registrationMapper::toRegistrationResponse)
+    }
+
+    /**
+     * Get registrations by status for an event using Specification Pattern
+     * More flexible than creating separate repository methods for each status
+     */
+    @Transactional(readOnly = true)
+    fun getRegistrationsByStatus(
+        eventId: Long,
+        status: RegistrationStatus,
+        managerEmail: String
+    ): List<RegistrationResponse> {
+        checkEventOwnership(eventId, managerEmail)
+
+        val spec = RegistrationSpecifications.forEvent(eventId)
+            .and(RegistrationSpecifications.hasStatus(status))
+
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+            .map(registrationMapper::toRegistrationResponse)
+    }
+
+    /**
+     * Get all pending registrations for events created by this manager
+     * Using specifications makes this query simple and readable
+     */
+    @Transactional(readOnly = true)
+    fun getAllPendingRegistrations(managerEmail: String): List<RegistrationResponse> {
+        val manager = eventRepository.findAll()
+            .firstOrNull { it.creator.email == managerEmail }
+            ?.creator
+            ?: throw ResourceNotFoundException("Manager", "email", managerEmail)
+
+        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
+            .and(RegistrationSpecifications.hasStatus(RegistrationStatus.PENDING))
+
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
             .map(registrationMapper::toRegistrationResponse)
     }
 

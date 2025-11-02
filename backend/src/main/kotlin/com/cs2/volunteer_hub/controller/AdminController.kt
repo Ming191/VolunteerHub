@@ -5,9 +5,11 @@ import com.cs2.volunteer_hub.service.AdminService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 
@@ -25,5 +27,35 @@ class AdminController(private val adminService: AdminService) {
     fun deleteEventAsAdmin(@PathVariable id: Long): ResponseEntity<Unit> {
         adminService.deleteEventAsAdmin(id)
         return ResponseEntity.noContent().build()
+    }
+
+    /**
+     * Get all pending events awaiting approval
+     * Uses Specification Pattern for flexible querying
+     */
+    @GetMapping("/events/pending")
+    fun getPendingEvents(): ResponseEntity<List<EventResponse>> {
+        val pendingEvents = adminService.getPendingEvents()
+        return ResponseEntity.ok(pendingEvents)
+    }
+
+    /**
+     * Search all events by text (title, description, or location)
+     * Example: GET /api/admin/events/search?q=volunteer
+     */
+    @GetMapping("/events/search")
+    fun searchAllEvents(@RequestParam q: String): ResponseEntity<List<EventResponse>> {
+        val events = adminService.searchAllEvents(q)
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Get past events for historical records and reporting
+     * Example: GET /api/admin/events/past
+     */
+    @GetMapping("/events/past")
+    fun getPastEvents(): ResponseEntity<List<EventResponse>> {
+        val events = adminService.getPastEvents()
+        return ResponseEntity.ok(events)
     }
 }

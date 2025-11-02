@@ -37,6 +37,19 @@ class PostController(private val postService: PostService) {
         return ResponseEntity.ok(posts)
     }
 
+    /**
+     * Get recent posts from all events the user is registered for (feed/dashboard)
+     * Example: GET /api/posts/feed?days=14
+     */
+    @GetMapping("/feed")
+    fun getRecentPostsFeed(
+        @RequestParam(defaultValue = "7") days: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<PostResponse>> {
+        val posts = postService.getRecentPostsForUser(currentUser.username, days)
+        return ResponseEntity.ok(posts)
+    }
+
     @PutMapping("/{postId}")
     fun updatePost(
         @PathVariable postId: Long,
