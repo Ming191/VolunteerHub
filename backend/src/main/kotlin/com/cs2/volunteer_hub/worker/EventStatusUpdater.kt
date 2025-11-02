@@ -49,7 +49,7 @@ class EventStatusUpdater(
             }
 
             eventRepository.save(event)
-            logger.info("Successfully saved image status for Event ID: $eventId (approved: ${event.isApproved})")
+            logger.info("Successfully saved image status for Event ID: $eventId (status: ${event.status})")
         }
     }
 

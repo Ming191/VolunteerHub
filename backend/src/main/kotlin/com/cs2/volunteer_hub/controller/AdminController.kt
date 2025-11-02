@@ -49,10 +49,21 @@ class AdminController(private val adminService: AdminService) {
         if (trimmed.isEmpty()) {
             return ResponseEntity.badRequest().build()
         }
-        if (trimmed.length > 100) {
-            return ResponseEntity.badRequest().build()
-        }
         val events = adminService.searchAllEvents(trimmed)
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Get events by status for admin review
+     * Example: GET /api/admin/events/status/PENDING
+     * Example: GET /api/admin/events/status/CANCELLED
+     * Example: GET /api/admin/events/status/COMPLETED
+     */
+    @GetMapping("/events/status/{status}")
+    fun getEventsByStatus(
+        @PathVariable status: com.cs2.volunteer_hub.model.EventStatus
+    ): ResponseEntity<List<EventResponse>> {
+        val events = adminService.getEventsByStatus(status)
         return ResponseEntity.ok(events)
     }
 

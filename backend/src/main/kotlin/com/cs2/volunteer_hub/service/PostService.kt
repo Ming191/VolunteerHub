@@ -7,6 +7,7 @@ import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.mapper.PostMapper
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.*
 import com.cs2.volunteer_hub.specification.PostSpecifications
@@ -45,7 +46,7 @@ class PostService(
         val event = eventRepository.findById(eventId)
             .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
 
-        if (!event.isApproved) {
+        if (event.status != EventStatus.APPROVED) {
             throw UnauthorizedAccessException("Cannot interact with unapproved events.")
         }
 

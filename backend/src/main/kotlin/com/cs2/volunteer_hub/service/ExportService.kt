@@ -11,7 +11,7 @@ class ExportService(private val eventRepository: EventRepository) {
     fun writeEventsToCsv(writer: Writer) {
         val events = eventRepository.findAll()
         CSVPrinter(writer, CSVFormat.DEFAULT).use { csvPrinter ->
-            csvPrinter.printRecord("ID", "Title", "Location", "DateTime", "IsApproved", "CreatorID")
+            csvPrinter.printRecord("ID", "Title", "Location", "DateTime", "Status", "Category", "CreatorID")
 
             for (event in events) {
                 csvPrinter.printRecord(
@@ -19,7 +19,8 @@ class ExportService(private val eventRepository: EventRepository) {
                     event.title,
                     event.location,
                     event.eventDateTime.toString(),
-                    event.isApproved,
+                    event.status.name,
+                    event.category.name,
                     event.creator.id
                 )
             }

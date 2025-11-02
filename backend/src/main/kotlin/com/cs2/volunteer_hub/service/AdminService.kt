@@ -5,6 +5,7 @@ import com.cs2.volunteer_hub.dto.UserResponse
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.mapper.UserMapper
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.specification.EventSpecifications
@@ -21,7 +22,8 @@ class AdminService(
     private val eventMapper: EventMapper,
     private val userRepository: UserRepository,
     private val userMapper: UserMapper,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val eventSearchService: EventSearchService
 ) {
     @Caching(evict = [
         CacheEvict(value = ["events"], allEntries = true),
@@ -32,7 +34,7 @@ class AdminService(
         val event = eventRepository.findById(eventId)
             .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
 
-        event.isApproved = true
+        event.status = EventStatus.APPROVED
         val savedEvent = eventRepository.save(event)
 
         // Send notification to event creator
@@ -51,11 +53,11 @@ class AdminService(
         CacheEvict(value = ["event"], key = "#eventId")
     ])
     @Transactional
-    fun deleteEventAsAdmin(eventId: Long) {
+    fun rejectEvent(eventId: Long) {
         val event = eventRepository.findById(eventId)
             .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
 
-        // Send notification to event creator before deletion
+        // Send notification to event creator before rejection
         notificationService.queuePushNotificationToUser(
             userId = event.creator.id,
             title = "Event Rejected",
@@ -64,6 +66,15 @@ class AdminService(
         )
 
         eventRepository.deleteById(eventId)
+    }
+
+    @Caching(evict = [
+        CacheEvict(value = ["events"], allEntries = true),
+        CacheEvict(value = ["event"], key = "#eventId")
+    ])
+    @Transactional
+    fun deleteEventAsAdmin(eventId: Long) {
+        rejectEvent(eventId)
     }
 
     @CacheEvict(value = ["users"], allEntries = true)
@@ -126,9 +137,18 @@ class AdminService(
      */
     @Transactional(readOnly = true)
     fun getPastEvents(): List<EventResponse> {
-        val spec = EventSpecifications.isApproved()
+        val spec = EventSpecifications.hasStatus(EventStatus.APPROVED)
             .and(EventSpecifications.isPast())
         return eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "eventDateTime"))
             .map(eventMapper::toEventResponse)
+    }
+
+    /**
+     * Get events by status (DRAFT, PENDING, APPROVED, CANCELLED, COMPLETED)
+     * Uses EventSearchService for consistent query handling
+     */
+    @Transactional(readOnly = true)
+    fun getEventsByStatus(status: EventStatus): List<EventResponse> {
+        return eventSearchService.findEventsByStatus(status)
     }
 }

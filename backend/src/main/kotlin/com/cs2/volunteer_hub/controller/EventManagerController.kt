@@ -87,4 +87,17 @@ class EventManagerController(
         val count = eventManagerService.bulkCompleteRegistrationsForPastEvents(currentUser.username)
         return ResponseEntity.ok(mapOf("completedCount" to count))
     }
+
+    /**
+     * Get organizer's own events by status
+     * Example: GET /api/manager/my-events?status=PENDING
+     */
+    @GetMapping("/my-events")
+    fun getMyEventsByStatus(
+        @RequestParam(required = false) status: com.cs2.volunteer_hub.model.EventStatus?,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<com.cs2.volunteer_hub.dto.EventResponse>> {
+        val events = eventManagerService.getMyEventsByStatus(currentUser.username, status)
+        return ResponseEntity.ok(events)
+    }
 }

@@ -3,6 +3,8 @@ package com.cs2.volunteer_hub.controller
 import com.cs2.volunteer_hub.dto.CreateEventRequest
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
+import com.cs2.volunteer_hub.model.EventCategory
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.service.EventSearchService
 import com.cs2.volunteer_hub.service.EventService
 import io.swagger.v3.oas.annotations.Operation
@@ -65,7 +67,7 @@ class EventController(
     }
 
     /**
-     * Search approved events with optional filters
+     * Search events by text (title, description, or location)
      * Example: GET /api/events/search?q=volunteer&upcoming=true
      */
     @Operation(
@@ -94,6 +96,85 @@ class EventController(
             }
         }
         val events = eventSearchService.searchApprovedEvents(searchText = q, onlyUpcoming = upcoming)
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Advanced search with multiple filters
+     * Example: GET /api/events/advanced-search?category=ENVIRONMENTAL&upcoming=true&availableSlots=true
+     */
+    @Operation(
+        summary = "Advanced event search",
+        description = "Search events with multiple filters: category, status, text search, upcoming only, and availability."
+    )
+    @GetMapping("/advanced-search")
+    fun advancedSearch(
+        @Parameter(description = "Search text in title, description, or location")
+        @RequestParam(required = false) q: String?,
+        @Parameter(description = "Filter by category")
+        @RequestParam(required = false) category: EventCategory?,
+        @Parameter(description = "Filter by status (defaults to APPROVED)")
+        @RequestParam(required = false) status: EventStatus?,
+        @Parameter(description = "Only return upcoming events")
+        @RequestParam(defaultValue = "false") upcoming: Boolean,
+        @Parameter(description = "Only return events with available volunteer slots")
+        @RequestParam(defaultValue = "false") availableSlots: Boolean
+    ): ResponseEntity<List<EventResponse>> {
+        val events = eventSearchService.searchEvents(
+            searchText = q,
+            category = category,
+            status = status,
+            onlyUpcoming = upcoming,
+            onlyWithAvailableSlots = availableSlots
+        )
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Get events by category
+     * Example: GET /api/events/category/ENVIRONMENTAL
+     */
+    @Operation(
+        summary = "Get events by category",
+        description = "Retrieve all events in a specific category (e.g., ENVIRONMENTAL, EDUCATION, HEALTHCARE)."
+    )
+    @GetMapping("/category/{category}")
+    fun getEventsByCategory(
+        @Parameter(description = "Event category", required = true)
+        @PathVariable category: EventCategory
+    ): ResponseEntity<List<EventResponse>> {
+        val events = eventSearchService.findEventsByCategory(category)
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Get events with available volunteer slots
+     * Example: GET /api/events/available
+     */
+    @Operation(
+        summary = "Get events with available slots",
+        description = "Retrieve events that still have volunteer slots available. Uses efficient database-level capacity checking."
+    )
+    @GetMapping("/available")
+    fun getEventsWithAvailableSlots(
+        @Parameter(description = "Only return upcoming events")
+        @RequestParam(defaultValue = "true") upcoming: Boolean
+    ): ResponseEntity<List<EventResponse>> {
+        val events = eventSearchService.findEventsWithAvailableSlots(upcoming)
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Get events that urgently need volunteers
+     * Example: GET /api/events/needing-volunteers
+     */
+    @Operation(
+        summary = "Get events needing volunteers",
+        description = "Retrieve upcoming events that are below their minimum volunteer requirement and need more registrations."
+    )
+    @GetMapping("/needing-volunteers")
+    fun getEventsNeedingVolunteers(): ResponseEntity<List<EventResponse>> {
+        val events = eventSearchService.findEventsNeedingVolunteers()
         return ResponseEntity.ok(events)
     }
 

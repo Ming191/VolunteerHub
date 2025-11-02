@@ -20,6 +20,8 @@ data class User(
     var email: String,
     var passwordHash : String,
 
+    var phone: String? = null,
+
     @Enumerated(EnumType.STRING)
     var role: Role = Role.VOLUNTEER,
 
