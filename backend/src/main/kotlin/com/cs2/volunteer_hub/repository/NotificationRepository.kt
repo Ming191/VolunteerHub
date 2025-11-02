@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository
 @Repository
 interface NotificationRepository : JpaRepository<Notification, Long> {
     fun findByRecipientIdOrderByCreatedAtDesc(recipientId: Long): List<Notification>
+    fun countByRecipientIdAndIsReadFalse(recipientId: Long): Long
 }
