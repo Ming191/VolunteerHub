@@ -49,6 +49,20 @@ class EventController(
         @RequestParam(required = false) q: String?,
         @RequestParam(defaultValue = "false") upcoming: Boolean
     ): ResponseEntity<List<EventResponse>> {
+        if (q != null) {
+            val trimmed = q.trim()
+            if (trimmed.length > 100) {
+                return ResponseEntity.badRequest().build()
+            }
+            if (trimmed.isEmpty()) {
+                val events = if (upcoming) {
+                    eventSearchService.searchApprovedEvents(onlyUpcoming = true)
+                } else {
+                    eventService.getAllApprovedEvents()
+                }
+                return ResponseEntity.ok(events)
+            }
+        }
         val events = eventSearchService.searchApprovedEvents(searchText = q, onlyUpcoming = upcoming)
         return ResponseEntity.ok(events)
     }
