@@ -14,6 +14,7 @@ import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.PostRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.specification.EventSpecifications
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -77,14 +78,19 @@ class DashboardService(
         val user = userRepository.findByEmail(userEmail)!!
 
         val pendingRegistrationsCount = registrationRepository.countPendingRegistrationsByCreatorId(user.id)
-        val eventsPendingAdminApprovalCount = eventRepository.countByCreatorIdAndIsApprovedFalse(user.id)
+
+        // Use specifications instead of repository method
+        val eventsPendingApprovalSpec = EventSpecifications.hasCreator(user.id)
+            .and(EventSpecifications.isNotApproved())
+        val eventsPendingAdminApprovalCount = eventRepository.count(eventsPendingApprovalSpec)
 
         val stats = mapOf(
             "pendingRegistrations" to pendingRegistrationsCount,
             "eventsPendingAdminApproval" to eventsPendingAdminApprovalCount
         )
 
-        val eventsPendingAdminApproval = eventRepository.findByCreatorIdAndIsApprovedFalse(user.id)
+        // Use specifications to get pending events
+        val eventsPendingAdminApproval = eventRepository.findAll(eventsPendingApprovalSpec)
             .map { event -> DashboardEventItem(event.id, event.title, event.eventDateTime, event.location) }
 
         val recentPendingRegistrations = registrationRepository.findRecentPendingRegistrationsByCreatorId(user.id, PageRequest.of(0, 5))
@@ -124,7 +130,9 @@ class DashboardService(
         val totalRegistrations = registrationRepository.count()
         val totalUsers = userRepository.count()
 
-        val eventsToApprove = eventRepository.findByIsApprovedFalse()
+        // Use specification instead of repository method
+        val spec = EventSpecifications.isNotApproved()
+        val eventsToApprove = eventRepository.findAll(spec)
             .map { event -> DashboardActionItem(
                 id = event.id,
                 primaryText = event.title,
