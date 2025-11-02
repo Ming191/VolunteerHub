@@ -51,4 +51,29 @@ class NotificationController(private val notificationService: NotificationServic
             "message" to "All notifications marked as read"
         ))
     }
+
+    /**
+     * Delete a notification
+     * DELETE /api/me/notifications/{notificationId}
+     */
+    @DeleteMapping("/{notificationId}")
+    fun deleteNotification(
+        @PathVariable notificationId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<Unit> {
+        notificationService.deleteNotification(notificationId, currentUser.username)
+        return ResponseEntity.noContent().build()
+    }
+
+    /**
+     * Get unread notification count
+     * GET /api/me/notifications/unread-count
+     */
+    @GetMapping("/unread-count")
+    fun getUnreadNotificationCount(
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<Map<String, Long>> {
+        val count = notificationService.getUnreadNotificationCount(currentUser.username)
+        return ResponseEntity.ok(mapOf("count" to count))
+    }
 }
