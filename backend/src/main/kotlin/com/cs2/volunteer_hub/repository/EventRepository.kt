@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.repository
 
 import com.cs2.volunteer_hub.dto.DashboardTrendingEventItem
 import com.cs2.volunteer_hub.model.Event
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
@@ -12,6 +13,9 @@ import java.time.LocalDateTime
 @Repository
 interface EventRepository : JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
     fun findAllByIsApprovedTrueOrderByEventDateTimeAsc(): List<Event>
+
+    // Paginated version
+    fun findAllByIsApprovedTrueOrderByEventDateTimeAsc(pageable: Pageable): Page<Event>
 
     fun findTop5ByIsApprovedTrueOrderByCreatedAtDesc(): List<Event>
 

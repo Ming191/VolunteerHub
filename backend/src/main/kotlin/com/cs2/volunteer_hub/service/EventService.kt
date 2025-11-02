@@ -17,6 +17,8 @@ import org.springframework.cache.annotation.Caching
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
@@ -86,6 +88,15 @@ class EventService(
             .stream()
             .map(eventMapper::toEventResponse)
             .collect(Collectors.toList())
+    }
+
+    /**
+     * Get all approved events with pagination support
+     */
+    @Transactional(readOnly = true)
+    fun getAllApprovedEvents(pageable: Pageable): Page<EventResponse> {
+        return eventRepository.findAllByIsApprovedTrueOrderByEventDateTimeAsc(pageable)
+            .map(eventMapper::toEventResponse)
     }
 
     @Cacheable(value = ["event"], key = "#id")
