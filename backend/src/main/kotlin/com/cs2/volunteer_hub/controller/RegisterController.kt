@@ -1,7 +1,11 @@
 package com.cs2.volunteer_hub.controller
 
 import com.cs2.volunteer_hub.service.RegistrationService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -15,8 +19,12 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/events/{eventId}/register")
 @PreAuthorize("isAuthenticated()")
+@Tag(name = "Registrations", description = "Event registration endpoints")
+@SecurityRequirement(name = "bearerAuth")
 class RegistrationController(private val registrationService: RegistrationService) {
-    @PostMapping
+
+    @Operation(summary = "Register for event", description = "Register the current user as a volunteer for an event")
+    @PostMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     @PreAuthorize("hasRole('VOLUNTEER')")
     fun registerForEvent(
         @PathVariable eventId: Long,
@@ -26,6 +34,7 @@ class RegistrationController(private val registrationService: RegistrationServic
         return ResponseEntity.status(HttpStatus.CREATED).build()
     }
 
+    @Operation(summary = "Cancel registration", description = "Cancel the current user's registration for an event")
     @DeleteMapping
     @PreAuthorize("hasRole('VOLUNTEER')")
     fun cancelRegistration(
