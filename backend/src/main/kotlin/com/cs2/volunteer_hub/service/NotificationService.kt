@@ -235,4 +235,34 @@ class NotificationService(
         notificationRepository.saveAll(unreadNotifications)
         logger.info("Marked ${unreadNotifications.size} notifications as read for user ${user.email}")
     }
+
+    /**
+     * Delete a notification
+     */
+    @Transactional
+    fun deleteNotification(notificationId: Long, userEmail: String) {
+        val user = userRepository.findByEmail(userEmail)
+            ?: throw IllegalArgumentException("User not found")
+
+        val notification = notificationRepository.findById(notificationId)
+            .orElseThrow { IllegalArgumentException("Notification not found with id: $notificationId") }
+
+        if (notification.recipient.id != user.id) {
+            throw IllegalArgumentException("You don't have permission to delete this notification")
+        }
+
+        notificationRepository.delete(notification)
+        logger.info("Notification $notificationId deleted by user ${user.email}")
+    }
+
+    /**
+     * Get unread notification count for a user
+     */
+    @Transactional(readOnly = true)
+    fun getUnreadNotificationCount(userEmail: String): Long {
+        val user = userRepository.findByEmail(userEmail)
+            ?: throw IllegalArgumentException("User not found")
+
+        return notificationRepository.countByRecipientIdAndIsReadFalse(user.id)
+    }
 }
