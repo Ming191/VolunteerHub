@@ -7,6 +7,7 @@ import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
+import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.EventRepository
@@ -29,10 +30,10 @@ class EventService(
     private val userRepository: UserRepository,
     private val rabbitTemplate: RabbitTemplate,
     private val fileValidationService: FileValidationService,
+    private val eventMapper: EventMapper,
     @field:Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
     private val logger = LoggerFactory.getLogger(EventService::class.java)
-
 
     @CacheEvict(value = ["events"], allEntries = true)
     @Transactional
@@ -75,7 +76,7 @@ class EventService(
             eventRepository.save(savedEvent)
         }
 
-        return mapToEventResponse(savedEvent)
+        return eventMapper.toEventResponse(savedEvent)
     }
 
     @Cacheable("events")
@@ -83,7 +84,7 @@ class EventService(
     fun getAllApprovedEvents(): List<EventResponse> {
         return eventRepository.findAllByIsApprovedTrueOrderByEventDateTimeAsc()
             .stream()
-            .map(this::mapToEventResponse)
+            .map(eventMapper::toEventResponse)
             .collect(Collectors.toList())
     }
 
@@ -96,7 +97,7 @@ class EventService(
         if (!event.isApproved) {
             throw ResourceNotFoundException("Event", "id", id)
         }
-        return mapToEventResponse(event)
+        return eventMapper.toEventResponse(event)
     }
 
     @Caching(evict = [
@@ -119,7 +120,7 @@ class EventService(
 
         val updatedEvent = eventRepository.save(event)
         logger.info("Updated event ID: $id by user: $currentUserEmail")
-        return mapToEventResponse(updatedEvent)
+        return eventMapper.toEventResponse(updatedEvent)
     }
 
     @Caching(evict = [
@@ -137,18 +138,5 @@ class EventService(
 
         eventRepository.delete(event)
         logger.info("Deleted event ID: $id by user: $currentUserEmail")
-    }
-
-    internal fun mapToEventResponse(event: Event): EventResponse {
-        return EventResponse(
-            id = event.id,
-            title = event.title,
-            imageUrls = event.images.mapNotNull { it.url },
-            description = event.description,
-            location = event.location,
-            eventDateTime = event.eventDateTime,
-            isApproved = event.isApproved,
-            creatorName = event.creator.name
-        )
     }
 }

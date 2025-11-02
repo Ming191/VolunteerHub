@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.*
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
+import com.cs2.volunteer_hub.mapper.CommentMapper
 import com.cs2.volunteer_hub.model.Comment
 import com.cs2.volunteer_hub.repository.CommentRepository
 import com.cs2.volunteer_hub.repository.PostRepository
@@ -17,7 +18,9 @@ class CommentService(
     private val postRepository: PostRepository,
     private val userRepository: UserRepository,
     private val postService: PostService,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val notificationService: NotificationService,
+    private val commentMapper: CommentMapper
 ) {
     @Transactional
     fun createComment(postId: Long, request: CommentRequest, userEmail: String): CommentResponse {
@@ -37,7 +40,17 @@ class CommentService(
         )
         val savedComment = commentRepository.save(comment)
 
-        return mapToCommentResponse(savedComment)
+        // Send notification to post author (if not commenting on own post)
+        if (post.author.id != author.id) {
+            notificationService.queuePushNotificationToUser(
+                userId = post.author.id,
+                title = "New Comment",
+                body = "${author.name} commented on your post: ${request.content.take(50)}${if (request.content.length > 50) "..." else ""}",
+                link = "/events/${post.event.id}/posts/${post.id}"
+            )
+        }
+
+        return commentMapper.toCommentResponse(savedComment)
     }
 
     @Cacheable(value = ["comments"], key = "#postId")
@@ -50,16 +63,6 @@ class CommentService(
         postService.checkPermissionToPost(post.event.id, user.id)
 
         return commentRepository.findAllByPostIdOrderByCreatedAtAsc(postId)
-            .map(this::mapToCommentResponse)
-    }
-
-
-    private fun mapToCommentResponse(comment: Comment): CommentResponse {
-        return CommentResponse(
-            id = comment.id,
-            content = comment.content,
-            createdAt = comment.createdAt,
-            author = AuthorResponse(id = comment.author.id, name = comment.author.name)
-        )
+            .map(commentMapper::toCommentResponse)
     }
 }
