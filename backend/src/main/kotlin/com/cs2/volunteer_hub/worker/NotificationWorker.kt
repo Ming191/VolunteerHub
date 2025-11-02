@@ -34,11 +34,16 @@ class NotificationWorker(
                 link = message.link
             )
 
-            // Send FCM push notification to user's devices
+            // Send FCM push notification to user's devices with data payload
             notificationService.sendFcmPushNotificationToUser(
                 userId = message.userId,
                 title = message.title,
-                body = message.body
+                body = message.body,
+                link = message.link,
+                data = mapOf(
+                    "type" to "general_notification",
+                    "timestamp" to System.currentTimeMillis().toString()
+                )
             )
 
             logger.info("Successfully processed notification for user ${message.userId}")
@@ -65,15 +70,16 @@ class NotificationWorker(
 
             val userToNotify = registration.user
             val eventTitle = registration.event.title
+            val eventId = registration.event.id
 
-            val title = "Cập nhật Trạng thái Đăng ký"
+            val title = "Registration Status Update"
             val body = when (registration.status) {
                 RegistrationStatus.APPROVED ->
-                    "Chúc mừng! Đăng ký của bạn cho sự kiện '$eventTitle' đã được duyệt."
+                    "Congratulations! Your registration for event '$eventTitle' has been approved."
                 RegistrationStatus.REJECTED ->
-                    "Rất tiếc, đăng ký của bạn cho sự kiện '$eventTitle' đã bị từ chối."
+                    "Unfortunately, your registration for event '$eventTitle' has been rejected."
                 RegistrationStatus.COMPLETED ->
-                    "Cảm ơn bạn đã hoàn thành sự kiện '$eventTitle'!"
+                    "Thank you for completing the event '$eventTitle'!"
                 else -> null
             }
 
@@ -87,11 +93,19 @@ class NotificationWorker(
                     link = link
                 )
 
-                // Send FCM push notification
+                // Send FCM push notification with enhanced data payload
                 notificationService.sendFcmPushNotificationToUser(
                     userId = userToNotify.id,
                     title = title,
-                    body = body
+                    body = body,
+                    link = link,
+                    data = mapOf(
+                        "type" to "registration_status_update",
+                        "eventId" to eventId.toString(),
+                        "registrationId" to registration.id.toString(),
+                        "status" to registration.status.name,
+                        "timestamp" to System.currentTimeMillis().toString()
+                    )
                 )
 
                 logger.info("Successfully processed registration status update for user ${userToNotify.id}")
