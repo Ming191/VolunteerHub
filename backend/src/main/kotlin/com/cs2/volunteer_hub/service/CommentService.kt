@@ -17,7 +17,8 @@ class CommentService(
     private val postRepository: PostRepository,
     private val userRepository: UserRepository,
     private val postService: PostService,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val notificationService: NotificationService
 ) {
     @Transactional
     fun createComment(postId: Long, request: CommentRequest, userEmail: String): CommentResponse {
@@ -36,6 +37,16 @@ class CommentService(
             post = post
         )
         val savedComment = commentRepository.save(comment)
+
+        // Send notification to post author (if not commenting on own post)
+        if (post.author.id != author.id) {
+            notificationService.queuePushNotificationToUser(
+                userId = post.author.id,
+                title = "New Comment",
+                body = "${author.name} commented on your post: ${request.content.take(50)}${if (request.content.length > 50) "..." else ""}",
+                link = "/events/${post.event.id}/posts/${post.id}"
+            )
+        }
 
         return mapToCommentResponse(savedComment)
     }

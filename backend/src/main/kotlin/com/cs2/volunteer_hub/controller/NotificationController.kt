@@ -20,4 +20,35 @@ class NotificationController(private val notificationService: NotificationServic
         val notifications = notificationService.getNotificationsForUser(currentUser.username)
         return ResponseEntity.ok(notifications)
     }
+
+    /**
+     * Mark a specific notification as read
+     * PATCH /api/me/notifications/{notificationId}/mark-read
+     */
+    @PatchMapping("/{notificationId}/mark-read")
+    fun markNotificationAsRead(
+        @PathVariable notificationId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<Map<String, String>> {
+        notificationService.markNotificationAsRead(notificationId, currentUser.username)
+        return ResponseEntity.ok(mapOf(
+            "status" to "success",
+            "message" to "Notification marked as read"
+        ))
+    }
+
+    /**
+     * Mark all notifications as read
+     * PATCH /api/me/notifications/mark-all-read
+     */
+    @PatchMapping("/mark-all-read")
+    fun markAllNotificationsAsRead(
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<Map<String, String>> {
+        notificationService.markAllNotificationsAsRead(currentUser.username)
+        return ResponseEntity.ok(mapOf(
+            "status" to "success",
+            "message" to "All notifications marked as read"
+        ))
+    }
 }
