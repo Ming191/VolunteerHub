@@ -1,13 +1,17 @@
 package com.cs2.volunteer_hub.service
 
+import com.cs2.volunteer_hub.config.RabbitMQConfig
 import com.cs2.volunteer_hub.dto.RegistrationResponse
+import com.cs2.volunteer_hub.dto.RegistrationStatusUpdateMessage
 import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
+import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
@@ -18,8 +22,12 @@ import java.time.LocalDateTime
 class EventManagerService(
     private val registrationRepository: RegistrationRepository,
     private val eventRepository: EventRepository,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val rabbitTemplate: RabbitTemplate,
+    private val registrationMapper: RegistrationMapper
 ) {
+    private val logger = org.slf4j.LoggerFactory.getLogger(EventManagerService::class.java)
+
     private fun checkEventOwnership(eventId: Long, managerEmail: String) {
         val event = eventRepository.findById(eventId)
             .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
@@ -29,7 +37,7 @@ class EventManagerService(
     }
 
     @Transactional
-    fun markRegistrationAsCompleted(registrationId: Long, managerEmail: String) :  RegistrationResponse {
+    fun markRegistrationAsCompleted(registrationId: Long, managerEmail: String): RegistrationResponse {
         val registration = registrationRepository.findById(registrationId)
             .orElseThrow { ResourceNotFoundException("Registration", "id", registrationId) }
 
@@ -46,14 +54,19 @@ class EventManagerService(
 
         registration.status = RegistrationStatus.COMPLETED
         val savedRegistration = registrationRepository.save(registration)
-        return mapToRegistrationResponse(savedRegistration)
+
+        // Queue notification for status update
+        queueRegistrationStatusUpdate(registrationId)
+
+        return registrationMapper.toRegistrationResponse(savedRegistration)
     }
 
     @Cacheable(value = ["eventRegistrations"], key = "#eventId")
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         checkEventOwnership(eventId, managerEmail)
-        return registrationRepository.findAllByEventId(eventId).map(this::mapToRegistrationResponse)
+        return registrationRepository.findAllByEventId(eventId)
+            .map(registrationMapper::toRegistrationResponse)
     }
 
     @Transactional
@@ -75,23 +88,30 @@ class EventManagerService(
 
         registration.status = newStatus
         val savedRegistration = registrationRepository.save(registration)
-        return mapToRegistrationResponse(savedRegistration)
+
+        // Queue notification for status update
+        queueRegistrationStatusUpdate(registrationId)
+
+        return registrationMapper.toRegistrationResponse(savedRegistration)
+    }
+
+    private fun queueRegistrationStatusUpdate(registrationId: Long) {
+        try {
+            val message = RegistrationStatusUpdateMessage(registrationId = registrationId)
+            rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_NAME,
+                RabbitMQConfig.REGISTRATION_STATUS_UPDATED_ROUTING_KEY,
+                message
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to send registration status update message to RabbitMQ for registrationId: $registrationId", e)
+            // Log error but don't fail the transaction
+            // The registration status is still updated in the database
+        }
     }
 
     private fun evictRelatedCaches(registration: Registration) {
         cacheManager.getCache("eventRegistrations")?.evict(registration.event.id)
         cacheManager.getCache("userRegistrations")?.evict(registration.user.email)
-    }
-
-    fun mapToRegistrationResponse(registration: Registration): RegistrationResponse {
-        return RegistrationResponse(
-            id = registration.id,
-            eventId = registration.event.id,
-            eventTitle = registration.event.title,
-            volunteerId = registration.user.id,
-            volunteerName = registration.user.name,
-            status = registration.status,
-            registeredAt = registration.registeredAt
-        )
     }
 }

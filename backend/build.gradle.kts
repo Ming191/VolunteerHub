@@ -53,6 +53,10 @@ dependencies {
     implementation("com.bucket4j:bucket4j_jdk17-core:8.15.0")
     implementation("com.bucket4j:bucket4j_jdk17-redis-common:8.15.0")
     implementation("com.bucket4j:bucket4j_jdk17-lettuce:8.15.0")
+
+    // https://mvnrepository.com/artifact/com.google.firebase/firebase-admin
+    implementation("com.google.firebase:firebase-admin:9.7.0")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
 }
 
 kotlin {

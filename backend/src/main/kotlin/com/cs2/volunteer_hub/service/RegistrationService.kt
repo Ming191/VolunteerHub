@@ -16,7 +16,8 @@ import java.time.LocalDateTime
 class RegistrationService(
     private val registrationRepository: RegistrationRepository,
     private val userRepository: UserRepository,
-    private val eventRepository: EventRepository
+    private val eventRepository: EventRepository,
+    private val notificationService: NotificationService
 ) {
     @CacheEvict(value = ["userRegistrations"], key = "#userEmail")
     @Transactional
@@ -44,6 +45,16 @@ class RegistrationService(
             event = event
         )
         registrationRepository.save(registration)
+
+        // Send notification to event creator about new registration
+        if (event.creator.id != user.id) {
+            notificationService.queuePushNotificationToUser(
+                userId = event.creator.id,
+                title = "New Registration",
+                body = "${user.name} has registered for your event '${event.title}'.",
+                link = "/events/${event.id}/registrations"
+            )
+        }
     }
 
     @CacheEvict(value = ["userRegistrations"], key = "#userEmail")

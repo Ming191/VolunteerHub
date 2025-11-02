@@ -1,13 +1,12 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.config.RabbitMQConfig
-import com.cs2.volunteer_hub.dto.AuthorResponse
 import com.cs2.volunteer_hub.dto.PostCreationMessage
 import com.cs2.volunteer_hub.dto.PostRequest
 import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
-import com.cs2.volunteer_hub.model.Post
+import com.cs2.volunteer_hub.mapper.PostMapper
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.*
 import org.slf4j.LoggerFactory
@@ -33,6 +32,7 @@ class PostService(
     private val rabbitTemplate: RabbitTemplate,
     private val fileValidationService: FileValidationService,
     private val cacheManager: CacheManager,
+    private val postMapper: PostMapper,
     @field:Value("\${upload.max-files-per-post:5}") private val maxFilesPerPost: Int = 5
 ) {
     private val logger = LoggerFactory.getLogger(PostService::class.java)
@@ -64,7 +64,7 @@ class PostService(
 
         files?.let { fileValidationService.validateFiles(it, maxFilesPerPost) }
 
-        val post = Post(
+        val post = com.cs2.volunteer_hub.model.Post(
             content = request.content,
             author = author,
             event = event
@@ -92,7 +92,7 @@ class PostService(
             })
         }
 
-        return mapToPostResponse(savedPost, false)
+        return postMapper.toPostResponse(savedPost, false)
     }
 
     @Transactional(readOnly = true)
@@ -110,15 +110,12 @@ class PostService(
         val postIds = posts.map { it.id }
         val likedPostIds = likeRepository.findLikedPostIdsByUser(user.id, postIds).toSet()
 
-        return posts.map { post ->
-            val isLiked = likedPostIds.contains(post.id)
-            mapToPostResponse(post, isLiked)
-        }
+        return postMapper.toPostResponseList(posts, likedPostIds)
     }
 
 
     @Cacheable(value = ["posts"], key = "#eventId")
-    internal fun getCachedPostsForEvent(eventId: Long): List<Post> {
+    internal fun getCachedPostsForEvent(eventId: Long): List<com.cs2.volunteer_hub.model.Post> {
         logger.info("--- DATABASE HIT: Fetching post list for event $eventId ---")
         return postRepository.findAllByEventIdOrderByCreatedAtDesc(eventId)
     }
@@ -141,7 +138,7 @@ class PostService(
         val updatedPost = postRepository.save(post)
 
         val isLiked = likeRepository.findByUserIdAndPostId(user.id, updatedPost.id).isPresent
-        return mapToPostResponse(updatedPost, isLiked)
+        return postMapper.toPostResponse(updatedPost, isLiked)
     }
 
     @Transactional
@@ -157,19 +154,5 @@ class PostService(
         cacheManager.getCache("posts")?.evict(post.event.id)
 
         postRepository.delete(post)
-    }
-
-    private fun mapToPostResponse(post: Post, isLikedByCurrentUser: Boolean): PostResponse {
-        return PostResponse(
-            id = post.id,
-            content = post.content,
-            createdAt = post.createdAt,
-            updatedAt = post.updatedAt,
-            author = AuthorResponse(id = post.author.id, name = post.author.name),
-            totalLikes = post.likes.size,
-            totalComments = post.comments.size,
-            isLikedByCurrentUser = isLikedByCurrentUser,
-            imageUrls = post.images.mapNotNull { it.url }
-        )
     }
 }
