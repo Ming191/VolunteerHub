@@ -11,6 +11,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -39,10 +42,25 @@ class EventController(
 
     private val logger = LoggerFactory.getLogger(EventController::class.java)
 
-    @Operation(summary = "Get all approved events", description = "Retrieve all events that have been approved by admin")
+    @Operation(summary = "Get all approved events", description = "Retrieve all events that have been approved by admin. Supports pagination.")
     @GetMapping
-    fun getAllEvents(): ResponseEntity<List<EventResponse>> {
-        val events = eventService.getAllApprovedEvents()
+    fun getAllEvents(
+        @Parameter(description = "Page number (0-based)")
+        @RequestParam(defaultValue = "0") page: Int,
+        @Parameter(description = "Page size")
+        @RequestParam(defaultValue = "20") size: Int,
+        @Parameter(description = "Sort field")
+        @RequestParam(defaultValue = "eventDateTime") sort: String,
+        @Parameter(description = "Sort direction (asc or desc)")
+        @RequestParam(defaultValue = "asc") direction: String
+    ): ResponseEntity<Page<EventResponse>> {
+        val pageable = PageRequest.of(
+            page,
+            size,
+            Sort.Direction.fromString(direction.uppercase()),
+            sort
+        )
+        val events = eventService.getAllApprovedEvents(pageable)
         return ResponseEntity.ok(events)
     }
 
