@@ -6,9 +6,6 @@ import org.springframework.stereotype.Component
 
 @Component
 class RegistrationMapper {
-    /**
-     * Map Registration entity to RegistrationResponse DTO
-     */
     fun toRegistrationResponse(registration: Registration): RegistrationResponse {
         return RegistrationResponse(
             id = registration.id,
@@ -20,12 +17,4 @@ class RegistrationMapper {
             registeredAt = registration.registeredAt
         )
     }
-
-    /**
-     * Map list of Registration entities to list of RegistrationResponse DTOs
-     */
-    fun toRegistrationResponseList(registrations: List<Registration>): List<RegistrationResponse> {
-        return registrations.map { toRegistrationResponse(it) }
-    }
 }
-

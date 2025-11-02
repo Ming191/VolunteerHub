@@ -11,9 +11,12 @@ import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
+import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -22,6 +25,7 @@ import java.time.LocalDateTime
 class EventManagerService(
     private val registrationRepository: RegistrationRepository,
     private val eventRepository: EventRepository,
+    private val userRepository: UserRepository,
     private val cacheManager: CacheManager,
     private val rabbitTemplate: RabbitTemplate,
     private val registrationMapper: RegistrationMapper
@@ -61,11 +65,78 @@ class EventManagerService(
         return registrationMapper.toRegistrationResponse(savedRegistration)
     }
 
+    /**
+     * Bulk mark all approved registrations for past events as completed
+     * Uses forPastEvents() specification to find eligible registrations
+     * Useful for scheduled jobs or bulk operations
+     */
+    @Transactional
+    fun bulkCompleteRegistrationsForPastEvents(managerEmail: String): Int {
+        val manager = userRepository.findByEmail(managerEmail)
+            ?: throw ResourceNotFoundException("Manager", "email", managerEmail)
+        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
+            .and(RegistrationSpecifications.hasStatus(RegistrationStatus.APPROVED))
+            .and(RegistrationSpecifications.forPastEvents())
+        val registrationsToComplete = registrationRepository.findAll(spec)
+        if (registrationsToComplete.isEmpty()) {
+            return 0
+        }
+        registrationsToComplete.forEach { registration ->
+            registration.status = RegistrationStatus.COMPLETED
+        }
+        registrationRepository.saveAll(registrationsToComplete)
+        registrationsToComplete.forEach { registration ->
+            evictRelatedCaches(registration)
+            queueRegistrationStatusUpdate(registration.id)
+        }
+
+        logger.info("Bulk completed ${registrationsToComplete.size} registrations for past events by manager ${manager.id}")
+        return registrationsToComplete.size
+    }
+
     @Cacheable(value = ["eventRegistrations"], key = "#eventId")
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         checkEventOwnership(eventId, managerEmail)
-        return registrationRepository.findAllByEventId(eventId)
+
+        // Use specification instead of repository method
+        val spec = RegistrationSpecifications.forEvent(eventId)
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+            .map(registrationMapper::toRegistrationResponse)
+    }
+
+    /**
+     * Get registrations by status for an event using Specification Pattern
+     * More flexible than creating separate repository methods for each status
+     */
+    @Transactional(readOnly = true)
+    fun getRegistrationsByStatus(
+        eventId: Long,
+        status: RegistrationStatus,
+        managerEmail: String
+    ): List<RegistrationResponse> {
+        checkEventOwnership(eventId, managerEmail)
+
+        val spec = RegistrationSpecifications.forEvent(eventId)
+            .and(RegistrationSpecifications.hasStatus(status))
+
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+            .map(registrationMapper::toRegistrationResponse)
+    }
+
+    /**
+     * Get all pending registrations for events created by this manager
+     * Using specifications makes this query simple and readable
+     */
+    @Transactional(readOnly = true)
+    fun getAllPendingRegistrations(managerEmail: String): List<RegistrationResponse> {
+        val manager = userRepository.findByEmail(managerEmail)
+            ?: throw ResourceNotFoundException("Manager", "email", managerEmail)
+
+        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
+            .and(RegistrationSpecifications.hasStatus(RegistrationStatus.PENDING))
+
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
             .map(registrationMapper::toRegistrationResponse)
     }
 
@@ -105,8 +176,6 @@ class EventManagerService(
             )
         } catch (e: Exception) {
             logger.error("Failed to send registration status update message to RabbitMQ for registrationId: $registrationId", e)
-            // Log error but don't fail the transaction
-            // The registration status is still updated in the database
         }
     }
 
