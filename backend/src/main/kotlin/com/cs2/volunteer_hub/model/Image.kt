@@ -4,7 +4,14 @@ import com.fasterxml.jackson.annotation.JsonBackReference
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "images")
+@Table(
+    name = "images",
+    indexes = [
+        Index(name = "idx_images_event_id", columnList = "event_id"),
+        Index(name = "idx_images_post_id", columnList = "post_id"),
+        Index(name = "idx_images_status", columnList = "status")
+    ]
+)
 data class Image(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
