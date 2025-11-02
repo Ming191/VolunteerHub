@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.controller
 import com.cs2.volunteer_hub.dto.CreateEventRequest
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
+import com.cs2.volunteer_hub.service.EventSearchService
 import com.cs2.volunteer_hub.service.EventService
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
@@ -19,19 +20,36 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/events")
-class EventController(private val eventService: EventService) {
+class EventController(
+    private val eventService: EventService,
+    private val eventSearchService: EventSearchService
+) {
 
     private val logger = LoggerFactory.getLogger(EventController::class.java)
 
     @GetMapping
     fun getAllEvents(): ResponseEntity<List<EventResponse>> {
         val events = eventService.getAllApprovedEvents()
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Search approved events with optional filters
+     * Example: GET /api/events/search?q=volunteer&upcoming=true
+     */
+    @GetMapping("/search")
+    fun searchEvents(
+        @RequestParam(required = false) q: String?,
+        @RequestParam(defaultValue = "false") upcoming: Boolean
+    ): ResponseEntity<List<EventResponse>> {
+        val events = eventSearchService.searchApprovedEvents(searchText = q, onlyUpcoming = upcoming)
         return ResponseEntity.ok(events)
     }
 

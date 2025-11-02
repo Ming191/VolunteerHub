@@ -7,9 +7,11 @@ import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.mapper.UserMapper
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.specification.EventSpecifications
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -95,5 +97,38 @@ class AdminService(
     @Transactional(readOnly = true)
     fun getAllUsers(): List<UserResponse> {
         return userRepository.findAll().map(userMapper::toUserResponse)
+    }
+
+    /**
+     * Get all pending events using Specification Pattern
+     * This replaces the need for a dedicated repository method
+     */
+    @Transactional(readOnly = true)
+    fun getPendingEvents(): List<EventResponse> {
+        val spec = EventSpecifications.isNotApproved()
+        return eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+            .map(eventMapper::toEventResponse)
+    }
+
+    /**
+     * Search events by text (title, description, or location)
+     */
+    @Transactional(readOnly = true)
+    fun searchAllEvents(searchTerm: String): List<EventResponse> {
+        val spec = EventSpecifications.searchText(searchTerm)
+        return eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+            .map(eventMapper::toEventResponse)
+    }
+
+    /**
+     * Get past events for historical/reporting purposes
+     * Uses Specification Pattern with isPast()
+     */
+    @Transactional(readOnly = true)
+    fun getPastEvents(): List<EventResponse> {
+        val spec = EventSpecifications.isApproved()
+            .and(EventSpecifications.isPast())
+        return eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "eventDateTime"))
+            .map(eventMapper::toEventResponse)
     }
 }
