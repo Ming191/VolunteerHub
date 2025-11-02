@@ -45,7 +45,14 @@ class AdminController(private val adminService: AdminService) {
      */
     @GetMapping("/events/search")
     fun searchAllEvents(@RequestParam q: String): ResponseEntity<List<EventResponse>> {
-        val events = adminService.searchAllEvents(q)
+        val trimmed = q.trim()
+        if (trimmed.isEmpty()) {
+            return ResponseEntity.badRequest().build()
+        }
+        if (trimmed.length > 100) {
+            return ResponseEntity.badRequest().build()
+        }
+        val events = adminService.searchAllEvents(trimmed)
         return ResponseEntity.ok(events)
     }
 

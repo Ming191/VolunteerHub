@@ -11,6 +11,7 @@ import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
+import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.CacheManager
@@ -24,6 +25,7 @@ import java.time.LocalDateTime
 class EventManagerService(
     private val registrationRepository: RegistrationRepository,
     private val eventRepository: EventRepository,
+    private val userRepository: UserRepository,
     private val cacheManager: CacheManager,
     private val rabbitTemplate: RabbitTemplate,
     private val registrationMapper: RegistrationMapper
@@ -70,27 +72,21 @@ class EventManagerService(
      */
     @Transactional
     fun bulkCompleteRegistrationsForPastEvents(managerEmail: String): Int {
-        val manager = eventRepository.findAll()
-            .firstOrNull { it.creator.email == managerEmail }
-            ?.creator
+        val manager = userRepository.findByEmail(managerEmail)
             ?: throw ResourceNotFoundException("Manager", "email", managerEmail)
-
-        // Use specifications to find approved registrations for past events created by this manager
         val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
             .and(RegistrationSpecifications.hasStatus(RegistrationStatus.APPROVED))
             .and(RegistrationSpecifications.forPastEvents())
-
         val registrationsToComplete = registrationRepository.findAll(spec)
-
         if (registrationsToComplete.isEmpty()) {
             return 0
         }
-
-        // Mark all as completed
+        registrationsToComplete.forEach { registration ->
+            registration.status = RegistrationStatus.COMPLETED
+        }
+        registrationRepository.saveAll(registrationsToComplete)
         registrationsToComplete.forEach { registration ->
             evictRelatedCaches(registration)
-            registration.status = RegistrationStatus.COMPLETED
-            registrationRepository.save(registration)
             queueRegistrationStatusUpdate(registration.id)
         }
 
@@ -134,9 +130,7 @@ class EventManagerService(
      */
     @Transactional(readOnly = true)
     fun getAllPendingRegistrations(managerEmail: String): List<RegistrationResponse> {
-        val manager = eventRepository.findAll()
-            .firstOrNull { it.creator.email == managerEmail }
-            ?.creator
+        val manager = userRepository.findByEmail(managerEmail)
             ?: throw ResourceNotFoundException("Manager", "email", managerEmail)
 
         val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
@@ -182,8 +176,6 @@ class EventManagerService(
             )
         } catch (e: Exception) {
             logger.error("Failed to send registration status update message to RabbitMQ for registrationId: $registrationId", e)
-            // Log error but don't fail the transaction
-            // The registration status is still updated in the database
         }
     }
 
