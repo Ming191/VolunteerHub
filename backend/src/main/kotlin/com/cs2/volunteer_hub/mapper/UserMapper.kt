@@ -13,19 +13,21 @@ class UserMapper {
         return UserResponse(
             id = user.id,
             name = user.name,
+            gender = user.gender,
             email = user.email,
             role = user.role,
             isLocked = user.isLocked,
             isEmailVerified = user.isEmailVerified,
             createdAt = user.createdAt,
-            lastLoginAt = user.lastLoginAt
+            lastLoginAt = user.lastLoginAt,
+            phoneNumber = user.phoneNumber,
+            bio = user.bio,
+            location = user.location,
+            profilePictureUrl = user.profilePictureUrl,
+            dateOfBirth = user.dateOfBirth,
+            skills = user.skills,
+            interests = user.interests,
+            updatedAt = user.updatedAt
         )
-    }
-
-    /**
-     * Map list of User entities to list of UserResponse DTOs
-     */
-    fun toUserResponseList(users: List<User>): List<UserResponse> {
-        return users.map { toUserResponse(it) }
     }
 }
