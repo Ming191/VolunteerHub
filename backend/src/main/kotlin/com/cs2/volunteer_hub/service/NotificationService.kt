@@ -8,16 +8,19 @@ import com.cs2.volunteer_hub.model.Notification
 import com.cs2.volunteer_hub.repository.FcmTokenRepository
 import com.cs2.volunteer_hub.repository.NotificationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.specification.NotificationSpecifications
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingException
 import com.google.firebase.messaging.Message
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.data.domain.Sort
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class NotificationService(
@@ -33,6 +36,62 @@ class NotificationService(
     fun getNotificationsForUser(userEmail: String): List<NotificationResponse> {
         val user = userRepository.findByEmail(userEmail)!!
         return notificationRepository.findByRecipientIdOrderByCreatedAtDesc(user.id)
+            .map(notificationMapper::toNotificationResponse)
+    }
+
+    /**
+     * Get unread notifications using NotificationSpecifications
+     */
+    @Transactional(readOnly = true)
+    fun getUnreadNotificationsForUser(userEmail: String): List<NotificationResponse> {
+        val user = userRepository.findByEmail(userEmail)!!
+        val spec = NotificationSpecifications.unreadForUser(user.id)
+
+        return notificationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+            .map(notificationMapper::toNotificationResponse)
+    }
+
+    /**
+     * Get recent notifications from the last N days using NotificationSpecifications
+     */
+    @Transactional(readOnly = true)
+    fun getRecentNotifications(userEmail: String, days: Int): List<NotificationResponse> {
+        val user = userRepository.findByEmail(userEmail)!!
+        val since = LocalDateTime.now().minusDays(days.toLong())
+        val spec = NotificationSpecifications.recentForUser(user.id, since)
+
+        return notificationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+            .map(notificationMapper::toNotificationResponse)
+    }
+
+    /**
+     * Search notifications by content text using NotificationSpecifications
+     */
+    @Transactional(readOnly = true)
+    fun searchNotifications(userEmail: String, searchText: String): List<NotificationResponse> {
+        val user = userRepository.findByEmail(userEmail)!!
+        val spec = NotificationSpecifications.forUser(user.id)
+            .and(NotificationSpecifications.contentContains(searchText))
+
+        return notificationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+            .map(notificationMapper::toNotificationResponse)
+    }
+
+    /**
+     * Get notifications by date range using NotificationSpecifications
+     */
+    @Transactional(readOnly = true)
+    fun getNotificationsByDateRange(
+        userEmail: String,
+        from: LocalDateTime,
+        to: LocalDateTime
+    ): List<NotificationResponse> {
+        val user = userRepository.findByEmail(userEmail)!!
+        val spec = NotificationSpecifications.forUser(user.id)
+            .and(NotificationSpecifications.createdAfter(from))
+            .and(NotificationSpecifications.createdBefore(to))
+
+        return notificationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
             .map(notificationMapper::toNotificationResponse)
     }
 
@@ -185,7 +244,7 @@ class NotificationService(
     @Transactional
     fun cleanupStaleTokens() {
         try {
-            val cutoffDate = java.time.LocalDateTime.now().minusDays(90)
+            val cutoffDate = LocalDateTime.now().minusDays(90)
             val staleTokens = fcmTokenRepository.findAll()
                 .filter { it.createdAt.isBefore(cutoffDate) }
 

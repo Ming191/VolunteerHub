@@ -16,7 +16,10 @@ import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -28,7 +31,8 @@ class EventManagerService(
     private val userRepository: UserRepository,
     private val cacheManager: CacheManager,
     private val rabbitTemplate: RabbitTemplate,
-    private val registrationMapper: RegistrationMapper
+    private val registrationMapper: RegistrationMapper,
+    private val waitlistService: WaitlistService
 ) {
     private val logger = org.slf4j.LoggerFactory.getLogger(EventManagerService::class.java)
 
@@ -38,6 +42,50 @@ class EventManagerService(
         if (event.creator.email != managerEmail) {
             throw UnauthorizedAccessException("You do not have permission to manage this event.")
         }
+    }
+
+    /**
+     * Search and filter registrations for a specific event
+     * Supports multiple filters: text search, status, date range
+     * Returns paginated results
+     */
+    @Transactional(readOnly = true)
+    fun searchEventRegistrations(
+        eventId: Long,
+        searchText: String?,
+        status: RegistrationStatus?,
+        registeredAfter: LocalDateTime?,
+        registeredBefore: LocalDateTime?,
+        pageable: Pageable,
+        managerEmail: String
+    ): Page<RegistrationResponse> {
+        checkEventOwnership(eventId, managerEmail)
+
+        // Build dynamic specification based on filters
+        var spec: Specification<Registration> = RegistrationSpecifications.forEvent(eventId)
+
+        // Add text search if provided
+        if (!searchText.isNullOrBlank()) {
+            spec = spec.and(RegistrationSpecifications.userSearchText(searchText.trim()))
+        }
+
+        // Add status filter if provided
+        if (status != null) {
+            spec = spec.and(RegistrationSpecifications.hasStatus(status))
+        }
+
+        // Add date range filters if provided
+        if (registeredAfter != null) {
+            spec = spec.and(RegistrationSpecifications.registeredAfter(registeredAfter))
+        }
+        if (registeredBefore != null) {
+            spec = spec.and(RegistrationSpecifications.registeredBefore(registeredBefore))
+        }
+
+        logger.info("Searching registrations for event $eventId with filters - text: $searchText, status: $status, after: $registeredAfter, before: $registeredBefore")
+
+        return registrationRepository.findAll(spec, pageable)
+            .map(registrationMapper::toRegistrationResponse)
     }
 
     @Transactional
@@ -92,6 +140,29 @@ class EventManagerService(
 
         logger.info("Bulk completed ${registrationsToComplete.size} registrations for past events by manager ${manager.id}")
         return registrationsToComplete.size
+    }
+
+    /**
+     * Get waitlist for a specific event
+     */
+    @Transactional(readOnly = true)
+    fun getEventWaitlist(eventId: Long, managerEmail: String): List<RegistrationResponse> {
+        checkEventOwnership(eventId, managerEmail)
+        return waitlistService.getWaitlistResponsesForEvent(eventId)
+    }
+
+    /**
+     * Manually promote someone from waitlist
+     */
+    @Transactional
+    fun promoteFromWaitlist(eventId: Long, managerEmail: String): RegistrationResponse {
+        checkEventOwnership(eventId, managerEmail)
+
+        val promoted = waitlistService.promoteFromWaitlist(eventId)
+            ?: throw BadRequestException("No one on waitlist or event is full")
+
+        evictRelatedCaches(promoted)
+        return registrationMapper.toRegistrationResponse(promoted)
     }
 
     @Cacheable(value = ["eventRegistrations"], key = "#eventId")
@@ -155,6 +226,8 @@ class EventManagerService(
             throw BadRequestException("Invalid status.")
         }
 
+        val oldStatus = registration.status
+
         evictRelatedCaches(registration)
 
         registration.status = newStatus
@@ -162,6 +235,11 @@ class EventManagerService(
 
         // Queue notification for status update
         queueRegistrationStatusUpdate(registrationId)
+
+        // If rejecting or cancelling an approved registration, promote from waitlist
+        if (oldStatus == RegistrationStatus.APPROVED && newStatus == RegistrationStatus.REJECTED) {
+            waitlistService.promoteFromWaitlist(registration.event.id)
+        }
 
         return registrationMapper.toRegistrationResponse(savedRegistration)
     }
