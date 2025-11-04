@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Welcome to VolunteerHub</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        h2 {
+            color: #2a4d8f;
+            text-align: center;
+        }
+        p {
+            color: #333;
+            line-height: 1.6;
+        }
+        .success-icon {
+            text-align: center;
+            font-size: 60px;
+            color: #10b981;
+            margin: 20px 0;
+        }
+        a.button {
+            display: inline-block;
+            background-color: #4e73df;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="success-icon">✓</div>
+    <h2 th:text="${subject}">Welcome to VolunteerHub!</h2>
+    <p>Hello <b th:text="${name}">User</b>,</p>
+    <p>Your email has been verified successfully! 🎉</p>
+    <p>Welcome to <b>VolunteerHub</b> - where volunteers and organizations connect to make a difference in their communities.</p>
+    <p>You can now:</p>
+    <ul>
+        <li>Browse and join volunteer opportunities</li>
+        <li>Create and manage your own events</li>
+        <li>Connect with other volunteers</li>
+        <li>Track your volunteer impact</li>
+    </ul>
+    <p style="text-align: center;">
+        <a th:href="${dashboardUrl}" class="button">Go to Dashboard</a>
+    </p>
+    <div class="footer">
+        <p>© 2025 VolunteerHub. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>
+
