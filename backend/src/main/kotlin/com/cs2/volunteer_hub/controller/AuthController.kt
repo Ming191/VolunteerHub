@@ -4,7 +4,7 @@ import com.cs2.volunteer_hub.dto.LoginRequest
 import com.cs2.volunteer_hub.dto.RegisterRequest
 import com.cs2.volunteer_hub.service.AuthService
 import com.cs2.volunteer_hub.service.EmailVerificationService
-import com.cs2.volunteer_hub.service.EmailService
+import com.cs2.volunteer_hub.service.EmailQueueService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*
 class AuthController (
     private val authService: AuthService,
     private val emailVerificationService: EmailVerificationService,
-    private val emailService: EmailService
+    private val emailQueueService: EmailQueueService
 ) {
 
     @Operation(
@@ -110,9 +110,8 @@ class AuthController (
         return try {
             emailVerificationService.verifyEmail(token)
 
-            // Send welcome email after successful verification
             val user = emailVerificationService.getUserByToken(token)
-            user?.let { emailService.sendWelcomeEmail(it.email, it.name) }
+            user?.let { emailQueueService.queueWelcomeEmail(it.email, it.name) }
 
             ResponseEntity.ok(mapOf("message" to "Email verified successfully!"))
         } catch (e: IllegalArgumentException) {

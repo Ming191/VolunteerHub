@@ -35,6 +35,10 @@ class RabbitMQConfig {
         const val NOTIFICATION_QUEUE = "notification_queue"
         const val REGISTRATION_STATUS_UPDATED_QUEUE = "registration_status_updated_queue"
 
+        // Email queues
+        const val EMAIL_QUEUE = "email_queue"
+        const val EMAIL_DLQ = "email_queue.dlq"
+
         // Dead Letter Queues
         const val EVENT_CREATION_DLQ = "event_creation_pending_queue.dlq"
         const val IMAGE_UPLOAD_SUCCEEDED_DLQ = "image_upload_succeeded_queue.dlq"
@@ -57,6 +61,9 @@ class RabbitMQConfig {
 
         const val NOTIFICATION_ROUTING_KEY = "notification.send"
         const val REGISTRATION_STATUS_UPDATED_ROUTING_KEY = "registration.status.updated"
+
+        // Email routing key
+        const val EMAIL_ROUTING_KEY = "email.send"
 
         const val MAX_RETRY_COUNT = 3
         const val MESSAGE_TTL = 3600000 // 1 hour in milliseconds
@@ -231,6 +238,21 @@ class RabbitMQConfig {
         return QueueBuilder.durable(REGISTRATION_STATUS_UPDATED_DLQ).build()
     }
 
+    // Email Queue
+    @Bean
+    fun emailQueue(): Queue {
+        return QueueBuilder.durable(EMAIL_QUEUE)
+            .withArgument("x-dead-letter-exchange", "")
+            .withArgument("x-dead-letter-routing-key", EMAIL_DLQ)
+            .withArgument("x-message-ttl", MESSAGE_TTL)
+            .build()
+    }
+
+    @Bean
+    fun emailDlq(): Queue {
+        return QueueBuilder.durable(EMAIL_DLQ).build()
+    }
+
     // Event Listeners
     @Bean
     fun bindNotification(
@@ -271,5 +293,14 @@ class RabbitMQConfig {
         exchange: TopicExchange
     ): Binding {
         return BindingBuilder.bind(failedQueue).to(exchange).with(POST_IMAGE_UPLOAD_FAILED_ROUTING_KEY)
+    }
+
+    // Email Binding
+    @Bean
+    fun bindEmail(
+        emailQueue: Queue,
+        exchange: TopicExchange
+    ): Binding {
+        return BindingBuilder.bind(emailQueue).to(exchange).with(EMAIL_ROUTING_KEY)
     }
 }
