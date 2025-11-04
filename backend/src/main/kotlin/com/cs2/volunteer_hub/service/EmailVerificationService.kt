@@ -6,7 +6,6 @@ import com.cs2.volunteer_hub.repository.EmailVerificationTokenRepository
 import com.cs2.volunteer_hub.repository.UserRepository
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
-import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -16,7 +15,7 @@ import java.util.*
 class EmailVerificationService(
     private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private val userRepository: UserRepository,
-    private val emailService: EmailService
+    private val emailQueueService: EmailQueueService
 ) {
     private val logger = LoggerFactory.getLogger(EmailVerificationService::class.java)
     private val TOKEN_EXPIRATION_HOURS = 24L
@@ -40,13 +39,12 @@ class EmailVerificationService(
         return token
     }
 
-    @Async
     fun sendVerificationEmail(user: User, token: String) {
         try {
-            emailService.sendVerificationEmail(user.email, user.name, token)
-            logger.info("Verification email sent to: ${user.email}")
+            emailQueueService.queueVerificationEmail(user.email, user.name, token)
+            logger.info("Verification email queued for: ${user.email}")
         } catch (e: Exception) {
-            logger.error("Failed to send verification email to: ${user.email}", e)
+            logger.error("Failed to queue verification email for: ${user.email}", e)
         }
     }
 
