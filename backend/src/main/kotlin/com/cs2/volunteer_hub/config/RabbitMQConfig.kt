@@ -31,6 +31,11 @@ class RabbitMQConfig {
         const val POST_IMAGE_UPLOAD_SUCCEEDED_QUEUE = "post_image_upload_succeeded_queue"
         const val POST_IMAGE_UPLOAD_FAILED_QUEUE = "post_image_upload_failed_queue"
 
+        // Profile picture queues
+        const val PROFILE_PICTURE_UPLOAD_QUEUE = "profile_picture_upload_queue"
+        const val PROFILE_PICTURE_UPLOAD_SUCCEEDED_QUEUE = "profile_picture_upload_succeeded_queue"
+        const val PROFILE_PICTURE_UPLOAD_FAILED_QUEUE = "profile_picture_upload_failed_queue"
+
         // Notification queue
         const val NOTIFICATION_QUEUE = "notification_queue"
         const val REGISTRATION_STATUS_UPDATED_QUEUE = "registration_status_updated_queue"
@@ -48,6 +53,10 @@ class RabbitMQConfig {
         const val POST_IMAGE_UPLOAD_SUCCEEDED_DLQ = "post_image_upload_succeeded_queue.dlq"
         const val POST_IMAGE_UPLOAD_FAILED_DLQ = "post_image_upload_failed_queue.dlq"
 
+        const val PROFILE_PICTURE_UPLOAD_DLQ = "profile_picture_upload_queue.dlq"
+        const val PROFILE_PICTURE_UPLOAD_SUCCEEDED_DLQ = "profile_picture_upload_succeeded_queue.dlq"
+        const val PROFILE_PICTURE_UPLOAD_FAILED_DLQ = "profile_picture_upload_failed_queue.dlq"
+
         const val NOTIFICATION_DLQ = "notification_queue.dlq"
         const val REGISTRATION_STATUS_UPDATED_DLQ = "registration_status_updated_queue.dlq"
 
@@ -58,6 +67,10 @@ class RabbitMQConfig {
         const val POST_CREATION_PENDING_ROUTING_KEY = "post.creation.pending"
         const val POST_IMAGE_UPLOAD_SUCCEEDED_ROUTING_KEY = "post.image.upload.succeeded"
         const val POST_IMAGE_UPLOAD_FAILED_ROUTING_KEY = "post.image.upload.failed"
+
+        const val PROFILE_PICTURE_UPLOAD_ROUTING_KEY = "profile.picture.upload"
+        const val PROFILE_PICTURE_UPLOAD_SUCCEEDED_ROUTING_KEY = "profile.picture.upload.succeeded"
+        const val PROFILE_PICTURE_UPLOAD_FAILED_ROUTING_KEY = "profile.picture.upload.failed"
 
         const val NOTIFICATION_ROUTING_KEY = "notification.send"
         const val REGISTRATION_STATUS_UPDATED_ROUTING_KEY = "registration.status.updated"
@@ -209,6 +222,50 @@ class RabbitMQConfig {
         return QueueBuilder.durable(POST_IMAGE_UPLOAD_FAILED_DLQ).build()
     }
 
+    // Profile Picture Queues with DLQ configuration
+    @Bean
+    fun profilePictureUploadQueue(): Queue {
+        return QueueBuilder.durable(PROFILE_PICTURE_UPLOAD_QUEUE)
+            .withArgument("x-dead-letter-exchange", "")
+            .withArgument("x-dead-letter-routing-key", PROFILE_PICTURE_UPLOAD_DLQ)
+            .withArgument("x-message-ttl", MESSAGE_TTL)
+            .build()
+    }
+
+    @Bean
+    fun profilePictureUploadSucceededQueue(): Queue {
+        return QueueBuilder.durable(PROFILE_PICTURE_UPLOAD_SUCCEEDED_QUEUE)
+            .withArgument("x-dead-letter-exchange", "")
+            .withArgument("x-dead-letter-routing-key", PROFILE_PICTURE_UPLOAD_SUCCEEDED_DLQ)
+            .withArgument("x-message-ttl", MESSAGE_TTL)
+            .build()
+    }
+
+    @Bean
+    fun profilePictureUploadFailedQueue(): Queue {
+        return QueueBuilder.durable(PROFILE_PICTURE_UPLOAD_FAILED_QUEUE)
+            .withArgument("x-dead-letter-exchange", "")
+            .withArgument("x-dead-letter-routing-key", PROFILE_PICTURE_UPLOAD_FAILED_DLQ)
+            .withArgument("x-message-ttl", MESSAGE_TTL)
+            .build()
+    }
+
+    // Profile Picture Dead Letter Queues
+    @Bean
+    fun profilePictureUploadDlq(): Queue {
+        return QueueBuilder.durable(PROFILE_PICTURE_UPLOAD_DLQ).build()
+    }
+
+    @Bean
+    fun profilePictureUploadSucceededDlq(): Queue {
+        return QueueBuilder.durable(PROFILE_PICTURE_UPLOAD_SUCCEEDED_DLQ).build()
+    }
+
+    @Bean
+    fun profilePictureUploadFailedDlq(): Queue {
+        return QueueBuilder.durable(PROFILE_PICTURE_UPLOAD_FAILED_DLQ).build()
+    }
+
     // Notification Queue
     @Bean
     fun notificationQueue(): Queue {
@@ -256,7 +313,7 @@ class RabbitMQConfig {
     // Event Listeners
     @Bean
     fun bindNotification(
-        notificationQueue: Queue,
+        @Qualifier("notificationQueue") notificationQueue: Queue,
         exchange: TopicExchange
     ): Binding {
         return BindingBuilder.bind(notificationQueue).to(exchange).with(NOTIFICATION_ROUTING_KEY)
@@ -264,7 +321,7 @@ class RabbitMQConfig {
 
     @Bean
     fun bindRegistrationStatusUpdated(
-        registrationStatusUpdatedQueue: Queue,
+        @Qualifier("registrationStatusUpdatedQueue") registrationStatusUpdatedQueue: Queue,
         exchange: TopicExchange
     ): Binding {
         return BindingBuilder.bind(registrationStatusUpdatedQueue).to(exchange).with(REGISTRATION_STATUS_UPDATED_ROUTING_KEY)
@@ -295,10 +352,35 @@ class RabbitMQConfig {
         return BindingBuilder.bind(failedQueue).to(exchange).with(POST_IMAGE_UPLOAD_FAILED_ROUTING_KEY)
     }
 
+    // Profile Picture Bindings
+    @Bean
+    fun bindProfilePictureUpload(
+        @Qualifier("profilePictureUploadQueue") profilePictureUploadQueue: Queue,
+        exchange: TopicExchange
+    ): Binding {
+        return BindingBuilder.bind(profilePictureUploadQueue).to(exchange).with(PROFILE_PICTURE_UPLOAD_ROUTING_KEY)
+    }
+
+    @Bean
+    fun bindProfilePictureUploadSucceeded(
+        @Qualifier("profilePictureUploadSucceededQueue") profilePictureUploadSucceededQueue: Queue,
+        exchange: TopicExchange
+    ): Binding {
+        return BindingBuilder.bind(profilePictureUploadSucceededQueue).to(exchange).with(PROFILE_PICTURE_UPLOAD_SUCCEEDED_ROUTING_KEY)
+    }
+
+    @Bean
+    fun bindProfilePictureUploadFailed(
+        @Qualifier("profilePictureUploadFailedQueue") profilePictureUploadFailedQueue: Queue,
+        exchange: TopicExchange
+    ): Binding {
+        return BindingBuilder.bind(profilePictureUploadFailedQueue).to(exchange).with(PROFILE_PICTURE_UPLOAD_FAILED_ROUTING_KEY)
+    }
+
     // Email Binding
     @Bean
     fun bindEmail(
-        emailQueue: Queue,
+        @Qualifier("emailQueue") emailQueue: Queue,
         exchange: TopicExchange
     ): Binding {
         return BindingBuilder.bind(emailQueue).to(exchange).with(EMAIL_ROUTING_KEY)

@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.model
 
 import jakarta.persistence.*
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Entity
@@ -16,10 +17,16 @@ data class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id : Long = 0,
-    val name: String,
+
+    var name: String,
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    var gender: Gender? = null,
 
     @Column(unique = true)
     var email: String,
+
     var passwordHash : String,
 
     @Enumerated(EnumType.STRING)
@@ -34,6 +41,28 @@ data class User(
 
     var lastLoginAt: LocalDateTime? = null,
 
+    // Enhanced Profile Fields
+    @Column(length = 20)
+    var phoneNumber: String? = null,
+
+    @Column(length = 500)
+    var bio: String? = null,
+
+    @Column(length = 100)
+    var location: String? = null,
+
+    var profilePictureUrl: String? = null,
+
+    var dateOfBirth: LocalDate? = null,
+
+    @Column(length = 200)
+    var skills: String? = null, // Comma-separated skills
+
+    @Column(length = 200)
+    var interests: String? = null, // Comma-separated interests
+
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
+
     @OneToMany(mappedBy = "creator", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     val createdEvents: List<Event> = mutableListOf()
 ) {
@@ -42,5 +71,11 @@ data class User(
         if (createdAt.year == 1970) {
             createdAt = LocalDateTime.now()
         }
+        updatedAt = LocalDateTime.now()
+    }
+
+    @PreUpdate
+    fun preUpdate() {
+        updatedAt = LocalDateTime.now()
     }
 }
