@@ -16,7 +16,10 @@ import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -38,6 +41,50 @@ class EventManagerService(
         if (event.creator.email != managerEmail) {
             throw UnauthorizedAccessException("You do not have permission to manage this event.")
         }
+    }
+
+    /**
+     * Search and filter registrations for a specific event
+     * Supports multiple filters: text search, status, date range
+     * Returns paginated results
+     */
+    @Transactional(readOnly = true)
+    fun searchEventRegistrations(
+        eventId: Long,
+        searchText: String?,
+        status: RegistrationStatus?,
+        registeredAfter: LocalDateTime?,
+        registeredBefore: LocalDateTime?,
+        pageable: Pageable,
+        managerEmail: String
+    ): Page<RegistrationResponse> {
+        checkEventOwnership(eventId, managerEmail)
+
+        // Build dynamic specification based on filters
+        var spec: Specification<Registration> = RegistrationSpecifications.forEvent(eventId)
+
+        // Add text search if provided
+        if (!searchText.isNullOrBlank()) {
+            spec = spec.and(RegistrationSpecifications.userSearchText(searchText.trim()))
+        }
+
+        // Add status filter if provided
+        if (status != null) {
+            spec = spec.and(RegistrationSpecifications.hasStatus(status))
+        }
+
+        // Add date range filters if provided
+        if (registeredAfter != null) {
+            spec = spec.and(RegistrationSpecifications.registeredAfter(registeredAfter))
+        }
+        if (registeredBefore != null) {
+            spec = spec.and(RegistrationSpecifications.registeredBefore(registeredBefore))
+        }
+
+        logger.info("Searching registrations for event $eventId with filters - text: $searchText, status: $status, after: $registeredAfter, before: $registeredBefore")
+
+        return registrationRepository.findAll(spec, pageable)
+            .map(registrationMapper::toRegistrationResponse)
     }
 
     @Transactional
