@@ -49,4 +49,89 @@ object RegistrationSpecifications {
             )
         }
     }
+
+    fun registeredAfter(dateTime: LocalDateTime): Specification<Registration> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.greaterThanOrEqualTo(root.get("registeredAt"), dateTime)
+        }
+    }
+
+    fun registeredBefore(dateTime: LocalDateTime): Specification<Registration> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.lessThanOrEqualTo(root.get("registeredAt"), dateTime)
+        }
+    }
+
+    /**
+     * Search registrations by username
+     */
+    fun userNameContains(name: String): Specification<Registration> {
+        return Specification { root, _, criteriaBuilder ->
+            val userJoin = root.join<Registration, User>("user")
+            criteriaBuilder.like(
+                criteriaBuilder.lower(userJoin.get("name")),
+                "%${name.lowercase()}%"
+            )
+        }
+    }
+
+    /**
+     * Search registrations by user email
+     */
+    fun userEmailContains(email: String): Specification<Registration> {
+        return Specification { root, _, criteriaBuilder ->
+            val userJoin = root.join<Registration, User>("user")
+            criteriaBuilder.like(
+                criteriaBuilder.lower(userJoin.get("email")),
+                "%${email.lowercase()}%"
+            )
+        }
+    }
+
+    /**
+     * Search registrations by user phone number
+     */
+    fun userPhoneContains(phone: String): Specification<Registration> {
+        return Specification { root, _, criteriaBuilder ->
+            val userJoin = root.join<Registration, User>("user")
+            criteriaBuilder.like(
+                userJoin.get("phoneNumber"),
+                "%$phone%"
+            )
+        }
+    }
+
+    /**
+     * Search registrations by user text (name, email, or phone)
+     * Most useful for general search functionality
+     */
+    fun userSearchText(searchText: String): Specification<Registration> {
+        return Specification { root, _, criteriaBuilder ->
+            val userJoin = root.join<Registration, User>("user")
+            val searchPattern = "%${searchText.lowercase()}%"
+            criteriaBuilder.or(
+                criteriaBuilder.like(criteriaBuilder.lower(userJoin.get("name")), searchPattern),
+                criteriaBuilder.like(criteriaBuilder.lower(userJoin.get("email")), searchPattern),
+                criteriaBuilder.like(userJoin.get("phoneNumber"), searchPattern)
+            )
+        }
+    }
+
+    /**
+     * Get waitlisted registrations for an event
+     * Useful for displaying waitlist queue
+     */
+    fun isWaitlisted(): Specification<Registration> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.equal(root.get<RegistrationStatus>("status"), RegistrationStatus.WAITLISTED)
+        }
+    }
+
+    /**
+     * Get waitlisted registrations ordered by position
+     * Returns registrations in waitlist order (position 1, 2, 3...)
+     */
+    fun waitlistedForEvent(eventId: Long): Specification<Registration> {
+        return forEvent(eventId).and(isWaitlisted())
+    }
 }
