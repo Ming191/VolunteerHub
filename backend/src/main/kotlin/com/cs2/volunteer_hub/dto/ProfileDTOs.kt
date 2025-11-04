@@ -1,5 +1,7 @@
 package com.cs2.volunteer_hub.dto
 
+import com.cs2.volunteer_hub.model.Interest
+import com.cs2.volunteer_hub.model.Skill
 import com.cs2.volunteer_hub.validation.StrongPassword
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Past
@@ -23,11 +25,9 @@ data class UpdateProfileRequest(
     @field:Past(message = "Date of birth must be in the past")
     val dateOfBirth: LocalDate?,
 
-    @field:Size(max = 200, message = "Skills must not exceed 200 characters")
-    val skills: String?,
+    val skills: Set<Skill>?,
 
-    @field:Size(max = 200, message = "Interests must not exceed 200 characters")
-    val interests: String?
+    val interests: Set<Interest>?
 )
 
 data class ChangePasswordRequest(
