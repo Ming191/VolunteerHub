@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class AuthService (
@@ -18,7 +19,8 @@ class AuthService (
     private val passwordEncoder: PasswordEncoder,
     private val jwtTokenProvider: JwtTokenProvider,
     private val authenticationManager: AuthenticationManager,
-    private val userDetailsService: CustomUserDetailsService
+    private val userDetailsService: CustomUserDetailsService,
+    private val emailVerificationService: EmailVerificationService
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
@@ -37,10 +39,15 @@ class AuthService (
             name = request.username,
             email = request.email,
             passwordHash = hashedPassword,
-            role = assignedRole
+            role = assignedRole,
+            isEmailVerified = false
         )
         val savedUser = userRepository.save(user)
-        logger.info("User saved with role: ${savedUser.role}")
+        logger.info("User saved with role: ${savedUser.role}, email verified: ${savedUser.isEmailVerified}")
+
+        val token = emailVerificationService.createVerificationToken(savedUser)
+        emailVerificationService.sendVerificationEmail(savedUser, token)
+
         return savedUser
     }
 
@@ -50,5 +57,14 @@ class AuthService (
         )
 
         val userDetails = userDetailsService.loadUserByUsername(request.email)
-        return jwtTokenProvider.generateToken(userDetails)    }
+
+        val user = userRepository.findByEmail(request.email)
+        user?.let {
+            it.lastLoginAt = LocalDateTime.now()
+            userRepository.save(it)
+            logger.info("Updated last login for user: ${it.email}")
+        }
+
+        return jwtTokenProvider.generateToken(userDetails)
+    }
 }

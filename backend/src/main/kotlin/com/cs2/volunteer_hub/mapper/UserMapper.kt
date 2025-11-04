@@ -15,7 +15,10 @@ class UserMapper {
             name = user.name,
             email = user.email,
             role = user.role,
-            isLocked = user.isLocked
+            isLocked = user.isLocked,
+            isEmailVerified = user.isEmailVerified,
+            createdAt = user.createdAt,
+            lastLoginAt = user.lastLoginAt
         )
     }
 
