@@ -33,6 +33,18 @@ data class Event(
 
     var isApproved: Boolean = false,
 
+    /**
+     * Maximum number of participants allowed for this event
+     * null = unlimited capacity
+     */
+    var maxParticipants: Int? = null,
+
+    /**
+     * Whether waitlist is enabled when event reaches capacity
+     * If false, registrations are rejected when full
+     */
+    var waitlistEnabled: Boolean = true,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false)
     @JsonBackReference
@@ -58,5 +70,32 @@ data class Event(
             createdAt = LocalDateTime.now()
         }
     }
-}
 
+    /**
+     * Get current count of approved registrations (confirmed participants)
+     */
+    fun getApprovedCount(): Int {
+        return registrations.count { it.status == RegistrationStatus.APPROVED }
+    }
+
+    /**
+     * Check if event has reached maximum capacity
+     */
+    fun isFull(): Boolean {
+        return maxParticipants?.let { getApprovedCount() >= it } ?: false
+    }
+
+    /**
+     * Get available spots remaining
+     */
+    fun getAvailableSpots(): Int? {
+        return maxParticipants?.let { it - getApprovedCount() }
+    }
+
+    /**
+     * Get current waitlist count
+     */
+    fun getWaitlistCount(): Int {
+        return registrations.count { it.status == RegistrationStatus.WAITLISTED }
+    }
+}

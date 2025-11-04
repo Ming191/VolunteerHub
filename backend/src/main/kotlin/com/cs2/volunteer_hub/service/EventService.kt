@@ -33,7 +33,7 @@ class EventService(
     private val rabbitTemplate: RabbitTemplate,
     private val fileValidationService: FileValidationService,
     private val eventMapper: EventMapper,
-    @field:Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
+    @field:Value($$"${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
     private val logger = LoggerFactory.getLogger(EventService::class.java)
 
@@ -51,7 +51,9 @@ class EventService(
             location = request.location,
             eventDateTime = request.eventDateTime,
             creator = creator,
-            isApproved = false
+            isApproved = false,
+            maxParticipants = request.maxParticipants,
+            waitlistEnabled = request.waitlistEnabled
         )
 
         if (!files.isNullOrEmpty()) {
@@ -128,6 +130,8 @@ class EventService(
         request.description?.let { event.description = it }
         request.location?.let { event.location = it }
         request.eventDateTime?.let { event.eventDateTime = it }
+        request.maxParticipants?.let { event.maxParticipants = it }
+        request.waitlistEnabled?.let { event.waitlistEnabled = it }
 
         val updatedEvent = eventRepository.save(event)
         logger.info("Updated event ID: $id by user: $currentUserEmail")

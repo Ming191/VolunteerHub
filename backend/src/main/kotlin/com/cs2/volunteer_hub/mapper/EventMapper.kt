@@ -18,7 +18,13 @@ class EventMapper {
             location = event.location,
             eventDateTime = event.eventDateTime,
             isApproved = event.isApproved,
-            creatorName = event.creator.name
+            creatorName = event.creator.name,
+            maxParticipants = event.maxParticipants,
+            waitlistEnabled = event.waitlistEnabled,
+            approvedCount = event.getApprovedCount(),
+            waitlistCount = event.getWaitlistCount(),
+            availableSpots = event.getAvailableSpots(),
+            isFull = event.isFull()
         )
     }
 
@@ -29,4 +35,3 @@ class EventMapper {
         return events.map { toEventResponse(it) }
     }
 }
-

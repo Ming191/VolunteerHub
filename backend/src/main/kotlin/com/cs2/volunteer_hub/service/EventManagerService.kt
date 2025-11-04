@@ -31,7 +31,8 @@ class EventManagerService(
     private val userRepository: UserRepository,
     private val cacheManager: CacheManager,
     private val rabbitTemplate: RabbitTemplate,
-    private val registrationMapper: RegistrationMapper
+    private val registrationMapper: RegistrationMapper,
+    private val waitlistService: WaitlistService
 ) {
     private val logger = org.slf4j.LoggerFactory.getLogger(EventManagerService::class.java)
 
@@ -141,6 +142,29 @@ class EventManagerService(
         return registrationsToComplete.size
     }
 
+    /**
+     * Get waitlist for a specific event
+     */
+    @Transactional(readOnly = true)
+    fun getEventWaitlist(eventId: Long, managerEmail: String): List<RegistrationResponse> {
+        checkEventOwnership(eventId, managerEmail)
+        return waitlistService.getWaitlistResponsesForEvent(eventId)
+    }
+
+    /**
+     * Manually promote someone from waitlist
+     */
+    @Transactional
+    fun promoteFromWaitlist(eventId: Long, managerEmail: String): RegistrationResponse {
+        checkEventOwnership(eventId, managerEmail)
+
+        val promoted = waitlistService.promoteFromWaitlist(eventId)
+            ?: throw BadRequestException("No one on waitlist or event is full")
+
+        evictRelatedCaches(promoted)
+        return registrationMapper.toRegistrationResponse(promoted)
+    }
+
     @Cacheable(value = ["eventRegistrations"], key = "#eventId")
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
@@ -202,6 +226,8 @@ class EventManagerService(
             throw BadRequestException("Invalid status.")
         }
 
+        val oldStatus = registration.status
+
         evictRelatedCaches(registration)
 
         registration.status = newStatus
@@ -209,6 +235,11 @@ class EventManagerService(
 
         // Queue notification for status update
         queueRegistrationStatusUpdate(registrationId)
+
+        // If rejecting or cancelling an approved registration, promote from waitlist
+        if (oldStatus == RegistrationStatus.APPROVED && newStatus == RegistrationStatus.REJECTED) {
+            waitlistService.promoteFromWaitlist(registration.event.id)
+        }
 
         return registrationMapper.toRegistrationResponse(savedRegistration)
     }

@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.dto
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import jakarta.validation.constraints.Future
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
@@ -19,7 +20,12 @@ data class CreateEventRequest(
 
     @field:Future(message = "Event date and time must be in the future")
     @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    val eventDateTime: LocalDateTime
+    val eventDateTime: LocalDateTime,
+
+    @field:Min(value = 1, message = "Maximum participants must be at least 1")
+    val maxParticipants: Int? = null,
+
+    val waitlistEnabled: Boolean = true
 )
 
 data class EventResponse(
@@ -31,7 +37,13 @@ data class EventResponse(
     val eventDateTime: LocalDateTime,
     val isApproved: Boolean,
     val creatorName: String,
-    val imageUrls: List<String>
+    val imageUrls: List<String>,
+    val maxParticipants: Int?,
+    val waitlistEnabled: Boolean,
+    val approvedCount: Int,
+    val waitlistCount: Int,
+    val availableSpots: Int?,
+    val isFull: Boolean
 )
 
 data class UpdateEventRequest(
@@ -44,5 +56,10 @@ data class UpdateEventRequest(
 
     @field:Future(message = "Event date and time must be in the future")
     @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    val eventDateTime: LocalDateTime?
+    val eventDateTime: LocalDateTime?,
+
+    @field:Min(value = 1, message = "Maximum participants must be at least 1")
+    val maxParticipants: Int?,
+
+    val waitlistEnabled: Boolean?
 )
