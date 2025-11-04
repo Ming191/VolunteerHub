@@ -1,7 +1,9 @@
 package com.cs2.volunteer_hub.dto
 
 import com.cs2.volunteer_hub.model.Gender
+import com.cs2.volunteer_hub.model.Interest
 import com.cs2.volunteer_hub.model.Role
+import com.cs2.volunteer_hub.model.Skill
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -20,7 +22,7 @@ data class UserResponse(
     val location: String?,
     val profilePictureUrl: String?,
     val dateOfBirth: LocalDate?,
-    val skills: String?,
-    val interests: String?,
+    val skills: Set<Skill>,
+    val interests: Set<Interest>,
     val updatedAt: LocalDateTime
 )

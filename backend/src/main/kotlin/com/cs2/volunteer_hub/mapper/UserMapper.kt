@@ -25,8 +25,8 @@ class UserMapper {
             location = user.location,
             profilePictureUrl = user.profilePictureUrl,
             dateOfBirth = user.dateOfBirth,
-            skills = user.skills,
-            interests = user.interests,
+            skills = user.skills.toSet(),
+            interests = user.interests.toSet(),
             updatedAt = user.updatedAt
         )
     }

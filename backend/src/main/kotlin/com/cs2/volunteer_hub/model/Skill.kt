@@ -1,0 +1,139 @@
+package com.cs2.volunteer_hub.model
+
+enum class Skill {
+    // Communication & Interpersonal
+    PUBLIC_SPEAKING,
+    COMMUNICATION,
+    ACTIVE_LISTENING,
+    PRESENTATION,
+    WRITING,
+    TRANSLATION,
+    SIGN_LANGUAGE,
+
+    // Leadership & Management
+    LEADERSHIP,
+    TEAM_MANAGEMENT,
+    PROJECT_MANAGEMENT,
+    EVENT_PLANNING,
+    COORDINATION,
+    PROBLEM_SOLVING,
+    DECISION_MAKING,
+    CONFLICT_RESOLUTION,
+
+    // Teaching & Mentoring
+    TEACHING,
+    TUTORING,
+    MENTORING,
+    COACHING,
+    TRAINING,
+    CURRICULUM_DEVELOPMENT,
+    CHILD_CARE,
+
+    // Healthcare & Wellness
+    FIRST_AID,
+    CPR,
+    NURSING,
+    COUNSELING,
+    MENTAL_HEALTH_SUPPORT,
+    PHYSICAL_THERAPY,
+    NUTRITION,
+    YOGA_INSTRUCTION,
+
+    // Technical & IT
+    WEB_DEVELOPMENT,
+    MOBILE_APP_DEVELOPMENT,
+    GRAPHIC_DESIGN,
+    VIDEO_EDITING,
+    PHOTOGRAPHY,
+    SOCIAL_MEDIA_MANAGEMENT,
+    DATA_ANALYSIS,
+    DATABASE_MANAGEMENT,
+    IT_SUPPORT,
+
+    // Creative & Arts
+    MUSIC,
+    PAINTING,
+    DRAWING,
+    CRAFTS,
+    PERFORMING_ARTS,
+    DANCE,
+    DRAMA,
+    CREATIVE_WRITING,
+
+    // Construction & Manual
+    CARPENTRY,
+    PLUMBING,
+    ELECTRICAL_WORK,
+    PAINTING_DECORATING,
+    GARDENING,
+    LANDSCAPING,
+    MECHANICAL_REPAIR,
+    CONSTRUCTION,
+
+    // Food & Hospitality
+    COOKING,
+    BAKING,
+    FOOD_PREPARATION,
+    FOOD_SERVICE,
+    CATERING,
+    RESTAURANT_MANAGEMENT,
+
+    // Administrative & Business
+    ADMINISTRATIVE_SUPPORT,
+    DATA_ENTRY,
+    BOOKKEEPING,
+    ACCOUNTING,
+    FUNDRAISING,
+    GRANT_WRITING,
+    MARKETING,
+    SALES,
+    CUSTOMER_SERVICE,
+    LEGAL_ADVICE,
+
+    // Outdoor & Environmental
+    ENVIRONMENTAL_CONSERVATION,
+    RECYCLING,
+    WILDLIFE_CARE,
+    FARMING,
+    HIKING_GUIDING,
+    OUTDOOR_EDUCATION,
+
+    // Sports & Fitness
+    SPORTS_COACHING,
+    FITNESS_TRAINING,
+    SWIMMING_INSTRUCTION,
+    MARTIAL_ARTS,
+    SPORTS_OFFICIATING,
+
+    // Languages
+    ENGLISH,
+    SPANISH,
+    FRENCH,
+    MANDARIN,
+    ARABIC,
+    GERMAN,
+    JAPANESE,
+    PORTUGUESE,
+    RUSSIAN,
+    HINDI,
+
+    // Animals
+    ANIMAL_CARE,
+    DOG_TRAINING,
+    VETERINARY_ASSISTANCE,
+    PET_GROOMING,
+
+    // Driving & Transportation
+    DRIVING,
+    DELIVERY,
+    TRANSPORTATION_COORDINATION,
+
+    // Other
+    RESEARCH,
+    SURVEYING,
+    INTERVIEWING,
+    ADVOCACY,
+    COMMUNITY_ORGANIZING,
+    PEER_SUPPORT,
+    CRISIS_INTERVENTION
+}

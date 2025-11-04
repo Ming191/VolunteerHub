@@ -55,11 +55,17 @@ data class User(
 
     var dateOfBirth: LocalDate? = null,
 
-    @Column(length = 200)
-    var skills: String? = null, // Comma-separated skills
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "user_skills", joinColumns = [JoinColumn(name = "user_id")])
+    @Column(name = "skill")
+    @Enumerated(EnumType.STRING)
+    var skills: MutableSet<Skill> = mutableSetOf(),
 
-    @Column(length = 200)
-    var interests: String? = null, // Comma-separated interests
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "user_interests", joinColumns = [JoinColumn(name = "user_id")])
+    @Column(name = "interest")
+    @Enumerated(EnumType.STRING)
+    var interests: MutableSet<Interest> = mutableSetOf(),
 
     var updatedAt: LocalDateTime = LocalDateTime.now(),
 
