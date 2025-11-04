@@ -63,7 +63,7 @@ object RegistrationSpecifications {
     }
 
     /**
-     * Search registrations by user name
+     * Search registrations by username
      */
     fun userNameContains(name: String): Specification<Registration> {
         return Specification { root, _, criteriaBuilder ->
@@ -115,5 +115,23 @@ object RegistrationSpecifications {
                 criteriaBuilder.like(userJoin.get("phoneNumber"), searchPattern)
             )
         }
+    }
+
+    /**
+     * Get waitlisted registrations for an event
+     * Useful for displaying waitlist queue
+     */
+    fun isWaitlisted(): Specification<Registration> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.equal(root.get<RegistrationStatus>("status"), RegistrationStatus.WAITLISTED)
+        }
+    }
+
+    /**
+     * Get waitlisted registrations ordered by position
+     * Returns registrations in waitlist order (position 1, 2, 3...)
+     */
+    fun waitlistedForEvent(eventId: Long): Specification<Registration> {
+        return forEvent(eventId).and(isWaitlisted())
     }
 }

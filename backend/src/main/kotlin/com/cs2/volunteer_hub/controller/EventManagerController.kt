@@ -184,4 +184,42 @@ class EventManagerController(
         val count = eventManagerService.bulkCompleteRegistrationsForPastEvents(currentUser.username)
         return ResponseEntity.ok(mapOf("completedCount" to count))
     }
+
+    /**
+     * Get waitlist for a specific event
+     * Example: GET /api/manager/events/1/waitlist
+     */
+    @Operation(
+        summary = "Get event waitlist",
+        description = "Retrieve all waitlisted registrations for a specific event in order",
+        security = [SecurityRequirement(name = "bearerAuth")]
+    )
+    @GetMapping("/events/{eventId}/waitlist")
+    fun getEventWaitlist(
+        @Parameter(description = "Event ID", required = true)
+        @PathVariable eventId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<RegistrationResponse>> {
+        val waitlist = eventManagerService.getEventWaitlist(eventId, currentUser.username)
+        return ResponseEntity.ok(waitlist)
+    }
+
+    /**
+     * Manually promote someone from waitlist to approved
+     * Example: POST /api/manager/events/1/waitlist/promote
+     */
+    @Operation(
+        summary = "Promote from waitlist",
+        description = "Manually promote the first person from the waitlist (if event has capacity)",
+        security = [SecurityRequirement(name = "bearerAuth")]
+    )
+    @PostMapping("/events/{eventId}/waitlist/promote")
+    fun promoteFromWaitlist(
+        @Parameter(description = "Event ID", required = true)
+        @PathVariable eventId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<RegistrationResponse> {
+        val promoted = eventManagerService.promoteFromWaitlist(eventId, currentUser.username)
+        return ResponseEntity.ok(promoted)
+    }
 }
