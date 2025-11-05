@@ -4,17 +4,15 @@ import com.cs2.volunteer_hub.config.RabbitMQConfig
 import com.cs2.volunteer_hub.dto.RegistrationResponse
 import com.cs2.volunteer_hub.dto.RegistrationStatusUpdateMessage
 import com.cs2.volunteer_hub.exception.BadRequestException
-import com.cs2.volunteer_hub.exception.ResourceNotFoundException
-import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
-import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.repository.findByEmailOrThrow
+import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -27,22 +25,14 @@ import java.time.LocalDateTime
 @Service
 class EventManagerService(
     private val registrationRepository: RegistrationRepository,
-    private val eventRepository: EventRepository,
     private val userRepository: UserRepository,
-    private val cacheManager: CacheManager,
     private val rabbitTemplate: RabbitTemplate,
     private val registrationMapper: RegistrationMapper,
-    private val waitlistService: WaitlistService
+    private val waitlistService: WaitlistService,
+    private val authorizationService: AuthorizationService,
+    private val cacheEvictionService: CacheEvictionService
 ) {
     private val logger = org.slf4j.LoggerFactory.getLogger(EventManagerService::class.java)
-
-    private fun checkEventOwnership(eventId: Long, managerEmail: String) {
-        val event = eventRepository.findById(eventId)
-            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
-        if (event.creator.email != managerEmail) {
-            throw UnauthorizedAccessException("You do not have permission to manage this event.")
-        }
-    }
 
     /**
      * Search and filter registrations for a specific event
@@ -59,7 +49,7 @@ class EventManagerService(
         pageable: Pageable,
         managerEmail: String
     ): Page<RegistrationResponse> {
-        checkEventOwnership(eventId, managerEmail)
+        authorizationService.requireEventOwnership(eventId, managerEmail)
 
         // Build dynamic specification based on filters
         var spec: Specification<Registration> = RegistrationSpecifications.forEvent(eventId)
@@ -90,19 +80,18 @@ class EventManagerService(
 
     @Transactional
     fun markRegistrationAsCompleted(registrationId: Long, managerEmail: String): RegistrationResponse {
-        val registration = registrationRepository.findById(registrationId)
-            .orElseThrow { ResourceNotFoundException("Registration", "id", registrationId) }
+        val registration = registrationRepository.findByIdOrThrow(registrationId)
 
-        checkEventOwnership(registration.event.id, managerEmail)
+        authorizationService.requireEventOwnership(registration.event.id, managerEmail)
 
         if (registration.status != RegistrationStatus.APPROVED) {
             throw BadRequestException("Only approved registrations can be marked as completed.")
         }
-        if (registration.event.eventDateTime.isAfter(LocalDateTime.now())) {
-            throw BadRequestException("Cannot mark as completed for events that have not occurred yet.")
+        if (!registration.event.isPast()) {
+            throw BadRequestException("Cannot mark as completed for events that have not ended yet.")
         }
 
-        evictRelatedCaches(registration)
+        cacheEvictionService.evictRelatedCaches(registration)
 
         registration.status = RegistrationStatus.COMPLETED
         val savedRegistration = registrationRepository.save(registration)
@@ -120,8 +109,7 @@ class EventManagerService(
      */
     @Transactional
     fun bulkCompleteRegistrationsForPastEvents(managerEmail: String): Int {
-        val manager = userRepository.findByEmail(managerEmail)
-            ?: throw ResourceNotFoundException("Manager", "email", managerEmail)
+        val manager = userRepository.findByEmailOrThrow(managerEmail)
         val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
             .and(RegistrationSpecifications.hasStatus(RegistrationStatus.APPROVED))
             .and(RegistrationSpecifications.forPastEvents())
@@ -134,7 +122,7 @@ class EventManagerService(
         }
         registrationRepository.saveAll(registrationsToComplete)
         registrationsToComplete.forEach { registration ->
-            evictRelatedCaches(registration)
+            cacheEvictionService.evictRelatedCaches(registration)
             queueRegistrationStatusUpdate(registration.id)
         }
 
@@ -147,7 +135,7 @@ class EventManagerService(
      */
     @Transactional(readOnly = true)
     fun getEventWaitlist(eventId: Long, managerEmail: String): List<RegistrationResponse> {
-        checkEventOwnership(eventId, managerEmail)
+        authorizationService.requireEventOwnership(eventId, managerEmail)
         return waitlistService.getWaitlistResponsesForEvent(eventId)
     }
 
@@ -156,19 +144,19 @@ class EventManagerService(
      */
     @Transactional
     fun promoteFromWaitlist(eventId: Long, managerEmail: String): RegistrationResponse {
-        checkEventOwnership(eventId, managerEmail)
+        authorizationService.requireEventOwnership(eventId, managerEmail)
 
         val promoted = waitlistService.promoteFromWaitlist(eventId)
             ?: throw BadRequestException("No one on waitlist or event is full")
 
-        evictRelatedCaches(promoted)
+        cacheEvictionService.evictRelatedCaches(promoted)
         return registrationMapper.toRegistrationResponse(promoted)
     }
 
     @Cacheable(value = ["eventRegistrations"], key = "#eventId")
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
-        checkEventOwnership(eventId, managerEmail)
+        authorizationService.requireEventOwnership(eventId, managerEmail)
 
         // Use specification instead of repository method
         val spec = RegistrationSpecifications.forEvent(eventId)
@@ -186,7 +174,7 @@ class EventManagerService(
         status: RegistrationStatus,
         managerEmail: String
     ): List<RegistrationResponse> {
-        checkEventOwnership(eventId, managerEmail)
+        authorizationService.requireEventOwnership(eventId, managerEmail)
 
         val spec = RegistrationSpecifications.forEvent(eventId)
             .and(RegistrationSpecifications.hasStatus(status))
@@ -201,8 +189,7 @@ class EventManagerService(
      */
     @Transactional(readOnly = true)
     fun getAllPendingRegistrations(managerEmail: String): List<RegistrationResponse> {
-        val manager = userRepository.findByEmail(managerEmail)
-            ?: throw ResourceNotFoundException("Manager", "email", managerEmail)
+        val manager = userRepository.findByEmailOrThrow(managerEmail)
 
         val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
             .and(RegistrationSpecifications.hasStatus(RegistrationStatus.PENDING))
@@ -217,10 +204,9 @@ class EventManagerService(
         newStatus: RegistrationStatus,
         managerEmail: String
     ): RegistrationResponse {
-        val registration = registrationRepository.findById(registrationId)
-            .orElseThrow { ResourceNotFoundException("Registration", "id", registrationId) }
+        val registration = registrationRepository.findByIdOrThrow(registrationId)
 
-        checkEventOwnership(registration.event.id, managerEmail)
+        authorizationService.requireEventOwnership(registration.event.id, managerEmail)
 
         if (newStatus !in listOf(RegistrationStatus.APPROVED, RegistrationStatus.REJECTED)) {
             throw BadRequestException("Invalid status.")
@@ -228,7 +214,7 @@ class EventManagerService(
 
         val oldStatus = registration.status
 
-        evictRelatedCaches(registration)
+        cacheEvictionService.evictRelatedCaches(registration)
 
         registration.status = newStatus
         val savedRegistration = registrationRepository.save(registration)
@@ -255,10 +241,5 @@ class EventManagerService(
         } catch (e: Exception) {
             logger.error("Failed to send registration status update message to RabbitMQ for registrationId: $registrationId", e)
         }
-    }
-
-    private fun evictRelatedCaches(registration: Registration) {
-        cacheManager.getCache("eventRegistrations")?.evict(registration.event.id)
-        cacheManager.getCache("userRegistrations")?.evict(registration.user.email)
     }
 }

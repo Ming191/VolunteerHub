@@ -6,11 +6,14 @@ import com.cs2.volunteer_hub.dto.EventCreationMessage
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
-import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.model.Event
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.EventRepository
+import com.cs2.volunteer_hub.repository.findByEmailOrThrow
+import com.cs2.volunteer_hub.repository.findByIdOrThrow
+import com.cs2.volunteer_hub.validation.EventDateValidator
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
@@ -33,6 +36,10 @@ class EventService(
     private val rabbitTemplate: RabbitTemplate,
     private val fileValidationService: FileValidationService,
     private val eventMapper: EventMapper,
+    private val eventCapacityService: EventCapacityService,
+    private val authorizationService: AuthorizationService,
+    private val cacheEvictionService: CacheEvictionService,
+    private val eventDateValidator: EventDateValidator,
     @field:Value($$"${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
     private val logger = LoggerFactory.getLogger(EventService::class.java)
@@ -40,18 +47,26 @@ class EventService(
     @CacheEvict(value = ["events"], allEntries = true)
     @Transactional
     fun createEvent(request: CreateEventRequest, creatorEmail: String, files: List<MultipartFile>?): EventResponse {
-        val creator = userRepository.findByEmail(creatorEmail)
-            ?: throw ResourceNotFoundException("User", "email", creatorEmail)
+        val creator = userRepository.findByEmailOrThrow(creatorEmail)
 
         files?.let { fileValidationService.validateFiles(it, maxFilesPerEvent) }
+
+        // Validate date range using centralized validator
+        eventDateValidator.validateEventDates(
+            request.eventDateTime,
+            request.endDateTime,
+            request.registrationDeadline
+        )
 
         val newEvent = Event(
             title = request.title,
             description = request.description,
             location = request.location,
             eventDateTime = request.eventDateTime,
+            endDateTime = request.endDateTime,
+            registrationDeadline = request.registrationDeadline,
             creator = creator,
-            isApproved = false,
+            status = EventStatus.PENDING,
             maxParticipants = request.maxParticipants,
             waitlistEnabled = request.waitlistEnabled
         )
@@ -86,7 +101,7 @@ class EventService(
     @Cacheable("events")
     @Transactional(readOnly = true)
     fun getAllApprovedEvents(): List<EventResponse> {
-        return eventRepository.findAllByIsApprovedTrueOrderByEventDateTimeAsc()
+        return eventRepository.findAllByStatusOrderByEventDateTimeAsc(EventStatus.PUBLISHED)
             .stream()
             .map(eventMapper::toEventResponse)
             .collect(Collectors.toList())
@@ -97,15 +112,14 @@ class EventService(
      */
     @Transactional(readOnly = true)
     fun getAllApprovedEvents(pageable: Pageable): Page<EventResponse> {
-        return eventRepository.findAllByIsApprovedTrueOrderByEventDateTimeAsc(pageable)
+        return eventRepository.findAllByStatusOrderByEventDateTimeAsc(EventStatus.PUBLISHED, pageable)
             .map(eventMapper::toEventResponse)
     }
 
     @Cacheable(value = ["event"], key = "#id")
     @Transactional(readOnly = true)
     fun getEventById(id: Long): EventResponse {
-        val event = eventRepository.findById(id)
-            .orElseThrow { ResourceNotFoundException("Event", "id", id) }
+        val event = eventRepository.findByIdOrThrow(id)
 
         if (!event.isApproved) {
             throw ResourceNotFoundException("Event", "id", id)
@@ -119,17 +133,29 @@ class EventService(
     ])
     @Transactional
     fun updateEvent(id: Long, request: UpdateEventRequest, currentUserEmail: String): EventResponse {
-        val event = eventRepository.findById(id)
-            .orElseThrow { ResourceNotFoundException("Event", "id", id) }
+        val event = authorizationService.requireEventOwnership(id, currentUserEmail)
 
-        if (event.creator.email != currentUserEmail) {
-            throw UnauthorizedAccessException("You do not have permission to edit this event.")
+        // Validate capacity changes
+        request.maxParticipants?.let {
+            eventCapacityService.validateCapacityChange(id, it)
         }
+
+        // Validate date changes using centralized validator
+        eventDateValidator.validateEventDatesForUpdate(
+            request.eventDateTime,
+            event.eventDateTime,
+            request.endDateTime,
+            event.endDateTime,
+            request.registrationDeadline,
+            event.registrationDeadline
+        )
 
         request.title?.let { event.title = it }
         request.description?.let { event.description = it }
         request.location?.let { event.location = it }
         request.eventDateTime?.let { event.eventDateTime = it }
+        request.endDateTime?.let { event.endDateTime = it }
+        request.registrationDeadline?.let { event.registrationDeadline = it }
         request.maxParticipants?.let { event.maxParticipants = it }
         request.waitlistEnabled?.let { event.waitlistEnabled = it }
 
@@ -144,12 +170,7 @@ class EventService(
     ])
     @Transactional
     fun deleteEvent(id: Long, currentUserEmail: String) {
-        val event = eventRepository.findById(id)
-            .orElseThrow { ResourceNotFoundException("Event", "id", id) }
-
-        if (event.creator.email != currentUserEmail) {
-            throw UnauthorizedAccessException("You do not have permission to delete this event.")
-        }
+        val event = authorizationService.requireEventOwnership(id, currentUserEmail)
 
         eventRepository.delete(event)
         logger.info("Deleted event ID: $id by user: $currentUserEmail")

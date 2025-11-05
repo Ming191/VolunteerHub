@@ -1,12 +1,13 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.*
-import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.mapper.CommentMapper
 import com.cs2.volunteer_hub.model.Comment
 import com.cs2.volunteer_hub.repository.CommentRepository
 import com.cs2.volunteer_hub.repository.PostRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.repository.findByEmailOrThrow
+import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.CommentSpecifications
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.Cacheable
@@ -20,21 +21,22 @@ class CommentService(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository,
     private val userRepository: UserRepository,
-    private val postService: PostService,
+    private val authorizationService: AuthorizationService,
+    private val cacheEvictionService: CacheEvictionService,
     private val cacheManager: CacheManager,
     private val notificationService: NotificationService,
     private val commentMapper: CommentMapper
 ) {
     @Transactional
     fun createComment(postId: Long, request: CommentRequest, userEmail: String): CommentResponse {
-        val author = userRepository.findByEmail(userEmail)!!
-        val post = postRepository.findById(postId)
-            .orElseThrow { ResourceNotFoundException("Post", "id", postId) }
+        val author = userRepository.findByEmailOrThrow(userEmail)
+        val post = postRepository.findByIdOrThrow(postId)
 
-        postService.checkPermissionToPost(post.event.id, author.id)
+        // Use centralized authorization service
+        authorizationService.requireEventPostPermission(post.event.id, author.id)
 
+        cacheEvictionService.evictPosts(post.event.id)
         cacheManager.getCache("comments")?.evict(postId)
-        cacheManager.getCache("posts")?.evict(post.event.id)
 
         val comment = Comment(
             content = request.content,
@@ -59,11 +61,11 @@ class CommentService(
     @Cacheable(value = ["comments"], key = "#postId")
     @Transactional(readOnly = true)
     fun getCommentsForPost(postId: Long, userEmail: String): List<CommentResponse> {
-        val user = userRepository.findByEmail(userEmail)!!
-        val post = postRepository.findById(postId)
-            .orElseThrow { ResourceNotFoundException("Post", "id", postId) }
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val post = postRepository.findByIdOrThrow(postId)
 
-        postService.checkPermissionToPost(post.event.id, user.id)
+        // Use centralized authorization service
+        authorizationService.requireEventPostPermission(post.event.id, user.id)
 
         return commentRepository.findAllByPostIdOrderByCreatedAtAsc(postId)
             .map(commentMapper::toCommentResponse)
@@ -109,11 +111,11 @@ class CommentService(
      */
     @Transactional(readOnly = true)
     fun getRecentCommentsForPost(postId: Long, since: LocalDateTime, userEmail: String): List<CommentResponse> {
-        val user = userRepository.findByEmail(userEmail)!!
-        val post = postRepository.findById(postId)
-            .orElseThrow { ResourceNotFoundException("Post", "id", postId) }
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val post = postRepository.findByIdOrThrow(postId)
 
-        postService.checkPermissionToPost(post.event.id, user.id)
+        // Use centralized authorization service
+        authorizationService.requireEventPostPermission(post.event.id, user.id)
 
         val spec = CommentSpecifications.forPost(postId)
             .and(CommentSpecifications.createdAfter(since))
@@ -128,11 +130,10 @@ class CommentService(
      */
     @Transactional(readOnly = true)
     fun searchCommentsInPost(postId: Long, searchText: String, userEmail: String): List<CommentResponse> {
-        val user = userRepository.findByEmail(userEmail)!!
-        val post = postRepository.findById(postId)
-            .orElseThrow { ResourceNotFoundException("Post", "id", postId) }
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val post = postRepository.findByIdOrThrow(postId)
 
-        postService.checkPermissionToPost(post.event.id, user.id)
+        authorizationService.requireEventPostPermission(post.event.id, user.id)
 
         val spec = CommentSpecifications.forPost(postId)
             .and(CommentSpecifications.contentContains(searchText))

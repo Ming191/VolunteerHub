@@ -8,6 +8,7 @@ import com.cs2.volunteer_hub.model.Notification
 import com.cs2.volunteer_hub.repository.FcmTokenRepository
 import com.cs2.volunteer_hub.repository.NotificationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.repository.findByEmailOrThrow
 import com.cs2.volunteer_hub.specification.NotificationSpecifications
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingException
@@ -34,7 +35,7 @@ class NotificationService(
 
     @Transactional(readOnly = true)
     fun getNotificationsForUser(userEmail: String): List<NotificationResponse> {
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
         return notificationRepository.findByRecipientIdOrderByCreatedAtDesc(user.id)
             .map(notificationMapper::toNotificationResponse)
     }
@@ -44,7 +45,7 @@ class NotificationService(
      */
     @Transactional(readOnly = true)
     fun getUnreadNotificationsForUser(userEmail: String): List<NotificationResponse> {
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
         val spec = NotificationSpecifications.unreadForUser(user.id)
 
         return notificationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
@@ -56,7 +57,7 @@ class NotificationService(
      */
     @Transactional(readOnly = true)
     fun getRecentNotifications(userEmail: String, days: Int): List<NotificationResponse> {
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
         val since = LocalDateTime.now().minusDays(days.toLong())
         val spec = NotificationSpecifications.recentForUser(user.id, since)
 
@@ -69,7 +70,7 @@ class NotificationService(
      */
     @Transactional(readOnly = true)
     fun searchNotifications(userEmail: String, searchText: String): List<NotificationResponse> {
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
         val spec = NotificationSpecifications.forUser(user.id)
             .and(NotificationSpecifications.contentContains(searchText))
 
@@ -86,7 +87,7 @@ class NotificationService(
         from: LocalDateTime,
         to: LocalDateTime
     ): List<NotificationResponse> {
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
         val spec = NotificationSpecifications.forUser(user.id)
             .and(NotificationSpecifications.createdAfter(from))
             .and(NotificationSpecifications.createdBefore(to))
@@ -264,11 +265,9 @@ class NotificationService(
      */
     @Transactional
     fun markNotificationAsRead(notificationId: Long, userEmail: String) {
-        val user = userRepository.findByEmail(userEmail)
-            ?: throw IllegalArgumentException("User not found")
-
+        val user = userRepository.findByEmailOrThrow(userEmail)
         val notification = notificationRepository.findById(notificationId)
-            .orElseThrow { IllegalArgumentException("Notification not found with id: $notificationId") }
+            .orElseThrow { IllegalArgumentException("Notification not found") }
 
         if (notification.recipient.id != user.id) {
             throw IllegalArgumentException("You don't have permission to mark this notification as read")
@@ -283,16 +282,14 @@ class NotificationService(
      * Mark all notifications as read for a user
      */
     @Transactional
-    fun markAllNotificationsAsRead(userEmail: String) {
-        val user = userRepository.findByEmail(userEmail)
-            ?: throw IllegalArgumentException("User not found")
-
-        val unreadNotifications = notificationRepository.findByRecipientIdOrderByCreatedAtDesc(user.id)
-            .filter { !it.isRead }
+    fun markAllAsRead(userEmail: String) {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val spec = NotificationSpecifications.unreadForUser(user.id)
+        val unreadNotifications = notificationRepository.findAll(spec)
 
         unreadNotifications.forEach { it.isRead = true }
         notificationRepository.saveAll(unreadNotifications)
-        logger.info("Marked ${unreadNotifications.size} notifications as read for user ${user.email}")
+        logger.info("Marked ${unreadNotifications.size} notifications as read for user ${user.id}")
     }
 
     /**
@@ -300,18 +297,15 @@ class NotificationService(
      */
     @Transactional
     fun deleteNotification(notificationId: Long, userEmail: String) {
-        val user = userRepository.findByEmail(userEmail)
-            ?: throw IllegalArgumentException("User not found")
-
+        val user = userRepository.findByEmailOrThrow(userEmail)
         val notification = notificationRepository.findById(notificationId)
-            .orElseThrow { IllegalArgumentException("Notification not found with id: $notificationId") }
+            .orElseThrow { IllegalArgumentException("Notification not found") }
 
         if (notification.recipient.id != user.id) {
             throw IllegalArgumentException("You don't have permission to delete this notification")
         }
 
         notificationRepository.delete(notification)
-        logger.info("Notification $notificationId deleted by user ${user.email}")
     }
 
     /**
@@ -319,9 +313,7 @@ class NotificationService(
      */
     @Transactional(readOnly = true)
     fun getUnreadNotificationCount(userEmail: String): Long {
-        val user = userRepository.findByEmail(userEmail)
-            ?: throw IllegalArgumentException("User not found")
-
+        val user = userRepository.findByEmailOrThrow(userEmail)
         return notificationRepository.countByRecipientIdAndIsReadFalse(user.id)
     }
 }
