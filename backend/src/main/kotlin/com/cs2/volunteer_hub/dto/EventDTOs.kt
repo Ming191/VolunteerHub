@@ -22,6 +22,13 @@ data class CreateEventRequest(
     @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val eventDateTime: LocalDateTime,
 
+    @field:Future(message = "Event end date and time must be in the future")
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    val endDateTime: LocalDateTime,
+
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    val registrationDeadline: LocalDateTime? = null,
+
     @field:Min(value = 1, message = "Maximum participants must be at least 1")
     val maxParticipants: Int? = null,
 
@@ -35,6 +42,10 @@ data class EventResponse(
     val location: String,
     @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val eventDateTime: LocalDateTime,
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    val endDateTime: LocalDateTime,
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    val registrationDeadline: LocalDateTime?,
     val isApproved: Boolean,
     val creatorName: String,
     val imageUrls: List<String>,
@@ -43,7 +54,8 @@ data class EventResponse(
     val approvedCount: Int,
     val waitlistCount: Int,
     val availableSpots: Int?,
-    val isFull: Boolean
+    val isFull: Boolean,
+    val isInProgress: Boolean
 )
 
 data class UpdateEventRequest(
@@ -57,6 +69,13 @@ data class UpdateEventRequest(
     @field:Future(message = "Event date and time must be in the future")
     @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val eventDateTime: LocalDateTime?,
+
+    @field:Future(message = "Event end date and time must be in the future")
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    val endDateTime: LocalDateTime?,
+
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    val registrationDeadline: LocalDateTime?,
 
     @field:Min(value = 1, message = "Maximum participants must be at least 1")
     val maxParticipants: Int?,

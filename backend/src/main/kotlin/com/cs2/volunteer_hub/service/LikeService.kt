@@ -5,7 +5,8 @@ import com.cs2.volunteer_hub.model.Like
 import com.cs2.volunteer_hub.repository.LikeRepository
 import com.cs2.volunteer_hub.repository.PostRepository
 import com.cs2.volunteer_hub.repository.UserRepository
-import org.springframework.cache.CacheManager
+import com.cs2.volunteer_hub.repository.findByEmailOrThrow
+import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,19 +15,15 @@ class LikeService(
     private val likeRepository: LikeRepository,
     val postRepository: PostRepository,
     private val userRepository: UserRepository,
-    private val postService: PostService,
-    private val cacheManager: CacheManager
+    private val authorizationService: AuthorizationService,
+    private val cacheEvictionService: CacheEvictionService
 ) {
     @Transactional
     fun toggleLike(postId: Long, userEmail: String): Boolean {
-        val user = userRepository.findByEmail(userEmail)!!
-        val post = postRepository.findById(postId)
-            .orElseThrow { ResourceNotFoundException("Post", "id", postId) }
-
-        postService.checkPermissionToPost(post.event.id, user.id)
-
-        cacheManager.getCache("posts")?.evict(post.event.id)
-
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val post = postRepository.findByIdOrThrow(postId)
+        authorizationService.requireEventPostPermission(post.event.id, user.id)
+        cacheEvictionService.evictPosts(post.event.id)
         val existingLike = likeRepository.findByUserIdAndPostId(user.id, post.id)
 
         return if (existingLike.isPresent) {

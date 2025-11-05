@@ -12,6 +12,7 @@ import com.cs2.volunteer_hub.model.FcmToken
 import com.cs2.volunteer_hub.repository.FcmTokenRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.repository.findByEmailOrThrow
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.annotation.CacheEvict
@@ -31,7 +32,7 @@ class MeService(
     private val rabbitTemplate: RabbitTemplate,
     private val tempFileService: TemporaryFileStorageService,
     private val fileValidationService: FileValidationService,
-    private val userMapper: UserMapper // Add UserMapper here
+    private val userMapper: UserMapper
 ) {
     private val logger = LoggerFactory.getLogger(MeService::class.java)
 
@@ -48,7 +49,7 @@ class MeService(
             fcmTokenRepository.delete(existingToken)
         }
 
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
         val userTokens = fcmTokenRepository.findAllByUserId(user.id)
         if (userTokens.none { it.token == token }) {
             val newFcmToken = FcmToken(token = token, user = user)
@@ -57,17 +58,14 @@ class MeService(
     }
 
     fun getMyProfile(userEmail: String): UserResponse {
-        val user = userRepository.findByEmail(userEmail)
-            ?: throw IllegalArgumentException("User not found")
-        
+        val user = userRepository.findByEmailOrThrow(userEmail)
         return userMapper.toUserResponse(user)
     }
 
     @Transactional
     @CacheEvict(value = ["userRegistrations"], key = "#userEmail")
     fun updateProfile(userEmail: String, request: UpdateProfileRequest): UserResponse {
-        val user = userRepository.findByEmail(userEmail)
-            ?: throw IllegalArgumentException("User not found")
+        val user = userRepository.findByEmailOrThrow(userEmail)
 
         request.name?.let { user.name = it }
         request.phoneNumber?.let { user.phoneNumber = it }
@@ -90,8 +88,7 @@ class MeService(
 
     @Transactional
     fun changePassword(userEmail: String, request: ChangePasswordRequest) {
-        val user = userRepository.findByEmail(userEmail)
-            ?: throw IllegalArgumentException("User not found")
+        val user = userRepository.findByEmailOrThrow(userEmail)
         if (!passwordEncoder.matches(request.currentPassword, user.passwordHash)) {
             throw IllegalArgumentException("Current password is incorrect")
         }
@@ -101,8 +98,7 @@ class MeService(
 
     @Transactional
     fun uploadProfilePicture(userEmail: String, file: MultipartFile): UserResponse {
-        val user = userRepository.findByEmail(userEmail)
-            ?: throw IllegalArgumentException("User not found")
+        val user = userRepository.findByEmailOrThrow(userEmail)
         fileValidationService.validateFiles(listOf(file), 1)
         val tempFilePath = tempFileService.save(file)
         logger.info("Saved profile picture to temporary storage: $tempFilePath for User ID: ${user.id}")

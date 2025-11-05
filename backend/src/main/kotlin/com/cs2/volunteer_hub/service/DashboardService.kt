@@ -4,12 +4,14 @@ import com.cs2.volunteer_hub.dto.AdminDashboardResponse
 import com.cs2.volunteer_hub.dto.OrganizerDashboardResponse
 import com.cs2.volunteer_hub.dto.VolunteerDashboardResponse
 import com.cs2.volunteer_hub.mapper.DashboardMapper
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.PostRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.repository.findByEmailOrThrow
 import com.cs2.volunteer_hub.specification.EventSpecifications
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.cache.annotation.Cacheable
@@ -30,7 +32,7 @@ class DashboardService(
     @Cacheable(value = ["volunteer_dashboard"], key = "#userEmail")
     @Transactional(readOnly = true)
     fun getVolunteerDashboard(userEmail: String): VolunteerDashboardResponse {
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
 
         // Get upcoming events for approved registrations
         val myUpcomingEvents = registrationRepository
@@ -45,7 +47,7 @@ class DashboardService(
 
         // Get newly approved events
         val newlyApprovedEvents = eventRepository
-            .findTop5ByIsApprovedTrueOrderByCreatedAtDesc()
+            .findTop5ByStatusOrderByCreatedAtDesc(EventStatus.PUBLISHED)
             .let { dashboardMapper.toDashboardEventItemList(it) }
 
         // Get trending events
@@ -79,7 +81,7 @@ class DashboardService(
     @Cacheable(value = ["organizer_dashboard"], key = "#userEmail")
     @Transactional(readOnly = true)
     fun getOrganizerDashboard(userEmail: String): OrganizerDashboardResponse {
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
 
         // Use Specification Pattern for pending registrations count
         val pendingRegistrationsSpec = RegistrationSpecifications.forEventsCreatedBy(user.id)

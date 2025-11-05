@@ -7,6 +7,7 @@ import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
+import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
@@ -22,7 +23,8 @@ class WaitlistService(
     private val registrationRepository: RegistrationRepository,
     private val eventRepository: EventRepository,
     private val registrationMapper: RegistrationMapper,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val eventCapacityService: EventCapacityService
 ) {
     private val logger = LoggerFactory.getLogger(WaitlistService::class.java)
 
@@ -79,11 +81,10 @@ class WaitlistService(
      */
     @Transactional
     fun promoteFromWaitlist(eventId: Long): Registration? {
-        val event = eventRepository.findById(eventId)
-            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
+        val event = eventRepository.findByIdOrThrow(eventId)
 
         // Check if event still has capacity
-        if (event.isFull()) {
+        if (eventCapacityService.isFull(eventId, event.maxParticipants)) {
             logger.warn("Cannot promote from waitlist - event $eventId is still full")
             return null
         }
@@ -168,10 +169,7 @@ class WaitlistService(
      */
     @Transactional(readOnly = true)
     fun shouldAddToWaitlist(eventId: Long): Boolean {
-        val event = eventRepository.findById(eventId)
-            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
-
-        return event.isFull() && event.waitlistEnabled
+        val event = eventRepository.findByIdOrThrow(eventId)
+        return eventCapacityService.isFull(eventId, event.maxParticipants) && event.waitlistEnabled
     }
 }
-

@@ -1,31 +1,45 @@
 package com.cs2.volunteer_hub.specification
 
 import com.cs2.volunteer_hub.model.Event
-import com.cs2.volunteer_hub.model.User
+import com.cs2.volunteer_hub.model.EventStatus
 import org.springframework.data.jpa.domain.Specification
 import java.time.LocalDateTime
 
 /**
  * Reusable query specifications for Event entity
- * Only includes commonly used specifications to avoid bloat
+ * Uses EventStatus for better type safety and flexibility
  */
 object EventSpecifications {
 
     /**
-     * Events that are approved
+     * Events with a specific status
      */
-    fun isApproved(): Specification<Event> {
+    fun hasStatus(status: EventStatus): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<Boolean>("isApproved"), true)
+            criteriaBuilder.equal(root.get<EventStatus>("status"), status)
         }
     }
 
     /**
-     * Events that are not approved (pending approval)
+     * Events that are published (visible to users)
+     */
+    fun isApproved(): Specification<Event> {
+        return hasStatus(EventStatus.PUBLISHED)
+    }
+
+    /**
+     * Events that are pending approval
      */
     fun isNotApproved(): Specification<Event> {
+        return hasStatus(EventStatus.PENDING)
+    }
+
+    /**
+     * Events that are not cancelled
+     */
+    fun isNotCancelled(): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<Boolean>("isApproved"), false)
+            criteriaBuilder.notEqual(root.get<EventStatus>("status"), EventStatus.CANCELLED)
         }
     }
 
@@ -34,13 +48,12 @@ object EventSpecifications {
      */
     fun hasCreator(creatorId: Long): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
-            val creatorJoin = root.join<Event, User>("creator")
-            criteriaBuilder.equal(creatorJoin.get<Long>("id"), creatorId)
+            criteriaBuilder.equal(root.get<Any>("creator").get<Long>("id"), creatorId)
         }
     }
 
     /**
-     * Events happening after a specific date/time
+     * Events happening after a specific date/time (by start time)
      */
     fun happeningAfter(dateTime: LocalDateTime): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
@@ -49,26 +62,26 @@ object EventSpecifications {
     }
 
     /**
-     * Events happening before a specific date/time
+     * Events ending before a specific date/time
      */
-    fun happeningBefore(dateTime: LocalDateTime): Specification<Event> {
+    fun endingBefore(dateTime: LocalDateTime): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.lessThanOrEqualTo(root.get("eventDateTime"), dateTime)
+            criteriaBuilder.lessThanOrEqualTo(root.get("endDateTime"), dateTime)
         }
     }
 
     /**
-     * Upcoming events (happening in the future)
+     * Upcoming events (starting in the future)
      */
     fun isUpcoming(): Specification<Event> {
         return happeningAfter(LocalDateTime.now())
     }
 
     /**
-     * Past events (already happened)
+     * Past events (already ended)
      */
     fun isPast(): Specification<Event> {
-        return happeningBefore(LocalDateTime.now())
+        return endingBefore(LocalDateTime.now())
     }
 
     /**

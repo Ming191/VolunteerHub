@@ -2,10 +2,13 @@ package com.cs2.volunteer_hub.mapper
 
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.model.Event
+import com.cs2.volunteer_hub.service.EventCapacityService
 import org.springframework.stereotype.Component
 
 @Component
-class EventMapper {
+class EventMapper(
+    private val eventCapacityService: EventCapacityService
+) {
     /**
      * Map Event entity to EventResponse DTO
      */
@@ -17,14 +20,17 @@ class EventMapper {
             description = event.description,
             location = event.location,
             eventDateTime = event.eventDateTime,
+            endDateTime = event.endDateTime,
+            registrationDeadline = event.registrationDeadline,
             isApproved = event.isApproved,
             creatorName = event.creator.name,
             maxParticipants = event.maxParticipants,
             waitlistEnabled = event.waitlistEnabled,
-            approvedCount = event.getApprovedCount(),
-            waitlistCount = event.getWaitlistCount(),
-            availableSpots = event.getAvailableSpots(),
-            isFull = event.isFull()
+            approvedCount = eventCapacityService.getApprovedCount(event.id),
+            waitlistCount = eventCapacityService.getWaitlistCount(event.id),
+            availableSpots = eventCapacityService.getAvailableSpots(event.id, event.maxParticipants),
+            isFull = eventCapacityService.isFull(event.id, event.maxParticipants),
+            isInProgress = event.isInProgress()
         )
     }
 
