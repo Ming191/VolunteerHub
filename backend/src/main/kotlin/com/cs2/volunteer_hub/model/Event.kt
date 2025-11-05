@@ -62,6 +62,12 @@ data class Event(
     @JsonBackReference
     val creator: User,
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "event_tags", joinColumns = [JoinColumn(name = "event_id")])
+    @Column(name = "tag")
+    @Enumerated(EnumType.STRING)
+    var tags: MutableSet<EventTag> = mutableSetOf(),
+
     @OneToMany(mappedBy = "event", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference("event-images")
     val images: MutableList<Image> = mutableListOf(),

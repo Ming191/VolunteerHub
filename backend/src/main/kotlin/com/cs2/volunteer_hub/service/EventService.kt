@@ -71,7 +71,8 @@ class EventService(
             creator = creator,
             status = EventStatus.PENDING,
             maxParticipants = request.maxParticipants,
-            waitlistEnabled = request.waitlistEnabled
+            waitlistEnabled = request.waitlistEnabled,
+            tags = request.tags?.toMutableSet() ?: mutableSetOf()
         )
 
         if (!files.isNullOrEmpty()) {
@@ -101,13 +102,6 @@ class EventService(
         return eventMapper.toEventResponse(savedEvent)
     }
 
-    @Cacheable("events")
-    @Transactional(readOnly = true)
-    fun getAllApprovedEvents(): List<EventResponse> {
-        val spec = EventSpecifications.isApproved()
-        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
-        return eventMapper.toEventResponseList(events)
-    }
 
     /**
      * Get all approved events with pagination support
@@ -172,6 +166,10 @@ class EventService(
         request.registrationDeadline?.let { event.registrationDeadline = it }
         request.maxParticipants?.let { event.maxParticipants = it }
         request.waitlistEnabled?.let { event.waitlistEnabled = it }
+        request.tags?.let {
+            event.tags.clear()
+            event.tags.addAll(it)
+        }
 
         val updatedEvent = eventRepository.save(event)
         logger.info("Updated event ID: $id by user: $currentUserEmail")
