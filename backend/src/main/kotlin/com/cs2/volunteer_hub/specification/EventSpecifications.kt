@@ -2,6 +2,8 @@ package com.cs2.volunteer_hub.specification
 
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.EventStatus
+import com.cs2.volunteer_hub.model.EventTag
+import jakarta.persistence.criteria.JoinType
 import org.springframework.data.jpa.domain.Specification
 import java.time.LocalDateTime
 
@@ -64,6 +66,19 @@ object EventSpecifications {
         }
     }
 
+    /**
+     * Filter events by location (case-insensitive partial match)
+     * Example: location="hanoi" matches "Hanoi", "123 Street, Hanoi", etc.
+     */
+    fun locationContains(location: String): Specification<Event> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.like(
+                criteriaBuilder.lower(root.get("location")),
+                "%${location.lowercase()}%"
+            )
+        }
+    }
+
     fun isInProgress(): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
             val now = LocalDateTime.now()
@@ -98,6 +113,53 @@ object EventSpecifications {
 
     fun pastPublishedEvents(): Specification<Event> {
         return isApproved().and(isPast())
+    }
+
+    /**
+     * Filter events that have ANY of the specified tags (OR logic)
+     * Example: tags=[OUTDOOR, VIRTUAL] returns events with either OUTDOOR OR VIRTUAL tag
+     */
+    fun hasAnyTag(tags: Set<EventTag>): Specification<Event> {
+        return Specification { root, _, criteriaBuilder ->
+            if (tags.isEmpty()) {
+                criteriaBuilder.conjunction() // Returns true (no filtering)
+            } else {
+                val tagsJoin = root.join<Event, EventTag>("tags", JoinType.LEFT)
+                tagsJoin.`in`(tags)
+            }
+        }
+    }
+
+    /**
+     * Filter events that have ALL of the specified tags (AND logic)
+     * Example: tags=[OUTDOOR, FAMILY_FRIENDLY] returns events with BOTH tags
+     * More restrictive than hasAnyTag
+     */
+    fun hasAllTags(tags: Set<EventTag>): Specification<Event> {
+        return Specification { root, query, criteriaBuilder ->
+            if (tags.isEmpty()) {
+                criteriaBuilder.conjunction() // Returns true (no filtering)
+            } else {
+                // For each required tag, create a subquery that checks if the event has it
+                val predicates = tags.map { tag ->
+                    val subquery = query.subquery(Long::class.java)
+                    val subRoot = subquery.from(Event::class.java)
+                    val subTagsJoin = subRoot.join<Event, EventTag>("tags", JoinType.INNER)
+
+                    subquery.select(criteriaBuilder.literal(1L))
+                        .where(
+                            criteriaBuilder.and(
+                                criteriaBuilder.equal(subRoot.get<Long>("id"), root.get<Long>("id")),
+                                criteriaBuilder.equal(subTagsJoin, tag)
+                            )
+                        )
+
+                    criteriaBuilder.exists(subquery)
+                }
+
+                criteriaBuilder.and(*predicates.toTypedArray())
+            }
+        }
     }
 
     /**

@@ -1,0 +1,113 @@
+package com.cs2.volunteer_hub.model
+
+enum class EventTag {
+    // Event Types
+    COMMUNITY_SERVICE,
+    FUNDRAISING,
+    WORKSHOP,
+    TRAINING,
+    CLEANUP,
+    FOOD_DISTRIBUTION,
+    BLOOD_DRIVE,
+    CHARITY_RUN,
+    CHARITY_WALK,
+    AUCTION,
+    GALA,
+    CONFERENCE,
+    SEMINAR,
+    WEBINAR,
+    TOWNHALL,
+
+    // Event Format
+    IN_PERSON,
+    VIRTUAL,
+    HYBRID,
+    OUTDOOR,
+    INDOOR,
+
+    // Event Properties
+    FAMILY_FRIENDLY,
+    WHEELCHAIR_ACCESSIBLE,
+    PETS_ALLOWED,
+    FREE_EVENT,
+    PAID_EVENT,
+    MEALS_PROVIDED,
+    TRANSPORTATION_PROVIDED,
+    PARKING_AVAILABLE,
+
+    // Activity Level
+    PHYSICAL_ACTIVITY,
+    LIGHT_ACTIVITY,
+    SEDENTARY,
+    SPORTS,
+    FITNESS,
+
+    // Audience
+    ALL_AGES,
+    YOUTH_FOCUSED,
+    TEENS_ONLY,
+    ADULTS_ONLY,
+    SENIORS_FOCUSED,
+    PROFESSIONALS,
+    STUDENTS,
+    FAMILIES,
+    WOMEN_ONLY,
+    MEN_ONLY,
+
+    // Frequency
+    ONE_TIME,
+    RECURRING,
+    WEEKLY,
+    MONTHLY,
+    ANNUAL,
+    ONGOING,
+
+    // Urgency & Priority
+    URGENT,
+    CRITICAL,
+    FEATURED,
+    POPULAR,
+    NEW,
+    LAST_CHANCE,
+
+    // Skills & Requirements
+    NO_EXPERIENCE_REQUIRED,
+    TRAINING_PROVIDED,
+    CERTIFICATION_REQUIRED,
+    BACKGROUND_CHECK_REQUIRED,
+    SPECIAL_SKILLS_NEEDED,
+    ORIENTATION_REQUIRED,
+
+    // Time Commitment
+    SHORT_TERM,
+    LONG_TERM,
+    FLEXIBLE_HOURS,
+    WEEKEND_ONLY,
+    WEEKDAY_ONLY,
+    EVENING,
+    MORNING,
+
+    // Impact Area
+    LOCAL_COMMUNITY,
+    REGIONAL,
+    NATIONAL,
+    INTERNATIONAL,
+    GRASSROOTS,
+
+    // Collaboration
+    CORPORATE_PARTNERSHIP,
+    TEAM_BUILDING,
+    GROUP_ACTIVITY,
+    SOLO_FRIENDLY,
+    NETWORKING,
+
+    // Special Categories
+    HOLIDAY_THEMED,
+    SEASONAL,
+    AWARENESS_CAMPAIGN,
+    ADVOCACY,
+    DIRECT_SERVICE,
+    ADMINISTRATIVE,
+    REMOTE_WORK
+}
+

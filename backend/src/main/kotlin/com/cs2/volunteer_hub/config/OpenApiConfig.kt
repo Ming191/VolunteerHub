@@ -40,7 +40,7 @@ class OpenApiConfig {
                         Most endpoints require JWT authentication. To use authenticated endpoints:
                         1. Register or login via `/api/auth/register` or `/api/auth/login`
                         2. Copy the JWT token from the response
-                        3. Click the "Authorize" button (🔒) at the top of this page
+                        3. Click the "Authorize" button at the top of this page
                         4. Enter: `Bearer <your-token>`
                         5. Click "Authorize"
                         
