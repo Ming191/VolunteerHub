@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import java.time.LocalDateTime
 
 @RestController
 @RequestMapping("/api/events")
@@ -154,6 +155,95 @@ class EventController(
         @RequestPart("files", required = false) files: List<MultipartFile>?,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<EventResponse> {
+        val event = eventService.createEvent(request, currentUser.username, files)
+        return ResponseEntity.status(HttpStatus.CREATED).body(event)
+    }
+
+    @Operation(
+        summary = "Create event (Form-friendly)",
+        description = """Create a new event using form parameters (requires EVENT_ORGANIZER role). 
+        This endpoint is more compatible with Swagger UI and form submissions. 
+        Event will be pending admin approval. Supports image uploads.
+        
+        For tags, use comma-separated values like: OUTDOOR,FAMILY_FRIENDLY,COMMUNITY_SERVICE"""
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/form", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PreAuthorize("hasRole('EVENT_ORGANIZER')")
+    fun createEventForm(
+        @Parameter(description = "Event title", required = true)
+        @RequestParam title: String,
+
+        @Parameter(description = "Event description", required = true)
+        @RequestParam description: String,
+
+        @Parameter(description = "Event location", required = true)
+        @RequestParam location: String,
+
+        @Parameter(description = "Event date and time (format: yyyy-MM-dd'T'HH:mm:ss)", required = true)
+        @RequestParam eventDateTime: String,
+
+        @Parameter(description = "Event end date and time (format: yyyy-MM-dd'T'HH:mm:ss)", required = true)
+        @RequestParam endDateTime: String,
+
+        @Parameter(description = "Registration deadline (format: yyyy-MM-dd'T'HH:mm:ss)")
+        @RequestParam(required = false) registrationDeadline: String?,
+
+        @Parameter(description = "Maximum participants (null = unlimited)")
+        @RequestParam(required = false) maxParticipants: Int?,
+
+        @Parameter(description = "Enable waitlist when full")
+        @RequestParam(defaultValue = "true") waitlistEnabled: Boolean,
+
+        @Parameter(description = "Event tags (comma-separated). Example: OUTDOOR,FAMILY_FRIENDLY")
+        @RequestParam(required = false) tags: String?,
+
+        @Parameter(description = "Optional event images")
+        @RequestPart("files", required = false) files: List<MultipartFile>?,
+
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<EventResponse> {
+        val eventDateTimeParsed = try {
+            LocalDateTime.parse(eventDateTime)
+        } catch (_: Exception) {
+            throw IllegalArgumentException("Invalid eventDateTime format. Use yyyy-MM-dd'T'HH:mm:ss")
+        }
+
+        val endDateTimeParsed = try {
+            LocalDateTime.parse(endDateTime)
+        } catch (_: Exception) {
+            throw IllegalArgumentException("Invalid endDateTime format. Use yyyy-MM-dd'T'HH:mm:ss")
+        }
+
+        val registrationDeadlineParsed = registrationDeadline?.let {
+            try {
+                LocalDateTime.parse(it)
+            } catch (_: Exception) {
+                throw IllegalArgumentException("Invalid registrationDeadline format. Use yyyy-MM-dd'T'HH:mm:ss")
+            }
+        }
+
+        val eventTags = tags?.split(",")?.mapNotNull { tagStr ->
+            try {
+                EventTag.valueOf(tagStr.trim().uppercase())
+            } catch (_: IllegalArgumentException) {
+                logger.warn("Invalid tag provided: $tagStr")
+                null
+            }
+        }?.toSet()
+
+        val request = CreateEventRequest(
+            title = title.trim(),
+            description = description.trim(),
+            location = location.trim(),
+            eventDateTime = eventDateTimeParsed,
+            endDateTime = endDateTimeParsed,
+            registrationDeadline = registrationDeadlineParsed,
+            maxParticipants = maxParticipants,
+            waitlistEnabled = waitlistEnabled,
+            tags = eventTags
+        )
+
         val event = eventService.createEvent(request, currentUser.username, files)
         return ResponseEntity.status(HttpStatus.CREATED).body(event)
     }
