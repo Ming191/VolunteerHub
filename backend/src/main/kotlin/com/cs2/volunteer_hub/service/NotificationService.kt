@@ -282,7 +282,7 @@ class NotificationService(
      * Mark all notifications as read for a user
      */
     @Transactional
-    fun markAllAsRead(userEmail: String) {
+    fun markAllNotificationsAsRead(userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
         val spec = NotificationSpecifications.unreadForUser(user.id)
         val unreadNotifications = notificationRepository.findAll(spec)

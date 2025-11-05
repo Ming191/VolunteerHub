@@ -1,12 +1,7 @@
 package com.cs2.volunteer_hub.service
 
-import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.model.Like
-import com.cs2.volunteer_hub.repository.LikeRepository
-import com.cs2.volunteer_hub.repository.PostRepository
-import com.cs2.volunteer_hub.repository.UserRepository
-import com.cs2.volunteer_hub.repository.findByEmailOrThrow
-import com.cs2.volunteer_hub.repository.findByIdOrThrow
+import com.cs2.volunteer_hub.repository.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

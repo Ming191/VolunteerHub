@@ -38,7 +38,6 @@ class EventService(
     private val eventMapper: EventMapper,
     private val eventCapacityService: EventCapacityService,
     private val authorizationService: AuthorizationService,
-    private val cacheEvictionService: CacheEvictionService,
     private val eventDateValidator: EventDateValidator,
     @field:Value($$"${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
