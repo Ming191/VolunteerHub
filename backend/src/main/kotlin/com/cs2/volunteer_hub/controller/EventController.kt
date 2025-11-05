@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.controller
 import com.cs2.volunteer_hub.dto.CreateEventRequest
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
+import com.cs2.volunteer_hub.model.EventTag
 import com.cs2.volunteer_hub.service.EventSearchService
 import com.cs2.volunteer_hub.service.EventService
 import io.swagger.v3.oas.annotations.Operation
@@ -66,34 +67,56 @@ class EventController(
 
     /**
      * Search approved events with optional filters
-     * Example: GET /api/events/search?q=volunteer&upcoming=true
+     * Example: GET /api/events/search?q=volunteer&upcoming=true&tags=OUTDOOR,FAMILY_FRIENDLY&matchAllTags=false
      */
     @Operation(
         summary = "Search events",
-        description = "Search approved events with optional filters. Can search by text (title, description, location) and filter for upcoming events only."
+        description = """Search approved events with multiple filters:
+        - Text search (title, description, location)
+        - Filter for upcoming events only
+        - Filter by tags (supports multiple tags)
+        - Choose AND/OR logic for tag matching
+        
+        Examples:
+        - /api/events/search?tags=OUTDOOR,VIRTUAL (events with OUTDOOR OR VIRTUAL)
+        - /api/events/search?tags=OUTDOOR,FAMILY_FRIENDLY&matchAllTags=true (events with BOTH tags)
+        - /api/events/search?q=volunteer&tags=COMMUNITY_SERVICE&upcoming=true
+        """
     )
     @GetMapping("/search")
     fun searchEvents(
         @Parameter(description = "Search text (max 100 characters)")
         @RequestParam(required = false) q: String?,
         @Parameter(description = "Only return upcoming events")
-        @RequestParam(defaultValue = "false") upcoming: Boolean
+        @RequestParam(defaultValue = "false") upcoming: Boolean,
+        @Parameter(description = "Filter by tags (comma-separated). Example: OUTDOOR,FAMILY_FRIENDLY,VIRTUAL")
+        @RequestParam(required = false) tags: List<String>?,
+        @Parameter(description = "If true, events must have ALL specified tags (AND logic). If false, events can have ANY tag (OR logic)")
+        @RequestParam(defaultValue = "false") matchAllTags: Boolean
     ): ResponseEntity<List<EventResponse>> {
         if (q != null) {
             val trimmed = q.trim()
             if (trimmed.length > 100) {
                 return ResponseEntity.badRequest().build()
             }
-            if (trimmed.isEmpty()) {
-                val events = if (upcoming) {
-                    eventSearchService.searchApprovedEvents(onlyUpcoming = true)
-                } else {
-                    eventService.getAllApprovedEvents()
-                }
-                return ResponseEntity.ok(events)
-            }
         }
-        val events = eventSearchService.searchApprovedEvents(searchText = q, onlyUpcoming = upcoming)
+
+        val eventTags = tags?.mapNotNull { tagStr ->
+            try {
+                EventTag.valueOf(tagStr.trim().uppercase())
+            } catch (_: IllegalArgumentException) {
+                logger.warn("Invalid tag provided: $tagStr")
+                null
+            }
+        }?.toSet()
+
+        val events = eventSearchService.searchApprovedEvents(
+            searchText = q?.trim()?.takeIf { it.isNotEmpty() },
+            onlyUpcoming = upcoming,
+            tags = eventTags,
+            matchAllTags = matchAllTags
+        )
+
         return ResponseEntity.ok(events)
     }
 

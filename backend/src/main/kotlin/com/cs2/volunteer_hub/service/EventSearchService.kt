@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.service
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.model.Event
+import com.cs2.volunteer_hub.model.EventTag
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.specification.EventSpecifications
 import org.springframework.data.domain.Sort
@@ -23,11 +24,18 @@ class EventSearchService(
     /**
      * Search approved events with optional filters
      * Example: Search upcoming events containing "volunteer" in Hanoi area
+     *
+     * @param searchText Text to search in title, description, location
+     * @param onlyUpcoming Filter for upcoming events only
+     * @param tags Set of tags to filter by
+     * @param matchAllTags If true, events must have ALL tags (AND). If false, events must have ANY tag (OR)
      */
     @Transactional(readOnly = true)
     fun searchApprovedEvents(
         searchText: String? = null,
-        onlyUpcoming: Boolean = false
+        onlyUpcoming: Boolean = false,
+        tags: Set<EventTag>? = null,
+        matchAllTags: Boolean = false
     ): List<EventResponse> {
         var spec: Specification<Event> = EventSpecifications.isApproved()
 
@@ -37,6 +45,15 @@ class EventSearchService(
 
         if (onlyUpcoming) {
             spec = spec.and(EventSpecifications.isUpcoming())
+        }
+
+        if (!tags.isNullOrEmpty()) {
+            val tagSpec = if (matchAllTags) {
+                EventSpecifications.hasAllTags(tags)
+            } else {
+                EventSpecifications.hasAnyTag(tags)
+            }
+            spec = spec.and(tagSpec)
         }
 
         val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
