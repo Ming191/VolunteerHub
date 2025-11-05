@@ -39,6 +39,38 @@ class EventCapacityService(
     }
 
     /**
+     * Batch get capacity stats for multiple events
+     * Solves N+1 query problem when mapping multiple events to DTOs
+     */
+    @Transactional(readOnly = true)
+    fun getCapacityStatsForEvents(eventIds: List<Long>): Map<Long, CapacityStats> {
+        if (eventIds.isEmpty()) return emptyMap()
+
+        val approvedCounts = eventRepository.countApprovedRegistrationsByEvents(eventIds)
+            .associate { map ->
+                (map["eventId"] as Long) to (map["count"] as Long).toInt()
+            }
+
+        val waitlistCounts = eventRepository.countWaitlistedRegistrationsByEvents(eventIds)
+            .associate { map ->
+                (map["eventId"] as Long) to (map["count"] as Long).toInt()
+            }
+
+        val pendingCounts = eventRepository.countPendingRegistrationsByEvents(eventIds)
+            .associate { map ->
+                (map["eventId"] as Long) to (map["count"] as Long).toInt()
+            }
+
+        return eventIds.associateWith { eventId ->
+            CapacityStats(
+                approvedCount = approvedCounts[eventId] ?: 0,
+                waitlistCount = waitlistCounts[eventId] ?: 0,
+                pendingCount = pendingCounts[eventId] ?: 0
+            )
+        }
+    }
+
+    /**
      * Check if event has reached maximum capacity
      */
     @Transactional(readOnly = true)
@@ -79,3 +111,12 @@ class EventCapacityService(
         }
     }
 }
+
+/**
+ * Data class holding capacity statistics for an event
+ */
+data class CapacityStats(
+    val approvedCount: Int,
+    val waitlistCount: Int,
+    val pendingCount: Int
+)

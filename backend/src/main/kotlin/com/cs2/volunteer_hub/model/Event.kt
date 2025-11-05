@@ -73,6 +73,26 @@ data class Event(
     @Column(nullable = false, updatable = false)
     var createdAt: LocalDateTime = LocalDateTime.now(),
 
+    @Column(nullable = false)
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
+
+    /**
+     * Reason provided by admin when rejecting event
+     */
+    @Column(length = 500)
+    var rejectionReason: String? = null,
+
+    /**
+     * Timestamp when event was cancelled
+     */
+    var cancelledAt: LocalDateTime? = null,
+
+    /**
+     * Reason for event cancellation
+     */
+    @Column(length = 500)
+    var cancelReason: String? = null,
+
     @Version
     var version: Long = 0
 ) {
@@ -81,6 +101,12 @@ data class Event(
         if (createdAt.year == 1970) {
             createdAt = LocalDateTime.now()
         }
+        updatedAt = LocalDateTime.now()
+    }
+
+    @PreUpdate
+    fun preUpdate() {
+        updatedAt = LocalDateTime.now()
     }
 
     /**
