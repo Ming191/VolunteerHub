@@ -65,4 +65,45 @@ class AdminController(private val adminService: AdminService) {
         val events = adminService.getPastEvents()
         return ResponseEntity.ok(events)
     }
+
+    /**
+     * Get upcoming published events
+     * Example: GET /api/admin/events/upcoming
+     */
+    @GetMapping("/events/upcoming")
+    fun getUpcomingEvents(): ResponseEntity<List<EventResponse>> {
+        val events = adminService.getUpcomingEvents()
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Get events currently in progress (started but not ended)
+     * Example: GET /api/admin/events/in-progress
+     */
+    @GetMapping("/events/in-progress")
+    fun getInProgressEvents(): ResponseEntity<List<EventResponse>> {
+        val events = adminService.getInProgressEvents()
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Get events currently accepting registrations
+     * Example: GET /api/admin/events/accepting-registrations
+     */
+    @GetMapping("/events/accepting-registrations")
+    fun getEventsAcceptingRegistrations(): ResponseEntity<List<EventResponse>> {
+        val events = adminService.getEventsAcceptingRegistrations()
+        return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Get all active (non-cancelled) events by a specific creator/organizer
+     * Useful for viewing an organizer's event portfolio
+     * Example: GET /api/admin/users/123/events
+     */
+    @GetMapping("/users/{userId}/events")
+    fun getActiveEventsByCreator(@PathVariable userId: Long): ResponseEntity<List<EventResponse>> {
+        val events = adminService.getActiveEventsByCreator(userId)
+        return ResponseEntity.ok(events)
+    }
 }

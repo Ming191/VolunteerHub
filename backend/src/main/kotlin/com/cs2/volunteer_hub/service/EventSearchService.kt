@@ -39,7 +39,7 @@ class EventSearchService(
             spec = spec.and(EventSpecifications.isUpcoming())
         }
 
-        return eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
-            .map(eventMapper::toEventResponse)
+        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+        return eventMapper.toEventResponseList(events)
     }
 }

@@ -134,6 +134,23 @@ class EventManagerController(
         return ResponseEntity.ok(registrations)
     }
 
+    /**
+     * Get all approved registrations across all events created by this manager
+     * Example: GET /api/manager/registrations/approved
+     */
+    @Operation(
+        summary = "Get all approved registrations",
+        description = "Retrieve all approved registrations across all events created by the current manager",
+        security = [SecurityRequirement(name = "bearerAuth")]
+    )
+    @GetMapping("/registrations/approved")
+    fun getAllApprovedRegistrations(
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<RegistrationResponse>> {
+        val registrations = eventManagerService.getAllApprovedRegistrations(currentUser.username)
+        return ResponseEntity.ok(registrations)
+    }
+
     @Operation(
         summary = "Update registration status",
         description = "Update the status of a specific registration",
@@ -221,5 +238,61 @@ class EventManagerController(
     ): ResponseEntity<RegistrationResponse> {
         val promoted = eventManagerService.promoteFromWaitlist(eventId, currentUser.username)
         return ResponseEntity.ok(promoted)
+    }
+
+    /**
+     * Get completed registrations for a specific event
+     * Example: GET /api/manager/events/1/registrations/completed
+     */
+    @Operation(
+        summary = "Get completed registrations",
+        description = "Retrieve all completed registrations for a specific event",
+        security = [SecurityRequirement(name = "bearerAuth")]
+    )
+    @GetMapping("/events/{eventId}/registrations/completed")
+    fun getCompletedRegistrations(
+        @Parameter(description = "Event ID", required = true)
+        @PathVariable eventId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<RegistrationResponse>> {
+        val registrations = eventManagerService.getCompletedRegistrations(eventId, currentUser.username)
+        return ResponseEntity.ok(registrations)
+    }
+
+    /**
+     * Get all completed registrations across all manager's events
+     * Useful for generating completion reports
+     * Example: GET /api/manager/registrations/completed
+     */
+    @Operation(
+        summary = "Get all completed registrations for manager",
+        description = "Retrieve all completed registrations across all events created by the current manager",
+        security = [SecurityRequirement(name = "bearerAuth")]
+    )
+    @GetMapping("/registrations/completed")
+    fun getAllCompletedRegistrations(
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<RegistrationResponse>> {
+        val registrations = eventManagerService.getAllCompletedRegistrationsForManager(currentUser.username)
+        return ResponseEntity.ok(registrations)
+    }
+
+    /**
+     * Get active registrations (approved + waitlisted) for an event
+     * Example: GET /api/manager/events/1/registrations/active
+     */
+    @Operation(
+        summary = "Get active registrations",
+        description = "Retrieve all active registrations (approved + waitlisted) for a specific event",
+        security = [SecurityRequirement(name = "bearerAuth")]
+    )
+    @GetMapping("/events/{eventId}/registrations/active")
+    fun getActiveRegistrations(
+        @Parameter(description = "Event ID", required = true)
+        @PathVariable eventId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<RegistrationResponse>> {
+        val registrations = eventManagerService.getActiveRegistrations(eventId, currentUser.username)
+        return ResponseEntity.ok(registrations)
     }
 }

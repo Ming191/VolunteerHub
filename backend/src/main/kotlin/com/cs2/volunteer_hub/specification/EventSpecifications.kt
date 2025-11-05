@@ -1,79 +1,58 @@
 package com.cs2.volunteer_hub.specification
 
 import com.cs2.volunteer_hub.model.Event
-import com.cs2.volunteer_hub.model.User
+import com.cs2.volunteer_hub.model.EventStatus
 import org.springframework.data.jpa.domain.Specification
 import java.time.LocalDateTime
 
-/**
- * Reusable query specifications for Event entity
- * Only includes commonly used specifications to avoid bloat
- */
 object EventSpecifications {
 
-    /**
-     * Events that are approved
-     */
+    fun hasStatus(status: EventStatus): Specification<Event> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.equal(root.get<EventStatus>("status"), status)
+        }
+    }
+
     fun isApproved(): Specification<Event> {
-        return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<Boolean>("isApproved"), true)
-        }
+        return hasStatus(EventStatus.PUBLISHED)
     }
 
-    /**
-     * Events that are not approved (pending approval)
-     */
     fun isNotApproved(): Specification<Event> {
+        return hasStatus(EventStatus.PENDING)
+    }
+
+    fun isNotCancelled(): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.equal(root.get<Boolean>("isApproved"), false)
+            criteriaBuilder.notEqual(root.get<EventStatus>("status"), EventStatus.CANCELLED)
         }
     }
 
-    /**
-     * Events created by a specific user
-     */
     fun hasCreator(creatorId: Long): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
-            val creatorJoin = root.join<Event, User>("creator")
-            criteriaBuilder.equal(creatorJoin.get<Long>("id"), creatorId)
+            criteriaBuilder.equal(root.get<Any>("creator").get<Long>("id"), creatorId)
         }
     }
 
-    /**
-     * Events happening after a specific date/time
-     */
     fun happeningAfter(dateTime: LocalDateTime): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
             criteriaBuilder.greaterThanOrEqualTo(root.get("eventDateTime"), dateTime)
         }
     }
 
-    /**
-     * Events happening before a specific date/time
-     */
-    fun happeningBefore(dateTime: LocalDateTime): Specification<Event> {
+    fun endingBefore(dateTime: LocalDateTime): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.lessThanOrEqualTo(root.get("eventDateTime"), dateTime)
+            criteriaBuilder.lessThanOrEqualTo(root.get("endDateTime"), dateTime)
         }
     }
 
-    /**
-     * Upcoming events (happening in the future)
-     */
     fun isUpcoming(): Specification<Event> {
         return happeningAfter(LocalDateTime.now())
     }
 
-    /**
-     * Past events (already happened)
-     */
     fun isPast(): Specification<Event> {
-        return happeningBefore(LocalDateTime.now())
+        return endingBefore(LocalDateTime.now())
     }
 
-    /**
-     * Events with title, description, or location containing search term (case-insensitive)
-     */
     fun searchText(searchTerm: String): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
             val searchPattern = "%${searchTerm.lowercase()}%"
@@ -83,5 +62,48 @@ object EventSpecifications {
                 criteriaBuilder.like(criteriaBuilder.lower(root.get("location")), searchPattern)
             )
         }
+    }
+
+    fun isInProgress(): Specification<Event> {
+        return Specification { root, _, criteriaBuilder ->
+            val now = LocalDateTime.now()
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get<EventStatus>("status"), EventStatus.PUBLISHED),
+                criteriaBuilder.lessThan(root.get("eventDateTime"), now),
+                criteriaBuilder.greaterThan(root.get("endDateTime"), now)
+            )
+        }
+    }
+
+    fun registrationOpen(): Specification<Event> {
+        return Specification { root, _, criteriaBuilder ->
+            val now = LocalDateTime.now()
+            val deadline = root.get<LocalDateTime?>("registrationDeadline")
+            val eventStart = root.get<LocalDateTime>("eventDateTime")
+
+            criteriaBuilder.and(
+                criteriaBuilder.equal(root.get<EventStatus>("status"), EventStatus.PUBLISHED),
+                criteriaBuilder.greaterThan(eventStart, now),
+                criteriaBuilder.or(
+                    criteriaBuilder.isNull(deadline),
+                    criteriaBuilder.greaterThan(deadline, now)
+                )
+            )
+        }
+    }
+
+    fun upcomingPublishedEvents(): Specification<Event> {
+        return isApproved().and(isUpcoming())
+    }
+
+    fun pastPublishedEvents(): Specification<Event> {
+        return isApproved().and(isPast())
+    }
+
+    /**
+     * Events created by a specific user that are not cancelled
+     */
+    fun activeEventsByCreator(creatorId: Long): Specification<Event> {
+        return hasCreator(creatorId).and(isNotCancelled())
     }
 }

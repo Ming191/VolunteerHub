@@ -5,10 +5,14 @@ import com.cs2.volunteer_hub.model.Post
 import org.springframework.data.jpa.domain.Specification
 import java.time.LocalDateTime
 
-/**
- * Reusable query specifications for Post entity
- */
 object PostSpecifications {
+
+    fun forEvent(eventId: Long): Specification<Post> {
+        return Specification { root, _, criteriaBuilder ->
+            val eventJoin = root.join<Post, Event>("event")
+            criteriaBuilder.equal(eventJoin.get<Long>("id"), eventId)
+        }
+    }
 
     fun forEvents(eventIds: List<Long>): Specification<Post> {
         return Specification { root, _, _ ->
@@ -22,4 +26,5 @@ object PostSpecifications {
             criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), dateTime)
         }
     }
-}
+
+    }

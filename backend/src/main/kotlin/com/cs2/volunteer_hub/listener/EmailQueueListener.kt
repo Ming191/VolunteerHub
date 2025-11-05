@@ -1,9 +1,7 @@
 package com.cs2.volunteer_hub.listener
 
 import com.cs2.volunteer_hub.config.RabbitMQConfig
-import com.cs2.volunteer_hub.dto.EmailMessage
-import com.cs2.volunteer_hub.dto.VerificationEmailMessage
-import com.cs2.volunteer_hub.dto.WelcomeEmailMessage
+import com.cs2.volunteer_hub.dto.*
 import com.cs2.volunteer_hub.service.EmailService
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.annotation.RabbitListener
@@ -35,6 +33,22 @@ class EmailQueueListener(
                     emailService.sendWelcomeEmail(message.to, message.name)
                     logger.info("Welcome email sent successfully to: ${message.to}")
                 }
+                is EventApprovedEmailMessage -> {
+                    emailService.sendEventApprovedEmail(message.to, message.name, message.eventTitle, message.eventId)
+                    logger.info("Event approved email sent successfully to: ${message.to}")
+                }
+                is EventRejectedEmailMessage -> {
+                    emailService.sendEventRejectedEmail(message.to, message.name, message.eventTitle, message.reason)
+                    logger.info("Event rejected email sent successfully to: ${message.to}")
+                }
+                is EventCancelledEmailMessage -> {
+                    emailService.sendEventCancelledEmail(message.to, message.name, message.eventTitle, message.cancelReason)
+                    logger.info("Event cancelled email sent successfully to: ${message.to}")
+                }
+                is RegistrationStatusEmailMessage -> {
+                    emailService.sendRegistrationStatusEmail(message.to, message.name, message.eventTitle, message.status)
+                    logger.info("Registration status email sent successfully to: ${message.to}")
+                }
             }
         } catch (e: Exception) {
             logger.error("Failed to send email to ${message.to}: ${e.message}", e)
@@ -49,4 +63,3 @@ class EmailQueueListener(
         }
     }
 }
-

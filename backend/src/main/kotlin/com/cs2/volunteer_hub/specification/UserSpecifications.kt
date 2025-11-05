@@ -5,32 +5,11 @@ import com.cs2.volunteer_hub.model.User
 import org.springframework.data.jpa.domain.Specification
 import java.time.LocalDateTime
 
-/**
- * Reusable query specifications for User entity
- */
 object UserSpecifications {
 
     fun hasRole(role: Role): Specification<User> {
         return Specification { root, _, criteriaBuilder ->
             criteriaBuilder.equal(root.get<Role>("role"), role)
-        }
-    }
-
-    fun emailContains(email: String): Specification<User> {
-        return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.like(
-                criteriaBuilder.lower(root.get("email")),
-                "%${email.lowercase()}%"
-            )
-        }
-    }
-
-    fun nameContains(name: String): Specification<User> {
-        return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.like(
-                criteriaBuilder.lower(root.get("name")),
-                "%${name.lowercase()}%"
-            )
         }
     }
 
@@ -67,19 +46,6 @@ object UserSpecifications {
         }
     }
 
-    fun phoneNumberContains(phoneNumber: String): Specification<User> {
-        return Specification { root, _, criteriaBuilder ->
-            criteriaBuilder.like(
-                root.get("phoneNumber"),
-                "%$phoneNumber%"
-            )
-        }
-    }
-
-    /**
-     * Search across multiple text fields (name, email, phone)
-     * Useful for general user search
-     */
     fun searchByText(searchText: String): Specification<User> {
         return Specification { root, _, criteriaBuilder ->
             val searchPattern = "%${searchText.lowercase()}%"
@@ -91,4 +57,3 @@ object UserSpecifications {
         }
     }
 }
-

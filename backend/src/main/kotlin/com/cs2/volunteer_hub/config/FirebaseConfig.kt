@@ -11,7 +11,7 @@ import org.springframework.core.io.Resource
 @Configuration
 class FirebaseConfig {
 
-    @Value("\${fcm.credentials.path}")
+    @Value($$"${fcm.credentials.path}")
     private lateinit var credentialsPath: Resource
 
     @PostConstruct
