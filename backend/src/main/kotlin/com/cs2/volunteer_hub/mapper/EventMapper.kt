@@ -35,7 +35,8 @@ class EventMapper(
             waitlistCount = waitlistCount,
             availableSpots = eventCapacityService.getAvailableSpots(event.id, event.maxParticipants),
             isFull = event.maxParticipants?.let { approvedCount >= it } ?: false,
-            isInProgress = event.isInProgress()
+            isInProgress = event.isInProgress(),
+            tags = event.tags.toSet()
         )
     }
 
@@ -71,7 +72,8 @@ class EventMapper(
                 waitlistCount = stats.waitlistCount,
                 availableSpots = event.maxParticipants?.let { it - stats.approvedCount },
                 isFull = event.maxParticipants?.let { stats.approvedCount >= it } ?: false,
-                isInProgress = event.isInProgress()
+                isInProgress = event.isInProgress(),
+                tags = event.tags.toSet()
             )
         }
     }

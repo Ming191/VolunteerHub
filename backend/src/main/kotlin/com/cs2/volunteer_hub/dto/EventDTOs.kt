@@ -1,5 +1,6 @@
 package com.cs2.volunteer_hub.dto
 
+import com.cs2.volunteer_hub.model.EventTag
 import com.fasterxml.jackson.annotation.JsonFormat
 import jakarta.validation.constraints.Future
 import jakarta.validation.constraints.Min
@@ -32,7 +33,10 @@ data class CreateEventRequest(
     @field:Min(value = 1, message = "Maximum participants must be at least 1")
     val maxParticipants: Int? = null,
 
-    val waitlistEnabled: Boolean = true
+    val waitlistEnabled: Boolean = true,
+
+    @field:Size(max = 15, message = "Maximum 15 tags allowed per event")
+    val tags: Set<EventTag>? = null
 )
 
 data class EventResponse(
@@ -56,7 +60,8 @@ data class EventResponse(
     val waitlistCount: Int,
     val availableSpots: Int?,
     val isFull: Boolean,
-    val isInProgress: Boolean
+    val isInProgress: Boolean,
+    val tags: Set<EventTag>
 )
 
 data class UpdateEventRequest(
@@ -81,5 +86,8 @@ data class UpdateEventRequest(
     @field:Min(value = 1, message = "Maximum participants must be at least 1")
     val maxParticipants: Int?,
 
-    val waitlistEnabled: Boolean?
+    val waitlistEnabled: Boolean?,
+
+    @field:Size(max = 15, message = "Maximum 15 tags allowed per event")
+    val tags: Set<EventTag>?
 )

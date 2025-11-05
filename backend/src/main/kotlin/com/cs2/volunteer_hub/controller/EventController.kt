@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.controller
 import com.cs2.volunteer_hub.dto.CreateEventRequest
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
+import com.cs2.volunteer_hub.model.EventTag
 import com.cs2.volunteer_hub.service.EventSearchService
 import com.cs2.volunteer_hub.service.EventService
 import io.swagger.v3.oas.annotations.Operation
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import java.time.LocalDateTime
 
 @RestController
 @RequestMapping("/api/events")
@@ -66,34 +68,66 @@ class EventController(
 
     /**
      * Search approved events with optional filters
-     * Example: GET /api/events/search?q=volunteer&upcoming=true
+     * Example: GET /api/events/search?q=volunteer&upcoming=true&tags=OUTDOOR,FAMILY_FRIENDLY&location=hanoi&matchAllTags=false
      */
     @Operation(
         summary = "Search events",
-        description = "Search approved events with optional filters. Can search by text (title, description, location) and filter for upcoming events only."
+        description = """Search approved events with multiple filters:
+        - Text search (title, description, location)
+        - Filter for upcoming events only
+        - Filter by specific location
+        - Filter by tags (supports multiple tags)
+        - Choose AND/OR logic for tag matching
+        
+        Examples:
+        - /api/events/search?location=hanoi (events in Hanoi)
+        - /api/events/search?location=hanoi&tags=OUTDOOR (outdoor events in Hanoi)
+        - /api/events/search?tags=OUTDOOR,VIRTUAL (events with OUTDOOR OR VIRTUAL)
+        - /api/events/search?tags=OUTDOOR,FAMILY_FRIENDLY&matchAllTags=true (events with BOTH tags)
+        - /api/events/search?q=volunteer&location=community%20center&tags=COMMUNITY_SERVICE&upcoming=true
+        """
     )
     @GetMapping("/search")
     fun searchEvents(
         @Parameter(description = "Search text (max 100 characters)")
         @RequestParam(required = false) q: String?,
         @Parameter(description = "Only return upcoming events")
-        @RequestParam(defaultValue = "false") upcoming: Boolean
+        @RequestParam(defaultValue = "false") upcoming: Boolean,
+        @Parameter(description = "Filter by location (case-insensitive partial match). Example: hanoi, community center")
+        @RequestParam(required = false) location: String?,
+        @Parameter(description = "Filter by tags (comma-separated). Example: OUTDOOR,FAMILY_FRIENDLY,VIRTUAL")
+        @RequestParam(required = false) tags: List<String>?,
+        @Parameter(description = "If true, events must have ALL specified tags (AND logic). If false, events can have ANY tag (OR logic)")
+        @RequestParam(defaultValue = "false") matchAllTags: Boolean
     ): ResponseEntity<List<EventResponse>> {
         if (q != null) {
             val trimmed = q.trim()
             if (trimmed.length > 100) {
                 return ResponseEntity.badRequest().build()
             }
-            if (trimmed.isEmpty()) {
-                val events = if (upcoming) {
-                    eventSearchService.searchApprovedEvents(onlyUpcoming = true)
-                } else {
-                    eventService.getAllApprovedEvents()
-                }
-                return ResponseEntity.ok(events)
-            }
         }
-        val events = eventSearchService.searchApprovedEvents(searchText = q, onlyUpcoming = upcoming)
+
+        if (location != null && location.trim().length > 200) {
+            return ResponseEntity.badRequest().build()
+        }
+
+        val eventTags = tags?.mapNotNull { tagStr ->
+            try {
+                EventTag.valueOf(tagStr.trim().uppercase())
+            } catch (_: IllegalArgumentException) {
+                logger.warn("Invalid tag provided: $tagStr")
+                null
+            }
+        }?.toSet()
+
+        val events = eventSearchService.searchApprovedEvents(
+            searchText = q?.trim()?.takeIf { it.isNotEmpty() },
+            onlyUpcoming = upcoming,
+            location = location?.trim()?.takeIf { it.isNotEmpty() },
+            tags = eventTags,
+            matchAllTags = matchAllTags
+        )
+
         return ResponseEntity.ok(events)
     }
 
@@ -121,6 +155,95 @@ class EventController(
         @RequestPart("files", required = false) files: List<MultipartFile>?,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<EventResponse> {
+        val event = eventService.createEvent(request, currentUser.username, files)
+        return ResponseEntity.status(HttpStatus.CREATED).body(event)
+    }
+
+    @Operation(
+        summary = "Create event (Form-friendly)",
+        description = """Create a new event using form parameters (requires EVENT_ORGANIZER role). 
+        This endpoint is more compatible with Swagger UI and form submissions. 
+        Event will be pending admin approval. Supports image uploads.
+        
+        For tags, use comma-separated values like: OUTDOOR,FAMILY_FRIENDLY,COMMUNITY_SERVICE"""
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/form", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    @PreAuthorize("hasRole('EVENT_ORGANIZER')")
+    fun createEventForm(
+        @Parameter(description = "Event title", required = true)
+        @RequestParam title: String,
+
+        @Parameter(description = "Event description", required = true)
+        @RequestParam description: String,
+
+        @Parameter(description = "Event location", required = true)
+        @RequestParam location: String,
+
+        @Parameter(description = "Event date and time (format: yyyy-MM-dd'T'HH:mm:ss)", required = true)
+        @RequestParam eventDateTime: String,
+
+        @Parameter(description = "Event end date and time (format: yyyy-MM-dd'T'HH:mm:ss)", required = true)
+        @RequestParam endDateTime: String,
+
+        @Parameter(description = "Registration deadline (format: yyyy-MM-dd'T'HH:mm:ss)")
+        @RequestParam(required = false) registrationDeadline: String?,
+
+        @Parameter(description = "Maximum participants (null = unlimited)")
+        @RequestParam(required = false) maxParticipants: Int?,
+
+        @Parameter(description = "Enable waitlist when full")
+        @RequestParam(defaultValue = "true") waitlistEnabled: Boolean,
+
+        @Parameter(description = "Event tags (comma-separated). Example: OUTDOOR,FAMILY_FRIENDLY")
+        @RequestParam(required = false) tags: String?,
+
+        @Parameter(description = "Optional event images")
+        @RequestPart("files", required = false) files: List<MultipartFile>?,
+
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<EventResponse> {
+        val eventDateTimeParsed = try {
+            LocalDateTime.parse(eventDateTime)
+        } catch (_: Exception) {
+            throw IllegalArgumentException("Invalid eventDateTime format. Use yyyy-MM-dd'T'HH:mm:ss")
+        }
+
+        val endDateTimeParsed = try {
+            LocalDateTime.parse(endDateTime)
+        } catch (_: Exception) {
+            throw IllegalArgumentException("Invalid endDateTime format. Use yyyy-MM-dd'T'HH:mm:ss")
+        }
+
+        val registrationDeadlineParsed = registrationDeadline?.let {
+            try {
+                LocalDateTime.parse(it)
+            } catch (_: Exception) {
+                throw IllegalArgumentException("Invalid registrationDeadline format. Use yyyy-MM-dd'T'HH:mm:ss")
+            }
+        }
+
+        val eventTags = tags?.split(",")?.mapNotNull { tagStr ->
+            try {
+                EventTag.valueOf(tagStr.trim().uppercase())
+            } catch (_: IllegalArgumentException) {
+                logger.warn("Invalid tag provided: $tagStr")
+                null
+            }
+        }?.toSet()
+
+        val request = CreateEventRequest(
+            title = title.trim(),
+            description = description.trim(),
+            location = location.trim(),
+            eventDateTime = eventDateTimeParsed,
+            endDateTime = endDateTimeParsed,
+            registrationDeadline = registrationDeadlineParsed,
+            maxParticipants = maxParticipants,
+            waitlistEnabled = waitlistEnabled,
+            tags = eventTags
+        )
+
         val event = eventService.createEvent(request, currentUser.username, files)
         return ResponseEntity.status(HttpStatus.CREATED).body(event)
     }

@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.controller
 
 import com.cs2.volunteer_hub.model.Interest
 import com.cs2.volunteer_hub.model.Skill
+import com.cs2.volunteer_hub.model.EventTag
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
@@ -168,6 +169,101 @@ class EnumController {
 
         return ResponseEntity.ok(grouped)
     }
+
+    @Operation(
+        summary = "Get all available event tags",
+        description = "Returns all event tag enum values that can be applied to events"
+    )
+    @GetMapping("/event-tags", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getEventTags(): ResponseEntity<List<EventTagInfo>> {
+        val tags = EventTag.entries.map { tag ->
+            EventTagInfo(
+                value = tag.name,
+                label = tag.name.replace('_', ' ').lowercase()
+                    .split(' ')
+                    .joinToString(" ") { word ->
+                        word.replaceFirstChar { it.uppercase() }
+                    }
+            )
+        }.sortedBy { it.label }
+
+        return ResponseEntity.ok(tags)
+    }
+
+    @Operation(
+        summary = "Get event tags grouped by category",
+        description = "Returns event tags organized by their functional categories"
+    )
+    @GetMapping("/event-tags/grouped", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getEventTagsGrouped(): ResponseEntity<Map<String, List<EventTagInfo>>> {
+        val grouped = mapOf(
+            "Event Types" to listOf(
+                EventTag.COMMUNITY_SERVICE, EventTag.FUNDRAISING, EventTag.WORKSHOP,
+                EventTag.TRAINING, EventTag.CLEANUP, EventTag.FOOD_DISTRIBUTION,
+                EventTag.BLOOD_DRIVE, EventTag.CHARITY_RUN, EventTag.CHARITY_WALK,
+                EventTag.AUCTION, EventTag.GALA, EventTag.CONFERENCE, EventTag.SEMINAR,
+                EventTag.WEBINAR, EventTag.TOWNHALL
+            ),
+            "Event Format" to listOf(
+                EventTag.IN_PERSON, EventTag.VIRTUAL, EventTag.HYBRID,
+                EventTag.OUTDOOR, EventTag.INDOOR
+            ),
+            "Event Properties" to listOf(
+                EventTag.FAMILY_FRIENDLY, EventTag.WHEELCHAIR_ACCESSIBLE, EventTag.PETS_ALLOWED,
+                EventTag.FREE_EVENT, EventTag.PAID_EVENT, EventTag.MEALS_PROVIDED,
+                EventTag.TRANSPORTATION_PROVIDED, EventTag.PARKING_AVAILABLE
+            ),
+            "Activity Level" to listOf(
+                EventTag.PHYSICAL_ACTIVITY, EventTag.LIGHT_ACTIVITY, EventTag.SEDENTARY,
+                EventTag.SPORTS, EventTag.FITNESS
+            ),
+            "Audience" to listOf(
+                EventTag.ALL_AGES, EventTag.YOUTH_FOCUSED, EventTag.TEENS_ONLY,
+                EventTag.ADULTS_ONLY, EventTag.SENIORS_FOCUSED, EventTag.PROFESSIONALS,
+                EventTag.STUDENTS, EventTag.FAMILIES, EventTag.WOMEN_ONLY, EventTag.MEN_ONLY
+            ),
+            "Frequency" to listOf(
+                EventTag.ONE_TIME, EventTag.RECURRING, EventTag.WEEKLY,
+                EventTag.MONTHLY, EventTag.ANNUAL, EventTag.ONGOING
+            ),
+            "Urgency & Priority" to listOf(
+                EventTag.URGENT, EventTag.CRITICAL, EventTag.FEATURED,
+                EventTag.POPULAR, EventTag.NEW, EventTag.LAST_CHANCE
+            ),
+            "Skills & Requirements" to listOf(
+                EventTag.NO_EXPERIENCE_REQUIRED, EventTag.TRAINING_PROVIDED,
+                EventTag.CERTIFICATION_REQUIRED, EventTag.BACKGROUND_CHECK_REQUIRED,
+                EventTag.SPECIAL_SKILLS_NEEDED, EventTag.ORIENTATION_REQUIRED
+            ),
+            "Time Commitment" to listOf(
+                EventTag.SHORT_TERM, EventTag.LONG_TERM, EventTag.FLEXIBLE_HOURS,
+                EventTag.WEEKEND_ONLY, EventTag.WEEKDAY_ONLY, EventTag.EVENING, EventTag.MORNING
+            ),
+            "Impact Area" to listOf(
+                EventTag.LOCAL_COMMUNITY, EventTag.REGIONAL, EventTag.NATIONAL,
+                EventTag.INTERNATIONAL, EventTag.GRASSROOTS
+            ),
+            "Collaboration" to listOf(
+                EventTag.CORPORATE_PARTNERSHIP, EventTag.TEAM_BUILDING,
+                EventTag.GROUP_ACTIVITY, EventTag.SOLO_FRIENDLY, EventTag.NETWORKING
+            ),
+            "Special Categories" to listOf(
+                EventTag.HOLIDAY_THEMED, EventTag.SEASONAL, EventTag.AWARENESS_CAMPAIGN,
+                EventTag.ADVOCACY, EventTag.DIRECT_SERVICE, EventTag.ADMINISTRATIVE, EventTag.REMOTE_WORK
+            )
+        ).mapValues { (_, tags) ->
+            tags.map { tag ->
+                EventTagInfo(
+                    value = tag.name,
+                    label = tag.name.replace('_', ' ').lowercase()
+                        .split(' ')
+                        .joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+                )
+            }
+        }
+
+        return ResponseEntity.ok(grouped)
+    }
 }
 
 data class SkillInfo(
@@ -180,3 +276,7 @@ data class InterestInfo(
     val label: String
 )
 
+data class EventTagInfo(
+    val value: String,
+    val label: String
+)
