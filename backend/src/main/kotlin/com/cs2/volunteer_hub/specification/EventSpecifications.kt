@@ -66,6 +66,19 @@ object EventSpecifications {
         }
     }
 
+    /**
+     * Filter events by location (case-insensitive partial match)
+     * Example: location="hanoi" matches "Hanoi", "123 Street, Hanoi", etc.
+     */
+    fun locationContains(location: String): Specification<Event> {
+        return Specification { root, _, criteriaBuilder ->
+            criteriaBuilder.like(
+                criteriaBuilder.lower(root.get("location")),
+                "%${location.lowercase()}%"
+            )
+        }
+    }
+
     fun isInProgress(): Specification<Event> {
         return Specification { root, _, criteriaBuilder ->
             val now = LocalDateTime.now()
