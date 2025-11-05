@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface PostRepository : JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
-    fun findAllByEventIdOrderByCreatedAtDesc(eventId: Long): List<Post>
 
     @Query("""
         SELECT p FROM Post p 

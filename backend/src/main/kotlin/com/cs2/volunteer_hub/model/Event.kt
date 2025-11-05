@@ -10,10 +10,11 @@ import java.time.LocalDateTime
 @Table(
     name = "events",
     indexes = [
-        Index(name = "idx_events_approved_datetime", columnList = "is_approved, event_date_time"),
+        Index(name = "idx_events_status_datetime", columnList = "status, event_date_time"),
         Index(name = "idx_events_creator_id", columnList = "creator_id"),
-        Index(name = "idx_events_creator_approved", columnList = "creator_id, is_approved"),
-        Index(name = "idx_events_created_at", columnList = "created_at")
+        Index(name = "idx_events_creator_status", columnList = "creator_id, status"),
+        Index(name = "idx_events_created_at", columnList = "created_at"),
+        Index(name = "idx_events_end_datetime", columnList = "end_date_time")
     ]
 )
 data class Event(
@@ -31,7 +32,18 @@ data class Event(
     @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     var eventDateTime: LocalDateTime,
 
-    var isApproved: Boolean = false,
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    var endDateTime: LocalDateTime,
+
+    /**
+     * Deadline for registrations (null = can register until event starts)
+     */
+    @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    var registrationDeadline: LocalDateTime? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var status: EventStatus = EventStatus.PENDING,
 
     /**
      * Maximum number of participants allowed for this event
@@ -50,7 +62,7 @@ data class Event(
     @JsonBackReference
     val creator: User,
 
-    @OneToMany(mappedBy = "event", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "event", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference("event-images")
     val images: MutableList<Image> = mutableListOf(),
 
@@ -61,6 +73,26 @@ data class Event(
     @Column(nullable = false, updatable = false)
     var createdAt: LocalDateTime = LocalDateTime.now(),
 
+    @Column(nullable = false)
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
+
+    /**
+     * Reason provided by admin when rejecting event
+     */
+    @Column(length = 500)
+    var rejectionReason: String? = null,
+
+    /**
+     * Timestamp when event was cancelled
+     */
+    var cancelledAt: LocalDateTime? = null,
+
+    /**
+     * Reason for event cancellation
+     */
+    @Column(length = 500)
+    var cancelReason: String? = null,
+
     @Version
     var version: Long = 0
 ) {
@@ -69,33 +101,46 @@ data class Event(
         if (createdAt.year == 1970) {
             createdAt = LocalDateTime.now()
         }
+        updatedAt = LocalDateTime.now()
+    }
+
+    @PreUpdate
+    fun preUpdate() {
+        updatedAt = LocalDateTime.now()
     }
 
     /**
-     * Get current count of approved registrations (confirmed participants)
+     * Check if event can accept registrations
+     * Considers event status, registration deadline, and whether event has started
      */
-    fun getApprovedCount(): Int {
-        return registrations.count { it.status == RegistrationStatus.APPROVED }
+    fun isRegistrationOpen(): Boolean {
+        if (status != EventStatus.PUBLISHED) return false
+        if (eventDateTime.isBefore(LocalDateTime.now())) return false
+
+        val deadline = registrationDeadline ?: eventDateTime
+        return LocalDateTime.now().isBefore(deadline)
     }
 
     /**
-     * Check if event has reached maximum capacity
+     * Check if event has ended
      */
-    fun isFull(): Boolean {
-        return maxParticipants?.let { getApprovedCount() >= it } ?: false
+    fun isPast(): Boolean {
+        return endDateTime.isBefore(LocalDateTime.now())
     }
 
     /**
-     * Get available spots remaining
+     * Check if event is currently in progress
      */
-    fun getAvailableSpots(): Int? {
-        return maxParticipants?.let { it - getApprovedCount() }
+    fun isInProgress(): Boolean {
+        val now = LocalDateTime.now()
+        return status == EventStatus.PUBLISHED &&
+                eventDateTime.isBefore(now) &&
+                endDateTime.isAfter(now)
     }
 
     /**
-     * Get current waitlist count
+     * Check if event is approved/published
      */
-    fun getWaitlistCount(): Int {
-        return registrations.count { it.status == RegistrationStatus.WAITLISTED }
-    }
+    val isApproved: Boolean
+        get() = status == EventStatus.PUBLISHED
 }

@@ -5,12 +5,15 @@ import com.cs2.volunteer_hub.dto.UserResponse
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.mapper.UserMapper
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.model.User
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.EventSpecifications
 import com.cs2.volunteer_hub.specification.UserSpecifications
+import com.cs2.volunteer_hub.validation.EventLifecycleValidator
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
@@ -28,42 +31,13 @@ class AdminService(
     private val eventMapper: EventMapper,
     private val userRepository: UserRepository,
     private val userMapper: UserMapper,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val cacheEvictionService: CacheEvictionService,
+    private val eventLifecycleValidator: EventLifecycleValidator,
+    private val eventQueueService: EventQueueService,
+    private val emailQueueService: EmailQueueService
 ) {
     private val logger = org.slf4j.LoggerFactory.getLogger(AdminService::class.java)
-
-    /**
-     * Search users by name specifically using UserSpecifications.nameContains()
-     * More focused than general text search - only searches name field
-     */
-    @Transactional(readOnly = true)
-    fun searchUsersByName(name: String, pageable: Pageable): Page<UserResponse> {
-        val spec = UserSpecifications.nameContains(name)
-        logger.info("Searching users by name: $name")
-        return userRepository.findAll(spec, pageable).map(userMapper::toUserResponse)
-    }
-
-    /**
-     * Search users by email specifically using UserSpecifications.emailContains()
-     * Useful for finding all users from a specific email domain (e.g., "@company.com")
-     */
-    @Transactional(readOnly = true)
-    fun searchUsersByEmail(email: String, pageable: Pageable): Page<UserResponse> {
-        val spec = UserSpecifications.emailContains(email)
-        logger.info("Searching users by email: $email")
-        return userRepository.findAll(spec, pageable).map(userMapper::toUserResponse)
-    }
-
-    /**
-     * Search users by phone number specifically using UserSpecifications.phoneNumberContains()
-     * Useful for finding users by area code or partial phone number
-     */
-    @Transactional(readOnly = true)
-    fun searchUsersByPhone(phone: String, pageable: Pageable): Page<UserResponse> {
-        val spec = UserSpecifications.phoneNumberContains(phone)
-        logger.info("Searching users by phone: $phone")
-        return userRepository.findAll(spec, pageable).map(userMapper::toUserResponse)
-    }
 
     /**
      * Search and filter users using UserSpecifications
@@ -138,13 +112,20 @@ class AdminService(
     ])
     @Transactional
     fun approveEvent(eventId: Long): EventResponse {
-        val event = eventRepository.findById(eventId)
-            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
+        val event = eventRepository.findByIdOrThrow(eventId)
 
-        event.isApproved = true
+        val from = event.status
+        eventLifecycleValidator.validateStatusTransition(from, EventStatus.PUBLISHED, event)
+
+        event.status = EventStatus.PUBLISHED
         val savedEvent = eventRepository.save(event)
 
-        // Send notification to event creator
+        eventQueueService.queueEvent(EventLifecycleEvent(
+            eventId = savedEvent.id,
+            from = from,
+            to = EventStatus.PUBLISHED
+        ))
+
         notificationService.queuePushNotificationToUser(
             userId = savedEvent.creator.id,
             title = "Event Approved",
@@ -152,19 +133,23 @@ class AdminService(
             link = "/events/${savedEvent.id}"
         )
 
+        // Send email notification
+        emailQueueService.queueEventApprovedEmail(
+            email = savedEvent.creator.email,
+            name = savedEvent.creator.name,
+            eventTitle = savedEvent.title,
+            eventId = savedEvent.id
+        )
+
         return eventMapper.toEventResponse(savedEvent)
     }
 
-    @Caching(evict = [
-        CacheEvict(value = ["events"], allEntries = true),
-        CacheEvict(value = ["event"], key = "#eventId")
-    ])
     @Transactional
     fun deleteEventAsAdmin(eventId: Long) {
-        val event = eventRepository.findById(eventId)
-            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
+        val event = eventRepository.findByIdOrThrow(eventId)
 
-        // Send notification to event creator before deletion
+        eventLifecycleValidator.validateDeletionAllowed(event)
+
         notificationService.queuePushNotificationToUser(
             userId = event.creator.id,
             title = "Event Rejected",
@@ -172,6 +157,14 @@ class AdminService(
             link = null
         )
 
+        emailQueueService.queueEventRejectedEmail(
+            email = event.creator.email,
+            name = event.creator.name,
+            eventTitle = event.title,
+            reason = "Your event has been reviewed and unfortunately cannot be approved at this time. Please contact support for more information."
+        )
+
+        cacheEvictionService.evictAllEventCaches(eventId)
         eventRepository.deleteById(eventId)
     }
 
@@ -184,7 +177,6 @@ class AdminService(
         user.isLocked = locked
         val savedUser = userRepository.save(user)
 
-        // Send notification to user about account status change
         val title = if (locked) "Account Locked" else "Account Unlocked"
         val body = if (locked) {
             "Your account has been locked by an administrator. Please contact support for more information."
@@ -208,36 +200,52 @@ class AdminService(
         return userRepository.findAll().map(userMapper::toUserResponse)
     }
 
-    /**
-     * Get all pending events using Specification Pattern
-     * This replaces the need for a dedicated repository method
-     */
     @Transactional(readOnly = true)
     fun getPendingEvents(): List<EventResponse> {
         val spec = EventSpecifications.isNotApproved()
-        return eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
-            .map(eventMapper::toEventResponse)
+        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+        return eventMapper.toEventResponseList(events)
     }
 
-    /**
-     * Search events by text (title, description, or location)
-     */
     @Transactional(readOnly = true)
     fun searchAllEvents(searchTerm: String): List<EventResponse> {
         val spec = EventSpecifications.searchText(searchTerm)
-        return eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
-            .map(eventMapper::toEventResponse)
+        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+        return eventMapper.toEventResponseList(events)
     }
 
-    /**
-     * Get past events for historical/reporting purposes
-     * Uses Specification Pattern with isPast()
-     */
     @Transactional(readOnly = true)
     fun getPastEvents(): List<EventResponse> {
-        val spec = EventSpecifications.isApproved()
-            .and(EventSpecifications.isPast())
-        return eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "eventDateTime"))
-            .map(eventMapper::toEventResponse)
+        val spec = EventSpecifications.pastPublishedEvents()
+        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "eventDateTime"))
+        return eventMapper.toEventResponseList(events)
+    }
+
+    @Transactional(readOnly = true)
+    fun getUpcomingEvents(): List<EventResponse> {
+        val spec = EventSpecifications.upcomingPublishedEvents()
+        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+        return eventMapper.toEventResponseList(events)
+    }
+
+    @Transactional(readOnly = true)
+    fun getInProgressEvents(): List<EventResponse> {
+        val spec = EventSpecifications.isInProgress()
+        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+        return eventMapper.toEventResponseList(events)
+    }
+
+    @Transactional(readOnly = true)
+    fun getEventsAcceptingRegistrations(): List<EventResponse> {
+        val spec = EventSpecifications.registrationOpen()
+        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+        return eventMapper.toEventResponseList(events)
+    }
+
+    @Transactional(readOnly = true)
+    fun getActiveEventsByCreator(creatorId: Long): List<EventResponse> {
+        val spec = EventSpecifications.activeEventsByCreator(creatorId)
+        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+        return eventMapper.toEventResponseList(events)
     }
 }

@@ -6,10 +6,7 @@ import com.cs2.volunteer_hub.dto.VolunteerDashboardResponse
 import com.cs2.volunteer_hub.mapper.DashboardMapper
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.model.Role
-import com.cs2.volunteer_hub.repository.EventRepository
-import com.cs2.volunteer_hub.repository.PostRepository
-import com.cs2.volunteer_hub.repository.RegistrationRepository
-import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.repository.*
 import com.cs2.volunteer_hub.specification.EventSpecifications
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.cache.annotation.Cacheable
@@ -30,33 +27,36 @@ class DashboardService(
     @Cacheable(value = ["volunteer_dashboard"], key = "#userEmail")
     @Transactional(readOnly = true)
     fun getVolunteerDashboard(userEmail: String): VolunteerDashboardResponse {
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
 
-        // Get upcoming events for approved registrations
+        val approvedSpec = RegistrationSpecifications.byUser(user.id)
+            .and(RegistrationSpecifications.isApproved())
         val myUpcomingEvents = registrationRepository
-            .findTop3ByUserIdAndStatusOrderByEventEventDateTimeAsc(user.id, RegistrationStatus.APPROVED)
+            .findAll(approvedSpec, Sort.by(Sort.Direction.ASC, "event.eventDateTime"))
+            .take(3)
             .map { it.event }
             .let { dashboardMapper.toDashboardEventItemList(it) }
 
-        // Get pending registrations
+        val pendingSpec = RegistrationSpecifications.byUser(user.id)
+            .and(RegistrationSpecifications.isPending())
         val myPendingRegistrations = registrationRepository
-            .findTop3ByUserIdAndStatusOrderByEventEventDateTimeAsc(user.id, RegistrationStatus.PENDING)
+            .findAll(pendingSpec, Sort.by(Sort.Direction.ASC, "event.eventDateTime"))
+            .take(3)
             .let { dashboardMapper.toDashboardPendingRegistrationItemList(it) }
 
-        // Get newly approved events
+        val newEventsSpec = EventSpecifications.upcomingPublishedEvents()
         val newlyApprovedEvents = eventRepository
-            .findTop5ByIsApprovedTrueOrderByCreatedAtDesc()
+            .findAll(newEventsSpec, PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt")))
+            .content
             .let { dashboardMapper.toDashboardEventItemList(it) }
 
-        // Get trending events
         val trendingEvents = eventRepository.findTrendingEvents(
             LocalDateTime.now().minusDays(7),
             PageRequest.of(0, 5)
         )
 
-        // Get recent posts from approved event registrations
         val approvedEventIds = registrationRepository
-            .findAllByUserIdAndStatus(user.id, RegistrationStatus.APPROVED)
+            .findAll(approvedSpec)
             .map { it.event.id }
 
         val recentWallPosts = if (approvedEventIds.isNotEmpty()) {
@@ -76,17 +76,40 @@ class DashboardService(
         )
     }
 
+    /**
+     * Get events currently accepting registrations
+     * Uses NEW specification registrationOpen()
+     */
+    @Transactional(readOnly = true)
+    fun getEventsAcceptingRegistrations(): List<Any> {
+        val spec = EventSpecifications.registrationOpen()
+        return eventRepository
+            .findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+            .take(10)
+            .let { dashboardMapper.toDashboardEventItemList(it) }
+    }
+
+    /**
+     * Get in-progress events for live tracking
+     * Uses NEW specification isInProgress()
+     */
+    @Transactional(readOnly = true)
+    fun getInProgressEventsForDashboard(): List<Any> {
+        val spec = EventSpecifications.isInProgress()
+        return eventRepository
+            .findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+            .let { dashboardMapper.toDashboardEventItemList(it) }
+    }
+
     @Cacheable(value = ["organizer_dashboard"], key = "#userEmail")
     @Transactional(readOnly = true)
     fun getOrganizerDashboard(userEmail: String): OrganizerDashboardResponse {
-        val user = userRepository.findByEmail(userEmail)!!
+        val user = userRepository.findByEmailOrThrow(userEmail)
 
-        // Use Specification Pattern for pending registrations count
         val pendingRegistrationsSpec = RegistrationSpecifications.forEventsCreatedBy(user.id)
             .and(RegistrationSpecifications.hasStatus(RegistrationStatus.PENDING))
         val pendingRegistrationsCount = registrationRepository.count(pendingRegistrationsSpec)
 
-        // Use specifications for events pending admin approval
         val eventsPendingApprovalSpec = EventSpecifications.hasCreator(user.id)
             .and(EventSpecifications.isNotApproved())
         val eventsPendingAdminApprovalCount = eventRepository.count(eventsPendingApprovalSpec)
@@ -96,12 +119,10 @@ class DashboardService(
             "eventsPendingAdminApproval" to eventsPendingAdminApprovalCount
         )
 
-        // Get pending events using mapper
         val eventsPendingAdminApproval = eventRepository
             .findAll(eventsPendingApprovalSpec)
             .let { dashboardMapper.toDashboardEventItemList(it) }
 
-        // Get recent pending registrations using mapper
         val recentPendingRegistrations = registrationRepository
             .findAll(
                 pendingRegistrationsSpec,
@@ -110,7 +131,6 @@ class DashboardService(
             .take(5)
             .let { dashboardMapper.registrationsToDashboardActionItemList(it) }
 
-        // Get top events by registration count using mapper
         val topEventsByRegistration = eventRepository
             .findTop3EventsByRegistrations(user.id, PageRequest.of(0, 3))
             .let { dashboardMapper.toDashboardTopEventItemList(it) }

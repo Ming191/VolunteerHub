@@ -1,11 +1,8 @@
 package com.cs2.volunteer_hub.service
 
-import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.model.Like
-import com.cs2.volunteer_hub.repository.LikeRepository
-import com.cs2.volunteer_hub.repository.PostRepository
-import com.cs2.volunteer_hub.repository.UserRepository
-import org.springframework.cache.CacheManager
+import com.cs2.volunteer_hub.repository.*
+import com.cs2.volunteer_hub.specification.LikeSpecifications
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,23 +11,21 @@ class LikeService(
     private val likeRepository: LikeRepository,
     val postRepository: PostRepository,
     private val userRepository: UserRepository,
-    private val postService: PostService,
-    private val cacheManager: CacheManager
+    private val authorizationService: AuthorizationService,
+    private val cacheEvictionService: CacheEvictionService
 ) {
     @Transactional
     fun toggleLike(postId: Long, userEmail: String): Boolean {
-        val user = userRepository.findByEmail(userEmail)!!
-        val post = postRepository.findById(postId)
-            .orElseThrow { ResourceNotFoundException("Post", "id", postId) }
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val post = postRepository.findByIdOrThrow(postId)
+        authorizationService.requireEventPostPermission(post.event.id, user.id)
+        cacheEvictionService.evictPosts(post.event.id)
 
-        postService.checkPermissionToPost(post.event.id, user.id)
+        val spec = LikeSpecifications.byUserAndPost(user.id, post.id)
+        val existingLike = likeRepository.findAll(spec).firstOrNull()
 
-        cacheManager.getCache("posts")?.evict(post.event.id)
-
-        val existingLike = likeRepository.findByUserIdAndPostId(user.id, post.id)
-
-        return if (existingLike.isPresent) {
-            likeRepository.delete(existingLike.get())
+        return if (existingLike != null) {
+            likeRepository.delete(existingLike)
             false
         } else {
             val newLike = Like(user = user, post = post)
