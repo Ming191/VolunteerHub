@@ -29,13 +29,15 @@ class EventSearchService(
      * @param onlyUpcoming Filter for upcoming events only
      * @param tags Set of tags to filter by
      * @param matchAllTags If true, events must have ALL tags (AND). If false, events must have ANY tag (OR)
+     * @param location Filter by specific location (case-insensitive partial match)
      */
     @Transactional(readOnly = true)
     fun searchApprovedEvents(
         searchText: String? = null,
         onlyUpcoming: Boolean = false,
         tags: Set<EventTag>? = null,
-        matchAllTags: Boolean = false
+        matchAllTags: Boolean = false,
+        location: String? = null
     ): List<EventResponse> {
         var spec: Specification<Event> = EventSpecifications.isApproved()
 
@@ -54,6 +56,10 @@ class EventSearchService(
                 EventSpecifications.hasAnyTag(tags)
             }
             spec = spec.and(tagSpec)
+        }
+
+        if (!location.isNullOrBlank()) {
+            spec = spec.and(EventSpecifications.locationContains(location.trim()))
         }
 
         val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))

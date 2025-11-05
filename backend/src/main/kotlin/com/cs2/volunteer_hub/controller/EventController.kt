@@ -67,20 +67,23 @@ class EventController(
 
     /**
      * Search approved events with optional filters
-     * Example: GET /api/events/search?q=volunteer&upcoming=true&tags=OUTDOOR,FAMILY_FRIENDLY&matchAllTags=false
+     * Example: GET /api/events/search?q=volunteer&upcoming=true&tags=OUTDOOR,FAMILY_FRIENDLY&location=hanoi&matchAllTags=false
      */
     @Operation(
         summary = "Search events",
         description = """Search approved events with multiple filters:
         - Text search (title, description, location)
         - Filter for upcoming events only
+        - Filter by specific location
         - Filter by tags (supports multiple tags)
         - Choose AND/OR logic for tag matching
         
         Examples:
+        - /api/events/search?location=hanoi (events in Hanoi)
+        - /api/events/search?location=hanoi&tags=OUTDOOR (outdoor events in Hanoi)
         - /api/events/search?tags=OUTDOOR,VIRTUAL (events with OUTDOOR OR VIRTUAL)
         - /api/events/search?tags=OUTDOOR,FAMILY_FRIENDLY&matchAllTags=true (events with BOTH tags)
-        - /api/events/search?q=volunteer&tags=COMMUNITY_SERVICE&upcoming=true
+        - /api/events/search?q=volunteer&location=community%20center&tags=COMMUNITY_SERVICE&upcoming=true
         """
     )
     @GetMapping("/search")
@@ -89,6 +92,8 @@ class EventController(
         @RequestParam(required = false) q: String?,
         @Parameter(description = "Only return upcoming events")
         @RequestParam(defaultValue = "false") upcoming: Boolean,
+        @Parameter(description = "Filter by location (case-insensitive partial match). Example: hanoi, community center")
+        @RequestParam(required = false) location: String?,
         @Parameter(description = "Filter by tags (comma-separated). Example: OUTDOOR,FAMILY_FRIENDLY,VIRTUAL")
         @RequestParam(required = false) tags: List<String>?,
         @Parameter(description = "If true, events must have ALL specified tags (AND logic). If false, events can have ANY tag (OR logic)")
@@ -99,6 +104,10 @@ class EventController(
             if (trimmed.length > 100) {
                 return ResponseEntity.badRequest().build()
             }
+        }
+
+        if (location != null && location.trim().length > 200) {
+            return ResponseEntity.badRequest().build()
         }
 
         val eventTags = tags?.mapNotNull { tagStr ->
@@ -113,6 +122,7 @@ class EventController(
         val events = eventSearchService.searchApprovedEvents(
             searchText = q?.trim()?.takeIf { it.isNotEmpty() },
             onlyUpcoming = upcoming,
+            location = location?.trim()?.takeIf { it.isNotEmpty() },
             tags = eventTags,
             matchAllTags = matchAllTags
         )
