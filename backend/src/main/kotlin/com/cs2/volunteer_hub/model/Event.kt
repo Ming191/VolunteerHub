@@ -14,7 +14,8 @@ import java.time.LocalDateTime
         Index(name = "idx_events_creator_id", columnList = "creator_id"),
         Index(name = "idx_events_creator_status", columnList = "creator_id, status"),
         Index(name = "idx_events_created_at", columnList = "created_at"),
-        Index(name = "idx_events_end_datetime", columnList = "end_date_time")
+        Index(name = "idx_events_end_datetime", columnList = "end_date_time"),
+        Index(name = "idx_events_location", columnList = "location")
     ]
 )
 data class Event(
@@ -24,9 +25,10 @@ data class Event(
 
     var title: String,
 
-    @Column(length = 1000)
+    @Column(length = 3000)
     var description: String,
 
+    @Column(length = 500)
     var location: String,
 
     @field:JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -63,7 +65,11 @@ data class Event(
     val creator: User,
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "event_tags", joinColumns = [JoinColumn(name = "event_id")])
+    @CollectionTable(
+        name = "event_tags",
+        joinColumns = [JoinColumn(name = "event_id")],
+        indexes = [Index(name = "idx_event_tags_tag", columnList = "tag")]
+    )
     @Column(name = "tag")
     @Enumerated(EnumType.STRING)
     var tags: MutableSet<EventTag> = mutableSetOf(),
