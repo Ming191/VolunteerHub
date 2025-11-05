@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank
 import java.time.LocalDateTime
 
 data class PostRequest(
-    @field:NotBlank(message = "Nội dung không được để trống")
+    @field:NotBlank(message = "Content cannot be blank")
     val content: String
 )
 

@@ -52,6 +52,7 @@ data class EventResponse(
     val maxParticipants: Int?,
     val waitlistEnabled: Boolean,
     val approvedCount: Int,
+    val pendingCount: Int,
     val waitlistCount: Int,
     val availableSpots: Int?,
     val isFull: Boolean,

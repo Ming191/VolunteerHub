@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject}">Registration Status Update</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        h2 {
+            color: #2a4d8f;
+            text-align: center;
+        }
+        p {
+            color: #333;
+            line-height: 1.6;
+        }
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 6px;
+            display: inline-block;
+            font-weight: 600;
+            margin: 20px 0;
+            color: white;
+        }
+        .status-approved {
+            background-color: #10b981;
+        }
+        .status-rejected {
+            background-color: #ef4444;
+        }
+        .status-pending {
+            background-color: #f59e0b;
+        }
+        .status-cancelled {
+            background-color: #6b7280;
+        }
+        .event-details {
+            background-color: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        a.button {
+            display: inline-block;
+            background-color: #4e73df;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 th:text="${subject}">Registration Status Update</h2>
+    <div style="text-align: center;">
+        <span th:class="'status-badge status-' + ${#strings.toLowerCase(status)}" th:text="${status}">STATUS</span>
+    </div>
+    <p>Hello <b th:text="${name}">User</b>,</p>
+    <p>Your registration status has been updated for the following event:</p>
+
+    <div class="event-details">
+        <p><strong>Event:</strong> <span th:text="${eventTitle}">Event Title</span></p>
+        <p><strong>Status:</strong> <span th:text="${status}">Status</span></p>
+    </div>
+
+    <div th:if="${status == 'APPROVED'}">
+        <p>Congratulations! Your registration has been approved. We look forward to seeing you at the event!</p>
+    </div>
+
+    <div th:if="${status == 'REJECTED'}">
+        <p>Unfortunately, your registration could not be approved at this time. Please check other available volunteer opportunities.</p>
+    </div>
+
+    <div th:if="${status == 'CANCELLED'}">
+        <p>Your registration has been cancelled. If this was a mistake, please contact the event organizer.</p>
+    </div>
+
+    <p style="text-align: center;">
+        <a th:href="${dashboardUrl}" class="button">Go to Dashboard</a>
+    </p>
+
+    <div class="footer">
+        <p>© 2025 VolunteerHub. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>

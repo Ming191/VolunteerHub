@@ -2,9 +2,7 @@ package com.cs2.volunteer_hub.repository
 
 import com.cs2.volunteer_hub.dto.DashboardTrendingEventItem
 import com.cs2.volunteer_hub.model.Event
-import com.cs2.volunteer_hub.model.EventStatus
 import jakarta.persistence.LockModeType
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
@@ -17,12 +15,6 @@ import java.util.Optional
 
 @Repository
 interface EventRepository : JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
-    // Status-based queries (preferred)
-    fun findAllByStatusOrderByEventDateTimeAsc(status: EventStatus): List<Event>
-
-    fun findAllByStatusOrderByEventDateTimeAsc(status: EventStatus, pageable: Pageable): Page<Event>
-
-    fun findTop5ByStatusOrderByCreatedAtDesc(status: EventStatus): List<Event>
 
     @Query("""
         SELECT new com.cs2.volunteer_hub.dto.DashboardTrendingEventItem(
@@ -79,4 +71,40 @@ interface EventRepository : JpaRepository<Event, Long>, JpaSpecificationExecutor
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Event e WHERE e.id = :eventId")
     fun findByIdWithLock(@Param("eventId") eventId: Long): Optional<Event>
+
+    /**
+     * Batch get approved registration counts for multiple events
+     * Returns map of eventId to count
+     */
+    @Query("""
+        SELECT r.event.id as eventId, COUNT(r.id) as count
+        FROM Registration r
+        WHERE r.event.id IN :eventIds AND r.status = 'APPROVED'
+        GROUP BY r.event.id
+    """)
+    fun countApprovedRegistrationsByEvents(@Param("eventIds") eventIds: List<Long>): List<Map<String, Any>>
+
+    /**
+     * Batch get waitlisted registration counts for multiple events
+     * Returns map of eventId to count
+     */
+    @Query("""
+        SELECT r.event.id as eventId, COUNT(r.id) as count
+        FROM Registration r
+        WHERE r.event.id IN :eventIds AND r.status = 'WAITLISTED'
+        GROUP BY r.event.id
+    """)
+    fun countWaitlistedRegistrationsByEvents(@Param("eventIds") eventIds: List<Long>): List<Map<String, Any>>
+
+    /**
+     * Batch get pending registration counts for multiple events
+     * Returns map of eventId to count
+     */
+    @Query("""
+        SELECT r.event.id as eventId, COUNT(r.id) as count
+        FROM Registration r
+        WHERE r.event.id IN :eventIds AND r.status = 'PENDING'
+        GROUP BY r.event.id
+    """)
+    fun countPendingRegistrationsByEvents(@Param("eventIds") eventIds: List<Long>): List<Map<String, Any>>
 }

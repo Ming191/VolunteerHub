@@ -30,7 +30,8 @@ class EventManagerService(
     private val registrationMapper: RegistrationMapper,
     private val waitlistService: WaitlistService,
     private val authorizationService: AuthorizationService,
-    private val cacheEvictionService: CacheEvictionService
+    private val cacheEvictionService: CacheEvictionService,
+    private val emailQueueService: EmailQueueService
 ) {
     private val logger = org.slf4j.LoggerFactory.getLogger(EventManagerService::class.java)
 
@@ -51,20 +52,16 @@ class EventManagerService(
     ): Page<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
-        // Build dynamic specification based on filters
         var spec: Specification<Registration> = RegistrationSpecifications.forEvent(eventId)
 
-        // Add text search if provided
         if (!searchText.isNullOrBlank()) {
             spec = spec.and(RegistrationSpecifications.userSearchText(searchText.trim()))
         }
 
-        // Add status filter if provided
         if (status != null) {
             spec = spec.and(RegistrationSpecifications.hasStatus(status))
         }
 
-        // Add date range filters if provided
         if (registeredAfter != null) {
             spec = spec.and(RegistrationSpecifications.registeredAfter(registeredAfter))
         }
@@ -96,7 +93,6 @@ class EventManagerService(
         registration.status = RegistrationStatus.COMPLETED
         val savedRegistration = registrationRepository.save(registration)
 
-        // Queue notification for status update
         queueRegistrationStatusUpdate(registrationId)
 
         return registrationMapper.toRegistrationResponse(savedRegistration)
@@ -158,15 +154,14 @@ class EventManagerService(
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
-        // Use specification instead of repository method
         val spec = RegistrationSpecifications.forEvent(eventId)
         return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
             .map(registrationMapper::toRegistrationResponse)
     }
 
     /**
-     * Get registrations by status for an event using Specification Pattern
-     * More flexible than creating separate repository methods for each status
+     * Get registrations by status for an event using NEW Composite Specification
+     * Uses approvedForEvent(), pendingForEvent(), or waitlistedForEvent()
      */
     @Transactional(readOnly = true)
     fun getRegistrationsByStatus(
@@ -176,8 +171,14 @@ class EventManagerService(
     ): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
-        val spec = RegistrationSpecifications.forEvent(eventId)
-            .and(RegistrationSpecifications.hasStatus(status))
+        // Use NEW composite specifications for common statuses
+        val spec = when (status) {
+            RegistrationStatus.APPROVED -> RegistrationSpecifications.approvedForEvent(eventId)
+            RegistrationStatus.PENDING -> RegistrationSpecifications.pendingForEvent(eventId)
+            RegistrationStatus.WAITLISTED -> RegistrationSpecifications.waitlistedForEvent(eventId)
+            else -> RegistrationSpecifications.forEvent(eventId)
+                .and(RegistrationSpecifications.hasStatus(status))
+        }
 
         return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
             .map(registrationMapper::toRegistrationResponse)
@@ -185,19 +186,81 @@ class EventManagerService(
 
     /**
      * Get all pending registrations for events created by this manager
-     * Using specifications makes this query simple and readable
+     * Uses NEW composite specifications for cleaner code
      */
     @Transactional(readOnly = true)
     fun getAllPendingRegistrations(managerEmail: String): List<RegistrationResponse> {
         val manager = userRepository.findByEmailOrThrow(managerEmail)
 
         val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
-            .and(RegistrationSpecifications.hasStatus(RegistrationStatus.PENDING))
+            .and(RegistrationSpecifications.isPending())
 
         return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
             .map(registrationMapper::toRegistrationResponse)
     }
 
+    /**
+     * Get all approved registrations for manager's events
+     * Uses NEW composite specification isApproved()
+     */
+    @Transactional(readOnly = true)
+    fun getAllApprovedRegistrations(managerEmail: String): List<RegistrationResponse> {
+        val manager = userRepository.findByEmailOrThrow(managerEmail)
+
+        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
+            .and(RegistrationSpecifications.isApproved())
+
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+            .map(registrationMapper::toRegistrationResponse)
+    }
+
+    /**
+     * Get all active registrations (approved + waitlisted) for an event
+     * Uses NEW composite specification activeForEvent()
+     */
+    @Transactional(readOnly = true)
+    fun getActiveRegistrations(eventId: Long, managerEmail: String): List<RegistrationResponse> {
+        authorizationService.requireEventOwnership(eventId, managerEmail)
+
+        val spec = RegistrationSpecifications.activeForEvent(eventId)
+
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+            .map(registrationMapper::toRegistrationResponse)
+    }
+
+    /**
+     * Get all completed registrations for an event
+     * Uses NEW specification isCompleted()
+     */
+    @Transactional(readOnly = true)
+    fun getCompletedRegistrations(eventId: Long, managerEmail: String): List<RegistrationResponse> {
+        authorizationService.requireEventOwnership(eventId, managerEmail)
+
+        val spec = RegistrationSpecifications.forEvent(eventId)
+            .and(RegistrationSpecifications.isCompleted())
+
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+            .map(registrationMapper::toRegistrationResponse)
+    }
+
+    /**
+     * Get all completed registrations across all manager's events
+     * Useful for analytics and reporting
+     */
+    @Transactional(readOnly = true)
+    fun getAllCompletedRegistrationsForManager(managerEmail: String): List<RegistrationResponse> {
+        val manager = userRepository.findByEmailOrThrow(managerEmail)
+
+        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
+            .and(RegistrationSpecifications.isCompleted())
+
+        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+            .map(registrationMapper::toRegistrationResponse)
+    }
+
+    /**
+     * Update registration status (approve/reject) and handle waitlist promotion
+     */
     @Transactional
     fun updateRegistrationStatus(
         registrationId: Long,
@@ -221,6 +284,14 @@ class EventManagerService(
 
         // Queue notification for status update
         queueRegistrationStatusUpdate(registrationId)
+
+        // Send email notification
+        emailQueueService.queueRegistrationStatusEmail(
+            email = savedRegistration.user.email,
+            name = savedRegistration.user.name,
+            eventTitle = savedRegistration.event.title,
+            status = newStatus.name
+        )
 
         // If rejecting or cancelling an approved registration, promote from waitlist
         if (oldStatus == RegistrationStatus.APPROVED && newStatus == RegistrationStatus.REJECTED) {

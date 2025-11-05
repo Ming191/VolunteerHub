@@ -121,7 +121,6 @@ class EventController(
         @RequestPart("files", required = false) files: List<MultipartFile>?,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<EventResponse> {
-
         val event = eventService.createEvent(request, currentUser.username, files)
         return ResponseEntity.status(HttpStatus.CREATED).body(event)
     }
@@ -139,7 +138,6 @@ class EventController(
         @Valid @RequestBody request: UpdateEventRequest,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<EventResponse> {
-        logger.info("=== UPDATE EVENT ENDPOINT CALLED ===")
         logger.info("Event ID: $id, User: ${currentUser.username}")
         logger.info("User authorities: ${currentUser.authorities.map { it.authority }}")
 
@@ -158,11 +156,30 @@ class EventController(
         @PathVariable id: Long,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<Unit> {
-        logger.info("=== DELETE EVENT ENDPOINT CALLED ===")
         logger.info("Event ID: $id, User: ${currentUser.username}")
         logger.info("User authorities: ${currentUser.authorities.map { it.authority }}")
 
         eventService.deleteEvent(id, currentUser.username)
         return ResponseEntity.noContent().build()
+    }
+
+    @Operation(
+        summary = "Cancel event",
+        description = "Cancel an event with a reason (requires EVENT_ORGANIZER role and must be event creator). Cancellation reason is required if event has registered participants."
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('EVENT_ORGANIZER')")
+    fun cancelEvent(
+        @Parameter(description = "Event ID", required = true)
+        @PathVariable id: Long,
+        @Parameter(description = "Cancellation reason")
+        @RequestParam(required = false) reason: String?,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<EventResponse> {
+        logger.info("Event ID: $id, User: ${currentUser.username}, Reason: $reason")
+
+        val cancelledEvent = eventService.cancelEvent(id, reason, currentUser.username)
+        return ResponseEntity.ok(cancelledEvent)
     }
 }

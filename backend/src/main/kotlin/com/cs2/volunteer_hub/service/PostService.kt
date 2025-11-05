@@ -7,12 +7,14 @@ import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.mapper.PostMapper
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.*
+import com.cs2.volunteer_hub.specification.LikeSpecifications
 import com.cs2.volunteer_hub.specification.PostSpecifications
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -40,8 +42,6 @@ class PostService(
     @Transactional
     fun createPost(eventId: Long, request: PostRequest, files: List<MultipartFile>?, userEmail: String): PostResponse {
         val author = userRepository.findByEmailOrThrow(userEmail)
-
-        // Use centralized authorization service
         val event = authorizationService.requireEventPostPermission(eventId, author.id)
 
         files?.let { fileValidationService.validateFiles(it, maxFilesPerPost) }
@@ -80,8 +80,6 @@ class PostService(
     @Transactional(readOnly = true)
     fun getPostsForEvent(eventId: Long, userEmail: String): List<PostResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
-
-        // Use centralized authorization service
         authorizationService.requireEventPostPermission(eventId, user.id)
 
         val posts = getCachedPostsForEvent(eventId)
@@ -90,15 +88,23 @@ class PostService(
         }
 
         val postIds = posts.map { it.id }
-        val likedPostIds = likeRepository.findLikedPostIdsByUser(user.id, postIds).toSet()
+        val likedPostIds = getLikedPostIdsByUser(user.id, postIds)
 
         return postMapper.toPostResponseList(posts, likedPostIds)
     }
 
-    @org.springframework.cache.annotation.Cacheable(value = ["posts"], key = "#eventId")
+    @Cacheable(value = ["posts"], key = "#eventId")
+    @Transactional(readOnly = true)
     internal fun getCachedPostsForEvent(eventId: Long): List<com.cs2.volunteer_hub.model.Post> {
         logger.info("--- DATABASE HIT: Fetching post list for event $eventId ---")
-        return postRepository.findAllByEventIdOrderByCreatedAtDesc(eventId)
+        val spec = PostSpecifications.forEvent(eventId)
+        return postRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+    }
+
+    @Transactional(readOnly = true)
+    internal fun getLikedPostIdsByUser(userId: Long, postIds: List<Long>): Set<Long> {
+        val spec = LikeSpecifications.byUserForPosts(userId, postIds)
+        return likeRepository.findAll(spec).map { it.post.id }.toSet()
     }
 
     @Transactional
@@ -117,8 +123,14 @@ class PostService(
 
         val updatedPost = postRepository.save(post)
 
-        val isLiked = likeRepository.findByUserIdAndPostId(user.id, updatedPost.id).isPresent
+        val isLiked = isPostLikedByUser(user.id, updatedPost.id)
         return postMapper.toPostResponse(updatedPost, isLiked)
+    }
+
+    @Transactional(readOnly = true)
+    internal fun isPostLikedByUser(userId: Long, postId: Long): Boolean {
+        val spec = LikeSpecifications.byUserAndPost(userId, postId)
+        return likeRepository.findAll(spec).isNotEmpty()
     }
 
     @Transactional
@@ -131,23 +143,17 @@ class PostService(
         }
 
         cacheEvictionService.evictPosts(post.event.id)
-
         postRepository.delete(post)
     }
 
-    /**
-     * Get recent posts from all events the user is registered for
-     * Uses PostSpecifications for flexible querying
-     */
     @Transactional(readOnly = true)
     fun getRecentPostsForUser(userEmail: String, daysBack: Long = 7): List<PostResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
 
-        // Use specifications to get approved registrations
-        val spec = RegistrationSpecifications.byUser(user.id)
+        val registrationSpec = RegistrationSpecifications.byUser(user.id)
             .and(RegistrationSpecifications.hasStatus(RegistrationStatus.APPROVED))
 
-        val approvedRegistrations = registrationRepository.findAll(spec)
+        val approvedRegistrations = registrationRepository.findAll(registrationSpec)
 
         if (approvedRegistrations.isEmpty()) {
             return emptyList()
@@ -155,7 +161,6 @@ class PostService(
 
         val eventIds = approvedRegistrations.map { it.event.id }
 
-        // Use specifications to get recent posts from these events
         val postSpec = PostSpecifications.forEvents(eventIds)
             .and(PostSpecifications.createdAfter(LocalDateTime.now().minusDays(daysBack)))
 
@@ -166,7 +171,7 @@ class PostService(
         }
 
         val postIds = posts.map { it.id }
-        val likedPostIds = likeRepository.findLikedPostIdsByUser(user.id, postIds).toSet()
+        val likedPostIds = getLikedPostIdsByUser(user.id, postIds)
 
         return postMapper.toPostResponseList(posts, likedPostIds)
     }

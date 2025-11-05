@@ -7,9 +7,6 @@ import com.cs2.volunteer_hub.model.User
 import org.springframework.data.jpa.domain.Specification
 import java.time.LocalDateTime
 
-/**
- * Reusable query specifications for Registration entity
- */
 object RegistrationSpecifications {
 
     fun forEvent(eventId: Long): Specification<Registration> {
@@ -62,49 +59,6 @@ object RegistrationSpecifications {
         }
     }
 
-    /**
-     * Search registrations by username
-     */
-    fun userNameContains(name: String): Specification<Registration> {
-        return Specification { root, _, criteriaBuilder ->
-            val userJoin = root.join<Registration, User>("user")
-            criteriaBuilder.like(
-                criteriaBuilder.lower(userJoin.get("name")),
-                "%${name.lowercase()}%"
-            )
-        }
-    }
-
-    /**
-     * Search registrations by user email
-     */
-    fun userEmailContains(email: String): Specification<Registration> {
-        return Specification { root, _, criteriaBuilder ->
-            val userJoin = root.join<Registration, User>("user")
-            criteriaBuilder.like(
-                criteriaBuilder.lower(userJoin.get("email")),
-                "%${email.lowercase()}%"
-            )
-        }
-    }
-
-    /**
-     * Search registrations by user phone number
-     */
-    fun userPhoneContains(phone: String): Specification<Registration> {
-        return Specification { root, _, criteriaBuilder ->
-            val userJoin = root.join<Registration, User>("user")
-            criteriaBuilder.like(
-                userJoin.get("phoneNumber"),
-                "%$phone%"
-            )
-        }
-    }
-
-    /**
-     * Search registrations by user text (name, email, or phone)
-     * Most useful for general search functionality
-     */
     fun userSearchText(searchText: String): Specification<Registration> {
         return Specification { root, _, criteriaBuilder ->
             val userJoin = root.join<Registration, User>("user")
@@ -117,21 +71,42 @@ object RegistrationSpecifications {
         }
     }
 
-    /**
-     * Get waitlisted registrations for an event
-     * Useful for displaying waitlist queue
-     */
     fun isWaitlisted(): Specification<Registration> {
         return Specification { root, _, criteriaBuilder ->
             criteriaBuilder.equal(root.get<RegistrationStatus>("status"), RegistrationStatus.WAITLISTED)
         }
     }
 
-    /**
-     * Get waitlisted registrations ordered by position
-     * Returns registrations in waitlist order (position 1, 2, 3...)
-     */
     fun waitlistedForEvent(eventId: Long): Specification<Registration> {
         return forEvent(eventId).and(isWaitlisted())
+    }
+
+    fun isApproved(): Specification<Registration> {
+        return hasStatus(RegistrationStatus.APPROVED)
+    }
+
+    fun isPending(): Specification<Registration> {
+        return hasStatus(RegistrationStatus.PENDING)
+    }
+
+    fun isCompleted(): Specification<Registration> {
+        return hasStatus(RegistrationStatus.COMPLETED)
+    }
+
+    fun approvedForEvent(eventId: Long): Specification<Registration> {
+        return forEvent(eventId).and(isApproved())
+    }
+
+    fun pendingForEvent(eventId: Long): Specification<Registration> {
+        return forEvent(eventId).and(isPending())
+    }
+
+    fun activeForEvent(eventId: Long): Specification<Registration> {
+        return forEvent(eventId).and { root, _, criteriaBuilder ->
+            criteriaBuilder.or(
+                criteriaBuilder.equal(root.get<RegistrationStatus>("status"), RegistrationStatus.APPROVED),
+                criteriaBuilder.equal(root.get<RegistrationStatus>("status"), RegistrationStatus.WAITLISTED)
+            )
+        }
     }
 }
