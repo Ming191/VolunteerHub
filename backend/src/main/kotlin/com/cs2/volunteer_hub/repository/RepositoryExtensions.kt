@@ -5,6 +5,7 @@ import com.cs2.volunteer_hub.model.Comment
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.Post
 import com.cs2.volunteer_hub.model.Registration
+import com.cs2.volunteer_hub.model.Report
 import com.cs2.volunteer_hub.model.User
 
 /**
@@ -55,5 +56,11 @@ fun RegistrationRepository.findByIdOrThrow(id: Long): Registration {
 fun CommentRepository.findByIdOrThrow(id: Long): Comment {
     return findById(id).orElseThrow {
         ResourceNotFoundException("Comment", "id", id)
+    }
+}
+
+fun ReportRepository.findByIdOrThrow(id: Long): Report {
+    return findById(id).orElseThrow {
+        throw NoSuchElementException("Report with id $id not found")
     }
 }

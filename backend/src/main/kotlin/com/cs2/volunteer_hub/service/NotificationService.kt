@@ -194,22 +194,18 @@ class NotificationService(
         } catch (e: FirebaseMessagingException) {
             logger.error("FCM error for token ${token.take(10)}...: ${e.messagingErrorCode} - ${e.message}")
 
-            // Handle specific FCM error codes
             when (e.messagingErrorCode?.name) {
                 "UNREGISTERED", "INVALID_ARGUMENT" -> {
                     logger.warn("Invalid/unregistered token detected. Removing token ID: $tokenId")
-                    // Direct repository call - will be part of parent transaction if exists
                     try {
                         fcmTokenRepository.deleteById(tokenId)
                         logger.info("Successfully deleted invalid FCM token ID: $tokenId")
                     } catch (deleteEx: Exception) {
                         logger.error("Failed to delete FCM token ID: $tokenId - ${deleteEx.message}")
                     }
-                    // Don't retry for invalid tokens
                 }
                 "SENDER_ID_MISMATCH" -> {
                     logger.warn("Sender ID mismatch for token. Removing token ID: $tokenId")
-                    // Direct repository call - will be part of parent transaction if exists
                     try {
                         fcmTokenRepository.deleteById(tokenId)
                         logger.info("Successfully deleted invalid FCM token ID: $tokenId")
