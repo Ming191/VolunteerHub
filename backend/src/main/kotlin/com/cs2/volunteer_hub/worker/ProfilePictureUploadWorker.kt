@@ -6,6 +6,7 @@ import com.cs2.volunteer_hub.dto.ProfilePictureUploadMessage
 import com.cs2.volunteer_hub.dto.ProfilePictureUploadSuccessMessage
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.service.ImageUploadService
+import com.cs2.volunteer_hub.service.NotificationService
 import com.cs2.volunteer_hub.service.TemporaryFileStorageService
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.annotation.RabbitListener
@@ -20,7 +21,8 @@ class ProfilePictureUploadWorker(
     private val imageUploadService: ImageUploadService,
     private val tempFileService: TemporaryFileStorageService,
     private val userRepository: UserRepository,
-    private val rabbitTemplate: RabbitTemplate
+    private val rabbitTemplate: RabbitTemplate,
+    private val notificationService: NotificationService
 ) {
     private val logger = LoggerFactory.getLogger(ProfilePictureUploadWorker::class.java)
 
@@ -41,11 +43,11 @@ class ProfilePictureUploadWorker(
         } catch (e: OptimisticLockingFailureException) {
             logger.warn("Optimistic locking failure for User ID: ${message.userId}, will retry")
             processedMessages.remove(messageId) // Allow retry
-            throw e // Requeue message
+            throw e
         } catch (e: Exception) {
             logger.error("Unexpected error processing profile picture for User ID: ${message.userId}", e)
             handleRetryOrFailure(message, e.message ?: "Unknown error")
-            throw e // Send to DLQ after max retries
+            throw e
         }
     }
 
@@ -61,17 +63,13 @@ class ProfilePictureUploadWorker(
         }
 
         try {
-            // Read temporary file
             val fileBytes = tempFileService.read(message.temporaryFilePath)
 
-            // Upload to GCS
             val uploadedUrl = imageUploadService.uploadImageFromBytes(
                 fileBytes,
                 message.contentType,
                 message.originalFileName
             )
-
-            // Delete old profile picture if exists
             user.profilePictureUrl?.let { oldUrl ->
                 try {
                     imageUploadService.deleteImageByUrl(oldUrl)
@@ -81,13 +79,10 @@ class ProfilePictureUploadWorker(
                 }
             }
 
-            // Update user with new URL
             user.profilePictureUrl = uploadedUrl
             userRepository.save(user)
 
             logger.info("Successfully uploaded profile picture for User ID: $userId")
-
-            // Send success message
             val successMessage = ProfilePictureUploadSuccessMessage(
                 userId = userId,
                 uploadedUrl = uploadedUrl
@@ -102,7 +97,6 @@ class ProfilePictureUploadWorker(
             logger.error("Failed to upload profile picture for User ID: $userId. Error: ${e.message}", e)
             throw e
         } finally {
-            // Always clean up temporary file
             try {
                 tempFileService.delete(message.temporaryFilePath)
                 logger.info("Deleted temporary file for User ID: $userId")
@@ -144,6 +138,24 @@ class ProfilePictureUploadWorker(
     @RabbitListener(queues = [RabbitMQConfig.PROFILE_PICTURE_UPLOAD_FAILED_QUEUE])
     fun handleUploadFailure(message: ProfilePictureUploadFailureMessage) {
         logger.error("Profile picture upload failed for User ID: ${message.userId}. Error: ${message.error}")
-        // TODO: Notify user of failure via notification system
+
+        try {
+            notificationService.saveNotification(
+                userId = message.userId,
+                content = "Failed to upload profile picture. Please try again later.",
+                link = "/profile/settings"
+            )
+
+            notificationService.queuePushNotificationToUser(
+                userId = message.userId,
+                title = "Profile Picture Upload Failed",
+                body = "We couldn't update your profile picture. Please try again.",
+                link = "/profile/settings"
+            )
+
+            logger.info("Sent failure notification to User ID: ${message.userId}")
+        } catch (e: Exception) {
+            logger.error("Failed to send notification for User ID: ${message.userId}: ${e.message}", e)
+        }
     }
 }

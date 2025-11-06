@@ -22,7 +22,10 @@ import org.springframework.web.bind.annotation.*
 @SecurityRequirement(name = "bearerAuth")
 class CommentController(private val commentService: CommentService) {
 
-    @Operation(summary = "Create comment", description = "Add a comment to a post")
+    @Operation(
+        summary = "Create comment or reply",
+        description = "Add a comment to a post. Include parentCommentId in the request body to create a reply to an existing comment."
+    )
     @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createComment(
         @PathVariable postId: Long,
@@ -33,7 +36,10 @@ class CommentController(private val commentService: CommentService) {
         return ResponseEntity.status(HttpStatus.CREATED).body(newComment)
     }
 
-    @Operation(summary = "Get comments for post", description = "Retrieve all comments for a specific post")
+    @Operation(
+        summary = "Get comments for post (flat)",
+        description = "Retrieve all comments for a specific post in a flat structure"
+    )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getCommentsForPost(
         @PathVariable postId: Long,
@@ -41,5 +47,32 @@ class CommentController(private val commentService: CommentService) {
     ): ResponseEntity<List<CommentResponse>> {
         val comments = commentService.getCommentsForPost(postId, currentUser.username)
         return ResponseEntity.ok(comments)
+    }
+
+    @Operation(
+        summary = "Get comments with nested replies",
+        description = "Retrieve all comments for a post with nested reply structure"
+    )
+    @GetMapping(path = ["/nested"], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getNestedCommentsForPost(
+        @PathVariable postId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<CommentResponse>> {
+        val comments = commentService.getNestedCommentsForPost(postId, currentUser.username)
+        return ResponseEntity.ok(comments)
+    }
+
+    @Operation(
+        summary = "Get replies for a comment",
+        description = "Retrieve all replies for a specific comment"
+    )
+    @GetMapping(path = ["/{commentId}/replies"], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getRepliesForComment(
+        @PathVariable postId: Long,
+        @PathVariable commentId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<CommentResponse>> {
+        val replies = commentService.getRepliesForComment(commentId, currentUser.username)
+        return ResponseEntity.ok(replies)
     }
 }
