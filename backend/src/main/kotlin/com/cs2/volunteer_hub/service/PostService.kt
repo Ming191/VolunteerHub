@@ -5,6 +5,7 @@ import com.cs2.volunteer_hub.dto.PostCreationMessage
 import com.cs2.volunteer_hub.dto.PostRequest
 import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.mapper.PostMapper
+import com.cs2.volunteer_hub.model.Post
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.*
 import com.cs2.volunteer_hub.specification.LikeSpecifications
@@ -14,8 +15,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.CacheEvict
-import org.springframework.cache.annotation.Cacheable
-import org.springframework.data.domain.Sort
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
@@ -46,7 +48,7 @@ class PostService(
 
         files?.let { fileValidationService.validateFiles(it, maxFilesPerPost) }
 
-        val post = com.cs2.volunteer_hub.model.Post(
+        val post = Post(
             content = request.content,
             author = author,
             event = event
@@ -78,27 +80,27 @@ class PostService(
     }
 
     @Transactional(readOnly = true)
-    fun getPostsForEvent(eventId: Long, userEmail: String): List<PostResponse> {
+    fun getPostsForEvent(eventId: Long, userEmail: String, pageable: Pageable): Page<PostResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
         authorizationService.requireEventPostPermission(eventId, user.id)
 
-        val posts = getCachedPostsForEvent(eventId)
-        if (posts.isEmpty()) {
-            return emptyList()
+        val spec = PostSpecifications.forEvent(eventId)
+        val postPage = postRepository.findAll(spec, pageable)
+
+        if (postPage.isEmpty) {
+            return Page.empty(pageable)
         }
 
-        val postIds = posts.map { it.id }
+        val postIds = postPage.content.map { it.id }
         val likedPostIds = getLikedPostIdsByUser(user.id, postIds)
 
-        return postMapper.toPostResponseList(posts, likedPostIds)
-    }
+        val postResponses = postMapper.toPostResponseList(postPage.content, likedPostIds)
 
-    @Cacheable(value = ["posts"], key = "#eventId")
-    @Transactional(readOnly = true)
-    internal fun getCachedPostsForEvent(eventId: Long): List<com.cs2.volunteer_hub.model.Post> {
-        logger.info("--- DATABASE HIT: Fetching post list for event $eventId ---")
-        val spec = PostSpecifications.forEvent(eventId)
-        return postRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+        return PageImpl(
+            postResponses,
+            pageable,
+            postPage.totalElements
+        )
     }
 
     @Transactional(readOnly = true)
@@ -147,7 +149,7 @@ class PostService(
     }
 
     @Transactional(readOnly = true)
-    fun getRecentPostsForUser(userEmail: String, daysBack: Long = 7): List<PostResponse> {
+    fun getRecentPostsForUser(userEmail: String, daysBack: Long = 7, pageable: Pageable): Page<PostResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
 
         val registrationSpec = RegistrationSpecifications.byUser(user.id)
@@ -156,7 +158,7 @@ class PostService(
         val approvedRegistrations = registrationRepository.findAll(registrationSpec)
 
         if (approvedRegistrations.isEmpty()) {
-            return emptyList()
+            return Page.empty(pageable)
         }
 
         val eventIds = approvedRegistrations.map { it.event.id }
@@ -164,15 +166,21 @@ class PostService(
         val postSpec = PostSpecifications.forEvents(eventIds)
             .and(PostSpecifications.createdAfter(LocalDateTime.now().minusDays(daysBack)))
 
-        val posts = postRepository.findAll(postSpec, Sort.by(Sort.Direction.DESC, "createdAt"))
+        val postPage = postRepository.findAll(postSpec, pageable)
 
-        if (posts.isEmpty()) {
-            return emptyList()
+        if (postPage.isEmpty) {
+            return Page.empty(pageable)
         }
 
-        val postIds = posts.map { it.id }
+        val postIds = postPage.content.map { it.id }
         val likedPostIds = getLikedPostIdsByUser(user.id, postIds)
 
-        return postMapper.toPostResponseList(posts, likedPostIds)
+        val postResponses = postMapper.toPostResponseList(postPage.content, likedPostIds)
+
+        return PageImpl(
+            postResponses,
+            pageable,
+            postPage.totalElements
+        )
     }
 }

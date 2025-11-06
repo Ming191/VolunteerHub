@@ -8,7 +8,8 @@ import java.time.LocalDateTime
     name = "comments",
     indexes = [
         Index(name = "idx_comments_post_created", columnList = "post_id, created_at"),
-        Index(name = "idx_comments_author_id", columnList = "author_id")
+        Index(name = "idx_comments_author_id", columnList = "author_id"),
+        Index(name = "idx_comments_parent_id", columnList = "parent_comment_id")
     ]
 )
 data class Comment(
@@ -27,5 +28,12 @@ data class Comment(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
-    val post: Post
+    val post: Post,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    val parentComment: Comment? = null,
+
+    @OneToMany(mappedBy = "parentComment", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val replies: MutableList<Comment> = mutableListOf()
 )
