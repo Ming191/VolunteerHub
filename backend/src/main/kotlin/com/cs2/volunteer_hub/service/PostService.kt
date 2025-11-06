@@ -5,6 +5,7 @@ import com.cs2.volunteer_hub.dto.PostCreationMessage
 import com.cs2.volunteer_hub.dto.PostRequest
 import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.mapper.PostMapper
+import com.cs2.volunteer_hub.model.Post
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.*
 import com.cs2.volunteer_hub.specification.LikeSpecifications
@@ -47,7 +48,7 @@ class PostService(
 
         files?.let { fileValidationService.validateFiles(it, maxFilesPerPost) }
 
-        val post = com.cs2.volunteer_hub.model.Post(
+        val post = Post(
             content = request.content,
             author = author,
             event = event

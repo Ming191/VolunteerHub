@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.repository
 
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
+import com.cs2.volunteer_hub.model.Comment
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.Post
 import com.cs2.volunteer_hub.model.Registration
@@ -48,3 +49,11 @@ fun RegistrationRepository.findByIdOrThrow(id: Long): Registration {
     }
 }
 
+/**
+ * Find comment by ID or throw ResourceNotFoundException
+ */
+fun CommentRepository.findByIdOrThrow(id: Long): Comment {
+    return findById(id).orElseThrow {
+        ResourceNotFoundException("Comment", "id", id)
+    }
+}
