@@ -17,20 +17,20 @@ services:
     restart: always
 
   rabbitmq:
-    image: rabbitmq:3.13-management 
+    image: rabbitmq:3.13-management
     container_name: volunteerhub_rabbitmq
     ports:
-      - "5672:5672" 
-      - "15672:15672" 
+      - "5672:5672"
+      - "15672:15672"
     environment:
       - RABBITMQ_DEFAULT_USER=myuser
       - RABBITMQ_DEFAULT_PASS=mypassword
-  
+
   redis:
-    image: redis:7-alpine 
+    image: redis:7-alpine
     container_name: volunteerhub_redis
     ports:
-      - "6379:6379" 
+      - "6379:6379"
     volumes:
       - redis_data:/data
     restart: always

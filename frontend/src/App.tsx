@@ -1,35 +1,42 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// src/App.tsx
+import SignIn from "./LoginScreen.tsx";
+import {BrowserRouter, Route, Routes} from "react-router-dom";
+import SignUp from "./SignUpScreen.tsx";
+import Dashboard from "./Dashboard.tsx";
+import {Toaster} from "sonner";
+import EventList from "./EventListScreen.tsx";
+import DashboardLayout from "./DashboardLayout.tsx";
+import EventDetail from "./EvenDetails.tsx";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <BrowserRouter>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          className: "",
+          style: {
+            background: "#fff",
+            color: "#1f2937", // text-gray-800
+            borderRadius: "0.5rem", // rounded-lg
+            padding: "12px 16px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          },
+        }}
+      />
+      <Routes>
+        <Route path="/" element={<SignIn />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/dashboardLayout" element={<DashboardLayout />}/>
 
-export default App
+
+        <Route element={<DashboardLayout/>}>
+          <Route path="/dashboard" element={<Dashboard/>}/>
+          <Route path="/events" element={<EventList />}/>
+          <Route path="/eventDetails" element={<EventDetail />}/>
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
