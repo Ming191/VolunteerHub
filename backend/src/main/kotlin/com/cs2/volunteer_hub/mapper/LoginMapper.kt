@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.mapper
 import com.cs2.volunteer_hub.dto.LoginResponse
 import com.cs2.volunteer_hub.dto.RegisterResponse
 import com.cs2.volunteer_hub.dto.TokenResponse
+import com.cs2.volunteer_hub.dto.VerifyEmailResponse
 import com.cs2.volunteer_hub.model.User
 import org.springframework.stereotype.Component
 
@@ -40,6 +41,23 @@ class RegisterMapper {
             email = user.email,
             name = user.name,
             role = user.role,
+            message = message
+        )
+    }
+}
+
+@Component
+class VerifyEmailMapper {
+
+    /**
+     * Map User entity to VerifyEmailResponse DTO
+     */
+    fun toVerifyEmailResponse(user: User, message: String = "Email verified successfully!"): VerifyEmailResponse {
+        return VerifyEmailResponse(
+            userId = user.id,
+            email = user.email,
+            name = user.name,
+            isEmailVerified = user.isEmailVerified,
             message = message
         )
     }

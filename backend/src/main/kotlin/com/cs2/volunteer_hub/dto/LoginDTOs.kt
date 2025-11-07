@@ -31,3 +31,11 @@ data class RegisterResponse(
     val role: Role,
     val message: String
 )
+
+data class VerifyEmailResponse(
+    val userId: Long,
+    val email: String,
+    val name: String,
+    val isEmailVerified: Boolean,
+    val message: String
+)
