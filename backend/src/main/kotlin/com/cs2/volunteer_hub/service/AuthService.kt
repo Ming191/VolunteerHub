@@ -3,10 +3,12 @@ package com.cs2.volunteer_hub.service
 import com.cs2.volunteer_hub.config.jwt.JwtTokenProvider
 import com.cs2.volunteer_hub.dto.LoginRequest
 import com.cs2.volunteer_hub.dto.RegisterRequest
+import com.cs2.volunteer_hub.dto.TokenResponse
 import com.cs2.volunteer_hub.model.User
 import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.repository.UserRepository
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -20,7 +22,10 @@ class AuthService (
     private val jwtTokenProvider: JwtTokenProvider,
     private val authenticationManager: AuthenticationManager,
     private val userDetailsService: CustomUserDetailsService,
-    private val emailVerificationService: EmailVerificationService
+    private val emailVerificationService: EmailVerificationService,
+    private val refreshTokenService: RefreshTokenService,
+    @Value($$"${jwt.refresh-token.expiration:2592000000}") // Default: 30 days
+    private val refreshTokenExpiration: Long
 ) {
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
@@ -52,7 +57,7 @@ class AuthService (
         return savedUser
     }
 
-    fun loginUser(request: LoginRequest) : String {
+    fun loginUser(request: LoginRequest, ipAddress: String? = null, userAgent: String? = null) : TokenResponse {
         authenticationManager.authenticate(
             UsernamePasswordAuthenticationToken(request.email, request.password)
         )
@@ -60,12 +65,54 @@ class AuthService (
         val userDetails = userDetailsService.loadUserByUsername(request.email)
 
         val user = userRepository.findByEmail(request.email)
-        user?.let {
-            it.lastLoginAt = LocalDateTime.now()
-            userRepository.save(it)
-            logger.info("Updated last login for user: ${it.email}")
-        }
+            ?: throw IllegalArgumentException("User not found")
 
-        return jwtTokenProvider.generateToken(userDetails)
+        user.lastLoginAt = LocalDateTime.now()
+        userRepository.save(user)
+        logger.info("Updated last login for user: ${user.email}")
+
+        // Generate access token
+        val accessToken = jwtTokenProvider.generateToken(userDetails)
+
+        // Generate refresh token
+        val refreshToken = refreshTokenService.createRefreshToken(user, ipAddress, userAgent)
+
+        return TokenResponse(
+            accessToken = accessToken,
+            refreshToken = refreshToken.token,
+            accessTokenExpiresIn = jwtTokenProvider.getExpirationMillis(),
+            refreshTokenExpiresIn = refreshTokenExpiration
+        )
+    }
+
+    fun refreshAccessToken(refreshToken: String, ipAddress: String? = null, userAgent: String? = null): TokenResponse {
+        // Rotate the refresh token (security best practice)
+        val newRefreshToken = refreshTokenService.rotateRefreshToken(refreshToken, ipAddress, userAgent)
+
+        // Generate new access token
+        val userDetails = userDetailsService.loadUserByUsername(newRefreshToken.user.email)
+        val accessToken = jwtTokenProvider.generateToken(userDetails)
+
+        return TokenResponse(
+            accessToken = accessToken,
+            refreshToken = newRefreshToken.token,
+            accessTokenExpiresIn = jwtTokenProvider.getExpirationMillis(),
+            refreshTokenExpiresIn = refreshTokenExpiration
+        )
+    }
+
+    fun logout(refreshToken: String) {
+        refreshTokenService.revokeToken(refreshToken)
+    }
+
+    fun logoutAllDevices(userEmail: String) {
+        val user = userRepository.findByEmail(userEmail)
+            ?: throw IllegalArgumentException("User not found")
+        refreshTokenService.revokeAllUserTokens(user)
+    }
+
+    fun getUserByEmail(email: String): User {
+        return userRepository.findByEmail(email)
+            ?: throw IllegalArgumentException("User not found")
     }
 }
