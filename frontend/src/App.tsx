@@ -1,42 +1,58 @@
-// src/App.tsx
-import SignIn from "./LoginScreen.tsx";
-import {BrowserRouter, Route, Routes} from "react-router-dom";
-import SignUp from "./SignUpScreen.tsx";
-import Dashboard from "./Dashboard.tsx";
-import {Toaster} from "sonner";
-import EventList from "./EventListScreen.tsx";
-import DashboardLayout from "./DashboardLayout.tsx";
-import EventDetail from "./EvenDetails.tsx";
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          className: "",
-          style: {
-            background: "#fff",
-            color: "#1f2937", // text-gray-800
-            borderRadius: "0.5rem", // rounded-lg
-            padding: "12px 16px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-          },
-        }}
-      />
-      <Routes>
-        <Route path="/" element={<SignIn />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/dashboardLayout" element={<DashboardLayout />}/>
+// Import Layouts and Route Guards
+import DashboardLayout from './components/layout/DashboardLayout';
+import ProtectedRoute from './components/ProtectedRoute';
 
+// Import Page Components
+import LoginScreen from './components/auth/LoginScreen';
+import SignUpScreen from './components/auth/SignUpScreen';
 
-        <Route element={<DashboardLayout/>}>
-          <Route path="/dashboard" element={<Dashboard/>}/>
-          <Route path="/events" element={<EventList />}/>
-          <Route path="/eventDetails" element={<EventDetail />}/>
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
+// Import a Toaster for notifications
+import { Toaster } from '@/components/ui/sonner';
+
+// --- Placeholder Pages (to be replaced in later phases) ---
+const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
+const EventList = () => <div className="text-3xl font-bold">Browse Events</div>;
+const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
+const AdminPanel = () => <div className="text-3xl font-bold">Admin Panel</div>;
+// -----------------------------------------------------------
+
+function App() {
+    return (
+        <>
+            <Routes>
+                {/* ============================================= */}
+                {/*           Public Routes                       */}
+                {/* ============================================= */}
+                <Route path="/signin" element={<LoginScreen />} />
+                <Route path="/signup" element={<SignUpScreen />} />
+
+                {/* ============================================= */}
+                {/*           Protected Routes                    */}
+                {/* ============================================= */}
+                <Route element={<ProtectedRoute />}>
+                    <Route element={<DashboardLayout />}>
+                        {/* Redirect root path to the dashboard */}
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/events" element={<EventList />} />
+
+                        {/* Role-specific routes can be nested here too */}
+                        <Route path="/my-events" element={<MyEvents />} />
+                        <Route path="/admin" element={<AdminPanel />} />
+                    </Route>
+                </Route>
+
+                {/* Add a 404 Not Found route here if desired */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+
+            {/* Toaster for notifications, available on all pages */}
+            <Toaster richColors position="top-right" />
+        </>
+    );
 }
+
+export default App;
