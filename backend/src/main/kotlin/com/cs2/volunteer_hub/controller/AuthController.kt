@@ -1,19 +1,23 @@
 package com.cs2.volunteer_hub.controller
 
-import com.cs2.volunteer_hub.dto.LoginRequest
-import com.cs2.volunteer_hub.dto.RegisterRequest
+import com.cs2.volunteer_hub.dto.*
+import com.cs2.volunteer_hub.mapper.LoginMapper
+import com.cs2.volunteer_hub.mapper.RegisterMapper
 import com.cs2.volunteer_hub.service.AuthService
-import com.cs2.volunteer_hub.service.EmailVerificationService
 import com.cs2.volunteer_hub.service.EmailQueueService
+import com.cs2.volunteer_hub.service.EmailVerificationService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.*
 
 
@@ -23,7 +27,9 @@ import org.springframework.web.bind.annotation.*
 class AuthController (
     private val authService: AuthService,
     private val emailVerificationService: EmailVerificationService,
-    private val emailQueueService: EmailQueueService
+    private val emailQueueService: EmailQueueService,
+    private val loginMapper: LoginMapper,
+    private val registerMapper: RegisterMapper
 ) {
 
     @Operation(
@@ -48,28 +54,22 @@ class AuthController (
     fun register(
         @Valid @RequestBody
         request: RegisterRequest
-    ): ResponseEntity<Any> {
-        return try {
-            authService.registerUser(request)
-            ResponseEntity(
-                mapOf("message" to "Registration successful. Please check your email to verify your account."),
-                HttpStatus.CREATED
-            )
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity(mapOf("error" to e.message), HttpStatus.BAD_REQUEST)
-        }
+    ): ResponseEntity<RegisterResponse> {
+        val user = authService.registerUser(request)
+        val response = registerMapper.toRegisterResponse(user)
+        return ResponseEntity(response, HttpStatus.CREATED)
     }
 
     @Operation(
         summary = "Login",
-        description = "Authenticate user and receive JWT token"
+        description = "Authenticate user and receive JWT access token and refresh token"
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
                 description = "Login successful",
-                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}""")])]
+                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "refreshToken": "550e8400-e29b-41d4-a716-446655440000", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")])]
             ),
             ApiResponse(
                 responseCode = "401",
@@ -80,11 +80,90 @@ class AuthController (
     )
     @PostMapping("/login")
     fun login(
-        @Valid @RequestBody
-        request: LoginRequest
+        @Valid @RequestBody request: LoginRequest,
+        httpRequest: HttpServletRequest
+    ): ResponseEntity<LoginResponse> {
+        val ipAddress = httpRequest.remoteAddr
+        val userAgent = httpRequest.getHeader("User-Agent")
+        val tokenResponse = authService.loginUser(request, ipAddress, userAgent)
+        val user = authService.getUserByEmail(request.email)
+        val response = loginMapper.toLoginResponse(user, tokenResponse)
+        return ResponseEntity.ok(response)
+    }
+
+    @Operation(
+        summary = "Refresh access token",
+        description = "Use refresh token to obtain a new access token without re-authentication. The refresh token will be rotated (old one invalidated, new one issued) for security."
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Token refreshed successfully",
+                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "refreshToken": "650e8400-e29b-41d4-a716-446655440001", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")])]
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "Invalid or expired refresh token",
+                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"error": "Invalid refresh token"}""")])]
+            )
+        ]
+    )
+    @PostMapping("/refresh")
+    fun refreshToken(
+        @Valid @RequestBody request: RefreshTokenRequest,
+        httpRequest: HttpServletRequest
     ): ResponseEntity<Any> {
-        val token = authService.loginUser(request)
-        return ResponseEntity.ok(mapOf("token" to token))
+        return try {
+            val ipAddress = httpRequest.remoteAddr
+            val userAgent = httpRequest.getHeader("User-Agent")
+            val tokenResponse = authService.refreshAccessToken(request.refreshToken, ipAddress, userAgent)
+            ResponseEntity.ok(tokenResponse)
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(mapOf("error" to (e.message ?: "Invalid refresh token")))
+        }
+    }
+
+    @Operation(
+        summary = "Logout",
+        description = "Logout from current device by revoking the refresh token"
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Logged out successfully",
+                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"message": "Logged out successfully"}""")])]
+            )
+        ]
+    )
+    @PostMapping("/logout")
+    fun logout(@RequestBody request: Map<String, String>): ResponseEntity<Map<String, String>> {
+        val refreshToken = request["refreshToken"]
+        if (refreshToken != null) {
+            authService.logout(refreshToken)
+        }
+        return ResponseEntity.ok(mapOf("message" to "Logged out successfully"))
+    }
+
+    @Operation(
+        summary = "Logout from all devices",
+        description = "Revoke all refresh tokens for the current user (requires authentication)"
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Logged out from all devices",
+                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"message": "Logged out from all devices"}""")])]
+            )
+        ]
+    )
+    @PostMapping("/logout-all")
+    fun logoutAll(@AuthenticationPrincipal currentUser: UserDetails): ResponseEntity<Map<String, String>> {
+        authService.logoutAllDevices(currentUser.username)
+        return ResponseEntity.ok(mapOf("message" to "Logged out from all devices"))
     }
 
     @Operation(
