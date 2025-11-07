@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.controller
 import com.cs2.volunteer_hub.dto.*
 import com.cs2.volunteer_hub.mapper.LoginMapper
 import com.cs2.volunteer_hub.mapper.RegisterMapper
+import com.cs2.volunteer_hub.mapper.VerifyEmailMapper
 import com.cs2.volunteer_hub.service.AuthService
 import com.cs2.volunteer_hub.service.EmailQueueService
 import com.cs2.volunteer_hub.service.EmailVerificationService
@@ -29,7 +30,8 @@ class AuthController (
     private val emailVerificationService: EmailVerificationService,
     private val emailQueueService: EmailQueueService,
     private val loginMapper: LoginMapper,
-    private val registerMapper: RegisterMapper
+    private val registerMapper: RegisterMapper,
+    private val verifyEmailMapper: VerifyEmailMapper
 ) {
 
     @Operation(
@@ -185,17 +187,15 @@ class AuthController (
         ]
     )
     @GetMapping("/verify-email")
-    fun verifyEmail(@RequestParam token: String): ResponseEntity<Any> {
-        return try {
-            emailVerificationService.verifyEmail(token)
+    fun verifyEmail(@RequestParam token: String): ResponseEntity<VerifyEmailResponse> {
+        emailVerificationService.verifyEmail(token)
+        val user = emailVerificationService.getUserByToken(token)
+            ?: throw IllegalArgumentException("User not found")
 
-            val user = emailVerificationService.getUserByToken(token)
-            user?.let { emailQueueService.queueWelcomeEmail(it.email, it.name) }
+        emailQueueService.queueWelcomeEmail(user.email, user.name)
 
-            ResponseEntity.ok(mapOf("message" to "Email verified successfully!"))
-        } catch (e: IllegalArgumentException) {
-            ResponseEntity(mapOf("error" to e.message), HttpStatus.BAD_REQUEST)
-        }
+        val response = verifyEmailMapper.toVerifyEmailResponse(user)
+        return ResponseEntity.ok(response)
     }
 
     @Operation(
