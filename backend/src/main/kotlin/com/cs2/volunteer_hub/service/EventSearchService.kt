@@ -6,7 +6,9 @@ import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.EventTag
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.specification.EventSpecifications
-import org.springframework.data.domain.Sort
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -30,6 +32,7 @@ class EventSearchService(
      * @param tags Set of tags to filter by
      * @param matchAllTags If true, events must have ALL tags (AND). If false, events must have ANY tag (OR)
      * @param location Filter by specific location (case-insensitive partial match)
+     * @param pageable Pagination and sorting parameters
      */
     @Transactional(readOnly = true)
     fun searchApprovedEvents(
@@ -37,8 +40,9 @@ class EventSearchService(
         onlyUpcoming: Boolean = false,
         tags: Set<EventTag>? = null,
         matchAllTags: Boolean = false,
-        location: String? = null
-    ): List<EventResponse> {
+        location: String? = null,
+        pageable: Pageable
+    ): Page<EventResponse> {
         var spec: Specification<Event> = EventSpecifications.isApproved()
 
         if (searchText != null && searchText.isNotBlank()) {
@@ -62,7 +66,13 @@ class EventSearchService(
             spec = spec.and(EventSpecifications.locationContains(location.trim()))
         }
 
-        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
-        return eventMapper.toEventResponseList(events)
+        val eventPage = eventRepository.findAll(spec, pageable)
+        val eventResponses = eventMapper.toEventResponseList(eventPage.content)
+
+        return PageImpl(
+            eventResponses,
+            pageable,
+            eventPage.totalElements
+        )
     }
 }

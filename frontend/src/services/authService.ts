@@ -17,7 +17,7 @@ const authApi = new AuthenticationApi(config, undefined, axiosInstance);
  */
 const login = async (loginData: LoginRequest) => {
     try {
-        const response = await authApi.login(loginData);
+        const response = await authApi.login({ loginRequest: loginData });
         return response.data;
     } catch (error) {
         console.error('Login failed:', error);
@@ -32,7 +32,7 @@ const login = async (loginData: LoginRequest) => {
  */
 const register = async (registerData: RegisterRequest) => {
     try {
-        const response = await authApi.register(registerData);
+        const response = await authApi.register({ registerRequest: registerData });
         return response.data;
     } catch (error) {
         console.error('Registration failed:', error);
@@ -46,7 +46,7 @@ const register = async (registerData: RegisterRequest) => {
  */
 const logout = async (refreshToken: string) => {
     try {
-        await authApi.logout({ refreshToken });
+        await authApi.logout({ requestBody: { refreshToken } });
     } catch (error) {
         console.error('Server logout failed:', error);
     }

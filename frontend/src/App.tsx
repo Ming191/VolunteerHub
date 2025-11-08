@@ -11,10 +11,10 @@ import SignUpScreen from './components/auth/SignUpScreen';
 
 // Import a Toaster for notifications
 import { Toaster } from '@/components/ui/sonner';
+import EventListScreen from "@/components/event/EventListScreen.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
-const EventList = () => <div className="text-3xl font-bold">Browse Events</div>;
 const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
 const AdminPanel = () => <div className="text-3xl font-bold">Admin Panel</div>;
 // -----------------------------------------------------------
@@ -41,7 +41,7 @@ function App() {
                             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
                             <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/events" element={<EventList />} />
+                            <Route path="/events" element={<EventListScreen  />} />
 
                             {/* Role-specific routes can be nested here too */}
                             <Route path="/my-events" element={<MyEvents />} />
