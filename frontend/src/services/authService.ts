@@ -3,6 +3,7 @@ import {
     Configuration,
     type LoginRequest,
     type RegisterRequest,
+    type VerifyEmailResponse,
 } from '@/api-client';
 import axiosInstance from '../utils/axiosInstance';
 
@@ -60,8 +61,7 @@ const logout = async (refreshToken: string) => {
 const verifyEmail = async (token: string): Promise<VerifyEmailResponse> => {
     try {
         const response = await authApi.verifyEmail({ token });
-        // The API returns void, but we need to cast the response data
-        return response.data as any;
+        return response.data as VerifyEmailResponse;
     } catch (error) {
         console.error('Email verification failed:', error);
         throw error;
