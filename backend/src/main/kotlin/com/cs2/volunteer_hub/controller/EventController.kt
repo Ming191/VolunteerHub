@@ -78,13 +78,14 @@ class EventController(
         - Filter by specific location
         - Filter by tags (supports multiple tags)
         - Choose AND/OR logic for tag matching
-        
+        - Supports pagination and sorting
+
         Examples:
         - /api/events/search?location=hanoi (events in Hanoi)
         - /api/events/search?location=hanoi&tags=OUTDOOR (outdoor events in Hanoi)
         - /api/events/search?tags=OUTDOOR,VIRTUAL (events with OUTDOOR OR VIRTUAL)
         - /api/events/search?tags=OUTDOOR,FAMILY_FRIENDLY&matchAllTags=true (events with BOTH tags)
-        - /api/events/search?q=volunteer&location=community%20center&tags=COMMUNITY_SERVICE&upcoming=true
+        - /api/events/search?q=volunteer&location=community%20center&tags=COMMUNITY_SERVICE&upcoming=true&page=0&size=10
         """
     )
     @GetMapping("/search")
@@ -98,8 +99,16 @@ class EventController(
         @Parameter(description = "Filter by tags (comma-separated). Example: OUTDOOR,FAMILY_FRIENDLY,VIRTUAL")
         @RequestParam(required = false) tags: List<String>?,
         @Parameter(description = "If true, events must have ALL specified tags (AND logic). If false, events can have ANY tag (OR logic)")
-        @RequestParam(defaultValue = "false") matchAllTags: Boolean
-    ): ResponseEntity<List<EventResponse>> {
+        @RequestParam(defaultValue = "false") matchAllTags: Boolean,
+        @Parameter(description = "Page number (0-based)")
+        @RequestParam(defaultValue = "0") page: Int,
+        @Parameter(description = "Page size")
+        @RequestParam(defaultValue = "20") size: Int,
+        @Parameter(description = "Sort field")
+        @RequestParam(defaultValue = "eventDateTime") sort: String,
+        @Parameter(description = "Sort direction (asc or desc)")
+        @RequestParam(defaultValue = "asc") direction: String
+    ): ResponseEntity<Page<EventResponse>> {
         if (q != null) {
             val trimmed = q.trim()
             if (trimmed.length > 100) {
@@ -120,12 +129,20 @@ class EventController(
             }
         }?.toSet()
 
+        val pageable = PageRequest.of(
+            page,
+            size,
+            Sort.Direction.fromString(direction.uppercase()),
+            sort
+        )
+
         val events = eventSearchService.searchApprovedEvents(
             searchText = q?.trim()?.takeIf { it.isNotEmpty() },
             onlyUpcoming = upcoming,
             location = location?.trim()?.takeIf { it.isNotEmpty() },
             tags = eventTags,
-            matchAllTags = matchAllTags
+            matchAllTags = matchAllTags,
+            pageable = pageable
         )
 
         return ResponseEntity.ok(events)
