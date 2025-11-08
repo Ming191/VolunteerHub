@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
+import AnimatedPage from '@/components/common/AnimatedPage';
 
 // Define the validation schema with Zod
 const formSchema = z.object({
@@ -49,7 +50,7 @@ export default function LoginScreen() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <AnimatedPage className="flex items-center justify-center min-h-screen bg-gray-100">
             <Card className="w-full max-w-sm">
                 <CardHeader>
                     <CardTitle className="text-2xl">Login to VolunteerHub</CardTitle>
@@ -98,6 +99,6 @@ export default function LoginScreen() {
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </AnimatedPage>
     );
 }

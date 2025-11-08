@@ -11,13 +11,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import AnimatedPage from '@/components/common/AnimatedPage';
 
-// Define the validation schema with Zod
 const formSchema = z
     .object({
         username: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
         email: z.email({ message: 'Please enter a valid email.' }),
-        password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+        password: z
+            .string()
+            .min(8, { message: 'Password must be at least 8 characters.' })
+            .max(100, { message: 'Password must be no more than 100 characters.' })
+            .regex(/.*[A-Z].*/, { message: 'Password must contain at least one uppercase letter.' })
+            .regex(/.*[a-z].*/, { message: 'Password must contain at least one lowercase letter.' })
+            .regex(/.*\d.*/, { message: 'Password must contain at least one digit.' })
+            .regex(/.*[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-].*/, {
+                message: 'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)'
+            }),
         confirmPassword: z.string(),
         role: z.enum(['VOLUNTEER', 'EVENT_ORGANIZER'], {
             message: 'You need to select a role.',
@@ -49,7 +58,6 @@ export default function SignUpScreen() {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            // The register function from useAuth will navigate on success
             await register(values);
             toast.success('Registration successful!', {
                 description: 'Please check your email to verify your account.',
@@ -64,7 +72,7 @@ export default function SignUpScreen() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 py-12">
+        <AnimatedPage className="flex items-center justify-center min-h-screen bg-gray-100 py-12">
             <Card className="w-full max-w-md">
                 <CardHeader>
                     <CardTitle className="text-2xl">Create an Account</CardTitle>
@@ -183,6 +191,6 @@ export default function SignUpScreen() {
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </AnimatedPage>
     );
 }
