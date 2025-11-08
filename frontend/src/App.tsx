@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Import Page Components
 import LoginScreen from './components/auth/LoginScreen';
 import SignUpScreen from './components/auth/SignUpScreen';
+import EmailVerificationScreen from './components/auth/EmailVerificationScreen';
 
 // Import a Toaster for notifications
 import { Toaster } from '@/components/ui/sonner';
@@ -31,6 +32,7 @@ function App() {
                     {/* ============================================= */}
                     <Route path="/signin" element={<LoginScreen />} />
                     <Route path="/signup" element={<SignUpScreen />} />
+                    <Route path="/verify-email" element={<EmailVerificationScreen />} />
 
                     {/* ============================================= */}
                     {/*           Protected Routes                    */}

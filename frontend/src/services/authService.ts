@@ -52,8 +52,25 @@ const logout = async (refreshToken: string) => {
     }
 };
 
+/**
+ * Verifies a user's email address using the token from the verification email.
+ * @param token - The verification token from the email link.
+ * @returns The response from the API confirming verification.
+ */
+const verifyEmail = async (token: string): Promise<VerifyEmailResponse> => {
+    try {
+        const response = await authApi.verifyEmail({ token });
+        // The API returns void, but we need to cast the response data
+        return response.data as any;
+    } catch (error) {
+        console.error('Email verification failed:', error);
+        throw error;
+    }
+};
+
 export const authService = {
     login,
     register,
     logout,
+    verifyEmail,
 };

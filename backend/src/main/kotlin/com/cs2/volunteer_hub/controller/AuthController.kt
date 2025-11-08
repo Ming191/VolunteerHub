@@ -10,6 +10,7 @@ import com.cs2.volunteer_hub.service.EmailVerificationService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -43,7 +44,11 @@ class AuthController (
             ApiResponse(
                 responseCode = "201",
                 description = "User registered successfully, verification email sent",
-                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"message": "Registration successful. Please check your email to verify your account."}""")])]
+                content = [Content(
+                    mediaType = "application/json",
+                    examples = [ExampleObject(value = """{"message": "Registration successful. Please check your email to verify your account."}""")],
+                    schema = Schema(implementation = RegisterResponse::class)
+                    )]
             ),
             ApiResponse(
                 responseCode = "400",
@@ -71,7 +76,11 @@ class AuthController (
             ApiResponse(
                 responseCode = "200",
                 description = "Login successful",
-                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "refreshToken": "550e8400-e29b-41d4-a716-446655440000", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")])]
+                content = [Content(
+                    mediaType = "application/json",
+                    examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "refreshToken": "550e8400-e29b-41d4-a716-446655440000", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")],
+                    schema = Schema(implementation = LoginResponse::class)
+                    )]
             ),
             ApiResponse(
                 responseCode = "401",
@@ -102,7 +111,11 @@ class AuthController (
             ApiResponse(
                 responseCode = "200",
                 description = "Token refreshed successfully",
-                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "refreshToken": "650e8400-e29b-41d4-a716-446655440001", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")])]
+                content = [Content(
+                    mediaType = "application/json",
+                    examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "refreshToken": "650e8400-e29b-41d4-a716-446655440001", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")],
+                    schema = Schema(implementation = TokenResponse::class)
+                    )]
             ),
             ApiResponse(
                 responseCode = "401",
@@ -177,7 +190,11 @@ class AuthController (
             ApiResponse(
                 responseCode = "200",
                 description = "Email verified successfully",
-                content = [Content(mediaType = "application/json", examples = [ExampleObject(value = """{"message": "Email verified successfully!"}""")])]
+                content = [Content(
+                    mediaType = "application/json",
+                    examples = [ExampleObject(value = """{"message": "Email verified successfully!"}""")],
+                    schema = Schema(implementation = VerifyEmailResponse::class)
+                )]
             ),
             ApiResponse(
                 responseCode = "400",
