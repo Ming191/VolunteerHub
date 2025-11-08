@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 
 // Import Layouts and Route Guards
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -19,35 +20,39 @@ const AdminPanel = () => <div className="text-3xl font-bold">Admin Panel</div>;
 // -----------------------------------------------------------
 
 function App() {
+    const location = useLocation();
+
     return (
         <>
-            <Routes>
-                {/* ============================================= */}
-                {/*           Public Routes                       */}
-                {/* ============================================= */}
-                <Route path="/signin" element={<LoginScreen />} />
-                <Route path="/signup" element={<SignUpScreen />} />
+            <AnimatePresence mode="wait" initial={false}>
+                <Routes location={location} key={location.pathname}>
+                    {/* ============================================= */}
+                    {/*           Public Routes                       */}
+                    {/* ============================================= */}
+                    <Route path="/signin" element={<LoginScreen />} />
+                    <Route path="/signup" element={<SignUpScreen />} />
 
-                {/* ============================================= */}
-                {/*           Protected Routes                    */}
-                {/* ============================================= */}
-                <Route element={<ProtectedRoute />}>
-                    <Route element={<DashboardLayout />}>
-                        {/* Redirect root path to the dashboard */}
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    {/* ============================================= */}
+                    {/*           Protected Routes                    */}
+                    {/* ============================================= */}
+                    <Route element={<ProtectedRoute />}>
+                        <Route element={<DashboardLayout />}>
+                            {/* Redirect root path to the dashboard */}
+                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/events" element={<EventList />} />
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/events" element={<EventList />} />
 
-                        {/* Role-specific routes can be nested here too */}
-                        <Route path="/my-events" element={<MyEvents />} />
-                        <Route path="/admin" element={<AdminPanel />} />
+                            {/* Role-specific routes can be nested here too */}
+                            <Route path="/my-events" element={<MyEvents />} />
+                            <Route path="/admin" element={<AdminPanel />} />
+                        </Route>
                     </Route>
-                </Route>
 
-                {/* Add a 404 Not Found route here if desired */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                    {/* Add a 404 Not Found route here if desired */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </AnimatePresence>
 
             {/* Toaster for notifications, available on all pages */}
             <Toaster richColors position="top-right" />
