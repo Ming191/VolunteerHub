@@ -33,6 +33,7 @@ class SecurityConfig {
     fun securityFilterChain(http: HttpSecurity, jwtAuthenticationFilter: JwtAuthenticationFilter): SecurityFilterChain {
         http
             .csrf { it.disable() }
+            .cors { }  // Enable CORS
             .sessionManagement { session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
@@ -40,6 +41,7 @@ class SecurityConfig {
                 auth
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/events/*").permitAll()
+                    .requestMatchers("/api/enums/**").permitAll()
                     .requestMatchers(
                         "/swagger-ui/**",
                         "/v3/api-docs/**",

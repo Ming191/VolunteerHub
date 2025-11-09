@@ -1,5 +1,6 @@
 package com.cs2.volunteer_hub.controller
 
+import com.cs2.volunteer_hub.dto.PageUserResponse
 import com.cs2.volunteer_hub.dto.UserResponse
 import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.service.AdminService
@@ -7,7 +8,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.format.annotation.DateTimeFormat
@@ -65,8 +65,8 @@ class AdminUserController(private val adminService: AdminService) {
         @Parameter(description = "Sort field")
         @RequestParam(defaultValue = "createdAt") sort: String,
         @Parameter(description = "Sort direction (asc or desc)")
-        @RequestParam(defaultValue = "desc") direction: String
-    ): ResponseEntity<Page<UserResponse>> {
+        @RequestParam(defaultValue = "asc") direction: String
+    ): ResponseEntity<PageUserResponse> {
         val pageable = PageRequest.of(
             page,
             size,
@@ -85,7 +85,7 @@ class AdminUserController(private val adminService: AdminService) {
             pageable = pageable
         )
 
-        return ResponseEntity.ok(users)
+        return ResponseEntity.ok(PageUserResponse.from(users))
     }
 
 
