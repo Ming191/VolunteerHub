@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.controller
 
 import com.cs2.volunteer_hub.dto.CreateEventRequest
 import com.cs2.volunteer_hub.dto.EventResponse
+import com.cs2.volunteer_hub.dto.PageEventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
 import com.cs2.volunteer_hub.model.EventTag
 import com.cs2.volunteer_hub.service.EventSearchService
@@ -55,7 +56,7 @@ class EventController(
         @RequestParam(defaultValue = "eventDateTime") sort: String,
         @Parameter(description = "Sort direction (asc or desc)")
         @RequestParam(defaultValue = "asc") direction: String
-    ): ResponseEntity<Page<EventResponse>> {
+    ): ResponseEntity<PageEventResponse> {
         val pageable = PageRequest.of(
             page,
             size,
@@ -63,7 +64,7 @@ class EventController(
             sort
         )
         val events = eventService.getAllApprovedEvents(pageable)
-        return ResponseEntity.ok(events)
+        return ResponseEntity.ok(PageEventResponse.from(events))
     }
 
     /**
@@ -108,7 +109,7 @@ class EventController(
         @RequestParam(defaultValue = "eventDateTime") sort: String,
         @Parameter(description = "Sort direction (asc or desc)")
         @RequestParam(defaultValue = "asc") direction: String
-    ): ResponseEntity<Page<EventResponse>> {
+    ): ResponseEntity<PageEventResponse> {
         if (q != null) {
             val trimmed = q.trim()
             if (trimmed.length > 100) {
@@ -145,7 +146,7 @@ class EventController(
             pageable = pageable
         )
 
-        return ResponseEntity.ok(events)
+        return ResponseEntity.ok(PageEventResponse.from(events))
     }
 
     @Operation(summary = "Get event by ID", description = "Retrieve detailed information about a specific event")

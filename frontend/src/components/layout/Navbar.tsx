@@ -1,5 +1,6 @@
 import { Menu, Search, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,10 +18,28 @@ interface NavbarProps {
     onMenuClick: () => void;
 }
 
+const getPageTitle = (pathname: string): string => {
+    const pathSegments = pathname.split('/').filter(Boolean);
+
+    if (pathSegments.length === 0 || pathSegments[0] === 'dashboard') {
+        return 'Dashboard';
+    }
+
+    const titleMap: Record<string, string> = {
+        'events': 'Events',
+        'my-events': 'My Events',
+        'admin': 'Admin Panel',
+    };
+
+    return titleMap[pathSegments[0]] || pathSegments[0].charAt(0).toUpperCase() + pathSegments[0].slice(1);
+};
+
 const Navbar = ({ onMenuClick }: NavbarProps) => {
     const { user, logout } = useAuth();
+    const location = useLocation();
 
     const userInitials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'V';
+    const pageTitle = getPageTitle(location.pathname);
 
     return (
         <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
@@ -28,7 +47,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
             <Button size="icon" variant="outline" className="lg:hidden" onClick={onMenuClick}>
                 <Menu className="h-6 w-6" />
             </Button>
-            <div className="hidden lg:block text-2xl font-semibold">Dashboard</div>
+            <div className="hidden lg:block text-2xl font-semibold">{pageTitle}</div>
 
 
             {/* Right side: Search, Notifications, and User Menu */}

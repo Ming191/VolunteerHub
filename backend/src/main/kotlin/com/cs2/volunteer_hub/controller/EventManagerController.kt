@@ -1,5 +1,6 @@
 package com.cs2.volunteer_hub.controller
 
+import com.cs2.volunteer_hub.dto.PageRegistrationResponse
 import com.cs2.volunteer_hub.dto.RegistrationResponse
 import com.cs2.volunteer_hub.dto.UpdateStatusRequest
 import com.cs2.volunteer_hub.model.RegistrationStatus
@@ -9,7 +10,6 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.format.annotation.DateTimeFormat
@@ -75,7 +75,7 @@ class EventManagerController(
         @Parameter(description = "Sort direction (asc or desc)")
         @RequestParam(defaultValue = "desc") direction: String,
         @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<Page<RegistrationResponse>> {
+    ): ResponseEntity<PageRegistrationResponse> {
         val pageable = PageRequest.of(
             page,
             size,
@@ -93,7 +93,7 @@ class EventManagerController(
             managerEmail = currentUser.username
         )
 
-        return ResponseEntity.ok(registrations)
+        return ResponseEntity.ok(PageRegistrationResponse.from(registrations))
     }
 
     /**

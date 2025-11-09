@@ -2,10 +2,12 @@ package com.cs2.volunteer_hub.dto
 
 import com.cs2.volunteer_hub.model.EventTag
 import com.fasterxml.jackson.annotation.JsonFormat
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Future
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
+import org.springframework.data.domain.Page
 import java.time.LocalDateTime
 
 data class CreateEventRequest(
@@ -91,3 +93,45 @@ data class UpdateEventRequest(
     @field:Size(max = 15, message = "Maximum 15 tags allowed per event")
     val tags: Set<EventTag>?
 )
+
+@Schema(description = "Paginated response for events with stable JSON structure")
+data class PageEventResponse(
+    @Schema(description = "List of events in the current page", required = true)
+    val content: List<EventResponse>,
+
+    @Schema(description = "Current page number (0-based)", example = "0", required = true)
+    val pageNumber: Int,
+
+    @Schema(description = "Number of items per page", example = "20", required = true)
+    val pageSize: Int,
+
+    @Schema(description = "Total number of events across all pages", example = "100", required = true)
+    val totalElements: Long,
+
+    @Schema(description = "Total number of pages", example = "5", required = true)
+    val totalPages: Int,
+
+    @Schema(description = "Whether this is the last page", example = "false", required = true)
+    val last: Boolean,
+
+    @Schema(description = "Whether this is the first page", example = "true", required = true)
+    val first: Boolean,
+
+    @Schema(description = "Whether the page is empty", example = "false", required = true)
+    val empty: Boolean
+) {
+    companion object {
+        fun from(page: Page<EventResponse>): PageEventResponse {
+            return PageEventResponse(
+                content = page.content,
+                pageNumber = page.number,
+                pageSize = page.size,
+                totalElements = page.totalElements,
+                totalPages = page.totalPages,
+                last = page.isLast,
+                first = page.isFirst,
+                empty = page.isEmpty
+            )
+        }
+    }
+}

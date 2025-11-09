@@ -1,12 +1,10 @@
-import { Configuration, EventsApi, type EventResponse } from '@/api-client';
+import { Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse } from '@/api-client';
 import axiosInstance from '../utils/axiosInstance';
-import type {PageEventResponse} from '@/api-client';
 
-// Use the same configuration pattern as authService
 const config = new Configuration({ basePath: '' });
 const eventsApi = new EventsApi(config, undefined, axiosInstance);
+const enumsApi = new EnumsApi(config, undefined, axiosInstance);
 
-// Define a type for search parameters for better type safety
 export interface SearchEventsParams {
     q?: string;
     location?: string;
@@ -19,11 +17,10 @@ export interface SearchEventsParams {
 
 /**
  * Searches for events with various filters and pagination.
- * This will be the primary method for the event list.
+ * This function is now updated to use the correct search endpoint.
  */
 const searchEvents = async (params: SearchEventsParams): Promise<PageEventResponse> => {
     try {
-        // Use searchEvents endpoint which now supports pagination
         const response = await eventsApi.searchEvents({
             q: params.q,
             upcoming: params.upcoming,
@@ -32,12 +29,23 @@ const searchEvents = async (params: SearchEventsParams): Promise<PageEventRespon
             matchAllTags: params.matchAllTags,
             page: params.page,
             size: params.size,
-            sort: 'eventDateTime',
-            direction: 'asc'
         });
         return response.data;
     } catch (error) {
         console.error('Failed to fetch events:', error);
+        throw error;
+    }
+};
+
+/**
+ * Fetches all available event tags.
+ */
+const getEventTags = async (): Promise<EventTagInfo[]> => {
+    try {
+        const response = await enumsApi.getEventTags();
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch event tags:', error);
         throw error;
     }
 };
@@ -58,4 +66,5 @@ const getEventById = async (id: number): Promise<EventResponse> => {
 export const eventService = {
     searchEvents,
     getEventById,
+    getEventTags, // Export the new function
 };

@@ -1,10 +1,10 @@
 package com.cs2.volunteer_hub.controller
 
+import com.cs2.volunteer_hub.dto.PagePostResponse
 import com.cs2.volunteer_hub.dto.PostRequest
 import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.service.PostService
 import jakarta.validation.Valid
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
@@ -39,7 +39,7 @@ class PostController(private val postService: PostService) {
         @RequestParam(defaultValue = "createdAt") sort: String,
         @RequestParam(defaultValue = "desc") direction: String,
         @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<Page<PostResponse>> {
+    ): ResponseEntity<PagePostResponse> {
         val pageable = PageRequest.of(
             page,
             size,
@@ -47,7 +47,7 @@ class PostController(private val postService: PostService) {
             sort
         )
         val posts = postService.getPostsForEvent(eventId, currentUser.username, pageable)
-        return ResponseEntity.ok(posts)
+        return ResponseEntity.ok(PagePostResponse.from(posts))
     }
 
     /**
@@ -62,7 +62,7 @@ class PostController(private val postService: PostService) {
         @RequestParam(defaultValue = "createdAt") sort: String,
         @RequestParam(defaultValue = "desc") direction: String,
         @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<Page<PostResponse>> {
+    ): ResponseEntity<PagePostResponse> {
         val pageable = PageRequest.of(
             page,
             size,
@@ -70,7 +70,7 @@ class PostController(private val postService: PostService) {
             sort
         )
         val posts = postService.getRecentPostsForUser(currentUser.username, days, pageable)
-        return ResponseEntity.ok(posts)
+        return ResponseEntity.ok(PagePostResponse.from(posts))
     }
 
     @PutMapping("/{postId}")
