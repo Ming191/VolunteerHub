@@ -1,4 +1,4 @@
-import { Menu, Search, Bell } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'react-router-dom';
 
@@ -13,10 +13,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-interface NavbarProps {
-    onMenuClick: () => void;
-}
+import { SidebarTrigger } from '@/components/animate-ui/components/radix/sidebar';
 
 const getPageTitle = (pathname: string): string => {
     const pathSegments = pathname.split('/').filter(Boolean);
@@ -34,7 +31,7 @@ const getPageTitle = (pathname: string): string => {
     return titleMap[pathSegments[0]] || pathSegments[0].charAt(0).toUpperCase() + pathSegments[0].slice(1);
 };
 
-const Navbar = ({ onMenuClick }: NavbarProps) => {
+const Navbar = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
 
@@ -43,11 +40,11 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
 
     return (
         <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
-            {/* Left side: Mobile Menu Toggle */}
-            <Button size="icon" variant="outline" className="lg:hidden" onClick={onMenuClick}>
-                <Menu className="h-6 w-6" />
-            </Button>
-            <div className="hidden lg:block text-2xl font-semibold">{pageTitle}</div>
+            {/* Left side: Sidebar Toggle */}
+            <div className="flex items-center gap-4">
+                <SidebarTrigger />
+                <div className="text-2xl font-semibold">{pageTitle}</div>
+            </div>
 
 
             {/* Right side: Search, Notifications, and User Menu */}
