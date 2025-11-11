@@ -1,4 +1,7 @@
-import { Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse } from '@/api-client';
+import {
+    Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse,
+    type CreateEventRequest
+} from '@/api-client';
 import axiosInstance from '../utils/axiosInstance';
 
 const config = new Configuration({ basePath: '' });
@@ -63,8 +66,22 @@ const getEventById = async (id: number): Promise<EventResponse> => {
     }
 };
 
+const createEvent = async (eventData: CreateEventRequest, files?: File[]): Promise<EventResponse> => {
+    try {
+        const response = await eventsApi.createEvent({
+            request: eventData,
+            files: files
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to create event:', error);
+        throw error;
+    }
+};
+
 export const eventService = {
     searchEvents,
     getEventById,
-    getEventTags, // Export the new function
+    getEventTags,
+    createEvent
 };
