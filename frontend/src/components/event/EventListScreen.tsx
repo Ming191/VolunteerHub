@@ -3,10 +3,13 @@ import { useGetEvents } from '@/hooks/useEvents';
 import EventCard from './EventCard';
 import EventCardSkeleton from './EventCardSkeleton';
 import EventFilterPanel from './eventsFilterPanels';
+import AddEventModal from './AddEventModal';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
-import { Search } from 'lucide-react';
+import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
+import { Search, Plus } from 'lucide-react';
 import type { SearchEventsParams } from '@/services/eventService';
+import { useAuth } from '@/hooks/useAuth';
 
 const EVENTS_PER_PAGE = 8;
 
@@ -14,6 +17,8 @@ type FilterState = Omit<SearchEventsParams, 'page' | 'size'>;
 
 export default function EventListScreen() {
     const [page, setPage] = useState(1); // Use 1-based indexing for UI
+    const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+    const { user } = useAuth();
     const [filters, setFilters] = useState<FilterState>({
         q: '',
         location: '',
@@ -22,7 +27,7 @@ export default function EventListScreen() {
         matchAllTags: false,
     });
 
-    const { data, isLoading, isError, error } = useGetEvents({
+    const { data, isLoading, isError, error, refetch } = useGetEvents({
         ...filters,
         page: page - 1, // Convert to 0-based index for the API
         size: EVENTS_PER_PAGE,
@@ -81,11 +86,23 @@ export default function EventListScreen() {
         <AnimatedPage>
             <div className="container mx-auto px-4 py-8 max-w-7xl">
                 {/* Header Section */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold tracking-tight mb-2">Upcoming Events</h1>
-                    <p className="text-muted-foreground text-lg">
-                        Discover and join events in your community
-                    </p>
+                <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-4xl font-bold tracking-tight mb-2">Upcoming Events</h1>
+                        <p className="text-muted-foreground text-lg">
+                            Discover and join events in your community
+                        </p>
+                    </div>
+                    {user && (user.role === 'EVENT_ORGANIZER' || user.role === 'ADMIN') && (
+                        <RippleButton
+                            onClick={() => setIsAddEventModalOpen(true)}
+                            size="lg"
+                            className="shrink-0"
+                        >
+                            <Plus className="mr-2 h-5 w-5" />
+                            Create Event
+                        </RippleButton>
+                    )}
                 </div>
 
                 {/* Filter Panel */}
@@ -195,6 +212,13 @@ export default function EventListScreen() {
                     </div>
                 )}
             </div>
+
+            {/* Add Event Modal */}
+            <AddEventModal
+                open={isAddEventModalOpen}
+                onOpenChange={setIsAddEventModalOpen}
+                onSuccess={() => refetch()}
+            />
         </AnimatedPage>
     );
 }
