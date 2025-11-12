@@ -14,11 +14,11 @@ import EmailVerificationScreen from './components/auth/EmailVerificationScreen';
 import { Toaster } from '@/components/ui/sonner';
 import EventListScreen from "@/components/event/EventListScreen.tsx";
 import DateTimePicker from "@/components/event/DateTimePicker.tsx";
+import AdminPendingEvents from "@/pages/AdminPendingEvents.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
 const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
-const AdminPanel = () => <div className="text-3xl font-bold">Admin Panel</div>;
 // -----------------------------------------------------------
 
 function App() {
@@ -49,7 +49,7 @@ function App() {
 
                             {/* Role-specific routes can be nested here too */}
                             <Route path="/my-events" element={<MyEvents />} />
-                            <Route path="/admin" element={<AdminPanel />} />
+                            <Route path="/admin/pending-events" element={<AdminPendingEvents />} />
                         </Route>
                     </Route>
 

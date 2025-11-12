@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Loader2, Upload, X } from 'lucide-react';
+import { Loader2} from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/animate-ui/components/radix/dialog';
 import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
@@ -15,8 +15,8 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import DateTimePicker from './DateTimePicker';
 import { eventService } from '@/services/eventService';
 import { useGetEventTags } from '@/hooks/useEventTags';
-import { cn } from '@/lib/utils';
 import type { CreateEventRequest } from '@/api-client';
+import { FileUpload } from '@/components/ui/file-upload';
 
 interface AddEventModalProps {
     open: boolean;
@@ -84,7 +84,6 @@ const validateUserPermissions = (): { isValid: boolean; userRole?: string } => {
 
 export default function AddEventModal({ open, onOpenChange, onSuccess }: AddEventModalProps) {
     const [files, setFiles] = useState<File[]>([]);
-    const [filePreview, setFilePreview] = useState<string[]>([]);
     const { data: eventTags, isLoading: tagsLoading } = useGetEventTags();
 
     const form = useForm<FormValues>({
@@ -112,34 +111,12 @@ export default function AddEventModal({ open, onOpenChange, onSuccess }: AddEven
         return true;
     };
 
-    const createFilePreviews = (files: File[]): void => {
-        const previews: string[] = [];
-        files.forEach((file) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                previews.push(reader.result as string);
-                if (previews.length === files.length) {
-                    setFilePreview(previews);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+    const handleFileChange = (newFiles: File[]): void => {
+        const validFiles = newFiles.filter(validateFile);
+        const combinedFiles = [...files, ...validFiles].slice(0, MAX_IMAGES);
+
+        setFiles(combinedFiles);
     };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        const selectedFiles = Array.from(e.target.files || []);
-        const validFiles = selectedFiles.filter(validateFile);
-        const newFiles = [...files, ...validFiles].slice(0, MAX_IMAGES);
-
-        setFiles(newFiles);
-        createFilePreviews(newFiles);
-    };
-
-    const removeFile = (index: number): void => {
-        setFiles((prev) => prev.filter((_, i) => i !== index));
-        setFilePreview((prev) => prev.filter((_, i) => i !== index));
-    };
-
     const handleError = (error: unknown): void => {
         const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
         const status = err?.response?.status;
@@ -214,7 +191,6 @@ export default function AddEventModal({ open, onOpenChange, onSuccess }: AddEven
 
             form.reset();
             setFiles([]);
-            setFilePreview([]);
             onOpenChange(false);
 
             if (onSuccess) {
@@ -425,49 +401,22 @@ export default function AddEventModal({ open, onOpenChange, onSuccess }: AddEven
                             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                                 Event Images (Optional)
                             </label>
-                            <div className="border-2 border-dashed rounded-lg p-4">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                    id="image-upload"
-                                    disabled={files.length >= 5}
-                                />
-                                <label
-                                    htmlFor="image-upload"
-                                    className={cn(
-                                        "flex flex-col items-center justify-center cursor-pointer",
-                                        files.length >= 5 && "opacity-50 cursor-not-allowed"
-                                    )}
-                                >
-                                    <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
-                                    <span className="text-sm text-muted-foreground">
-                    {files.length >= 5 ? 'Maximum 5 images' : 'Click to upload images (max 5, 5MB each)'}
-                  </span>
-                                </label>
-                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">
+                                Upload up to {MAX_IMAGES} images (max 5MB each)
+                            </p>
 
-                            {filePreview.length > 0 && (
-                                <div className="grid grid-cols-3 gap-2 mt-4">
-                                    {filePreview.map((preview, index) => (
-                                        <div key={index} className="relative group">
-                                            <img
-                                                src={preview}
-                                                alt={`Preview ${index + 1}`}
-                                                className="w-full h-24 object-cover rounded-lg"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => removeFile(index)}
-                                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
+                            {files.length < MAX_IMAGES && (
+                                <FileUpload
+                                    onChange={handleFileChange}
+                                    accept="image/*"
+                                    multiple={true}
+                                />
+                            )}
+
+                            {files.length >= MAX_IMAGES && (
+                                <p className="text-sm text-muted-foreground text-center p-4 bg-muted rounded-lg">
+                                    Maximum of {MAX_IMAGES} images reached
+                                </p>
                             )}
                         </div>
 
