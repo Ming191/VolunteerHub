@@ -24,7 +24,7 @@ export default function EventCard({ event }: EventCardProps) {
         ? `${event.availableSpots} spots available`
         : 'Unlimited spots';
 
-    const eventImageUrl = event.imageUrls?.[0] || 'https://via.placeholder.com/400x200?text=VolunteerHub';
+    const eventImageUrl = event.imageUrls?.[0] || 'https://storage.googleapis.com/volunteerhub-bucket/images/dac462c4-81ff-492a-8ce6-0a28bca410de-z7168037184515_19fc3834199c66012062da48d276eae9.jpg';
 
     return (
         <Card className="flex flex-col h-full">
