@@ -45,8 +45,8 @@ export default function DateTimePicker({
                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                 </RippleButton>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
+            <PopoverContent className="w-full min-w-[320px] p-0" align="start">
+            <Calendar
                     mode="single"
                     selected={value}
                     onSelect={onChange}

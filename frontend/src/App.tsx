@@ -13,6 +13,7 @@ import EmailVerificationScreen from './components/auth/EmailVerificationScreen';
 // Import a Toaster for notifications
 import { Toaster } from '@/components/ui/sonner';
 import EventListScreen from "@/components/event/EventListScreen.tsx";
+import DateTimePicker from "@/components/event/DateTimePicker.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
@@ -33,7 +34,7 @@ function App() {
                     <Route path="/signin" element={<LoginScreen />} />
                     <Route path="/signup" element={<SignUpScreen />} />
                     <Route path="/verify-email" element={<EmailVerificationScreen />} />
-
+                    <Route path="/test" element={<DateTimePicker onChange={() => {}} />} />
                     {/* ============================================= */}
                     {/*           Protected Routes                    */}
                     {/* ============================================= */}
@@ -44,6 +45,7 @@ function App() {
 
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/events" element={<EventListScreen  />} />
+
 
                             {/* Role-specific routes can be nested here too */}
                             <Route path="/my-events" element={<MyEvents />} />
