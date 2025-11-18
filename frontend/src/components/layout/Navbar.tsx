@@ -13,7 +13,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarTrigger } from '@/components/animate-ui/components/radix/sidebar';
 
 const getPageTitle = (pathname: string): string => {
     const pathSegments = pathname.split('/').filter(Boolean);
@@ -39,11 +38,11 @@ const Navbar = () => {
     const pageTitle = getPageTitle(location.pathname);
 
     return (
-        <header className="flex items-center justify-between p-4 bg-background border-b sticky top-0 z-10">
-            {/* Left side: Sidebar Toggle */}
+        <header className="flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b sticky top-0 z-40">
+            {/* Left side: Logo and Page Title */}
             <div className="flex items-center gap-4">
-                <SidebarTrigger />
-                <div className="text-2xl font-semibold">{pageTitle}</div>
+                <div className="text-2xl font-bold text-primary">VolunteerHub</div>
+                <div className="text-xl font-semibold text-muted-foreground">/ {pageTitle}</div>
             </div>
 
 
