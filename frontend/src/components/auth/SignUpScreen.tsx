@@ -40,7 +40,11 @@ const formSchema = z
         path: ['confirmPassword'],
     });
 
-export default function SignUpScreen() {
+interface SignUpScreenProps {
+    isTabbed?: boolean;
+}
+
+export default function SignUpScreen({ isTabbed = false }: SignUpScreenProps) {
     const { register } = useAuth();
     const navigate = useNavigate();
 
@@ -71,8 +75,7 @@ export default function SignUpScreen() {
         }
     }
 
-    return (
-        <AnimatedPage className="flex items-center justify-center min-h-screen bg-gray-100 py-12">
+    const cardContent = (
             <Card className="w-full max-w-md">
                 <CardHeader>
                     <CardTitle className="text-2xl">Create an Account</CardTitle>
@@ -183,14 +186,21 @@ export default function SignUpScreen() {
                             </Button>
                         </form>
                     </Form>
-                    <div className="mt-4 text-center text-sm">
-                        Already have an account?{' '}
-                        <Link to="/signin" className="underline">
-                            Sign in
-                        </Link>
-                    </div>
+                    {!isTabbed && (
+                        <div className="mt-4 text-center text-sm">
+                            Already have an account?{' '}
+                            <Link to="/signin" className="underline">
+                                Sign in
+                            </Link>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
+    );
+
+    return isTabbed ? cardContent : (
+        <AnimatedPage className="flex items-center justify-center min-h-screen py-12">
+            {cardContent}
         </AnimatedPage>
     );
 }

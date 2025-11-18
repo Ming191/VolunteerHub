@@ -18,7 +18,11 @@ const formSchema = z.object({
     password: z.string().min(1, { message: 'Password is required.' }),
 });
 
-export default function LoginScreen() {
+interface LoginScreenProps {
+    isTabbed?: boolean;
+}
+
+export default function LoginScreen({ isTabbed = false }: LoginScreenProps) {
     const { login } = useAuth();
     useNavigate();
     const form = useForm<z.infer<typeof formSchema>>({
@@ -49,56 +53,62 @@ export default function LoginScreen() {
         }
     }
 
-    return (
-        <AnimatedPage className="flex items-center justify-center min-h-screen bg-gray-100">
-            <Card className="w-full max-w-sm">
-                <CardHeader>
-                    <CardTitle className="text-2xl">Login to VolunteerHub</CardTitle>
-                    <CardDescription>Enter your email below to login to your account.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Email</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="name@example.com" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Password</FormLabel>
-                                        <FormControl>
-                                            <Input type="password" placeholder="••••••••" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Sign In
-                            </Button>
-                        </form>
-                    </Form>
+    const cardContent = (
+        <Card className="w-full max-w-sm">
+            <CardHeader>
+                <CardTitle className="text-2xl">Login to VolunteerHub</CardTitle>
+                <CardDescription>Enter your email below to login to your account.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="name@example.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl>
+                                        <Input type="password" placeholder="••••••••" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Sign In
+                        </Button>
+                    </form>
+                </Form>
+                {!isTabbed && (
                     <div className="mt-4 text-center text-sm">
                         Don't have an account?{' '}
                         <Link to="/signup" className="underline">
                             Sign up
                         </Link>
                     </div>
-                </CardContent>
-            </Card>
+                )}
+            </CardContent>
+        </Card>
+    );
+
+    return isTabbed ? cardContent : (
+        <AnimatedPage className="flex items-center justify-center min-h-screen">
+            {cardContent}
         </AnimatedPage>
     );
 }
