@@ -335,11 +335,31 @@ function GravityStarsBackground({
   ]);
 
   React.useEffect(() => {
-    if (animRef.current) cancelAnimationFrame(animRef.current);
-    animRef.current = requestAnimationFrame(animate);
+    // Start animation loop
+    const startAnimation = () => {
+      if (animRef.current) {
+        cancelAnimationFrame(animRef.current);
+      }
+      animRef.current = requestAnimationFrame(animate);
+    };
+
+    startAnimation();
+
+    // Ensure animation continues even if tab becomes inactive
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !animRef.current) {
+        startAnimation();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
-      animRef.current = null;
+      if (animRef.current) {
+        cancelAnimationFrame(animRef.current);
+        animRef.current = null;
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [animate]);
 
