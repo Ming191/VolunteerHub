@@ -63,6 +63,14 @@ const refreshAccessToken = async (): Promise<string | null> => {
 
 axiosInstance.interceptors.request.use(
     async (config) => {
+        // Skip adding Authorization header for auth endpoints
+        const authEndpoints = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/verify-email'];
+        const isAuthEndpoint = authEndpoints.some(endpoint => config.url?.includes(endpoint));
+        
+        if (isAuthEndpoint) {
+            return config;
+        }
+
         const accessToken = localStorage.getItem('accessToken');
 
         if (accessToken) {
