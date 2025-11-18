@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import {
   AlertDialog as AlertDialogPrimitive,
   AlertDialogPopup as AlertDialogPopupPrimitive,
