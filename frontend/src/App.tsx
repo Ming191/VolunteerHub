@@ -6,8 +6,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Import Page Components
-import LoginScreen from './components/auth/LoginScreen';
-import SignUpScreen from './components/auth/SignUpScreen';
+import TabbedAuthScreen from './components/auth/TabbedAuthScreen';
 import EmailVerificationScreen from './components/auth/EmailVerificationScreen';
 
 // Import a Toaster for notifications
@@ -15,6 +14,7 @@ import { Toaster } from '@/components/ui/sonner';
 import EventListScreen from "@/components/event/EventListScreen.tsx";
 import DateTimePicker from "@/components/event/DateTimePicker.tsx";
 import AdminPendingEvents from "@/pages/AdminPendingEvents.tsx";
+import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
@@ -26,13 +26,30 @@ function App() {
 
     return (
         <>
+            {/* Gravity Stars Background for the entire app */}
+            <div className="fixed inset-0 -z-10">
+                <GravityStarsBackground 
+                    starsCount={100}
+                    starsSize={2}
+                    starsOpacity={0.75}
+                    glowIntensity={15}
+                    glowAnimation="ease"
+                    movementSpeed={0.3}
+                    mouseInfluence={150}
+                    mouseGravity="attract"
+                    gravityStrength={75}
+                    starsInteraction={true}
+                    starsInteractionType="bounce"
+                />
+            </div>
+
             <AnimatePresence mode="wait" initial={false}>
                 <Routes location={location} key={location.pathname}>
                     {/* ============================================= */}
                     {/*           Public Routes                       */}
                     {/* ============================================= */}
-                    <Route path="/signin" element={<LoginScreen />} />
-                    <Route path="/signup" element={<SignUpScreen />} />
+                    <Route path="/signin" element={<TabbedAuthScreen />} />
+                    <Route path="/signup" element={<TabbedAuthScreen />} />
                     <Route path="/verify-email" element={<EmailVerificationScreen />} />
                     <Route path="/test" element={<DateTimePicker onChange={() => {}} />} />
                     {/* ============================================= */}
@@ -40,7 +57,7 @@ function App() {
                     {/* ============================================= */}
                     <Route element={<ProtectedRoute />}>
                         <Route element={<DashboardLayout />}>
-                            {/* Redirect root path to the dashboard */}
+                            {/* Redirect the root path to the dashboard */}
                             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
                             <Route path="/dashboard" element={<Dashboard />} />
