@@ -119,6 +119,24 @@ class EventService(
         )
     }
 
+    /**
+     * Get all events created by a specific user (non-cancelled)
+     * Used for "My Events" feature on profile page
+     */
+    @Transactional(readOnly = true)
+    fun getEventsByCreator(userEmail: String, pageable: Pageable): Page<EventResponse> {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val spec = EventSpecifications.activeEventsByCreator(user.id)
+        val eventPage = eventRepository.findAll(spec, pageable)
+        val eventResponses = eventMapper.toEventResponseList(eventPage.content)
+
+        return PageImpl(
+            eventResponses,
+            pageable,
+            eventPage.totalElements
+        )
+    }
+
     @Cacheable(value = ["event"], key = "#id")
     @Transactional(readOnly = true)
     fun getEventById(id: Long): EventResponse {
