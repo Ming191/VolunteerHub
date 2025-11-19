@@ -183,4 +183,27 @@ class PostService(
             postPage.totalElements
         )
     }
+
+    @Transactional(readOnly = true)
+    fun getPostsByUser(userEmail: String, pageable: Pageable): Page<PostResponse> {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+
+        val postSpec = PostSpecifications.byAuthor(user.id)
+        val postPage = postRepository.findAll(postSpec, pageable)
+
+        if (postPage.isEmpty) {
+            return Page.empty(pageable)
+        }
+
+        val postIds = postPage.content.map { it.id }
+        val likedPostIds = getLikedPostIdsByUser(user.id, postIds)
+
+        val postResponses = postMapper.toPostResponseList(postPage.content, likedPostIds)
+
+        return PageImpl(
+            postResponses,
+            pageable,
+            postPage.totalElements
+        )
+    }
 }

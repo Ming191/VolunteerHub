@@ -4,6 +4,9 @@ import com.cs2.volunteer_hub.dto.PagePostResponse
 import com.cs2.volunteer_hub.dto.PostRequest
 import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.service.PostService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -19,7 +22,14 @@ import org.springframework.web.multipart.MultipartFile
 @RestController
 @RequestMapping("/api/posts")
 @PreAuthorize("isAuthenticated()")
+@Tag(name = "Posts", description = "Post management endpoints")
+@SecurityRequirement(name = "bearerAuth")
 class PostController(private val postService: PostService) {
+    
+    @Operation(
+        summary = "Create post for event",
+        description = "Create a new post for a specific event. Optionally upload up to 5 images with the post."
+    )
     @PostMapping(value = ["/event/{eventId}"], consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun createPostForEvent(
         @PathVariable eventId: Long,
@@ -31,6 +41,10 @@ class PostController(private val postService: PostService) {
         return ResponseEntity.status(HttpStatus.CREATED).body(newPost)
     }
 
+    @Operation(
+        summary = "Get posts for event",
+        description = "Retrieve all posts for a specific event with pagination and sorting"
+    )
     @GetMapping("/event/{eventId}")
     fun getPostsForEvent(
         @PathVariable eventId: Long,
@@ -50,10 +64,10 @@ class PostController(private val postService: PostService) {
         return ResponseEntity.ok(PagePostResponse.from(posts))
     }
 
-    /**
-     * Get recent posts from all events the user is registered for (feed/dashboard)
-     * Example: GET /api/posts/feed?days=14&page=0&size=20
-     */
+    @Operation(
+        summary = "Get recent posts feed",
+        description = "Get recent posts from all events the user is registered for (feed/dashboard). Filter by days and paginate results."
+    )
     @GetMapping("/feed")
     fun getRecentPostsFeed(
         @RequestParam(defaultValue = "7") days: Long,
@@ -73,6 +87,32 @@ class PostController(private val postService: PostService) {
         return ResponseEntity.ok(PagePostResponse.from(posts))
     }
 
+    @Operation(
+        summary = "Get my posts",
+        description = "Get all posts created by the current user with pagination and sorting"
+    )
+    @GetMapping("/my-posts")
+    fun getMyPosts(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "createdAt") sort: String,
+        @RequestParam(defaultValue = "desc") direction: String,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<PagePostResponse> {
+        val pageable = PageRequest.of(
+            page,
+            size,
+            Sort.Direction.fromString(direction.uppercase()),
+            sort
+        )
+        val posts = postService.getPostsByUser(currentUser.username, pageable)
+        return ResponseEntity.ok(PagePostResponse.from(posts))
+    }
+
+    @Operation(
+        summary = "Update post",
+        description = "Update the content of an existing post. Only the author can update their own posts."
+    )
     @PutMapping("/{postId}")
     fun updatePost(
         @PathVariable postId: Long,
@@ -83,6 +123,10 @@ class PostController(private val postService: PostService) {
         return ResponseEntity.ok(updatedPost)
     }
 
+    @Operation(
+        summary = "Delete post",
+        description = "Delete a post. Only the author can delete their own posts."
+    )
     @DeleteMapping("/{postId}")
     fun deletePost(
         @PathVariable postId: Long,
