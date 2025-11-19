@@ -4,11 +4,13 @@ import EventCard from './EventCard';
 import EventCardSkeleton from './EventCardSkeleton';
 import EventFilterPanel from './eventsFilterPanels';
 import AddEventModal from './AddEventModal';
+import EventDetailSheet from './EventDetailSheet';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
 import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
 import { Search, Plus } from 'lucide-react';
 import type { SearchEventsParams } from '@/services/eventService';
+import type { EventResponse } from '@/api-client';
 import { useAuth } from '@/hooks/useAuth';
 
 const EVENTS_PER_PAGE = 8;
@@ -18,6 +20,8 @@ type FilterState = Omit<SearchEventsParams, 'page' | 'size'>;
 export default function EventListScreen() {
     const [page, setPage] = useState(1); // Use 1-based indexing for UI
     const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
+    const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
     const { user } = useAuth();
     const [filters, setFilters] = useState<FilterState>({
         q: '',
@@ -42,6 +46,11 @@ export default function EventListScreen() {
     const handleFilterChange = (newFilters: FilterState) => {
         setFilters(newFilters);
         setPage(1); // Reset to first page when filters change
+    };
+
+    const handleViewDetails = (event: EventResponse) => {
+        setSelectedEvent(event);
+        setIsDetailSheetOpen(true);
     };
 
     const renderContent = () => {
@@ -78,7 +87,7 @@ export default function EventListScreen() {
         }
 
         return data.content.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard key={event.id} event={event} onViewDetails={handleViewDetails} />
         ));
     };
 
@@ -211,6 +220,13 @@ export default function EventListScreen() {
                         </Pagination>
                     </div>
                 )}
+
+                {/* Event Detail Sheet */}
+                <EventDetailSheet 
+                    event={selectedEvent}
+                    isOpen={isDetailSheetOpen}
+                    onOpenChange={setIsDetailSheetOpen}
+                />
             </div>
 
             {/* Add Event Modal */}

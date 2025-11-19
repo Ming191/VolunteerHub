@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,23 +16,30 @@ const formatDate = (dateString: string) => {
 
 interface EventCardProps {
     event: EventResponse;
+    onViewDetails?: (event: EventResponse) => void;
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, onViewDetails }: EventCardProps) {
     const availableSpotsText = event.maxParticipants
         ? `${event.availableSpots} spots available`
         : 'Unlimited spots';
 
-    const eventImageUrl = event.imageUrls?.[0] || 'https://storage.googleapis.com/volunteerhub-bucket/images/dac462c4-81ff-492a-8ce6-0a28bca410de-z7168037184515_19fc3834199c66012062da48d276eae9.jpg';
+    const hasImage = event.imageUrls && event.imageUrls.length > 0;
 
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="p-0">
-                <img
-                    src={eventImageUrl}
-                    alt={event.title}
-                    className="w-full h-48 object-cover rounded-t-lg"
-                />
+                {hasImage ? (
+                    <img
+                        src={event.imageUrls[0]}
+                        alt={event.title}
+                        className="w-full h-48 object-cover rounded-t-lg"
+                    />
+                ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-muted to-muted/50 rounded-t-lg flex items-center justify-center">
+                        <Calendar className="h-16 w-16 text-muted-foreground/30" />
+                    </div>
+                )}
                 <div className="p-4">
                     <CardTitle className="text-xl font-bold leading-tight truncate">
                         {event.title}
@@ -67,8 +73,11 @@ export default function EventCard({ event }: EventCardProps) {
                 </div>
             </CardContent>
             <CardFooter className="p-4 pt-0">
-                <Button asChild className="w-full">
-                    <Link to={`/events/${event.id}`}>View Details</Link>
+                <Button 
+                    className="w-full"
+                    onClick={() => onViewDetails?.(event)}
+                >
+                    View Details
                 </Button>
             </CardFooter>
         </Card>

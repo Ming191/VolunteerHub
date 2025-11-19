@@ -117,18 +117,24 @@ export default function AdminPendingEvents() {
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {events.map((event) => (
-                        <Card key={event.id} className="flex flex-col h-full">
-                            <CardHeader className="p-0">
-                                <img
-                                    src={
-                                        event.imageUrls?.[0] ||
-                                        'https://storage.googleapis.com/volunteerhub-bucket/images/dac462c4-81ff-492a-8ce6-0a28bca410de-z7168037184515_19fc3834199c66012062da48d276eae9.jpg'
-                                    }
-                                    alt={event.title}
-                                    className="w-full h-48 object-cover rounded-t-lg"
-                                />
-                                <div className="p-4">
+                    {events.map((event) => {
+                        const hasImage = event.imageUrls && event.imageUrls.length > 0;
+                        
+                        return (
+                            <Card key={event.id} className="flex flex-col h-full">
+                                <CardHeader className="p-0">
+                                    {hasImage ? (
+                                        <img
+                                            src={event.imageUrls[0]}
+                                            alt={event.title}
+                                            className="w-full h-48 object-cover rounded-t-lg"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-48 bg-gradient-to-br from-muted to-muted/50 rounded-t-lg flex items-center justify-center">
+                                            <Calendar className="h-16 w-16 text-muted-foreground/30" />
+                                        </div>
+                                    )}
+                                    <div className="p-4">
                                     <CardTitle className="text-xl font-bold leading-tight">
                                         {event.title}
                                     </CardTitle>
@@ -191,7 +197,8 @@ export default function AdminPendingEvents() {
                                 </Button>
                             </CardFooter>
                         </Card>
-                    ))}
+                    );
+                    })}
                 </div>
             )}
 
