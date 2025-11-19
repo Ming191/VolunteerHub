@@ -14,6 +14,7 @@ import { Toaster } from '@/components/ui/sonner';
 import EventListScreen from "@/components/event/EventListScreen.tsx";
 import DateTimePicker from "@/components/event/DateTimePicker.tsx";
 import AdminPendingEvents from "@/pages/AdminPendingEvents.tsx";
+import ProfilePage from "@/pages/ProfilePage.tsx";
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
@@ -62,7 +63,7 @@ function App() {
 
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/events" element={<EventListScreen  />} />
-
+                            <Route path="/profile" element={<ProfilePage />} />
 
                             {/* Role-specific routes can be nested here too */}
                             <Route path="/my-events" element={<MyEvents />} />
