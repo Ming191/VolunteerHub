@@ -149,6 +149,34 @@ class EventController(
         return ResponseEntity.ok(PageEventResponse.from(events))
     }
 
+    @Operation(
+        summary = "Get my events",
+        description = "Get all events created by the current user (requires EVENT_ORGANIZER role). Returns non-cancelled events with pagination and sorting."
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/my-events")
+    @PreAuthorize("hasRole('EVENT_ORGANIZER')")
+    fun getMyEvents(
+        @Parameter(description = "Page number (0-based)")
+        @RequestParam(defaultValue = "0") page: Int,
+        @Parameter(description = "Page size")
+        @RequestParam(defaultValue = "20") size: Int,
+        @Parameter(description = "Sort field")
+        @RequestParam(defaultValue = "createdAt") sort: String,
+        @Parameter(description = "Sort direction (asc or desc)")
+        @RequestParam(defaultValue = "desc") direction: String,
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<PageEventResponse> {
+        val pageable = PageRequest.of(
+            page,
+            size,
+            Sort.Direction.fromString(direction.uppercase()),
+            sort
+        )
+        val events = eventService.getEventsByCreator(currentUser.username, pageable)
+        return ResponseEntity.ok(PageEventResponse.from(events))
+    }
+
     @Operation(summary = "Get event by ID", description = "Retrieve detailed information about a specific event")
     @GetMapping("/{id}")
     fun getEventById(
