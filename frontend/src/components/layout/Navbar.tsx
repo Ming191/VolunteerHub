@@ -1,6 +1,6 @@
 import { Search, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,7 @@ const getPageTitle = (pathname: string): string => {
 const Navbar = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
+    const navigate = useNavigate();
 
     const userInitials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'V';
     const pageTitle = getPageTitle(location.pathname);
@@ -71,7 +72,7 @@ const Navbar = () => {
                             <div className="font-normal text-sm text-muted-foreground">{user?.email}</div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>Profile</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/profile')}>Profile</DropdownMenuItem>
                         <DropdownMenuItem>Settings</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={logout} className="text-red-500">
