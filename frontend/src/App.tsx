@@ -12,14 +12,15 @@ import EmailVerificationScreen from './components/auth/EmailVerificationScreen';
 // Import a Toaster for notifications
 import { Toaster } from '@/components/ui/sonner';
 import EventListScreen from "@/components/event/EventListScreen.tsx";
+import AddEventModal from "@/components/event/AddEventModal.tsx";
 import DateTimePicker from "@/components/event/DateTimePicker.tsx";
 import AdminPendingEvents from "@/pages/AdminPendingEvents.tsx";
-import ProfilePage from "@/pages/ProfilePage.tsx";
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
+import MyEventsScreen from "@/components/event/MyEventsScreen.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
-const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
+//const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
 // -----------------------------------------------------------
 
 function App() {
@@ -29,7 +30,7 @@ function App() {
         <>
             {/* Gravity Stars Background for the entire app */}
             <div className="fixed inset-0 -z-10">
-                <GravityStarsBackground 
+                <GravityStarsBackground
                     starsCount={100}
                     starsSize={2}
                     starsOpacity={0.75}
@@ -63,10 +64,10 @@ function App() {
 
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/events" element={<EventListScreen  />} />
-                            <Route path="/profile" element={<ProfilePage />} />
+                            <Route path="/event/create" element={<AddEventModal open={true} onOpenChange={() => {}} onSuccess={() => {}} />}/>
 
                             {/* Role-specific routes can be nested here too */}
-                            <Route path="/my-events" element={<MyEvents />} />
+                            <Route path="/my-events" element={<MyEventsScreen />} />
                             <Route path="/admin/pending-events" element={<AdminPendingEvents />} />
                         </Route>
                     </Route>

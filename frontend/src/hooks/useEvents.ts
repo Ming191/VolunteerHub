@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import {useQuery} from '@tanstack/react-query';
 import { eventService, type SearchEventsParams } from '@/services/eventService';
 
 // We define a constant for the query key to avoid magic strings
@@ -24,3 +24,4 @@ export const useGetEvents = (params: SearchEventsParams) => {
         placeholderData: (previousData) => previousData,
     });
 };
+

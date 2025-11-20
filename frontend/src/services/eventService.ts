@@ -1,12 +1,13 @@
 import {
-    Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse,
-    type CreateEventRequest
+  Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse,
+  type CreateEventRequest, EventManagerApi, type RegistrationResponse
 } from '@/api-client';
 import axiosInstance from '../utils/axiosInstance';
 
 const config = new Configuration({ basePath: '' });
 const eventsApi = new EventsApi(config, undefined, axiosInstance);
 const enumsApi = new EnumsApi(config, undefined, axiosInstance);
+const evenManagerApi = new EventManagerApi(config, undefined, axiosInstance);
 
 export interface SearchEventsParams {
     q?: string;
@@ -79,9 +80,45 @@ const createEvent = async (eventData: CreateEventRequest, files?: File[]): Promi
     }
 };
 
+export interface MyEventsParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: 'ASC' | 'DESC';
+}
+
+const getMyEvents = async (params: MyEventsParams = {}): Promise<PageEventResponse> => {
+  try {
+    const response = await eventsApi.getMyEvents({
+      page: params.page,
+      size: params.size,
+      sort: params.sort,
+      direction: params.direction
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch my events:", error);
+    throw error;
+  }
+};
+
+const getEventRegistrations = async (eventId: number): Promise<RegistrationResponse[]> => {
+  try {
+    const response = await evenManagerApi.getRegistrationsForEvent({eventId});
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch event Registrations:', error);
+    throw error;
+  }
+}
+
+
 export const eventService = {
     searchEvents,
     getEventById,
     getEventTags,
-    createEvent
+    createEvent,
+    getMyEvents,
+    getEventRegistrations
 };
