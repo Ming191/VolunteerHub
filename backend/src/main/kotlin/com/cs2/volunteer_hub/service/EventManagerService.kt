@@ -16,7 +16,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -71,8 +70,14 @@ class EventManagerService(
 
         logger.info("Searching registrations for event $eventId with filters - text: $searchText, status: $status, after: $registeredAfter, before: $registeredBefore")
 
-        return registrationRepository.findAll(spec, pageable)
-            .map(registrationMapper::toRegistrationResponse)
+        val page = registrationRepository.findAll(spec, pageable)
+        
+        page.content.forEach { registration ->
+            registration.user.name
+            registration.event.title
+        }
+        
+        return page.map(registrationMapper::toRegistrationResponse)
     }
 
     @Transactional
@@ -154,8 +159,12 @@ class EventManagerService(
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
-        val spec = RegistrationSpecifications.forEvent(eventId)
-        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+        // Use JOIN FETCH query to eagerly load user and event in a single query
+        val registrations = registrationRepository.findAllByEventIdWithAssociations(eventId)
+        
+        // Sort in memory since we're using custom query
+        return registrations
+            .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
     }
 
@@ -171,16 +180,11 @@ class EventManagerService(
     ): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
-        // Use NEW composite specifications for common statuses
-        val spec = when (status) {
-            RegistrationStatus.APPROVED -> RegistrationSpecifications.approvedForEvent(eventId)
-            RegistrationStatus.PENDING -> RegistrationSpecifications.pendingForEvent(eventId)
-            RegistrationStatus.WAITLISTED -> RegistrationSpecifications.waitlistedForEvent(eventId)
-            else -> RegistrationSpecifications.forEvent(eventId)
-                .and(RegistrationSpecifications.hasStatus(status))
-        }
-
-        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+        // Use JOIN FETCH query to eagerly load associations in single query
+        val registrations = registrationRepository.findAllByEventIdAndStatusWithAssociations(eventId, status)
+        
+        return registrations
+            .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
     }
 
@@ -192,10 +196,14 @@ class EventManagerService(
     fun getAllPendingRegistrations(managerEmail: String): List<RegistrationResponse> {
         val manager = userRepository.findByEmailOrThrow(managerEmail)
 
-        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
-            .and(RegistrationSpecifications.isPending())
-
-        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+        // Use JOIN FETCH query to eagerly load associations
+        val registrations = registrationRepository.findAllByEventCreatorIdAndStatusWithAssociations(
+            manager.id, 
+            RegistrationStatus.PENDING
+        )
+        
+        return registrations
+            .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
     }
 
@@ -207,10 +215,14 @@ class EventManagerService(
     fun getAllApprovedRegistrations(managerEmail: String): List<RegistrationResponse> {
         val manager = userRepository.findByEmailOrThrow(managerEmail)
 
-        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
-            .and(RegistrationSpecifications.isApproved())
-
-        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+        // Use JOIN FETCH query to eagerly load associations
+        val registrations = registrationRepository.findAllByEventCreatorIdAndStatusWithAssociations(
+            manager.id,
+            RegistrationStatus.APPROVED
+        )
+        
+        return registrations
+            .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
     }
 
@@ -222,9 +234,11 @@ class EventManagerService(
     fun getActiveRegistrations(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
-        val spec = RegistrationSpecifications.activeForEvent(eventId)
-
-        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+        // Use JOIN FETCH query to eagerly load associations
+        val registrations = registrationRepository.findActiveRegistrationsByEventIdWithAssociations(eventId)
+        
+        return registrations
+            .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
     }
 
@@ -236,10 +250,11 @@ class EventManagerService(
     fun getCompletedRegistrations(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
-        val spec = RegistrationSpecifications.forEvent(eventId)
-            .and(RegistrationSpecifications.isCompleted())
-
-        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+        // Use JOIN FETCH query to eagerly load associations
+        val registrations = registrationRepository.findCompletedRegistrationsByEventIdWithAssociations(eventId)
+        
+        return registrations
+            .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
     }
 
@@ -251,10 +266,11 @@ class EventManagerService(
     fun getAllCompletedRegistrationsForManager(managerEmail: String): List<RegistrationResponse> {
         val manager = userRepository.findByEmailOrThrow(managerEmail)
 
-        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
-            .and(RegistrationSpecifications.isCompleted())
-
-        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "registeredAt"))
+        // Use JOIN FETCH query to eagerly load associations
+        val registrations = registrationRepository.findCompletedRegistrationsByCreatorIdWithAssociations(manager.id)
+        
+        return registrations
+            .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
     }
 
