@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.dto
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import org.springframework.data.domain.Page
 import java.time.LocalDateTime
 
@@ -18,7 +19,7 @@ data class RegistrationResponse(
 )
 
 data class UpdateStatusRequest(
-    @field:NotBlank
+    @field:NotNull
     val status: RegistrationStatus
 )
 
