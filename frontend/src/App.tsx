@@ -12,7 +12,6 @@ import EmailVerificationScreen from './components/auth/EmailVerificationScreen';
 // Import a Toaster for notifications
 import { Toaster } from '@/components/ui/sonner';
 import EventListScreen from "@/components/event/EventListScreen.tsx";
-import AddEventModal from "@/components/event/AddEventModal.tsx";
 import DateTimePicker from "@/components/event/DateTimePicker.tsx";
 import AdminPendingEvents from "@/pages/AdminPendingEvents.tsx";
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
@@ -64,7 +63,6 @@ function App() {
 
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/events" element={<EventListScreen  />} />
-                            <Route path="/event/create" element={<AddEventModal open={true} onOpenChange={() => {}} onSuccess={() => {}} />}/>
 
                             {/* Role-specific routes can be nested here too */}
                             <Route path="/my-events" element={<MyEventsScreen />} />
