@@ -28,7 +28,8 @@ interface RegistrationRepository : JpaRepository<Registration, Long>, JpaSpecifi
     @Query("""
         SELECT DISTINCT r FROM Registration r 
         JOIN FETCH r.user 
-        JOIN FETCH r.event 
+        JOIN FETCH r.event e
+        JOIN FETCH e.creator
         WHERE r.event.id = :eventId
     """)
     fun findAllByEventIdWithAssociations(@Param("eventId") eventId: Long): List<Registration>
