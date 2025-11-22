@@ -1,13 +1,14 @@
 import {
   Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse,
-  type CreateEventRequest, EventManagerApi, type RegistrationResponse
+  type CreateEventRequest, EventManagerApi, type RegistrationResponse, type UpdateStatusRequestStatusEnum,
+  type UpdateEventRequest
 } from '@/api-client';
 import axiosInstance from '../utils/axiosInstance';
 
 const config = new Configuration({ basePath: '' });
 const eventsApi = new EventsApi(config, undefined, axiosInstance);
 const enumsApi = new EnumsApi(config, undefined, axiosInstance);
-const evenManagerApi = new EventManagerApi(config, undefined, axiosInstance);
+const eventManagerApi = new EventManagerApi(config, undefined, axiosInstance);
 
 export interface SearchEventsParams {
     q?: string;
@@ -105,12 +106,38 @@ const getMyEvents = async (params: MyEventsParams = {}): Promise<PageEventRespon
 
 const getEventRegistrations = async (eventId: number): Promise<RegistrationResponse[]> => {
   try {
-    const response = await evenManagerApi.getRegistrationsForEvent({eventId});
+    const response = await eventManagerApi.getRegistrationsForEvent({eventId});
     return response.data;
   } catch (error) {
     console.error('Failed to fetch event Registrations:', error);
     throw error;
   }
+}
+
+const updateRegistrationStatus = async (
+  registrationId: number,
+  status: UpdateStatusRequestStatusEnum
+
+) => {
+  const response = await eventManagerApi.updateRegistrationStatus({
+    registrationId,
+    updateStatusRequest: {status: status},
+  });
+
+  return response.data;
+};
+
+const updateEvent = async (eventId: number, data: UpdateEventRequest): Promise<EventResponse> => {
+  const response = await eventsApi.updateEvent({
+    id: eventId,
+    updateEventRequest: data,
+  });
+  return response.data;
+}
+
+const deleteEvent = async (id: number): Promise<void> => {
+  const response = await eventsApi.deleteEvent({id});
+  return response.data;
 }
 
 
@@ -120,5 +147,8 @@ export const eventService = {
     getEventTags,
     createEvent,
     getMyEvents,
-    getEventRegistrations
+    getEventRegistrations,
+    updateRegistrationStatus,
+    updateEvent,
+    deleteEvent,
 };
