@@ -71,12 +71,12 @@ class EventManagerService(
         logger.info("Searching registrations for event $eventId with filters - text: $searchText, status: $status, after: $registeredAfter, before: $registeredBefore")
 
         val page = registrationRepository.findAll(spec, pageable)
-        
+
         page.content.forEach { registration ->
             registration.user.name
             registration.event.title
         }
-        
+
         return page.map(registrationMapper::toRegistrationResponse)
     }
 
@@ -154,14 +154,14 @@ class EventManagerService(
         return registrationMapper.toRegistrationResponse(promoted)
     }
 
-    @Cacheable(value = ["eventRegistrations"], key = "#eventId")
+    //@Cacheable(value = ["eventRegistrations"], key = "#eventId")
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
         // Use JOIN FETCH query to eagerly load user and event in a single query
         val registrations = registrationRepository.findAllByEventIdWithAssociations(eventId)
-        
+
         // Sort in memory since we're using custom query
         return registrations
             .sortedByDescending { it.registeredAt }
@@ -182,7 +182,7 @@ class EventManagerService(
 
         // Use JOIN FETCH query to eagerly load associations in single query
         val registrations = registrationRepository.findAllByEventIdAndStatusWithAssociations(eventId, status)
-        
+
         return registrations
             .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
@@ -198,10 +198,10 @@ class EventManagerService(
 
         // Use JOIN FETCH query to eagerly load associations
         val registrations = registrationRepository.findAllByEventCreatorIdAndStatusWithAssociations(
-            manager.id, 
+            manager.id,
             RegistrationStatus.PENDING
         )
-        
+
         return registrations
             .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
@@ -220,7 +220,7 @@ class EventManagerService(
             manager.id,
             RegistrationStatus.APPROVED
         )
-        
+
         return registrations
             .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
@@ -236,7 +236,7 @@ class EventManagerService(
 
         // Use JOIN FETCH query to eagerly load associations
         val registrations = registrationRepository.findActiveRegistrationsByEventIdWithAssociations(eventId)
-        
+
         return registrations
             .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
@@ -252,7 +252,7 @@ class EventManagerService(
 
         // Use JOIN FETCH query to eagerly load associations
         val registrations = registrationRepository.findCompletedRegistrationsByEventIdWithAssociations(eventId)
-        
+
         return registrations
             .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
@@ -268,7 +268,7 @@ class EventManagerService(
 
         // Use JOIN FETCH query to eagerly load associations
         val registrations = registrationRepository.findCompletedRegistrationsByCreatorIdWithAssociations(manager.id)
-        
+
         return registrations
             .sortedByDescending { it.registeredAt }
             .map(registrationMapper::toRegistrationResponse)
