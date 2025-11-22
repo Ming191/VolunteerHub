@@ -1,6 +1,7 @@
-import { Search, Bell } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { NotificationList } from '@/components/animate-ui/components/community/notification-list';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,16 +50,12 @@ const Navbar = () => {
 
             {/* Right side: Search, Notifications, and User Menu */}
             <div className="flex items-center gap-4">
-                <div className="relative hidden sm:block">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input type="search" placeholder="Search events..." className="pl-8" />
-                </div>
+            <div className="relative hidden sm:block">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input type="search" placeholder="Search events..." className="pl-8" />
+            </div>
 
-                <Button size="icon" variant="outline">
-                    <Bell className="h-5 w-5" />
-                </Button>
-
-                <DropdownMenu>
+            <NotificationList />                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                             <Avatar>
