@@ -8,6 +8,7 @@ import { UserProfileApi, PostsApi, Configuration, type UserResponse, type PostRe
 import axiosInstance from '@/utils/axiosInstance';
 import Loading from '@/components/common/Loading';
 import EditProfileModal from '@/components/common/EditProfileModal';
+import ChangePasswordModal from "@/pages/ChangePasswordModal.tsx";
 
 const config = new Configuration({ basePath: '' });
 const userProfileApi = new UserProfileApi(config, undefined, axiosInstance);
@@ -38,6 +39,7 @@ export default function ProfilePage() {
     const [posts, setPosts] = useState<PostResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 
     const fetchProfileData = async () => {
         try {
@@ -65,6 +67,10 @@ export default function ProfilePage() {
             // Refetch profile data when modal closes
             fetchProfileData();
         }
+    };
+
+    const handleCloseChangePassword = (open: boolean) => {
+      setIsChangePasswordModalOpen(open);
     };
 
     if (loading) {
@@ -123,10 +129,16 @@ export default function ProfilePage() {
                                 </div>
                             )}
                         </div>
+                        <div className="space-y-4">
                         <Button onClick={() => setIsEditModalOpen(true)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Profile
                         </Button>
+                        <Button variant={'secondary'} onClick={() => setIsChangePasswordModalOpen(true)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Change Password
+                        </Button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -146,7 +158,7 @@ export default function ProfilePage() {
                         <div className="space-y-6">
                             {posts.map((post) => {
                                 const hasImages = post.imageUrls && post.imageUrls.length > 0;
-                                
+
                                 return (
                                     <div
                                         key={post.id}
@@ -203,6 +215,14 @@ export default function ProfilePage() {
                     currentProfile={profile}
                 />
             )}
+
+            {isChangePasswordModalOpen && (
+              <ChangePasswordModal
+                open={isChangePasswordModalOpen}
+                onOpenChange={handleCloseChangePassword}
+              />
+            )}
         </div>
     );
 }
+
