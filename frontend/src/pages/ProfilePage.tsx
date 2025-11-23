@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserProfileApi, PostsApi, Configuration, type UserResponse, type PostResponse } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
 import Loading from '@/components/common/Loading';
+import EditProfileModal from '@/components/common/EditProfileModal';
 
 const config = new Configuration({ basePath: '' });
 const userProfileApi = new UserProfileApi(config, undefined, axiosInstance);
@@ -36,26 +37,35 @@ export default function ProfilePage() {
     const [profile, setProfile] = useState<UserResponse | null>(null);
     const [posts, setPosts] = useState<PostResponse[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    const fetchProfileData = async () => {
+        try {
+            setLoading(true);
+            const [profileRes, postsRes] = await Promise.all([
+                userProfileApi.getMyProfile(),
+                postsApi.getMyPosts(),
+            ]);
+            setProfile(profileRes.data);
+            setPosts(postsRes.data.content);
+        } catch (error) {
+            console.error('Failed to fetch profile data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchProfileData = async () => {
-            try {
-                setLoading(true);
-                const [profileRes, postsRes] = await Promise.all([
-                    userProfileApi.getMyProfile(),
-                    postsApi.getMyPosts(),
-                ]);
-                setProfile(profileRes.data);
-                setPosts(postsRes.data.content);
-            } catch (error) {
-                console.error('Failed to fetch profile data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchProfileData();
     }, []);
+
+    const handleModalClose = (open: boolean) => {
+        setIsEditModalOpen(open);
+        if (!open) {
+            // Refetch profile data when modal closes
+            fetchProfileData();
+        }
+    };
 
     if (loading) {
         return <Loading />;
@@ -113,7 +123,7 @@ export default function ProfilePage() {
                                 </div>
                             )}
                         </div>
-                        <Button>
+                        <Button onClick={() => setIsEditModalOpen(true)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Profile
                         </Button>
@@ -184,6 +194,15 @@ export default function ProfilePage() {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Edit Profile Modal */}
+            {profile && (
+                <EditProfileModal
+                    open={isEditModalOpen}
+                    onOpenChange={handleModalClose}
+                    currentProfile={profile}
+                />
+            )}
         </div>
     );
 }
