@@ -35,6 +35,24 @@ services:
       - redis_data:/data
     restart: always
 
+  backend:
+    build: ./backend
+    container_name: volunteerhub_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/volunteerhub
+      - SPRING_DATASOURCE_USERNAME=myuser
+      - SPRING_DATASOURCE_PASSWORD=mypassword
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATA_REDIS_HOST=redis
+      - RATE_LIMIT_REDIS_HOST=redis
+    depends_on:
+      - postgres-db
+      - rabbitmq
+      - redis
+    restart: always
+
 volumes:
   postgres_data:
     driver: local

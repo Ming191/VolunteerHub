@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Temp files
+temp-uploads/
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Credentials
+fcm-credentials.json
+gcp-credentials.json
+
+# Logs
+*.log
