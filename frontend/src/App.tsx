@@ -19,7 +19,6 @@ import MyEventsScreen from "@/components/event/MyEventsScreen.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
-//const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
 // -----------------------------------------------------------
 
 function App() {
