@@ -1,5 +1,8 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Import Layouts and Route Guards
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -14,8 +17,11 @@ import { Toaster } from '@/components/ui/sonner';
 import EventListScreen from "@/components/event/EventListScreen.tsx";
 import DateTimePicker from "@/components/event/DateTimePicker.tsx";
 import AdminPendingEvents from "@/pages/AdminPendingEvents.tsx";
+import ProfilePage from "@/pages/ProfilePage.tsx";
+import NotificationsPage from "@/pages/NotificationsPage.tsx";
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
 import MyEventsScreen from "@/components/event/MyEventsScreen.tsx";
+import { fcmService } from "@/services/fcmService.ts";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
@@ -23,6 +29,30 @@ const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dash
 
 function App() {
     const location = useLocation();
+    const queryClient = useQueryClient();
+
+    // Setup FCM foreground message listener
+    useEffect(() => {
+        const unsubscribe = fcmService.setupForegroundMessageListener((payload) => {
+            const title = payload.notification?.title || 'New Notification';
+            const body = payload.notification?.body || '';
+
+            toast.info(title, {
+                description: body,
+                duration: 5000,
+            });
+
+            // Invalidate notification queries to update UI
+            queryClient.invalidateQueries({ queryKey: ['recentNotifications'] });
+            queryClient.invalidateQueries({ queryKey: ['notificationCount'] });
+        });
+
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, [queryClient]);
 
     return (
         <>
@@ -62,6 +92,8 @@ function App() {
 
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/events" element={<EventListScreen  />} />
+                            <Route path="/profile" element={<ProfilePage />} />
+                            <Route path="/notifications" element={<NotificationsPage />} />
 
                             {/* Role-specific routes can be nested here too */}
                             <Route path="/my-events" element={<MyEventsScreen />} />
