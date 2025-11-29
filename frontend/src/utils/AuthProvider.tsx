@@ -2,6 +2,7 @@ import {type ReactNode, useState, useEffect, useCallback} from "react";
 import type {LoginRequest, RegisterRequest} from "@/api-client";
 import {useNavigate} from "react-router-dom";
 import {authService} from "../services/authService.ts";
+import {fcmService} from "@/services/fcmService.ts";
 import { AuthContext } from "./AuthContext.ts";
 
 interface User {
@@ -28,13 +29,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const initializeAuth = () => {
+        const initializeAuth = async () => {
             try {
                 const accessToken = localStorage.getItem('accessToken');
                 const storedUser = localStorage.getItem('user');
 
                 if (accessToken && storedUser) {
                     setUser(JSON.parse(storedUser));
+
+                    // Register FCM token for already logged-in users
+                    fcmService.registerDeviceForNotifications().catch(err =>
+                        console.error("FCM registration failed on init:", err)
+                    );
                 }
             } catch (error) {
                 console.error("Failed to initialize auth:", error);
@@ -61,6 +67,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             localStorage.setItem('refreshToken', response.refreshToken);
             localStorage.setItem('user', JSON.stringify(userData));
             setUser(userData);
+            
+            // Register FCM token after successful login
+            fcmService.registerDeviceForNotifications().catch(err =>
+                console.error("FCM registration failed after login:", err)
+            );
+            
             navigate('/dashboard');
         } catch (error) {
             console.log("Login failed:", error);
@@ -87,10 +99,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('fcmToken');
         navigate('/signin');
     }, [navigate]);
 
-    // This is the value that will be available to all components
     const value: AuthContextType = {
         user,
         login,

@@ -1,15 +1,17 @@
 import {
-    AuthenticationApi,
-    Configuration,
-    type LoginRequest,
-    type RegisterRequest,
-    type VerifyEmailResponse,
+  AuthenticationApi,
+  Configuration,
+  type LoginRequest,
+  type RegisterRequest, UserProfileApi,
+  type VerifyEmailResponse,
 } from '@/api-client';
 import axiosInstance from '../utils/axiosInstance';
 
 const config = new Configuration({ basePath: '' });
 
 const authApi = new AuthenticationApi(config, undefined, axiosInstance);
+
+const userProfileApi = new UserProfileApi(config, undefined, axiosInstance);
 
 /**
  * Logs in a user.
@@ -68,9 +70,19 @@ const verifyEmail = async (token: string): Promise<VerifyEmailResponse> => {
     }
 };
 
+const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+  await userProfileApi.changePassword({
+    changePasswordRequest: {
+      currentPassword,
+      newPassword,
+    }
+  });
+};
+
 export const authService = {
     login,
     register,
     logout,
     verifyEmail,
+    changePassword
 };

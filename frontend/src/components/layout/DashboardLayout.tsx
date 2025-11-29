@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import { FloatingDock } from '@/components/ui/floating-dock';
-import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck, User } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const DashboardLayout = () => {
@@ -17,11 +17,6 @@ const DashboardLayout = () => {
             title: 'Browse Events',
             icon: <CalendarDays className="h-full w-full" />,
             href: '/events',
-        },
-        {
-            title: 'Profile',
-            icon: <User className="h-full w-full" />,
-            href: '/profile',
         },
         ...(user?.role === 'EVENT_ORGANIZER' ? [{
             title: 'My Events',
