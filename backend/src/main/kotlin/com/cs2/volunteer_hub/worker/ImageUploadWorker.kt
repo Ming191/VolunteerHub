@@ -83,7 +83,7 @@ class ImageUploadWorker(
                     fileBytes,
                     image.contentType,
                     image.originalFileName
-                )
+                ).get() // Wait for CompletableFuture to complete
 
                 uploadedUrls[image.id] = url
                 logger.info("Successfully uploaded image ID: ${image.id} for Event ID: $eventId")
