@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Users, FileCheck, ShieldCheck, TrendingUp, Settings, BarChart, AlertCircle, Activity, Cpu, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import { useMemo, useCallback, memo } from 'react';
 
 const config = new Configuration({ basePath: '' });
 const dashboardApi = new DashboardApi(config, undefined, axiosInstance);
@@ -36,6 +37,49 @@ interface SystemMetrics {
   };
 }
 
+// Memoized Stats Card Component
+const StatsCard = memo(({ title, value, description, icon: Icon }: {
+  title: string;
+  value: number;
+  description: string;
+  icon: any;
+}) => (
+  <Card className="hover:shadow-lg transition-shadow">
+    <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardTitle className="text-sm font-medium text-muted-foreground">
+        {title}
+      </CardTitle>
+      <Icon className="h-4 w-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+      <div className="text-3xl font-bold">{value}</div>
+      <p className="text-xs text-muted-foreground mt-1">
+        {description}
+      </p>
+    </CardContent>
+  </Card>
+));
+
+StatsCard.displayName = 'StatsCard';
+
+// Memoized Metric Card Component
+const MetricCard = memo(({ value, description, color = 'text-primary' }: {
+  value: string | number;
+  description?: string;
+  color?: string;
+}) => (
+  <div className="bg-background/80 backdrop-blur p-4 rounded-lg border">
+    <div className={`text-2xl font-bold ${color}`}>
+      {value}
+    </div>
+    {description && (
+      <p className="text-xs text-muted-foreground mt-1">{description}</p>
+    )}
+  </div>
+));
+
+MetricCard.displayName = 'MetricCard';
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
@@ -57,6 +101,42 @@ export default function AdminDashboard() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
+  // Memoize stats object
+  const stats = useMemo(() => dashboardData?.stats || {}, [dashboardData?.stats]);
+  const userRoleCounts = useMemo(() => dashboardData?.userRoleCounts || {}, [dashboardData?.userRoleCounts]);
+
+  // Memoize expensive calculations
+  const engagementRate = useMemo(() => {
+    if (stats.totalEvents > 0) {
+      return (Number(stats.totalRegistrations) / Number(stats.totalEvents)).toFixed(1);
+    }
+    return '0';
+  }, [stats.totalEvents, stats.totalRegistrations]);
+
+  const formattedUptime = useMemo(() => {
+    if (!metricsData) return '0h 0m';
+    const hours = Math.floor(metricsData.systemHealth.uptimeSeconds / 3600);
+    const minutes = Math.floor((metricsData.systemHealth.uptimeSeconds % 3600) / 60);
+    return `${hours}h ${minutes}m`;
+  }, [metricsData]);
+
+  // Memoize navigation callbacks
+  const handleNavigateToPendingEvents = useCallback(() => {
+    navigate('/admin/pending-events');
+  }, [navigate]);
+
+  const handleNavigateToUsers = useCallback(() => {
+    navigate('/admin/users');
+  }, [navigate]);
+
+  const handleNavigateToReports = useCallback(() => {
+    navigate('/admin/reports');
+  }, [navigate]);
+
+  const handleNavigateToSettings = useCallback(() => {
+    navigate('/admin/settings');
+  }, [navigate]);
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -72,9 +152,6 @@ export default function AdminDashboard() {
       </div>
     );
   }
-
-  const stats = dashboardData?.stats || {};
-  const userRoleCounts = dashboardData?.userRoleCounts || {};
 
   return (
     <div className="space-y-6">
@@ -99,50 +176,24 @@ export default function AdminDashboard() {
         transition={{ duration: 0.5, delay: 0.1 }}
         className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Users
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.totalUsers || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Registered users
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Events
-            </CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.totalEvents || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              All time events
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Registrations
-            </CardTitle>
-            <FileCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.totalRegistrations || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              All time registrations
-            </p>
-          </CardContent>
-        </Card>
+        <StatsCard 
+          title="Total Users"
+          value={stats.totalUsers || 0}
+          description="Registered users"
+          icon={Users}
+        />
+        <StatsCard 
+          title="Total Events"
+          value={stats.totalEvents || 0}
+          description="All time events"
+          icon={Calendar}
+        />
+        <StatsCard 
+          title="Total Registrations"
+          value={stats.totalRegistrations || 0}
+          description="All time registrations"
+          icon={FileCheck}
+        />
       </motion.div>
 
       {/* Bento Grid for Main Content */}
@@ -214,7 +265,7 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   className="bg-background/80 backdrop-blur p-4 rounded-lg border border-amber-500/50 cursor-pointer hover:border-amber-500 transition-colors"
-                  onClick={() => navigate('/admin/pending-events')}
+                  onClick={handleNavigateToPendingEvents}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -317,7 +368,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="bg-background/80 backdrop-blur p-4 rounded-lg border">
                       <div className="text-2xl font-bold text-green-600">
-                        {Math.floor(metricsData.systemHealth.uptimeSeconds / 3600)}h {Math.floor((metricsData.systemHealth.uptimeSeconds % 3600) / 60)}m
+                        {formattedUptime}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Uptime</p>
                     </div>
@@ -393,9 +444,7 @@ export default function AdminDashboard() {
                 <TrendingUp className="h-8 w-8 text-green-600 mb-3" />
                 <h4 className="font-semibold mb-2">Engagement Rate</h4>
                 <div className="text-3xl font-bold text-green-600">
-                  {stats.totalEvents > 0
-                    ? ((Number(stats.totalRegistrations) / Number(stats.totalEvents)).toFixed(1))
-                    : '0'}
+                  {engagementRate}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Average registrations per event
@@ -451,28 +500,28 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <button
-              onClick={() => navigate('/admin/pending-events')}
+              onClick={handleNavigateToPendingEvents}
               className="p-4 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors text-left group"
             >
               <FileCheck className="h-6 w-6 mb-2 text-primary" />
               <div className="text-sm font-medium">Approve Events</div>
             </button>
             <button
-              onClick={() => navigate('/admin/users')}
+              onClick={handleNavigateToUsers}
               className="p-4 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors text-left group"
             >
               <Users className="h-6 w-6 mb-2 text-primary" />
               <div className="text-sm font-medium">Manage Users</div>
             </button>
             <button
-              onClick={() => navigate('/admin/reports')}
+              onClick={handleNavigateToReports}
               className="p-4 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors text-left group"
             >
               <BarChart className="h-6 w-6 mb-2 text-primary" />
               <div className="text-sm font-medium">View Reports</div>
             </button>
             <button
-              onClick={() => navigate('/admin/settings')}
+              onClick={handleNavigateToSettings}
               className="p-4 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors text-left group"
             >
               <Settings className="h-6 w-6 mb-2 text-primary" />
