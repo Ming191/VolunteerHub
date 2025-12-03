@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # VolunteerHub Spring Boot Application
+  - job_name: 'volunteerhub-backend'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          application: 'volunteerhub'
+          environment: 'local'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # PostgreSQL (if postgres_exporter is added later)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-db:5432']
+    
+  # RabbitMQ metrics endpoint
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']

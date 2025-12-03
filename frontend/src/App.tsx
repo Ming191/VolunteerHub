@@ -19,13 +19,33 @@ import DateTimePicker from "@/components/event/DateTimePicker.tsx";
 import AdminPendingEvents from "@/pages/AdminPendingEvents.tsx";
 import ProfilePage from "@/pages/ProfilePage.tsx";
 import NotificationsPage from "@/pages/NotificationsPage.tsx";
+import VolunteerDashboard from "@/pages/VolunteerDashboard.tsx";
+import OrganizerDashboard from "@/pages/OrganizerDashboard.tsx";
+import AdminDashboard from "@/pages/AdminDashboard.tsx";
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
 import { fcmService } from "@/services/fcmService.ts";
+import { useAuth } from "@/hooks/useAuth";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
-const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
 const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
 // -----------------------------------------------------------
+
+// Dashboard Router Component
+const DashboardRouter = () => {
+    const { user } = useAuth();
+    
+    if (!user) return null;
+    
+    switch (user.role) {
+        case 'ADMIN':
+            return <AdminDashboard />;
+        case 'EVENT_ORGANIZER':
+            return <OrganizerDashboard />;
+        case 'VOLUNTEER':
+        default:
+            return <VolunteerDashboard />;
+    }
+};
 
 function App() {
     const location = useLocation();
@@ -90,7 +110,7 @@ function App() {
                             {/* Redirect the root path to the dashboard */}
                             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/dashboard" element={<DashboardRouter />} />
                             <Route path="/events" element={<EventListScreen  />} />
                             <Route path="/profile" element={<ProfilePage />} />
                             <Route path="/notifications" element={<NotificationsPage />} />
