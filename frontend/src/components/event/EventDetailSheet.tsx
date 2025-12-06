@@ -1,27 +1,32 @@
-import { 
-    Sheet, 
-    SheetContent, 
-    SheetHeader, 
-    SheetTitle, 
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
     SheetDescription,
     SheetFooter
 } from '@/components/animate-ui/components/radix/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { 
-    Calendar, 
-    MapPin, 
-    Clock, 
-    Users, 
-    UserCheck, 
-    UserX,
-    Image as ImageIcon,
-    AlertCircle
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  Users,
+  UserCheck,
+  UserX,
+  Image as ImageIcon,
+  AlertCircle, ArrowLeft
 } from 'lucide-react';
 import type { EventResponse } from '@/api-client';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
+import {useRegisterForEvent} from "@/hooks/useRegistration.ts";
+import {useState} from "react";
+import {EventRegistrationsModal} from "@/components/event/EventRegistrationsModal.tsx";
+import EditEventModal from "@/components/event/EditEventModal.tsx";
+import {useDeleteEvent} from "@/hooks/useMyEvents.ts";
 
 interface EventDetailSheetProps {
     event: EventResponse | null;
@@ -29,9 +34,16 @@ interface EventDetailSheetProps {
     onOpenChange: (open: boolean) => void;
 }
 
+// Thêm type cho view state
+type SheetView = 'event-details' | 'registrations';
+
 export default function EventDetailSheet({ event, isOpen, onOpenChange }: EventDetailSheetProps) {
     const { user } = useAuth();
-    
+    const [isEditEventModalOpen, setEditEventModalOpen] = useState(false);
+    const registerMutation = useRegisterForEvent();
+    const deleteEventMutation = useDeleteEvent();
+    const [currentView, setCurrentView] = useState<SheetView>('event-details');
+
     if (!event) return null;
 
     const formatDate = (dateString: string) => {
@@ -51,31 +63,81 @@ export default function EventDetailSheet({ event, isOpen, onOpenChange }: EventD
     };
 
     const tags = Array.from(event.tags || []);
+    const isAdmin = user?.role === 'ADMIN';
+    const isOrganizer = user?.role === 'EVENT_ORGANIZER';
     const isVolunteer = user?.role === 'VOLUNTEER';
     const canRegister = isVolunteer && !event.isFull && event.isApproved;
+
+    const handleRegister = () => {
+      if (!event) return;
+      if (!canRegister) return;
+      registerMutation.mutate(event.id);
+    };
+
+    const handleViewRegistration = () => {
+      setCurrentView('registrations');
+    }
+
+    const handleBackToDetails = () => {
+      setCurrentView('event-details');
+    }
+
+    const handleDeleteEvent = () => {
+      deleteEventMutation.mutate(event.id);
+    }
 
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
             <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-6">
-                <SheetHeader className="pb-4">
-                    <SheetTitle className="text-2xl">{event.title}</SheetTitle>
-                    <SheetDescription>
-                        Created by {event.creatorName}
-                    </SheetDescription>
-                </SheetHeader>
 
-                <div className="space-y-6 pb-20">
+              {currentView === 'event-details' ? (
+                <>
+                  <SheetHeader className="pb-4 flex justify-between items-start">
+                    <div className="flex flex-col">
+                      <SheetTitle className="text-2xl">{event.title}</SheetTitle>
+                      <SheetDescription>
+                        Created by {event.creatorName}
+                      </SheetDescription>
+                    </div>
+
+                    {isOrganizer ? (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          console.log('Edit clicked', event);
+                          setEditEventModalOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          console.log('Delete clicked');
+                          handleDeleteEvent();
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                    ) : null}
+                  </SheetHeader>
+
+                  <div className="space-y-6 pb-20">
                     {/* Event Images */}
                     {event.imageUrls && event.imageUrls.length > 0 ? (
                         <div className="space-y-2">
                             <div className="grid grid-cols-2 gap-2">
                                 {event.imageUrls.slice(0, 4).map((url, index) => (
-                                    <div 
+                                    <div
                                         key={index}
                                         className="relative aspect-video rounded-lg overflow-hidden bg-muted"
                                     >
-                                        <img 
-                                            src={url} 
+                                        <img
+                                            src={url}
                                             alt={`${event.title} - ${index + 1}`}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
@@ -242,32 +304,79 @@ export default function EventDetailSheet({ event, isOpen, onOpenChange }: EventD
 
                 <SheetFooter className="sticky bottom-0 bg-background pt-4 pb-4 border-t mt-6">
                     {!user ? (
-                        <Button 
-                            className="w-full" 
+                        <Button
+                            className="w-full"
                             size="lg"
                             disabled
                         >
                             Login to Register
                         </Button>
-                    ) : !isVolunteer ? (
-                        <Button 
-                            className="w-full" 
+                    ) : isOrganizer ? (
+                        <Button
+                            className="w-full"
                             size="lg"
-                            disabled
+                            onClick={handleViewRegistration}
                         >
-                            Only Volunteers Can Register
+                            View Registrations
                         </Button>
+                    ) : isAdmin ? (
+                      <Button
+                        className="w-full"
+                        size="lg"
+                        disabled
+                      >
+                        Admin can only view
+                      </Button>
                     ) : (
-                        <Button 
-                            className="w-full" 
+                        <Button
+                            className="w-full"
                             size="lg"
                             disabled={!canRegister}
+                            onClick={ handleRegister }
                         >
                             {event.isFull ? 'Event Full' : event.isApproved ? 'Register for Event' : 'Awaiting Approval'}
                         </Button>
                     )}
                 </SheetFooter>
+              </>
+            ) : (
+                // View registrations
+                <div className="h-full flex flex-col">
+                  <SheetHeader className="pb-4">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleBackToDetails}
+                        className="h-8 w-8"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <div>
+                        <SheetTitle className="text-2xl">Registrations</SheetTitle>
+                        <SheetDescription>
+                          {event.title} - {event.creatorName}
+                        </SheetDescription>
+                      </div>
+                    </div>
+                  </SheetHeader>
+
+                  <div className="flex-1 overflow-y-auto">
+                    {/* Đặt component EventRegistrationsModal content ở đây */}
+                    <EventRegistrationsModal eventId={event.id} />
+                  </div>
+                </div>
+              )}
             </SheetContent>
+
+            <EditEventModal
+              open={isEditEventModalOpen}
+              onOpenChange={setEditEventModalOpen}
+              event={event}
+              onSuccess={() => {
+                // reload data hoặc callback tùy bạn
+              }}
+            />
         </Sheet>
     );
 }

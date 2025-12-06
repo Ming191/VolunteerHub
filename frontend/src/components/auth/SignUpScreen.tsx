@@ -28,7 +28,7 @@ const formSchema = z
                 message: 'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)'
             }),
         confirmPassword: z.string(),
-        role: z.enum(['VOLUNTEER', 'EVENT_ORGANIZER'], {
+        role: z.enum(['VOLUNTEER', 'EVENT_ORGANIZER', 'ADMIN'], {
             message: 'You need to select a role.',
         }),
         gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'], {
@@ -148,6 +148,7 @@ export default function SignUpScreen({ isTabbed = false }: SignUpScreenProps) {
                                             <SelectContent>
                                                 <SelectItem value="VOLUNTEER">Volunteer</SelectItem>
                                                 <SelectItem value="EVENT_ORGANIZER">Event Organizer</SelectItem>
+                                                <SelectItem value="ADMIN">Admin</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
