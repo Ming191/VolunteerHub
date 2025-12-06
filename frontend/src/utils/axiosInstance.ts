@@ -48,7 +48,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
             return null;
         }
 
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
             refreshToken,
         });
 
@@ -66,7 +66,7 @@ axiosInstance.interceptors.request.use(
         // Skip adding Authorization header for auth endpoints
         const authEndpoints = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/verify-email'];
         const isAuthEndpoint = authEndpoints.some(endpoint => config.url?.includes(endpoint));
-        
+
         if (isAuthEndpoint) {
             return config;
         }
@@ -113,7 +113,7 @@ axiosInstance.interceptors.response.use(
                     return Promise.reject(error);
                 }
 
-                const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+                const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
                     refreshToken,
                 });
 
