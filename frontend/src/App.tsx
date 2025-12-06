@@ -23,19 +23,21 @@ import VolunteerDashboard from "@/pages/VolunteerDashboard.tsx";
 import OrganizerDashboard from "@/pages/OrganizerDashboard.tsx";
 import AdminDashboard from "@/pages/AdminDashboard.tsx";
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
+import MyEventsScreen from "@/components/event/MyEventsScreen.tsx";
 import { fcmService } from "@/services/fcmService.ts";
 import { useAuth } from "@/hooks/useAuth";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
-const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
+const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
+//const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
 // -----------------------------------------------------------
 
 // Dashboard Router Component
 const DashboardRouter = () => {
     const { user } = useAuth();
-    
+
     if (!user) return null;
-    
+
     switch (user.role) {
         case 'ADMIN':
             return <AdminDashboard />;
@@ -56,12 +58,12 @@ function App() {
         const unsubscribe = fcmService.setupForegroundMessageListener((payload) => {
             const title = payload.notification?.title || 'New Notification';
             const body = payload.notification?.body || '';
-            
+
             toast.info(title, {
                 description: body,
                 duration: 5000,
             });
-            
+
             // Invalidate notification queries to update UI
             queryClient.invalidateQueries({ queryKey: ['recentNotifications'] });
             queryClient.invalidateQueries({ queryKey: ['notificationCount'] });
@@ -78,7 +80,7 @@ function App() {
         <>
             {/* Gravity Stars Background for the entire app */}
             <div className="fixed inset-0 -z-10">
-                <GravityStarsBackground 
+                <GravityStarsBackground
                     starsCount={100}
                     starsSize={2}
                     starsOpacity={0.75}
@@ -116,7 +118,7 @@ function App() {
                             <Route path="/notifications" element={<NotificationsPage />} />
 
                             {/* Role-specific routes can be nested here too */}
-                            <Route path="/my-events" element={<MyEvents />} />
+                            <Route path="/my-events" element={<MyEventsScreen />} />
                             <Route path="/admin/pending-events" element={<AdminPendingEvents />} />
                         </Route>
                     </Route>

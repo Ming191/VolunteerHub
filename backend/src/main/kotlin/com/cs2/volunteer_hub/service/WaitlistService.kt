@@ -1,16 +1,13 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.RegistrationResponse
-import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.findByIdOrThrow
-import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.slf4j.LoggerFactory
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -63,8 +60,7 @@ class WaitlistService(
      */
     @Transactional(readOnly = true)
     fun getWaitlistForEvent(eventId: Long): List<Registration> {
-        val spec = RegistrationSpecifications.waitlistedForEvent(eventId)
-        return registrationRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "waitlistPosition"))
+        return registrationRepository.findWaitlistedRegistrationsByEventIdWithAssociations(eventId)
     }
 
     /**
