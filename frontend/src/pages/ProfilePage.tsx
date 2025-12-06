@@ -39,9 +39,9 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    const fetchProfileData = async () => {
+    const fetchProfileData = async (showLoading = true) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const [profileRes, postsRes] = await Promise.all([
                 userProfileApi.getMyProfile(),
                 postsApi.getMyPosts(),
@@ -51,7 +51,7 @@ export default function ProfilePage() {
         } catch (error) {
             console.error('Failed to fetch profile data:', error);
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     };
 
@@ -62,8 +62,8 @@ export default function ProfilePage() {
     const handleModalClose = (open: boolean) => {
         setIsEditModalOpen(open);
         if (!open) {
-            // Refetch profile data when modal closes
-            fetchProfileData();
+            // Refetch profile data in background when modal closes
+            fetchProfileData(false);
         }
     };
 
@@ -146,7 +146,7 @@ export default function ProfilePage() {
                         <div className="space-y-6">
                             {posts.map((post) => {
                                 const hasImages = post.imageUrls && post.imageUrls.length > 0;
-                                
+
                                 return (
                                     <div
                                         key={post.id}
@@ -157,11 +157,10 @@ export default function ProfilePage() {
 
                                         {/* Post Images */}
                                         {hasImages && (
-                                            <div className={`grid gap-2 mb-4 ${
-                                                post.imageUrls.length === 1 ? 'grid-cols-1' :
-                                                post.imageUrls.length === 2 ? 'grid-cols-2' :
-                                                'grid-cols-2 md:grid-cols-3'
-                                            }`}>
+                                            <div className={`grid gap-2 mb-4 ${post.imageUrls.length === 1 ? 'grid-cols-1' :
+                                                    post.imageUrls.length === 2 ? 'grid-cols-2' :
+                                                        'grid-cols-2 md:grid-cols-3'
+                                                }`}>
                                                 {post.imageUrls.map((url, index) => (
                                                     <img
                                                         key={index}

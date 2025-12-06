@@ -16,6 +16,28 @@ services:
 
     restart: always
 
+  backend:
+    build: ./backend
+    container_name: volunteerhub_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/volunteerhub
+      - SPRING_DATASOURCE_USERNAME=myuser
+      - SPRING_DATASOURCE_PASSWORD=mypassword
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_MAIL_HOST=smtp.gmail.com
+      - SPRING_MAIL_PORT=587
+      - SPRING_MAIL_USERNAME=user@example.com
+      - SPRING_MAIL_PASSWORD=xxxx xxxx xxxx xxxx
+      - PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - postgres-db
+      - rabbitmq
+      - redis
+    restart: always
+
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: volunteerhub_rabbitmq
@@ -60,6 +82,7 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_PUBLIC_DASHBOARDS_ENABLED=true
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning

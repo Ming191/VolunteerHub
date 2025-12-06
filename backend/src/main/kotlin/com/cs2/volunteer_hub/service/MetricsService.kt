@@ -68,6 +68,14 @@ class MetricsService(
         )
     }
 
+    private fun Double.safeRoundToInt(): Int {
+        return if (this.isNaN()) 0 else this.roundToInt()
+    }
+
+    private fun Double.safeFormat(): Double {
+        return if (this.isNaN()) 0.0 else String.format("%.2f", this).toDouble()
+    }
+
     /**
      * Get system health metrics
      */
@@ -101,12 +109,12 @@ class MetricsService(
             prometheusClient.query("process_uptime_seconds{application=\"volunteerhub\"}").get()
         ).toLong()
 
-        logger.debug("System health - Memory: ${memoryUsedMB.roundToInt()}MB/${memoryMaxMB.roundToInt()}MB, Threads: $activeThreads, Uptime: ${uptimeSeconds}s")
+        logger.debug("System health - Memory: ${memoryUsedMB.safeRoundToInt()}MB/${memoryMaxMB.safeRoundToInt()}MB, Threads: $activeThreads, Uptime: ${uptimeSeconds}s")
 
         return SystemHealth(
-            memoryUsedMB = String.format("%.2f", memoryUsedMB).toDouble(),
-            memoryMaxMB = String.format("%.2f", memoryMaxMB).toDouble(),
-            memoryUsagePercent = String.format("%.2f", memoryUsagePercent).toDouble(),
+            memoryUsedMB = memoryUsedMB.safeFormat(),
+            memoryMaxMB = memoryMaxMB.safeFormat(),
+            memoryUsagePercent = memoryUsagePercent.safeFormat(),
             activeThreads = activeThreads,
             uptimeSeconds = uptimeSeconds
         )
@@ -142,14 +150,14 @@ class MetricsService(
         val slowestEndpointTimeSec = prometheusClient.extractValue(slowestEndpointResponse)
         val slowestEndpointTimeMs = slowestEndpointTimeSec * 1000
 
-        logger.debug("API performance - Avg: ${avgResponseTimeMs.roundToInt()}ms, P95: ${p95ResponseTimeMs.roundToInt()}ms, P99: ${p99ResponseTimeMs.roundToInt()}ms")
+        logger.debug("API performance - Avg: ${avgResponseTimeMs.safeRoundToInt()}ms, P95: ${p95ResponseTimeMs.safeRoundToInt()}ms, P99: ${p99ResponseTimeMs.safeRoundToInt()}ms")
 
         return ApiPerformance(
-            avgResponseTimeMs = String.format("%.2f", avgResponseTimeMs).toDouble(),
-            p95ResponseTimeMs = String.format("%.2f", p95ResponseTimeMs).toDouble(),
-            p99ResponseTimeMs = String.format("%.2f", p99ResponseTimeMs).toDouble(),
+            avgResponseTimeMs = avgResponseTimeMs.safeFormat(),
+            p95ResponseTimeMs = p95ResponseTimeMs.safeFormat(),
+            p99ResponseTimeMs = p99ResponseTimeMs.safeFormat(),
             slowestEndpoint = slowestEndpoint,
-            slowestEndpointTimeMs = String.format("%.2f", slowestEndpointTimeMs).toDouble()
+            slowestEndpointTimeMs = slowestEndpointTimeMs.safeFormat()
         )
     }
 }
