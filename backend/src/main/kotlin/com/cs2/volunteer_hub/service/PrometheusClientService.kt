@@ -36,7 +36,7 @@ class PrometheusClientService(
                     .fromHttpUrl("$prometheusUrl/api/v1/query")
                     .queryParam("query", query)
                     .build()
-                    .toUriString()
+                    .toUri()
 
                 logger.debug("Querying Prometheus: $query")
                 restTemplate.getForObject(url, PrometheusResponse::class.java)
@@ -75,7 +75,7 @@ class PrometheusClientService(
                     .queryParam("end", end)
                     .queryParam("step", step)
                     .build()
-                    .toUriString()
+                    .toUri()
 
                 logger.debug("Querying Prometheus (range): $query")
                 restTemplate.getForObject(url, PrometheusResponse::class.java)

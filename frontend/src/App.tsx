@@ -23,6 +23,7 @@ const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 const VolunteerDashboard = lazy(() => import('@/pages/VolunteerDashboard'));
 const OrganizerDashboard = lazy(() => import('@/pages/OrganizerDashboard'));
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
+const AdminUsers = lazy(() => import('@/pages/AdminUsers'));
 
 // Import a Toaster for notifications
 import { Toaster } from '@/components/ui/sonner';
@@ -37,9 +38,9 @@ const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)
 // Dashboard Router Component
 const DashboardRouter = () => {
     const { user } = useAuth();
-    
+
     if (!user) return null;
-    
+
     switch (user.role) {
         case 'ADMIN':
             return <AdminDashboard />;
@@ -60,12 +61,12 @@ function App() {
         const unsubscribe = fcmService.setupForegroundMessageListener((payload) => {
             const title = payload.notification?.title || 'New Notification';
             const body = payload.notification?.body || '';
-            
+
             toast.info(title, {
                 description: body,
                 duration: 5000,
             });
-            
+
             // Invalidate notification queries to update UI
             queryClient.invalidateQueries({ queryKey: ['recentNotifications'] });
             queryClient.invalidateQueries({ queryKey: ['notificationCount'] });
@@ -82,7 +83,7 @@ function App() {
         <ErrorBoundary>
             {/* Gravity Stars Background for the entire app */}
             <div className="fixed inset-0 -z-10">
-                <GravityStarsBackground 
+                <GravityStarsBackground
                     starsCount={100}
                     starsSize={2}
                     starsOpacity={0.75}
@@ -106,7 +107,7 @@ function App() {
                         <Route path="/signin" element={<TabbedAuthScreen />} />
                         <Route path="/signup" element={<TabbedAuthScreen />} />
                         <Route path="/verify-email" element={<EmailVerificationScreen />} />
-                        <Route path="/test" element={<DateTimePicker onChange={() => {}} />} />
+                        <Route path="/test" element={<DateTimePicker onChange={() => { }} />} />
                         {/* ============================================= */}
                         {/*           Protected Routes                    */}
                         {/* ============================================= */}
@@ -116,13 +117,14 @@ function App() {
                                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
                                 <Route path="/dashboard" element={<DashboardRouter />} />
-                                <Route path="/events" element={<EventListScreen  />} />
+                                <Route path="/events" element={<EventListScreen />} />
                                 <Route path="/profile" element={<ProfilePage />} />
                                 <Route path="/notifications" element={<NotificationsPage />} />
 
                                 {/* Role-specific routes can be nested here too */}
                                 <Route path="/my-events" element={<MyEvents />} />
                                 <Route path="/admin/pending-events" element={<AdminPendingEvents />} />
+                                <Route path="/admin/users" element={<AdminUsers />} />
                             </Route>
                         </Route>
 
