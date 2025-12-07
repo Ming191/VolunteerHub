@@ -1,6 +1,8 @@
-import { useMutation } from "@tanstack/react-query";
+import {useMutation, useQuery} from "@tanstack/react-query";
 import { registrationService } from "@/services/registrationService.ts";
-import { toast } from "sonner"; // ← Import từ sonner
+import { toast } from "sonner";
+
+const REGISTRATION_QUERY_KEY = 'my-registrations';
 
 export const useRegisterForEvent = () => {
   return useMutation({
@@ -25,3 +27,10 @@ export const useRegisterForEvent = () => {
 };
 
 
+export const useGetMyRegistrationEvents = () => {
+  return useQuery({
+    queryKey: [REGISTRATION_QUERY_KEY],
+    queryFn: () => registrationService.getMyRegistrationEvents(),
+    placeholderData: (prev) => prev
+  })
+}

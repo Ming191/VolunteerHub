@@ -26,9 +26,10 @@ import { GravityStarsBackground } from "@/components/animate-ui/components/backg
 import MyEventsScreen from "@/components/event/MyEventsScreen.tsx";
 import { fcmService } from "@/services/fcmService.ts";
 import { useAuth } from "@/hooks/useAuth";
+import MyRegistrationsScreen from "@/pages/MyRegistrations.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
-const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
+// const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
 //const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
 // -----------------------------------------------------------
 
@@ -120,6 +121,8 @@ function App() {
                             {/* Role-specific routes can be nested here too */}
                             <Route path="/my-events" element={<MyEventsScreen />} />
                             <Route path="/admin/pending-events" element={<AdminPendingEvents />} />
+
+                            <Route path="/my-registrations" element={<MyRegistrationsScreen />} />
                         </Route>
                     </Route>
 

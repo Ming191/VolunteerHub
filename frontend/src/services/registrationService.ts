@@ -2,12 +2,13 @@ import {
   Configuration,
   RegistrationsApi,
   type RegistrationStatusResponse,
-  type RegistrationResultResponse,
+  type RegistrationResultResponse, UserProfileApi, type RegistrationResponse,
 } from '@/api-client';
 import axiosInstance from '../utils/axiosInstance';
 
 const config = new Configuration({ basePath: '' });
 const registrationsApi = new RegistrationsApi(config, undefined, axiosInstance);
+const userProfileApi = new UserProfileApi(config, undefined, axiosInstance);
 
 /**
  * Register for an event
@@ -38,18 +39,15 @@ const getRegistrationStatus = async (eventId: number): Promise<RegistrationStatu
 /**
  * Get user's registrations with pagination
  */
-// const getMyRegistrations = async (page?: number, size?: number): Promise<PageRegistrationResponse> => {
-//   try {
-//     const response = await registrationsApi.getMyRegistrations({
-//       page,
-//       size
-//     });
-//     return response.data;
-//   } catch (error) {
-//     console.error('Failed to get my registrations:', error);
-//     throw error;
-//   }
-// };
+const getMyRegistrationEvents = async (): Promise<RegistrationResponse[]> => {
+  try {
+    const response = await userProfileApi.getMyRegistrations();
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get my registrations:', error);
+    throw error;
+  }
+};
 
 // /**
 //  * Cancel a registration
@@ -68,4 +66,5 @@ const getRegistrationStatus = async (eventId: number): Promise<RegistrationStatu
 export const registrationService = {
   registerForEvent,
   getRegistrationStatus,
+  getMyRegistrationEvents
 };
