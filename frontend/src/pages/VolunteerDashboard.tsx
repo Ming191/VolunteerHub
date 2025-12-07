@@ -326,7 +326,7 @@ export default function VolunteerDashboard() {
               <ArrowRight className="h-4 w-4 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
             <button
-              onClick={() => navigate('/events')}
+              onClick={() => navigate('/my-registrations')}
               className="p-4 rounded-lg border hover:border-primary hover:bg-primary/5 transition-colors text-left group"
             >
               <Users className="h-6 w-6 mb-2 text-primary" />
