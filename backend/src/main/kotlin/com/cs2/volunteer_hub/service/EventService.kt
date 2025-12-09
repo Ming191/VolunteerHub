@@ -25,7 +25,6 @@ import org.springframework.cache.annotation.Caching
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
@@ -34,94 +33,113 @@ import org.springframework.web.multipart.MultipartFile
 
 @Service
 class EventService(
-    private val eventRepository: EventRepository,
-    private val userRepository: UserRepository,
-    private val rabbitTemplate: RabbitTemplate,
-    private val fileValidationService: FileValidationService,
-    private val eventMapper: EventMapper,
-    private val eventCapacityService: EventCapacityService,
-    private val authorizationService: AuthorizationService,
-    private val eventDateValidator: EventDateValidator,
-    private val eventLifecycleValidator: EventLifecycleValidator,
-    private val eventQueueService: EventQueueService,
-    @field:Value($$"${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
+        private val eventRepository: EventRepository,
+        private val userRepository: UserRepository,
+        private val rabbitTemplate: RabbitTemplate,
+        private val fileValidationService: FileValidationService,
+        private val eventMapper: EventMapper,
+        private val eventCapacityService: EventCapacityService,
+        private val authorizationService: AuthorizationService,
+        private val eventDateValidator: EventDateValidator,
+        private val eventLifecycleValidator: EventLifecycleValidator,
+        private val eventQueueService: EventQueueService,
+        @field:Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
     private val logger = LoggerFactory.getLogger(EventService::class.java)
 
+    private fun publishEventChange(eventId: Long, type: com.cs2.volunteer_hub.dto.ChangeType) {
+        try {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.EXCHANGE_NAME,
+                    RabbitMQConfig.EVENT_CHANGED_ROUTING_KEY,
+                    com.cs2.volunteer_hub.dto.EventChangedMessage(eventId, type)
+            )
+            logger.info("Published event change: $type for ID: $eventId")
+        } catch (e: Exception) {
+            logger.error("Failed to publish event change: $type for ID: $eventId", e)
+        }
+    }
+
     @CacheEvict(value = ["events"], allEntries = true)
     @Transactional
-    fun createEvent(request: CreateEventRequest, creatorEmail: String, files: List<MultipartFile>?): EventResponse {
+    fun createEvent(
+            request: CreateEventRequest,
+            creatorEmail: String,
+            files: List<MultipartFile>?
+    ): EventResponse {
         val creator = userRepository.findByEmailOrThrow(creatorEmail)
 
         files?.let { fileValidationService.validateFiles(it, maxFilesPerEvent) }
 
         eventDateValidator.validateEventDates(
-            request.eventDateTime,
-            request.endDateTime,
-            request.registrationDeadline
+                request.eventDateTime,
+                request.endDateTime,
+                request.registrationDeadline
         )
 
-        val newEvent = Event(
-            title = request.title,
-            description = request.description,
-            location = request.location,
-            eventDateTime = request.eventDateTime,
-            endDateTime = request.endDateTime,
-            registrationDeadline = request.registrationDeadline,
-            creator = creator,
-            status = EventStatus.PENDING,
-            maxParticipants = request.maxParticipants,
-            waitlistEnabled = request.waitlistEnabled,
-            tags = request.tags?.toMutableSet() ?: mutableSetOf()
-        )
+        val newEvent =
+                Event(
+                        title = request.title,
+                        description = request.description,
+                        location = request.location,
+                        eventDateTime = request.eventDateTime,
+                        endDateTime = request.endDateTime,
+                        registrationDeadline = request.registrationDeadline,
+                        creator = creator,
+                        status = EventStatus.PENDING,
+                        maxParticipants = request.maxParticipants,
+                        waitlistEnabled = request.waitlistEnabled,
+                        tags = request.tags?.toMutableSet() ?: mutableSetOf()
+                )
 
         if (!files.isNullOrEmpty()) {
             fileValidationService.processFilesForEvent(files, newEvent)
         }
 
         val savedEvent = eventRepository.save(newEvent)
-        logger.info("Created event ID: ${savedEvent.id} with ${savedEvent.images.size} images pending upload")
+        logger.info(
+                "Created event ID: ${savedEvent.id} with ${savedEvent.images.size} images pending upload"
+        )
 
         if (savedEvent.images.isNotEmpty()) {
             val message = EventCreationMessage(eventId = savedEvent.id)
 
-            TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
-                override fun afterCommit() {
-                    rabbitTemplate.convertAndSend(
-                        RabbitMQConfig.EXCHANGE_NAME,
-                        RabbitMQConfig.EVENT_CREATION_PENDING_ROUTING_KEY,
-                        message
-                    )
-                    logger.info("Sent event creation message to queue for Event ID: ${savedEvent.id}")
-                }
-            })
+            TransactionSynchronizationManager.registerSynchronization(
+                    object : TransactionSynchronization {
+                        override fun afterCommit() {
+                            rabbitTemplate.convertAndSend(
+                                    RabbitMQConfig.EXCHANGE_NAME,
+                                    RabbitMQConfig.EVENT_CREATION_PENDING_ROUTING_KEY,
+                                    message
+                            )
+                            logger.info(
+                                    "Sent event creation message to queue for Event ID: ${savedEvent.id}"
+                            )
+                        }
+                    }
+            )
         } else {
             eventRepository.save(savedEvent)
         }
 
+        publishEventChange(savedEvent.id, com.cs2.volunteer_hub.dto.ChangeType.CREATED)
+
         return eventMapper.toEventResponse(savedEvent)
     }
 
-
-    /**
-     * Get all approved events with pagination support
-     */
+    /** Get all approved events with pagination support */
     @Transactional(readOnly = true)
     fun getAllApprovedEvents(pageable: Pageable): Page<EventResponse> {
         val spec = EventSpecifications.isApproved()
         val eventPage = eventRepository.findAll(spec, pageable)
         val eventResponses = eventMapper.toEventResponseList(eventPage.content)
 
-        return PageImpl(
-            eventResponses,
-            pageable,
-            eventPage.totalElements
-        )
+        return PageImpl(eventResponses, pageable, eventPage.totalElements)
     }
 
     /**
-     * Get all events created by a specific user (non-cancelled)
-     * Used for "My Events" feature on profile page
+     * Get all events created by a specific user (non-cancelled) Used for "My Events" feature on
+     * profile page
      */
     @Transactional(readOnly = true)
     fun getEventsByCreator(userEmail: String, pageable: Pageable): Page<EventResponse> {
@@ -130,11 +148,7 @@ class EventService(
         val eventPage = eventRepository.findAll(spec, pageable)
         val eventResponses = eventMapper.toEventResponseList(eventPage.content)
 
-        return PageImpl(
-            eventResponses,
-            pageable,
-            eventPage.totalElements
-        )
+        return PageImpl(eventResponses, pageable, eventPage.totalElements)
     }
 
     @Cacheable(value = ["event"], key = "#id")
@@ -148,32 +162,37 @@ class EventService(
         return eventMapper.toEventResponse(event)
     }
 
-    @Caching(evict = [
-        CacheEvict(value = ["events"], allEntries = true),
-        CacheEvict(value = ["event"], key = "#id")
-    ])
+    @Caching(
+            evict =
+                    [
+                            CacheEvict(value = ["events"], allEntries = true),
+                            CacheEvict(value = ["event"], key = "#id")]
+    )
     @Transactional
-    fun updateEvent(id: Long, request: UpdateEventRequest, currentUserEmail: String): EventResponse {
+    fun updateEvent(
+            id: Long,
+            request: UpdateEventRequest,
+            currentUserEmail: String
+    ): EventResponse {
         val event = authorizationService.requireEventOwnership(id, currentUserEmail)
 
         eventLifecycleValidator.validateUpdateAllowed(event)
-        request.maxParticipants?.let {
-            eventCapacityService.validateCapacityChange(id, it)
-        }
+        request.maxParticipants?.let { eventCapacityService.validateCapacityChange(id, it) }
+
         if (request.eventDateTime != null || request.endDateTime != null) {
             eventLifecycleValidator.validateDateChangeAllowed(
-                event,
-                request.eventDateTime,
-                request.endDateTime
+                    event,
+                    request.eventDateTime,
+                    request.endDateTime
             )
         }
         eventDateValidator.validateEventDatesForUpdate(
-            request.eventDateTime,
-            event.eventDateTime,
-            request.endDateTime,
-            event.endDateTime,
-            request.registrationDeadline,
-            event.registrationDeadline
+                request.eventDateTime,
+                event.eventDateTime,
+                request.endDateTime,
+                event.endDateTime,
+                request.registrationDeadline,
+                event.registrationDeadline
         )
 
         request.title?.let { event.title = it }
@@ -191,29 +210,35 @@ class EventService(
 
         val updatedEvent = eventRepository.save(event)
         logger.info("Updated event ID: $id by user: $currentUserEmail")
+
+        publishEventChange(updatedEvent.id, com.cs2.volunteer_hub.dto.ChangeType.UPDATED)
+
         return eventMapper.toEventResponse(updatedEvent)
     }
 
-    @Caching(evict = [
-        CacheEvict(value = ["events"], allEntries = true),
-        CacheEvict(value = ["event"], key = "#id")
-    ])
+    @Caching(
+            evict =
+                    [
+                            CacheEvict(value = ["events"], allEntries = true),
+                            CacheEvict(value = ["event"], key = "#id")]
+    )
     @Transactional
     fun deleteEvent(id: Long, currentUserEmail: String) {
         val event = authorizationService.requireEventOwnership(id, currentUserEmail)
         eventLifecycleValidator.validateDeletionAllowed(event)
         eventRepository.delete(event)
         logger.info("Deleted event ID: $id by user: $currentUserEmail")
+
+        publishEventChange(id, com.cs2.volunteer_hub.dto.ChangeType.DELETED)
     }
 
-    /**
-     * Cancel an event with a reason
-     * Validates cancellation rules and notifies participants
-     */
-    @Caching(evict = [
-        CacheEvict(value = ["events"], allEntries = true),
-        CacheEvict(value = ["event"], key = "#id")
-    ])
+    /** Cancel an event with a reason Validates cancellation rules and notifies participants */
+    @Caching(
+            evict =
+                    [
+                            CacheEvict(value = ["events"], allEntries = true),
+                            CacheEvict(value = ["event"], key = "#id")]
+    )
     @Transactional
     fun cancelEvent(id: Long, reason: String?, currentUserEmail: String): EventResponse {
         val event = authorizationService.requireEventOwnership(id, currentUserEmail)
@@ -226,14 +251,19 @@ class EventService(
 
         val savedEvent = eventRepository.save(event)
 
-        eventQueueService.queueEvent(EventLifecycleEvent(
-            eventId = savedEvent.id,
-            from = from,
-            to = EventStatus.CANCELLED,
-            reason = reason
-        ))
+        eventQueueService.queueEvent(
+                EventLifecycleEvent(
+                        eventId = savedEvent.id,
+                        from = from,
+                        to = EventStatus.CANCELLED,
+                        reason = reason
+                )
+        )
 
         logger.info("Cancelled event ID: $id by user: $currentUserEmail with reason: $reason")
+
+        publishEventChange(savedEvent.id, com.cs2.volunteer_hub.dto.ChangeType.CANCELLED)
+
         return eventMapper.toEventResponse(savedEvent)
     }
 }

@@ -54,11 +54,16 @@ class RabbitMQConfig {
         const val POST_IMAGE_UPLOAD_FAILED_DLQ = "post_image_upload_failed_queue.dlq"
 
         const val PROFILE_PICTURE_UPLOAD_DLQ = "profile_picture_upload_queue.dlq"
-        const val PROFILE_PICTURE_UPLOAD_SUCCEEDED_DLQ = "profile_picture_upload_succeeded_queue.dlq"
+        const val PROFILE_PICTURE_UPLOAD_SUCCEEDED_DLQ =
+                "profile_picture_upload_succeeded_queue.dlq"
         const val PROFILE_PICTURE_UPLOAD_FAILED_DLQ = "profile_picture_upload_failed_queue.dlq"
 
         const val NOTIFICATION_DLQ = "notification_queue.dlq"
         const val REGISTRATION_STATUS_UPDATED_DLQ = "registration_status_updated_queue.dlq"
+
+        const val EVENT_CHANGED_QUEUE = "event_changed_queue"
+        const val EVENT_CHANGED_DLQ = "event_changed_queue.dlq"
+        const val EVENT_CHANGED_ROUTING_KEY = "event.changed"
 
         const val EVENT_CREATION_PENDING_ROUTING_KEY = "event.creation.pending"
         const val IMAGE_UPLOAD_SUCCEEDED_ROUTING_KEY = "image.upload.succeeded"
@@ -96,8 +101,8 @@ class RabbitMQConfig {
 
     @Bean
     fun rabbitListenerContainerFactory(
-        connectionFactory: ConnectionFactory,
-        configurer: SimpleRabbitListenerContainerFactoryConfigurer
+            connectionFactory: ConnectionFactory,
+            configurer: SimpleRabbitListenerContainerFactoryConfigurer
     ): SimpleRabbitListenerContainerFactory {
         val factory = SimpleRabbitListenerContainerFactory()
         configurer.configure(factory, connectionFactory)
@@ -114,28 +119,28 @@ class RabbitMQConfig {
     @Bean
     fun eventCreationPendingQueue(): Queue {
         return QueueBuilder.durable(EVENT_CREATION_PENDING_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", EVENT_CREATION_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", EVENT_CREATION_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
     fun imageUploadSucceededQueue(): Queue {
         return QueueBuilder.durable(IMAGE_UPLOAD_SUCCEEDED_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", IMAGE_UPLOAD_SUCCEEDED_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", IMAGE_UPLOAD_SUCCEEDED_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
     fun imageUploadFailedQueue(): Queue {
         return QueueBuilder.durable(IMAGE_UPLOAD_FAILED_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", IMAGE_UPLOAD_FAILED_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", IMAGE_UPLOAD_FAILED_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
@@ -156,24 +161,28 @@ class RabbitMQConfig {
     // Bindings
     @Bean
     fun bindEventCreationPending(
-        @Qualifier("eventCreationPendingQueue") pendingQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("eventCreationPendingQueue") pendingQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
-        return BindingBuilder.bind(pendingQueue).to(exchange).with(EVENT_CREATION_PENDING_ROUTING_KEY)
+        return BindingBuilder.bind(pendingQueue)
+                .to(exchange)
+                .with(EVENT_CREATION_PENDING_ROUTING_KEY)
     }
 
     @Bean
     fun bindImageUploadSucceeded(
-        @Qualifier("imageUploadSucceededQueue") succeededQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("imageUploadSucceededQueue") succeededQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
-        return BindingBuilder.bind(succeededQueue).to(exchange).with(IMAGE_UPLOAD_SUCCEEDED_ROUTING_KEY)
+        return BindingBuilder.bind(succeededQueue)
+                .to(exchange)
+                .with(IMAGE_UPLOAD_SUCCEEDED_ROUTING_KEY)
     }
 
     @Bean
     fun bindImageUploadFailed(
-        @Qualifier("imageUploadFailedQueue") failedQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("imageUploadFailedQueue") failedQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
         return BindingBuilder.bind(failedQueue).to(exchange).with(IMAGE_UPLOAD_FAILED_ROUTING_KEY)
     }
@@ -182,28 +191,28 @@ class RabbitMQConfig {
     @Bean
     fun postCreationPendingQueue(): Queue {
         return QueueBuilder.durable(POST_CREATION_PENDING_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", POST_CREATION_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", POST_CREATION_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
     fun postImageUploadSucceededQueue(): Queue {
         return QueueBuilder.durable(POST_IMAGE_UPLOAD_SUCCEEDED_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", POST_IMAGE_UPLOAD_SUCCEEDED_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", POST_IMAGE_UPLOAD_SUCCEEDED_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
     fun postImageUploadFailedQueue(): Queue {
         return QueueBuilder.durable(POST_IMAGE_UPLOAD_FAILED_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", POST_IMAGE_UPLOAD_FAILED_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", POST_IMAGE_UPLOAD_FAILED_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     // Post Dead Letter Queues
@@ -226,28 +235,28 @@ class RabbitMQConfig {
     @Bean
     fun profilePictureUploadQueue(): Queue {
         return QueueBuilder.durable(PROFILE_PICTURE_UPLOAD_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", PROFILE_PICTURE_UPLOAD_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", PROFILE_PICTURE_UPLOAD_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
     fun profilePictureUploadSucceededQueue(): Queue {
         return QueueBuilder.durable(PROFILE_PICTURE_UPLOAD_SUCCEEDED_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", PROFILE_PICTURE_UPLOAD_SUCCEEDED_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", PROFILE_PICTURE_UPLOAD_SUCCEEDED_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
     fun profilePictureUploadFailedQueue(): Queue {
         return QueueBuilder.durable(PROFILE_PICTURE_UPLOAD_FAILED_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", PROFILE_PICTURE_UPLOAD_FAILED_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", PROFILE_PICTURE_UPLOAD_FAILED_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     // Profile Picture Dead Letter Queues
@@ -270,19 +279,19 @@ class RabbitMQConfig {
     @Bean
     fun notificationQueue(): Queue {
         return QueueBuilder.durable(NOTIFICATION_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", NOTIFICATION_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", NOTIFICATION_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
     fun registrationStatusUpdatedQueue(): Queue {
         return QueueBuilder.durable(REGISTRATION_STATUS_UPDATED_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", REGISTRATION_STATUS_UPDATED_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", REGISTRATION_STATUS_UPDATED_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
@@ -295,14 +304,36 @@ class RabbitMQConfig {
         return QueueBuilder.durable(REGISTRATION_STATUS_UPDATED_DLQ).build()
     }
 
+    @Bean
+    fun eventChangedQueue(): Queue {
+        return QueueBuilder.durable(EVENT_CHANGED_QUEUE)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", EVENT_CHANGED_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
+    }
+
+    @Bean
+    fun eventChangedDlq(): Queue {
+        return QueueBuilder.durable(EVENT_CHANGED_DLQ).build()
+    }
+
+    @Bean
+    fun bindEventChanged(
+            @Qualifier("eventChangedQueue") queue: Queue,
+            exchange: TopicExchange
+    ): Binding {
+        return BindingBuilder.bind(queue).to(exchange).with(EVENT_CHANGED_ROUTING_KEY)
+    }
+
     // Email Queue
     @Bean
     fun emailQueue(): Queue {
         return QueueBuilder.durable(EMAIL_QUEUE)
-            .withArgument("x-dead-letter-exchange", "")
-            .withArgument("x-dead-letter-routing-key", EMAIL_DLQ)
-            .withArgument("x-message-ttl", MESSAGE_TTL)
-            .build()
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", EMAIL_DLQ)
+                .withArgument("x-message-ttl", MESSAGE_TTL)
+                .build()
     }
 
     @Bean
@@ -313,76 +344,88 @@ class RabbitMQConfig {
     // Event Listeners
     @Bean
     fun bindNotification(
-        @Qualifier("notificationQueue") notificationQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("notificationQueue") notificationQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
         return BindingBuilder.bind(notificationQueue).to(exchange).with(NOTIFICATION_ROUTING_KEY)
     }
 
     @Bean
     fun bindRegistrationStatusUpdated(
-        @Qualifier("registrationStatusUpdatedQueue") registrationStatusUpdatedQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("registrationStatusUpdatedQueue") registrationStatusUpdatedQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
-        return BindingBuilder.bind(registrationStatusUpdatedQueue).to(exchange).with(REGISTRATION_STATUS_UPDATED_ROUTING_KEY)
+        return BindingBuilder.bind(registrationStatusUpdatedQueue)
+                .to(exchange)
+                .with(REGISTRATION_STATUS_UPDATED_ROUTING_KEY)
     }
 
     // Post Bindings
     @Bean
     fun bindPostCreationPending(
-        @Qualifier("postCreationPendingQueue") pendingQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("postCreationPendingQueue") pendingQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
-        return BindingBuilder.bind(pendingQueue).to(exchange).with(POST_CREATION_PENDING_ROUTING_KEY)
+        return BindingBuilder.bind(pendingQueue)
+                .to(exchange)
+                .with(POST_CREATION_PENDING_ROUTING_KEY)
     }
 
     @Bean
     fun bindPostImageUploadSucceeded(
-        @Qualifier("postImageUploadSucceededQueue") succeededQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("postImageUploadSucceededQueue") succeededQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
-        return BindingBuilder.bind(succeededQueue).to(exchange).with(POST_IMAGE_UPLOAD_SUCCEEDED_ROUTING_KEY)
+        return BindingBuilder.bind(succeededQueue)
+                .to(exchange)
+                .with(POST_IMAGE_UPLOAD_SUCCEEDED_ROUTING_KEY)
     }
 
     @Bean
     fun bindPostImageUploadFailed(
-        @Qualifier("postImageUploadFailedQueue") failedQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("postImageUploadFailedQueue") failedQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
-        return BindingBuilder.bind(failedQueue).to(exchange).with(POST_IMAGE_UPLOAD_FAILED_ROUTING_KEY)
+        return BindingBuilder.bind(failedQueue)
+                .to(exchange)
+                .with(POST_IMAGE_UPLOAD_FAILED_ROUTING_KEY)
     }
 
     // Profile Picture Bindings
     @Bean
     fun bindProfilePictureUpload(
-        @Qualifier("profilePictureUploadQueue") profilePictureUploadQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("profilePictureUploadQueue") profilePictureUploadQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
-        return BindingBuilder.bind(profilePictureUploadQueue).to(exchange).with(PROFILE_PICTURE_UPLOAD_ROUTING_KEY)
+        return BindingBuilder.bind(profilePictureUploadQueue)
+                .to(exchange)
+                .with(PROFILE_PICTURE_UPLOAD_ROUTING_KEY)
     }
 
     @Bean
     fun bindProfilePictureUploadSucceeded(
-        @Qualifier("profilePictureUploadSucceededQueue") profilePictureUploadSucceededQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("profilePictureUploadSucceededQueue")
+            profilePictureUploadSucceededQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
-        return BindingBuilder.bind(profilePictureUploadSucceededQueue).to(exchange).with(PROFILE_PICTURE_UPLOAD_SUCCEEDED_ROUTING_KEY)
+        return BindingBuilder.bind(profilePictureUploadSucceededQueue)
+                .to(exchange)
+                .with(PROFILE_PICTURE_UPLOAD_SUCCEEDED_ROUTING_KEY)
     }
 
     @Bean
     fun bindProfilePictureUploadFailed(
-        @Qualifier("profilePictureUploadFailedQueue") profilePictureUploadFailedQueue: Queue,
-        exchange: TopicExchange
+            @Qualifier("profilePictureUploadFailedQueue") profilePictureUploadFailedQueue: Queue,
+            exchange: TopicExchange
     ): Binding {
-        return BindingBuilder.bind(profilePictureUploadFailedQueue).to(exchange).with(PROFILE_PICTURE_UPLOAD_FAILED_ROUTING_KEY)
+        return BindingBuilder.bind(profilePictureUploadFailedQueue)
+                .to(exchange)
+                .with(PROFILE_PICTURE_UPLOAD_FAILED_ROUTING_KEY)
     }
 
     // Email Binding
     @Bean
-    fun bindEmail(
-        @Qualifier("emailQueue") emailQueue: Queue,
-        exchange: TopicExchange
-    ): Binding {
+    fun bindEmail(@Qualifier("emailQueue") emailQueue: Queue, exchange: TopicExchange): Binding {
         return BindingBuilder.bind(emailQueue).to(exchange).with(EMAIL_ROUTING_KEY)
     }
 }
