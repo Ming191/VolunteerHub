@@ -25,3 +25,7 @@ src/api-client
 *.njsproj
 *.sln
 *.sw?
+
+# OpenApi
+openapi.json
+openapitools.json
