@@ -14,7 +14,7 @@ description = "Demo project for Spring Boot"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(23)
 	}
 }
 
@@ -62,6 +62,12 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.firebase/firebase-admin
     implementation("com.google.firebase:firebase-admin:9.7.0")
     implementation("org.springframework.boot:spring-boot-starter-aop")
+
+    // Resilience4j for Circuit Breaker pattern
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.3.0")
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.3.0")
+    implementation("io.github.resilience4j:resilience4j-timelimiter:2.3.0")
+    implementation("io.github.resilience4j:resilience4j-micrometer:2.3.0")
 
     // https://mvnrepository.com/artifact/org.webjars/swagger-ui
     implementation("org.webjars:swagger-ui:5.30.1")

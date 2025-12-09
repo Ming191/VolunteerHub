@@ -143,7 +143,7 @@ class DashboardService(
         )
     }
 
-    @Cacheable("admin_dashboard")
+    // @Cacheable("admin_dashboard")
     @Transactional(readOnly = true)
     fun getAdminDashboard(): AdminDashboardResponse {
         val userRoleCounts = userRepository.countUsersByRole()
