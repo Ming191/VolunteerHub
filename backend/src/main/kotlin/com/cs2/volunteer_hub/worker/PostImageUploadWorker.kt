@@ -85,7 +85,7 @@ class PostImageUploadWorker(
                     fileBytes,
                     image.contentType,
                     image.originalFileName
-                )
+                ).get() // Wait for CompletableFuture
 
                 uploadedUrls[image.id] = url
                 logger.info("Successfully uploaded image ID: ${image.id} for Post ID: $postId")

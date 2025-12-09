@@ -69,10 +69,10 @@ class ProfilePictureUploadWorker(
                 fileBytes,
                 message.contentType,
                 message.originalFileName
-            )
+            ).get() // Wait for CompletableFuture
             user.profilePictureUrl?.let { oldUrl ->
                 try {
-                    imageUploadService.deleteImageByUrl(oldUrl)
+                    imageUploadService.deleteImageByUrl(oldUrl).get() // Wait for CompletableFuture
                     logger.info("Deleted old profile picture for User ID: $userId")
                 } catch (e: Exception) {
                     logger.warn("Failed to delete old profile picture for User ID: $userId: ${e.message}")
