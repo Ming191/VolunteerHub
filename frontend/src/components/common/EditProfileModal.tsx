@@ -151,12 +151,14 @@ export default function EditProfileModal({
 
         try {
             const croppedFile = await getCroppedImg(cropImageSrc, croppedAreaPixels);
-            if (croppedFile) {
-                setSelectedImage(croppedFile);
-                setPreviewUrl(URL.createObjectURL(croppedFile));
-                setIsCropping(false);
-                setCropImageSrc(null);
+            if (!croppedFile) {
+                toast.error('Failed to crop image');
+                return;
             }
+            setSelectedImage(croppedFile);
+            setPreviewUrl(URL.createObjectURL(croppedFile));
+            setIsCropping(false);
+            setCropImageSrc(null);
         } catch (e) {
             console.error(e);
             toast.error('Failed to crop image');
