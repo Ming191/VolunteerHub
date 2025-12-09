@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, Camera, X, Check } from 'lucide-react';
-import Cropper from 'react-easy-crop';
+import Cropper, { type Area } from 'react-easy-crop';
 
 import {
     Dialog,
@@ -90,7 +90,7 @@ export default function EditProfileModal({
     const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -142,7 +142,7 @@ export default function EditProfileModal({
         e.target.value = '';
     };
 
-    const onCropComplete = (_: any, croppedAreaPixels: any) => {
+    const onCropComplete = (_: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels);
     };
 
