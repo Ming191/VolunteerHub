@@ -38,3 +38,7 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### Secrets ###
+src/main/resources/fcm-credentials.json
+src/main/resources/gcp-credentials.json
