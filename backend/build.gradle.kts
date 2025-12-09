@@ -53,6 +53,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
 
     // Bucket4j for rate limiting with Redis support
     implementation("com.bucket4j:bucket4j_jdk17-core:8.15.0")

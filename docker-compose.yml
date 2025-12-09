@@ -57,6 +57,19 @@ services:
       - redis_data:/data
     restart: always
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: volunteerhub_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    restart: always
+
   prometheus:
     image: prom/prometheus:latest
     container_name: volunteerhub_prometheus
@@ -96,6 +109,8 @@ volumes:
   rabbitmq_data:
     driver: local
   redis_data:
+    driver: local
+  elasticsearch_data:
     driver: local
   prometheus_data:
     driver: local
