@@ -102,7 +102,7 @@ export default function EventListScreen() {
                             Discover and join events in your community
                         </p>
                     </div>
-                    {user && (user.role === 'EVENT_ORGANIZER' || user.role === 'ADMIN') && (
+                    {user && (user.role === 'EVENT_ORGANIZER') && (
                         <RippleButton
                             onClick={() => setIsAddEventModalOpen(true)}
                             size="lg"
@@ -222,7 +222,7 @@ export default function EventListScreen() {
                 )}
 
                 {/* Event Detail Sheet */}
-                <EventDetailSheet 
+                <EventDetailSheet
                     event={selectedEvent}
                     isOpen={isDetailSheetOpen}
                     onOpenChange={setIsDetailSheetOpen}

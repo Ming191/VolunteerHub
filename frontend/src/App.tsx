@@ -28,11 +28,14 @@ const AdminUsers = lazy(() => import('@/pages/AdminUsers'));
 // Import a Toaster for notifications
 import { Toaster } from '@/components/ui/sonner';
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
+import MyEventsScreen from "@/components/event/MyEventsScreen.tsx";
 import { fcmService } from "@/services/fcmService.ts";
 import { useAuth } from "@/hooks/useAuth";
+import MyRegistrationsScreen from "@/pages/MyRegistrations.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
-const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
+// const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
+//const MyEvents = () => <div className="text-3xl font-bold">My Events (Organizer)</div>;
 // -----------------------------------------------------------
 
 // Dashboard Router Component
@@ -121,12 +124,13 @@ function App() {
                                 <Route path="/profile" element={<ProfilePage />} />
                                 <Route path="/notifications" element={<NotificationsPage />} />
 
-                                {/* Role-specific routes can be nested here too */}
-                                <Route path="/my-events" element={<MyEvents />} />
-                                <Route path="/admin/pending-events" element={<AdminPendingEvents />} />
-                                <Route path="/admin/users" element={<AdminUsers />} />
-                            </Route>
+                            {/* Role-specific routes can be nested here too */}
+                            <Route path="/my-events" element={<MyEventsScreen />} />
+                            <Route path="/admin/pending-events" element={<AdminPendingEvents />} />
+                            <Route path="/admin/users" element={<AdminUsers />} />
+                            <Route path="/my-registrations" element={<MyRegistrationsScreen />} />
                         </Route>
+                    </Route>
 
                         {/* Add a 404 Not Found route here if desired */}
                         <Route path="*" element={<Navigate to="/" replace />} />
