@@ -15,12 +15,12 @@ const formatDate = (dateString: string) => {
     });
 };
 
-interface EventCardProps {
-    event: UiEvent | EventResponse; // Backward compatibility until all usages are migrated, but prefer UiEvent
-    onViewDetails?: (event: UiEvent | EventResponse) => void;
+interface EventCardProps<T extends UiEvent | EventResponse> {
+    event: T;
+    onViewDetails?: (event: T) => void;
 }
 
-export default function EventCard({ event, onViewDetails }: EventCardProps) {
+export default function EventCard<T extends UiEvent | EventResponse>({ event, onViewDetails }: EventCardProps<T>) {
     // Helper to check if it's the new UI model (has availableSpotsText precaculated)
     const isUiEvent = (e: any): e is UiEvent => 'availableSpotsText' in e;
 
