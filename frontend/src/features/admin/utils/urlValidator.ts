@@ -15,6 +15,15 @@ const TRUSTED_HOSTNAMES = [
 ];
 
 /**
+ * Parse and cache trusted domains from environment variables
+ * This is done once at module load time for performance
+ */
+const TRUSTED_DOMAINS = (import.meta.env.VITE_TRUSTED_DOMAINS || '')
+    .split(',')
+    .map((domain: string) => domain.trim())
+    .filter((domain: string) => domain.length > 0);
+
+/**
  * Checks if an IP address is from a private network range
  */
 const isPrivateIP = (hostname: string): boolean => {
@@ -26,7 +35,14 @@ const isPrivateIP = (hostname: string): boolean => {
         return false;
     }
     
-    const [, first, second] = match.map(Number);
+    const octets = match.slice(1).map(Number);
+    
+    // Validate that each octet is in the range 0-255
+    if (octets.some(octet => octet > 255)) {
+        return false;
+    }
+    
+    const [first, second] = octets;
     
     // 10.0.0.0 - 10.255.255.255
     if (first === 10) {
@@ -72,9 +88,11 @@ export const isValidMonitoringURL = (urlString: string): boolean => {
         }
         
         // Check for additional trusted domains from environment variables
-        // Format: VITE_TRUSTED_DOMAINS=domain1.com,domain2.com
-        const trustedDomains = import.meta.env.VITE_TRUSTED_DOMAINS?.split(',') || [];
-        if (trustedDomains.some((domain: string) => hostname.endsWith(domain.trim()))) {
+        // Use exact domain matching or proper subdomain matching to prevent attacks
+        // e.g., if 'example.com' is trusted, 'maliciousexample.com' should NOT match
+        if (TRUSTED_DOMAINS.some((domain: string) => 
+            hostname === domain || hostname.endsWith('.' + domain)
+        )) {
             return true;
         }
         
