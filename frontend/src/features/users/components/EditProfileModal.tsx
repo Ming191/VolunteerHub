@@ -185,8 +185,8 @@ export default function EditProfileModal({
                 bio: data.bio || undefined,
                 location: data.location || undefined,
                 dateOfBirth: data.dateOfBirth || undefined,
-                skills: data.skills && data.skills.length > 0 ? new Set(data.skills) as any : undefined,
-                interests: data.interests && data.interests.length > 0 ? new Set(data.interests) as any : undefined,
+                skills: data.skills && data.skills.length > 0 ? data.skills as any : undefined,
+                interests: data.interests && data.interests.length > 0 ? data.interests as any : undefined,
             };
 
             await userProfileApi.updateMyProfile({ updateProfileRequest: updateData });

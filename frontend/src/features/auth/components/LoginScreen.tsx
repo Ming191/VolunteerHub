@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';

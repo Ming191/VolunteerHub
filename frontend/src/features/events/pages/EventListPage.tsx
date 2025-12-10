@@ -7,12 +7,11 @@ import AddEventModal from '../components/AddEventModal';
 import EventDetailSheet from '../components/EventDetailSheet';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
-import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
-import { Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import type { SearchEventsParams } from '../api/eventService';
 import type { UiEvent } from '@/types/ui-models';
 import type { EventResponse } from '@/api-client';
-import { useAuth } from '@/hooks/useAuth';
+
 
 const EVENTS_PER_PAGE = 8;
 type FilterState = Omit<SearchEventsParams, 'page' | 'size'>;
@@ -22,7 +21,6 @@ export default function EventListScreen() {
     const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
     const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
-    const { user } = useAuth();
     const [filters, setFilters] = useState<FilterState>({
         q: '',
         location: '',

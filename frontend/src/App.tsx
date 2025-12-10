@@ -6,32 +6,32 @@ import { useQueryClient } from '@tanstack/react-query';
 
 // Import Layouts and Route Guards
 import DashboardLayout from './components/layout/DashboardLayout';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from '@/features/auth/components/ProtectedRoute';
 
 // Import Error Boundary and Loading Components
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { SuspenseFallback } from '@/components/common/SuspenseFallback';
 
 // Import Page Components (Lazy Loaded)
-const TabbedAuthScreen = lazy(() => import('./components/auth/TabbedAuthScreen'));
-const EmailVerificationScreen = lazy(() => import('./components/auth/EmailVerificationScreen'));
+const TabbedAuthScreen = lazy(() => import('@/features/auth/components/TabbedAuthScreen'));
+const EmailVerificationScreen = lazy(() => import('@/features/auth/components/EmailVerificationScreen'));
 const EventListPage = lazy(() => import('@/features/events/pages/EventListPage'));
 const DateTimePicker = lazy(() => import('@/features/events/components/DateTimePicker'));
-const AdminPendingEvents = lazy(() => import('@/pages/AdminPendingEvents'));
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
-const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
-const VolunteerDashboard = lazy(() => import('@/pages/VolunteerDashboard'));
-const OrganizerDashboard = lazy(() => import('@/pages/OrganizerDashboard'));
+const AdminPendingEvents = lazy(() => import('@/features/admin/pages/AdminPendingEvents'));
+const ProfilePage = lazy(() => import('@/features/users/pages/ProfilePage'));
+const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage'));
+const VolunteerDashboard = lazy(() => import('@/features/volunteer/pages/VolunteerDashboard'));
+const OrganizerDashboard = lazy(() => import('@/features/organizer/pages/OrganizerDashboard'));
 const AdminDashboard = lazy(() => import('@/features/admin/pages/AdminDashboardPage'));
-const AdminUsers = lazy(() => import('@/pages/AdminUsers'));
+const AdminUsers = lazy(() => import('@/features/admin/pages/AdminUsers'));
 
 // Import a Toaster for notifications
 import { Toaster } from '@/components/ui/sonner';
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
 import MyEventsPage from "@/features/events/pages/MyEventsPage";
-import { fcmService } from "@/services/fcmService.ts";
-import { useAuth } from "@/hooks/useAuth";
-import MyRegistrationsScreen from "@/pages/MyRegistrations.tsx";
+import { fcmService } from "@/features/notifications/services/fcmService.ts";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import MyRegistrationsScreen from "@/features/events/pages/MyRegistrationsPage";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 // const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;

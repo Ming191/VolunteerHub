@@ -51,7 +51,7 @@ export default function EditEventModal({ open, onOpenChange, onSuccess, event }:
     toast.error('Failed to update event', { description: errorMessage });
   };
 
-  const handleUpdateEvent = async (values: EventFormValues, files: File[]) => {
+  const handleUpdateEvent = async (values: EventFormValues, _files: File[]) => {
     try {
       const eventData = {
         title: values.title,
