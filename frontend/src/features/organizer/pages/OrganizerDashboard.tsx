@@ -5,10 +5,12 @@ import { DashboardApi, Configuration } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DashboardStatSkeleton } from '@/components/ui/loaders';
 import { Button } from '@/components/ui/button';
 import { Clock, TrendingUp, Users, AlertCircle, FileCheck, PlusCircle, Settings, Award, Calendar } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import AnimatedPage from '@/components/common/AnimatedPage';
+import { ApiErrorState } from '@/components/ui/api-error-state';
 
 // Stats Card Component
 const StatsCard = ({ title, value, description, icon: Icon }: {
@@ -34,7 +36,9 @@ export default function OrganizerDashboard() {
 
   const dashboardApi = useMemo(() => new DashboardApi(new Configuration(), '', axiosInstance), []);
 
-  const { data: dashboardData, isLoading } = useQuery({
+
+
+  const { data: dashboardData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['organizer-dashboard'],
     queryFn: async () => {
       const response = await dashboardApi.getOrganizerDashboard();
@@ -47,17 +51,48 @@ export default function OrganizerDashboard() {
   const handleNavigateToMyEvents = useCallback(() => navigate('/my-events'), [navigate]);
   const handleNavigateToCreateEvent = useCallback(() => navigate('/my-events'), [navigate]);
 
+
+  // ... imports
+
   if (isLoading) {
     return (
       <AnimatedPage>
         <div className="max-w-6xl mx-auto p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+            {[...Array(3)].map((_, i) => <DashboardStatSkeleton key={i} />)}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Skeleton className="h-64" />
-            <Skeleton className="h-64 lg:col-span-2" />
+            <Card className="lg:col-span-2 h-[400px]">
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="h-[400px]">
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              </CardContent>
+            </Card>
           </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
+
+  if (isError) {
+    return (
+      <AnimatedPage>
+        <div className="max-w-6xl mx-auto p-6">
+          <ApiErrorState error={error} onRetry={refetch} />
         </div>
       </AnimatedPage>
     );

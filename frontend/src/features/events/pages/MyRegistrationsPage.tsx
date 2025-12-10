@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import AnimatedPage from '@/components/common/AnimatedPage';
+import { ApiErrorState } from '@/components/ui/api-error-state';
+import { EventListSkeleton } from '@/components/ui/loaders';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Search } from 'lucide-react';
@@ -13,11 +16,21 @@ const EVENTS_PER_PAGE = 8;
 export default function MyRegistrationsScreen() {
   const [page, setPage] = useState(1);
   const [searchByName, setSearchByName] = useState('');
-  const { data, isLoading, isError, error } = useGetMyRegistrationEvents();
+
+
+  // Destructure refetch
+  const { data, isLoading, isError, error, refetch } = useGetMyRegistrationEvents();
   const [statusFilter, setStatusFilter] = useState<RegistrationStatus | 'ALL'>('ALL');
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error: {error.message}</div>;
+  if (isError) {
+    return (
+      <AnimatedPage>
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <ApiErrorState error={error} onRetry={refetch} />
+        </div>
+      </AnimatedPage>
+    );
+  }
 
   const filteredEvents = data?.filter((event) => {
     const matchesSearchByName = event.eventTitle.toLowerCase().includes(searchByName.toLowerCase());
@@ -82,22 +95,24 @@ export default function MyRegistrationsScreen() {
           </div>
         )}
 
+
+
         {/* Events grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-          {paginatedEvents.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-              <div className="rounded-full bg-muted p-4 mb-4">
-                <Search className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No Registrations Found</h3>
-              <p className="text-muted-foreground max-w-md">
-                Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.
-              </p>
+          {isLoading && <EventListSkeleton count={8} />}
+
+          {!isLoading && paginatedEvents.length === 0 ? (
+            <div className="col-span-full">
+              <EmptyState
+                title="No Registrations Found"
+                description="Try adjusting your filters or search terms."
+              />
             </div>
           ) : (
-            paginatedEvents.map((event) => (
+            !isLoading && paginatedEvents.map((event) => (
               <div
                 key={event.id}
+                // ... components
                 className="border rounded-lg p-4 shadow-sm bg-card hover:shadow-md transition"
               >
                 <h3 className="text-lg font-semibold mb-2">{event.eventTitle}</h3>

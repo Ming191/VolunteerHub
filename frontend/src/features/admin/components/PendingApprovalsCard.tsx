@@ -21,17 +21,19 @@ export const PendingApprovalsCard = ({ events }: PendingApprovalsCardProps) => {
             <CardContent>
                 <div className="space-y-3 max-h-[280px] overflow-y-auto">
                     {events.map((event) => (
-                        <div
+                        <button
                             key={event.id}
-                            className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+                            type="button"
+                            className="w-full text-left p-3 rounded-lg border hover:bg-muted/50 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                             onClick={handleNavigate}
+                            aria-label={`View details for ${event.primaryText}`}
                         >
                             <p className="font-medium text-sm">{event.primaryText}</p>
                             <p className="text-xs text-muted-foreground mt-1">{event.secondaryText}</p>
                             <p className="text-xs text-muted-foreground mt-1">
                                 {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })}
                             </p>
-                        </div>
+                        </button>
                     ))}
                     {events.length === 0 && (
                         <div className="text-center py-8 text-muted-foreground text-sm">

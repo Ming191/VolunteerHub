@@ -28,6 +28,8 @@ import {
     Configuration,
     type UserResponse,
     type UpdateProfileRequest,
+    UpdateProfileRequestSkillsEnum,
+    UpdateProfileRequestInterestsEnum,
 } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
 import getCroppedImg from '@/utils/imageUtils';
@@ -185,8 +187,12 @@ export default function EditProfileModal({
                 bio: data.bio || undefined,
                 location: data.location || undefined,
                 dateOfBirth: data.dateOfBirth || undefined,
-                skills: data.skills && data.skills.length > 0 ? data.skills as any : undefined,
-                interests: data.interests && data.interests.length > 0 ? data.interests as any : undefined,
+                skills: data.skills && data.skills.length > 0
+                    ? new Set(data.skills as unknown as UpdateProfileRequestSkillsEnum[])
+                    : undefined,
+                interests: data.interests && data.interests.length > 0
+                    ? new Set(data.interests as unknown as UpdateProfileRequestInterestsEnum[])
+                    : undefined,
             };
 
             await userProfileApi.updateMyProfile({ updateProfileRequest: updateData });

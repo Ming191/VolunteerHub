@@ -4,17 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { authService } from "../api/authService";
 import { fcmService } from "@/features/notifications/services/fcmService.ts";
 import { AuthContext } from "./AuthContext.ts";
-
-interface User {
-    userId: number;
-    email: string;
-    name: string;
-    role: string;
-    isEmailVerified: boolean;
-}
+import { authStorage, type AuthUser } from "../utils/authStorage";
 
 interface AuthContextType {
-    user: User | null;
+    user: AuthUser | null;
     login: (data: LoginRequest) => Promise<void>;
     register: (data: RegisterRequest) => Promise<void>;
     logout: () => void;
@@ -24,18 +17,18 @@ interface AuthContextType {
 
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState(null as User | null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         const initializeAuth = async () => {
             try {
-                const accessToken = localStorage.getItem('accessToken');
-                const storedUser = localStorage.getItem('user');
+                const accessToken = authStorage.getAccessToken();
+                const storedUser = authStorage.getUser();
 
                 if (accessToken && storedUser) {
-                    setUser(JSON.parse(storedUser));
+                    setUser(storedUser);
 
                     // Register FCM token for already logged-in users
                     fcmService.registerDeviceForNotifications().catch(err =>
@@ -45,7 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } catch (error) {
                 console.error("Failed to initialize auth:", error);
                 setUser(null);
-                localStorage.clear();
+                authStorage.clearAuth();
             } finally {
                 setIsLoading(false);
             }
@@ -56,16 +49,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = useCallback(async (data: LoginRequest) => {
         try {
             const response = await authService.login(data);
-            const userData: User = {
+            const userData: AuthUser = {
                 userId: response.userId,
                 email: response.email,
                 name: response.name,
                 role: response.role,
                 isEmailVerified: response.isEmailVerified,
             };
-            localStorage.setItem('accessToken', response.accessToken);
-            localStorage.setItem('refreshToken', response.refreshToken);
-            localStorage.setItem('user', JSON.stringify(userData));
+
+            authStorage.setAuth(response.accessToken, response.refreshToken, userData);
             setUser(userData);
 
             // Register FCM token after successful login
@@ -91,15 +83,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, [navigate]);
 
     const logout = useCallback(() => {
-        const refreshToken = localStorage.getItem('refreshToken');
+        const refreshToken = authStorage.getRefreshToken();
         if (refreshToken) {
             authService.logout(refreshToken).catch(err => console.error("Server logout failed", err));
         }
         setUser(null);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        localStorage.removeItem('fcmToken');
+        authStorage.clearAuth();
         navigate('/signin');
     }, [navigate]);
 
