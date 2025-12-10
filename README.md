@@ -24,6 +24,8 @@ VolunteerHub is a modern application connecting volunteers with opportunities. I
 ### Infrastructure & Monitoring
 - **Containerization:** Docker, Docker Compose
 - **Monitoring:** Prometheus, Grafana
+- **Logging:** Loki, Promtail (JSON Structured Logs)
+- **Tracing:** Grafana Tempo (Distributed Tracing)
 
 ## Features
 
@@ -33,6 +35,8 @@ VolunteerHub is a modern application connecting volunteers with opportunities. I
 - **Resiliency**: Circuit breakers and time limiters for external services (GCS, RabbitMQ, Prometheus).
 - **Rate Limiting**: Intelligent rate limiting using Bucket4j and Redis to prevent abuse.
 - **Monitoring**: Comprehensive metrics with Prometheus and Grafana dashboards.
+- **Distributed Tracing**: Full request tracing (Frontend -> Backend -> DB) with Grafana Tempo.
+- **Centralized Logging**: Structured logs with Loki and Promtail.
 - **File Storage**: Secure image upload to Google Cloud Storage.
 
 ## Configuration
@@ -71,6 +75,8 @@ This will start:
 - Redis
 - Prometheus (`http://localhost:9090`)
 - Grafana (`http://localhost:3001` - user/pass: admin/admin)
+- Loki (Logs) & Tempo (Traces) - Integrated into Grafana
+- Promtail (Log Shipper)
 
 ### Local Development
 
