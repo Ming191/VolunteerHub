@@ -1,8 +1,8 @@
-import {useGetEventRegistrations, useUpdateRegistrationStatus} from "@/hooks/useMyEvents.ts";
-import {format} from "date-fns";
-import {Users} from "lucide-react";
-import {Badge} from "@/components/ui/badge.tsx";
-import type {UpdateStatusRequestStatusEnum} from "@/api-client";
+import { useGetEventRegistrations, useUpdateRegistrationStatus } from "../hooks/useMyEvents";
+import { format } from "date-fns";
+import { Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge.tsx";
+import type { UpdateStatusRequestStatusEnum } from "@/api-client";
 
 // Tách riêng content của registrations
 export function EventRegistrationsModal({ eventId }: { eventId: number }) {
@@ -24,8 +24,8 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4" />
           <span className="text-sm font-medium">
-                        Total Registrations: {registrations?.length || 0}
-                    </span>
+            Total Registrations: {registrations?.length || 0}
+          </span>
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { eventService } from '@/services/eventService';
+import { eventService } from '@/features/events/api/eventService';
 
 export const EVENT_TAGS_QUERY_KEY = 'eventTags';
 

@@ -34,7 +34,7 @@ export default function VolunteerDashboard() {
 
   const dashboardApi = useMemo(() => new DashboardApi(new Configuration(), '', axiosInstance), []);
 
-  const { data: dashboardData, isLoading } = useQuery({
+  const { data: dashboardData, isLoading, isError } = useQuery({
     queryKey: ['volunteer-dashboard'],
     queryFn: async () => {
       const response = await dashboardApi.getVolunteerDashboard();
@@ -57,6 +57,19 @@ export default function VolunteerDashboard() {
             <Skeleton className="h-64" />
             <Skeleton className="h-64 lg:col-span-2" />
           </div>
+        </div>
+      </AnimatedPage>
+    );
+  }
+
+  if (isError) {
+    return (
+      <AnimatedPage>
+        <div className="max-w-6xl mx-auto p-6 flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <h2 className="text-xl font-semibold">Failed to load dashboard</h2>
+          <p className="text-muted-foreground">Unable to fetch your dashboard data. Please try again later.</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </AnimatedPage>
     );

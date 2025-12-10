@@ -4,7 +4,7 @@ import {
   type RegistrationStatusResponse,
   type RegistrationResultResponse, UserProfileApi, type RegistrationResponse,
 } from '@/api-client';
-import axiosInstance from '../utils/axiosInstance';
+import axiosInstance from '@/utils/axiosInstance';
 
 const config = new Configuration({ basePath: '' });
 const registrationsApi = new RegistrationsApi(config, undefined, axiosInstance);

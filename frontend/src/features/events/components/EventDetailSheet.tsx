@@ -22,11 +22,11 @@ import {
 import type { EventResponse } from '@/api-client';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
-import { useRegisterForEvent } from "@/hooks/useRegistration.ts";
+import { useRegisterForEvent } from "../hooks/useRegistration";
 import { useState } from "react";
-import { EventRegistrationsModal } from "@/components/event/EventRegistrationsModal.tsx";
-import EditEventModal from "@/components/event/EditEventModal.tsx";
-import { useDeleteEvent } from "@/hooks/useMyEvents.ts";
+import { EventRegistrationsModal } from "./EventRegistrationsModal";
+import EditEventModal from "./EditEventModal";
+import { useDeleteEvent } from "../hooks/useMyEvents";
 
 interface EventDetailSheetProps {
     event: EventResponse | null;

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Search } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
-import {useGetMyRegistrationEvents} from "@/hooks/useRegistration.ts";
+import { useGetMyRegistrationEvents } from "@/features/events/hooks/useRegistration";
 
 type RegistrationStatus = 'APPROVED' | 'PENDING';
 
@@ -103,9 +103,8 @@ export default function MyRegistrationsScreen() {
                 <h3 className="text-lg font-semibold mb-2">{event.eventTitle}</h3>
                 <p className="text-sm text-muted-foreground mb-1">📍 {event.registeredAt}</p>
                 <p
-                  className={`text-sm font-medium ${
-                    event.status === 'APPROVED' ? 'text-green-600' : 'text-yellow-600'
-                  }`}
+                  className={`text-sm font-medium ${event.status === 'APPROVED' ? 'text-green-600' : 'text-yellow-600'
+                    }`}
                 >
                   {event.status}
                 </p>

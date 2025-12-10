@@ -5,25 +5,26 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { useGetEventTags } from '@/hooks/useEventTags';
+import { useGetEventTags } from '../hooks/useEventTags';
 import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Badge } from '../ui/badge';
-import type { SearchEventsParams } from '@/services/eventService';
+import { Badge } from '@/components/ui/badge';
+import type { SearchEventsParams } from '../api/eventService';
 
 type FilterState = Omit<SearchEventsParams, 'page' | 'size'>;
 
 interface EventFilterPanelProps {
     onFilterChange: (filters: FilterState) => void;
+    initialFilters?: FilterState;
 }
 
-export default function EventFilterPanel({ onFilterChange }: EventFilterPanelProps) {
+export default function EventFilterPanel({ onFilterChange, initialFilters }: EventFilterPanelProps) {
     const { data: tags } = useGetEventTags();
-    const [filters, setFilters] = useState<FilterState>({
+    const [filters, setFilters] = useState<FilterState>(initialFilters || {
         q: '',
         location: '',
         tags: [],
-        upcoming: true,
+        upcoming: false, // Default to false if not provided, to catch more events
         matchAllTags: false,
     });
     const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
