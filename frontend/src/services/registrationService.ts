@@ -41,30 +41,36 @@ const getRegistrationStatus = async (eventId: number): Promise<RegistrationStatu
  */
 const getMyRegistrationEvents = async (): Promise<RegistrationResponse[]> => {
   try {
-    const response = await userProfileApi.getMyRegistrations();
-    return response.data;
-  } catch (error) {
-    console.error('Failed to get my registrations:', error);
-    throw error;
+    const res = await userProfileApi.getMyRegistrations();
+    return res.data;
+  } catch (err: any) {
+    console.error('Failed to get my registrations:', {
+      code: err.code,
+      status: err.response?.status,
+      data: err.response?.data,
+    });
+    throw err;
   }
 };
 
-// /**
-//  * Cancel a registration
-//  */
-// const cancelRegistration = async (registrationId: number): Promise<void> => {
-//   try {
-//     await registrationsApi.cancelRegistration({ registrationId });
-//   } catch (error) {
-//     console.error('Failed to cancel registration:', error);
-//     throw error;
-//   }
-// };
+/**
+ * Cancel a registration
+ */
+const cancelRegistration = async (registrationId: number): Promise<void> => {
+  try {
+    // @ts-ignore
+    await registrationsApi.cancelRegistration(registrationId);
+  } catch (error) {
+    console.error('Failed to cancel registration:', error);
+    throw error;
+  }
+};
 
 
 
 export const registrationService = {
   registerForEvent,
   getRegistrationStatus,
-  getMyRegistrationEvents
+  getMyRegistrationEvents,
+  cancelRegistration
 };
