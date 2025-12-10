@@ -111,6 +111,19 @@ services:
     command: -config.file=/etc/loki/loki-config.yml
     restart: always
 
+  tempo:
+    image: grafana/tempo:latest
+    container_name: volunteerhub_tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./monitoring/tempo/tempo-config.yml:/etc/tempo.yaml
+      - tempo_data:/tmp/tempo
+    ports:
+      - "14268:14268" # jaeger ingest
+      - "3200:3200" # tempo
+      - "9411:9411" # zipkin
+    restart: always
+
   promtail:
     image: grafana/promtail:3.0.0
     container_name: volunteerhub_promtail
@@ -135,4 +148,6 @@ volumes:
   grafana_data:
     driver: local
   loki_data:
+    driver: local
+  tempo_data:
     driver: local
