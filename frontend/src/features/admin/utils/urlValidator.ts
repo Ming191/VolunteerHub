@@ -15,19 +15,30 @@ const TRUSTED_HOSTNAMES = [
 ];
 
 /**
+ * Validates that a domain string is in a valid format
+ * Ensures it only contains alphanumeric characters, dots, and hyphens
+ */
+const isValidDomainFormat = (domain: string): boolean => {
+    // Domain format: alphanumeric, dots, and hyphens, no spaces or special characters
+    const domainRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i;
+    return domainRegex.test(domain);
+};
+
+/**
  * Parse and cache trusted domains from environment variables
  * This is done once at module load time for performance
  */
 const TRUSTED_DOMAINS = (import.meta.env.VITE_TRUSTED_DOMAINS || '')
     .split(',')
     .map((domain: string) => domain.trim())
-    .filter((domain: string) => domain.length > 0);
+    .filter((domain: string) => domain.length > 0 && isValidDomainFormat(domain));
 
 /**
  * Checks if an IP address is from a private network range
  */
 const isPrivateIP = (hostname: string): boolean => {
     // Check for IPv4 private ranges
+    // Note: This regex accepts values like 999.999.999.999, but those are validated below
     const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
     const match = hostname.match(ipv4Regex);
     
