@@ -36,7 +36,6 @@ services:
       - SPRING_MAIL_PORT=587
       - SPRING_MAIL_USERNAME=user@example.com
       - SPRING_MAIL_PASSWORD=xxxx xxxx xxxx xxxx
-      - SPRING_MAIL_PASSWORD=xxxx xxxx xxxx xxxx
       - PROMETHEUS_URL=http://prometheus:9090
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_JPA_SHOW_SQL=false
@@ -115,9 +114,8 @@ services:
     restart: always
 
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.6.0
     container_name: volunteerhub_tempo
-    user: root
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
       - ./monitoring/tempo/tempo-config.yml:/etc/tempo.yaml
@@ -135,7 +133,7 @@ services:
     volumes:
       - ./monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
       - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
     command: -config.file=/etc/promtail/promtail-config.yml
     depends_on:
       - loki

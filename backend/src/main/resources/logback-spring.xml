@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
     
     <springProperty scope="context" name="applicationName" source="spring.application.name" defaultValue="volunteerhub"/>
     <springProperty scope="context" name="environment" source="spring.profiles.active" defaultValue="local"/>
@@ -49,6 +49,13 @@
         </encoder>
     </appender>
 
+    <!-- Async wrapper for Console JSON to prevent blocking -->
+    <appender name="ASYNC_CONSOLE_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="CONSOLE_JSON"/>
+    </appender>
+
     <!-- File appender with JSON format (optional, for local file logging) -->
     <appender name="FILE_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/volunteerhub.log</file>
@@ -93,8 +100,7 @@
     <!-- Production profile: JSON format for Loki -->
     <springProfile name="prod,docker">
         <root level="INFO">
-            <appender-ref ref="CONSOLE_JSON"/>
-            <appender-ref ref="FILE_JSON"/>
+            <appender-ref ref="ASYNC_CONSOLE_JSON"/>
         </root>
         
         <!-- Adjust log levels for specific packages -->
@@ -105,7 +111,7 @@
     </springProfile>
 
     <!-- Default: Use JSON for Docker environments -->
-    <springProfile name="!dev,!local,!prod,!docker">
+    <springProfile name="default">
         <root level="INFO">
             <appender-ref ref="CONSOLE_JSON"/>
         </root>
