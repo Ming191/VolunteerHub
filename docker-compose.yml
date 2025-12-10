@@ -4,6 +4,9 @@ services:
 
     container_name: volunteerhub_postgres
 
+    labels:
+      logging: "promtail"
+
     environment:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=mypassword
@@ -19,6 +22,8 @@ services:
   backend:
     build: ./backend
     container_name: volunteerhub_backend
+    labels:
+      logging: "promtail"
     ports:
       - "8080:8080"
     environment:
@@ -41,6 +46,8 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: volunteerhub_rabbitmq
+    labels:
+      logging: "promtail"
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -51,6 +58,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: volunteerhub_redis
+    labels:
+      logging: "promtail"
     ports:
       - "6379:6379"
     volumes:
@@ -88,6 +97,30 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
+      - loki
+    restart: always
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: volunteerhub_loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    restart: always
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: volunteerhub_promtail
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      - loki
     restart: always
 
 volumes:
@@ -100,4 +133,6 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  loki_data:
     driver: local
