@@ -60,6 +60,11 @@ scrape_configs:
             trace_id: trace_id
             span_id: span_id
       
+      # Normalize level to uppercase
+      - template:
+          source: level
+          template: '{{ .level | ToUpper }}'
+      
       # Extract timestamp if present
       - timestamp:
           source: timestamp
@@ -70,8 +75,7 @@ scrape_configs:
           level: level
       
       # Output stage for structured data
-      - output:
-          source: message
+
 
   # Alternative: scrape from log files if needed
   - job_name: backend_files
