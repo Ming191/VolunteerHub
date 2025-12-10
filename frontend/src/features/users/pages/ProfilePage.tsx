@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserProfileApi, PostsApi, Configuration, type UserResponse, type PostResponse } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
 import Loading from '@/components/common/Loading';
-import EditProfileModal from '@/components/common/EditProfileModal';
-import ChangePasswordModal from "@/pages/ChangePasswordModal.tsx";
+import EditProfileModal from '@/features/users/components/EditProfileModal';
+import ChangePasswordModal from "@/features/users/components/ChangePasswordModal";
 
 const config = new Configuration({ basePath: '' });
 const userProfileApi = new UserProfileApi(config, undefined, axiosInstance);
@@ -70,7 +70,7 @@ export default function ProfilePage() {
     };
 
     const handleCloseChangePassword = (open: boolean) => {
-      setIsChangePasswordModalOpen(open);
+        setIsChangePasswordModalOpen(open);
     };
 
     if (loading) {
@@ -130,14 +130,14 @@ export default function ProfilePage() {
                             )}
                         </div>
                         <div className="space-y-4">
-                        <Button onClick={() => setIsEditModalOpen(true)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Profile
-                        </Button>
-                        <Button variant={'secondary'} onClick={() => setIsChangePasswordModalOpen(true)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Change Password
-                        </Button>
+                            <Button onClick={() => setIsEditModalOpen(true)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Profile
+                            </Button>
+                            <Button variant={'secondary'} onClick={() => setIsChangePasswordModalOpen(true)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Change Password
+                            </Button>
                         </div>
                     </div>
                 </CardContent>
@@ -170,8 +170,8 @@ export default function ProfilePage() {
                                         {/* Post Images */}
                                         {hasImages && (
                                             <div className={`grid gap-2 mb-4 ${post.imageUrls.length === 1 ? 'grid-cols-1' :
-                                                    post.imageUrls.length === 2 ? 'grid-cols-2' :
-                                                        'grid-cols-2 md:grid-cols-3'
+                                                post.imageUrls.length === 2 ? 'grid-cols-2' :
+                                                    'grid-cols-2 md:grid-cols-3'
                                                 }`}>
                                                 {post.imageUrls.map((url, index) => (
                                                     <img
@@ -216,10 +216,10 @@ export default function ProfilePage() {
             )}
 
             {isChangePasswordModalOpen && (
-              <ChangePasswordModal
-                open={isChangePasswordModalOpen}
-                onOpenChange={handleCloseChangePassword}
-              />
+                <ChangePasswordModal
+                    open={isChangePasswordModalOpen}
+                    onOpenChange={handleCloseChangePassword}
+                />
             )}
         </div>
     );

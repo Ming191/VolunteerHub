@@ -1,8 +1,8 @@
-import {type ReactNode, useState, useEffect, useCallback} from "react";
-import type {LoginRequest, RegisterRequest} from "@/api-client";
-import {useNavigate} from "react-router-dom";
-import {authService} from "../services/authService.ts";
-import {fcmService} from "@/services/fcmService.ts";
+import { type ReactNode, useState, useEffect, useCallback } from "react";
+import type { LoginRequest, RegisterRequest } from "@/api-client";
+import { useNavigate } from "react-router-dom";
+import { authService } from "../api/authService";
+import { fcmService } from "@/features/notifications/services/fcmService.ts";
 import { AuthContext } from "./AuthContext.ts";
 
 interface User {
@@ -67,12 +67,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             localStorage.setItem('refreshToken', response.refreshToken);
             localStorage.setItem('user', JSON.stringify(userData));
             setUser(userData);
-            
+
             // Register FCM token after successful login
             fcmService.registerDeviceForNotifications().catch(err =>
                 console.error("FCM registration failed after login:", err)
             );
-            
+
             navigate('/dashboard');
         } catch (error) {
             console.log("Login failed:", error);

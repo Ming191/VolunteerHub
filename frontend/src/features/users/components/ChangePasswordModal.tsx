@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
-import { useChangePassword } from '@/hooks/useProfile';
+import { useChangePassword } from '@/features/users/hooks/useProfile';
 
 // Define the validation schema with Zod
 const formSchema = z.object({
@@ -41,7 +41,7 @@ interface ChangePasswordDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function ChangePasswordDialog({open, onOpenChange}: ChangePasswordDialogProps) {
+export default function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
   const changePasswordMutation = useChangePassword();
 
   const form = useForm<z.infer<typeof formSchema>>({

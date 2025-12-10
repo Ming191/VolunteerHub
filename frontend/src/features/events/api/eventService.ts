@@ -70,8 +70,16 @@ const getEventById = async (id: number): Promise<EventResponse> => {
 
 const createEvent = async (eventData: CreateEventRequest, files?: File[]): Promise<EventResponse> => {
     try {
-        const response = await eventsApi.createEvent({
-            request: eventData,
+        const response = await eventsApi.createEventForm({
+            title: eventData.title,
+            description: eventData.description,
+            location: eventData.location,
+            eventDateTime: eventData.eventDateTime,
+            endDateTime: eventData.endDateTime,
+            registrationDeadline: eventData.registrationDeadline,
+            maxParticipants: eventData.maxParticipants,
+            waitlistEnabled: eventData.waitlistEnabled,
+            tags: eventData.tags ? Array.from(eventData.tags).join(',') : undefined,
             files: files
         });
         return response.data;

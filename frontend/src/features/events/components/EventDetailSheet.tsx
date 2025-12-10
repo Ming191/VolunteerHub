@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import type { EventResponse } from '@/api-client';
 import { format } from 'date-fns';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useRegisterForEvent } from "../hooks/useRegistration";
 import { useState } from "react";
 import { EventRegistrationsModal } from "./EventRegistrationsModal";

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { authService } from '@/services/authService';
+import { authService } from '@/features/auth/api/authService';
 import { fadeOnly, fadeTransition } from '@/lib/fadeAnimations';
 
 type VerificationStatus = 'verifying' | 'success' | 'error';

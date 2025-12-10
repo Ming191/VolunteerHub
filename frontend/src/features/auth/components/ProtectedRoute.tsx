@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import Loading from './common/Loading'; // We'll create this simple component next
+import Loading from '@/components/common/Loading';
 
 interface ProtectedRouteProps {
     allowedRoles?: string[];

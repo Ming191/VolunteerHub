@@ -1,6 +1,6 @@
-import {useMutation} from "@tanstack/react-query";
-import {authService} from "@/services/authService.ts";
-import {toast} from "sonner";
+import { useMutation } from "@tanstack/react-query";
+import { authService } from "@/features/auth/api/authService";
+import { toast } from "sonner";
 
 interface ChangePasswordData {
   currentPassword: string;
