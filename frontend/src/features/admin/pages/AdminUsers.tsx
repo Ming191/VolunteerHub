@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+
 import { Search, Mail, MoreVertical, Lock, Unlock } from 'lucide-react';
 import {
     DropdownMenu,
@@ -19,6 +19,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import AnimatedPage from '@/components/common/AnimatedPage';
+import { TableRowSkeleton } from '@/components/ui/loaders';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ApiErrorState } from '@/components/ui/api-error-state';
 
 interface PageUserResponse {
     content: UserResponse[];
@@ -34,50 +37,43 @@ export default function AdminUsers() {
     const queryClient = useQueryClient();
 
     // Fetch users
-    const { data: usersPage, isLoading } = useQuery({
-        queryKey: ['admin-users', debouncedSearchQuery],
+    const { data: usersPage, isLoading, isError, error, refetch } = useQuery<PageUserResponse, Error>({
+        queryKey: ['adminUsers', debouncedSearchQuery],
         queryFn: async () => {
-            const response = await axiosInstance.get<PageUserResponse>('/api/admin/users/search', {
-                params: {
-                    q: debouncedSearchQuery,
-                    page: 0,
-                    size: 100, // Fetch 100 for now
-                }
-            });
+            const response = await axiosInstance.get(`/admin/users?search=${debouncedSearchQuery}`);
             return response.data;
         },
     });
 
     const users = usersPage?.content || [];
 
-    // Lock/Unlock user mutation
-    const toggleLockMutation = useMutation({
-        mutationFn: async ({ userId, isLocked }: { userId: number; isLocked: boolean }) => {
-            const endpoint = isLocked ? 'unlock' : 'lock';
-            await axiosInstance.patch(`/api/admin/users/${userId}/${endpoint}`);
+    // Mutation for locking/unlocking users
+    const toggleLockMutation = useMutation<void, Error, { userId: number; isLocked: boolean }>({
+        mutationFn: async ({ userId, isLocked }) => {
+            await axiosInstance.patch(`/admin/users/${userId}/lock`, { isLocked: !isLocked });
         },
-        onSuccess: () => {
-            toast.success('User status updated successfully');
-            queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+            toast.success(`User ${variables.isLocked ? 'unlocked' : 'locked'} successfully.`);
         },
-        onError: () => {
-            toast.error('Failed to update user status');
+        onError: (err) => {
+            toast.error(`Failed to toggle lock status: ${err.message}`);
         },
     });
 
     const handleToggleLock = (userId: number, isLocked: boolean) => {
-        const action = isLocked ? 'unlock' : 'lock';
-        if (confirm(`Are you sure you want to ${action} this user?`)) {
-            toggleLockMutation.mutate({ userId, isLocked });
-        }
+        toggleLockMutation.mutate({ userId, isLocked });
     };
 
     const getRoleBadgeVariant = (role: string) => {
         switch (role) {
-            case 'ADMIN': return 'default';
-            case 'EVENT_ORGANIZER': return 'secondary';
-            case 'VOLUNTEER': return 'outline';
-            default: return 'outline';
+            case 'ADMIN':
+                return 'default';
+            case 'MODERATOR':
+                return 'secondary';
+            case 'USER':
+            default:
+                return 'outline';
         }
     };
 
@@ -86,35 +82,26 @@ export default function AdminUsers() {
             <div className="max-w-6xl mx-auto p-6 space-y-6">
                 <Card>
                     <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="text-base">Users Directory</CardTitle>
-                                <CardDescription>
-                                    {usersPage?.totalElements || 0} users found
-                                </CardDescription>
-                            </div>
-                            <div className="relative w-64">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search users..."
-                                    className="pl-8 h-9"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
+                        <CardTitle>User Management</CardTitle>
+                        <CardDescription>Manage users, their roles, and lock status.</CardDescription>
+                        <div className="relative mt-4">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search users by name or email..."
+                                className="pl-9"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
                         </div>
                     </CardHeader>
+
                     <CardContent>
-                        {isLoading ? (
+                        {isError ? (
+                            <ApiErrorState error={error} onRetry={refetch} />
+                        ) : isLoading ? (
                             <div className="space-y-4">
                                 {[...Array(5)].map((_, i) => (
-                                    <div key={i} className="flex items-center gap-4 p-4">
-                                        <Skeleton className="h-9 w-9 rounded-full" />
-                                        <div className="space-y-2 flex-1">
-                                            <Skeleton className="h-4 w-48" />
-                                            <Skeleton className="h-3 w-32" />
-                                        </div>
-                                    </div>
+                                    <TableRowSkeleton key={i} />
                                 ))}
                             </div>
                         ) : (
@@ -182,15 +169,18 @@ export default function AdminUsers() {
                                     </div>
                                 ))}
                                 {users.length === 0 && (
-                                    <div className="text-center py-12 text-muted-foreground text-sm">
-                                        No users found
-                                    </div>
+                                    <EmptyState
+                                        title="No users found"
+                                        description="Try adjusting your search terms."
+                                        className="py-12 border-none bg-transparent"
+                                    />
                                 )}
                             </div>
                         )}
-                    </CardContent>
-                </Card>
-            </div>
-        </AnimatedPage>
+
+                    </CardContent >
+                </Card >
+            </div >
+        </AnimatedPage >
     );
 }
