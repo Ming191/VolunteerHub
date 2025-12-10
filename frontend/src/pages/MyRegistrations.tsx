@@ -4,9 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Search } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
-import {useGetMyRegistrationEvents} from "@/hooks/useRegistration.ts";
+import { useGetMyRegistrationEvents } from "@/hooks/useRegistration.ts";
+import EventDetailSheet from "@/components/event/EventDetailSheet.tsx";
+import { RegistrationCard } from "@/components/event/RegistrationCard.tsx";
+import type { EventResponse } from "@/api-client";
+import { eventService } from "@/services/eventService.ts"; // giả sử bạn export sẵn
 
-type RegistrationStatus = 'APPROVED' | 'PENDING';
+type RegistrationStatus = 'APPROVED' | 'PENDING' | 'COMPLETED' | 'CANCELLED';
 
 const EVENTS_PER_PAGE = 8;
 
@@ -15,6 +19,9 @@ export default function MyRegistrationsScreen() {
   const [searchByName, setSearchByName] = useState('');
   const { data, isLoading, isError, error } = useGetMyRegistrationEvents();
   const [statusFilter, setStatusFilter] = useState<RegistrationStatus | 'ALL'>('ALL');
+
+  const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
+  const [isDetailOpen, setDetailOpen] = useState(false);
 
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error: {error.message}</div>;
@@ -31,6 +38,16 @@ export default function MyRegistrationsScreen() {
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
       setPage(newPage);
+    }
+  };
+
+  const handleSelectEvent = async (eventId: number) => {
+    try {
+      const eventDetail = await eventService.getEventById(eventId);
+      setSelectedEvent(eventDetail);
+      setDetailOpen(true);
+    } catch (err) {
+      console.error("Failed to load event detail", err);
     }
   };
 
@@ -70,6 +87,8 @@ export default function MyRegistrationsScreen() {
               <SelectItem value="ALL">All</SelectItem>
               <SelectItem value="APPROVED">Approved</SelectItem>
               <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -82,10 +101,10 @@ export default function MyRegistrationsScreen() {
           </div>
         )}
 
-        {/* Events grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        {/* Events list */}
+        <div className="space-y-4 mb-8">
           {paginatedEvents.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="rounded-full bg-muted p-4 mb-4">
                 <Search className="h-8 w-8 text-muted-foreground" />
               </div>
@@ -95,21 +114,12 @@ export default function MyRegistrationsScreen() {
               </p>
             </div>
           ) : (
-            paginatedEvents.map((event) => (
-              <div
-                key={event.id}
-                className="border rounded-lg p-4 shadow-sm bg-card hover:shadow-md transition"
-              >
-                <h3 className="text-lg font-semibold mb-2">{event.eventTitle}</h3>
-                <p className="text-sm text-muted-foreground mb-1">📍 {event.registeredAt}</p>
-                <p
-                  className={`text-sm font-medium ${
-                    event.status === 'APPROVED' ? 'text-green-600' : 'text-yellow-600'
-                  }`}
-                >
-                  {event.status}
-                </p>
-              </div>
+            paginatedEvents.map((registration) => (
+              <RegistrationCard
+                key={registration.id}
+                registration={registration}
+                onClick={() => handleSelectEvent(registration.eventId)}
+              />
             ))
           )}
         </div>
@@ -157,6 +167,13 @@ export default function MyRegistrationsScreen() {
             </Pagination>
           </div>
         )}
+
+        {/* Event detail sheet */}
+        <EventDetailSheet
+          event={selectedEvent}
+          isOpen={isDetailOpen}
+          onOpenChange={setDetailOpen}
+        />
       </div>
     </AnimatedPage>
   );

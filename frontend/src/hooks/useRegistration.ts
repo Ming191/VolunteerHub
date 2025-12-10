@@ -1,8 +1,9 @@
-import {useMutation, useQuery} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { registrationService } from "@/services/registrationService.ts";
 import { toast } from "sonner";
 
 const REGISTRATION_QUERY_KEY = 'my-registrations';
+const CHECK_REGISTRATION_QUERY_KEY = 'check-registration';
 
 export const useRegisterForEvent = () => {
   return useMutation({
@@ -26,11 +27,44 @@ export const useRegisterForEvent = () => {
   });
 };
 
+export const useGetRegistrationStatus = (eventId: number | undefined, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: [CHECK_REGISTRATION_QUERY_KEY, eventId],
+    queryFn: () => {
+      if (!eventId) throw new Error("Event ID is required");
+      return registrationService.getRegistrationStatus(eventId);
+    },
+    enabled: !!eventId && enabled,
+    retry: false
+  });
+};
+
+export const useCancelRegistration = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (registrationId: number) => registrationService.cancelRegistration(registrationId),
+    onSuccess: () => {
+      toast.success("Registration Cancelled", {
+        description: "You have successfully cancelled your registration",
+      });
+      queryClient.invalidateQueries({ queryKey: [REGISTRATION_QUERY_KEY] });
+    },
+    onError: (error: any) => {
+      toast.error("Cancellation Failed", {
+        description: error.response?.data?.message || "Unable to cancel registration",
+      });
+    },
+  });
+}
+
 
 export const useGetMyRegistrationEvents = () => {
   return useQuery({
     queryKey: [REGISTRATION_QUERY_KEY],
     queryFn: () => registrationService.getMyRegistrationEvents(),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: Infinity, // dữ liệu luôn được coi là fresh
     placeholderData: (prev) => prev
   })
 }
