@@ -42,6 +42,15 @@ const formatUptime = (seconds: number): string => {
   return `${hours}h ${minutes}m`;
 };
 
+/**
+ * Renders the Admin dashboard page, including top-level stats, user distribution, pending approvals,
+ * system metrics, platform insights, infrastructure quick links, and quick action buttons.
+ *
+ * The component fetches dashboard and system metrics, displays loading skeletons while data loads,
+ * keeps metrics updated on an interval, and exposes navigation callbacks for admin routes.
+ *
+ * @returns The JSX element for the admin dashboard view
+ */
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
