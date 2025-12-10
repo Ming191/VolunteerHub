@@ -32,6 +32,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     // Micrometer Prometheus for metrics
     implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("io.micrometer:micrometer-tracing-bridge-brave")
     // Logstash encoder for structured JSON logging
     implementation("net.logstash.logback:logstash-logback-encoder:8.0")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
