@@ -7,22 +7,45 @@
     
     <!-- Console appender with JSON format for Docker/Loki -->
     <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSX</timestampPattern>
-            <timeZone>UTC</timeZone>
-            <customFields>{"application":"${applicationName}","environment":"${environment}"}</customFields>
-            <fieldNames>
-                <timestamp>timestamp</timestamp>
-                <message>message</message>
-                <logger>logger_name</logger>
-                <thread>thread_name</thread>
-                <level>level</level>
-                <levelValue>level_value</levelValue>
-                <stackTrace>stack_trace</stackTrace>
-            </fieldNames>
-            <includeMdcKeyName>mdc_key</includeMdcKeyName>
-            <includeContext>false</includeContext>
-            <includeCallerData>false</includeCallerData>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <version/>
+                <message/>
+                <loggerName/>
+                <threadName/>
+                <logLevel/>
+                <stackTrace>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>10</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                        <exclude>sun\.reflect\..*</exclude>
+                        <exclude>java\.lang\.reflect\..*</exclude>
+                        <exclude>net\.sf\.cglib\.proxy\..*</exclude>
+                        <exclude>org\.springframework\.aop\..*</exclude>
+                        <exclude>org\.springframework\.security\..*</exclude>
+                        <exclude>org\.springframework\.web\..*</exclude>
+                        <exclude>org\.apache\.catalina\..*</exclude>
+                    </throwableConverter>
+                </stackTrace>
+                <pattern>
+                    <pattern>
+                        {
+                            "trace_id": "%mdc{traceId}",
+                            "span_id": "%mdc{spanId}",
+                            "application": "${applicationName}",
+                            "environment": "${environment}"
+                        }
+                    </pattern>
+                </pattern>
+                <mdc>
+                    <excludeMdcKeyName>traceId</excludeMdcKeyName>
+                    <excludeMdcKeyName>spanId</excludeMdcKeyName>
+                </mdc>
+            </providers>
         </encoder>
     </appender>
 
