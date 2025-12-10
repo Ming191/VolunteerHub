@@ -42,6 +42,14 @@ const formatUptime = (seconds: number): string => {
   return `${hours}h ${minutes}m`;
 };
 
+// Monitoring URLs configuration
+const MONITORING_URLS = {
+  grafana: import.meta.env.VITE_GRAFANA_URL || 'http://localhost:3001',
+  loki: import.meta.env.VITE_LOKI_EXPLORE_URL || 'http://localhost:3001/explore?left=%7B%22datasource%22:%22loki%22,%22queries%22:[%7B%22refId%22:%22A%22,%22expr%22:%22%7Bcontainer=%5C%22volunteerhub_backend%5C%22%7D%22%7D]%7D',
+  tempo: import.meta.env.VITE_TEMPO_EXPLORE_URL || 'http://localhost:3001/explore?datasource=tempo',
+  rabbitmq: import.meta.env.VITE_RABBITMQ_URL || 'http://localhost:15672',
+};
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
@@ -254,6 +262,8 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
+
+
         {/* Infrastructure & Monitoring */}
         <Card>
           <CardHeader>
@@ -262,19 +272,19 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open('http://localhost:3001', '_blank')}>
+              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open(MONITORING_URLS.grafana, '_blank')}>
                 <Activity className="h-5 w-5 mb-2 text-orange-500" />
                 <span className="text-sm">Grafana</span>
               </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open('http://localhost:3001/explore?left=%7B%22datasource%22:%22loki%22,%22queries%22:[%7B%22refId%22:%22A%22,%22expr%22:%22%7Bcontainer=%5C%22volunteerhub_backend%5C%22%7D%22%7D]%7D', '_blank')}>
+              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open(MONITORING_URLS.loki, '_blank')}>
                 <FileCheck className="h-5 w-5 mb-2 text-blue-500" />
                 <span className="text-sm">View Logs</span>
               </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open('http://localhost:3001/explore?datasource=tempo', '_blank')}>
+              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open(MONITORING_URLS.tempo, '_blank')}>
                 <TrendingUp className="h-5 w-5 mb-2 text-green-500" />
                 <span className="text-sm">Trace Search</span>
               </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open('http://localhost:15672', '_blank')}>
+              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open(MONITORING_URLS.rabbitmq, '_blank')}>
                 <Settings className="h-5 w-5 mb-2 text-red-500" />
                 <span className="text-sm">RabbitMQ</span>
               </Button>

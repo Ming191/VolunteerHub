@@ -100,4 +100,4 @@ scrape_configs:
           source: timestamp
           format: RFC3339Nano
       - labels:
-          level:
+          level: level
