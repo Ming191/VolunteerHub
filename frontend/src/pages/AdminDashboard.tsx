@@ -254,6 +254,34 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
+        {/* Infrastructure & Monitoring */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Infrastructure & Monitoring</CardTitle>
+            <CardDescription>Direct access to observability tools</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open('http://localhost:3001', '_blank')}>
+                <Activity className="h-5 w-5 mb-2 text-orange-500" />
+                <span className="text-sm">Grafana</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open('http://localhost:3001/explore?left=%7B%22datasource%22:%22loki%22,%22queries%22:[%7B%22refId%22:%22A%22,%22expr%22:%22%7Bcontainer=%5C%22volunteerhub_backend%5C%22%7D%22%7D]%7D', '_blank')}>
+                <FileCheck className="h-5 w-5 mb-2 text-blue-500" />
+                <span className="text-sm">View Logs</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open('http://localhost:3001/explore?datasource=tempo', '_blank')}>
+                <TrendingUp className="h-5 w-5 mb-2 text-green-500" />
+                <span className="text-sm">Trace Search</span>
+              </Button>
+              <Button variant="outline" className="h-auto py-4 flex-col hover:bg-muted/50" onClick={() => window.open('http://localhost:15672', '_blank')}>
+                <Settings className="h-5 w-5 mb-2 text-red-500" />
+                <span className="text-sm">RabbitMQ</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Quick Actions */}
         <Card>
           <CardHeader>
