@@ -12,6 +12,8 @@ export const InfrastructureLinks = () => {
         setError(null);
         safelyOpenURL(url, (errorMessage) => {
             setError(errorMessage);
+            // Clear error after 5 seconds for better UX
+            setTimeout(() => setError(null), 5000);
         });
     };
 
