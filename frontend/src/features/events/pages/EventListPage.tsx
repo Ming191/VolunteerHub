@@ -1,20 +1,20 @@
 import { useState } from 'react';
-import { useGetEvents } from '@/hooks/useEvents';
-import EventCard from './EventCard';
-import EventCardSkeleton from './EventCardSkeleton';
-import EventFilterPanel from './eventsFilterPanels';
-import AddEventModal from './AddEventModal';
-import EventDetailSheet from './EventDetailSheet';
+import { useGetEvents } from '../hooks/useEvents';
+import EventCard from '../components/EventCard';
+import EventCardSkeleton from '../components/EventCardSkeleton';
+import EventFilterPanel from '../components/EventFilterPanel';
+import AddEventModal from '../components/AddEventModal';
+import EventDetailSheet from '../components/EventDetailSheet';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
 import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
 import { Search, Plus } from 'lucide-react';
-import type { SearchEventsParams } from '@/services/eventService';
+import type { SearchEventsParams } from '../api/eventService';
+import type { UiEvent } from '@/types/ui-models';
 import type { EventResponse } from '@/api-client';
 import { useAuth } from '@/hooks/useAuth';
 
 const EVENTS_PER_PAGE = 8;
-
 type FilterState = Omit<SearchEventsParams, 'page' | 'size'>;
 
 export default function EventListScreen() {
@@ -27,7 +27,7 @@ export default function EventListScreen() {
         q: '',
         location: '',
         tags: [],
-        upcoming: true,
+        upcoming: false,
         matchAllTags: false,
     });
 
@@ -48,19 +48,20 @@ export default function EventListScreen() {
         setPage(1); // Reset to first page when filters change
     };
 
-    const handleViewDetails = (event: EventResponse) => {
-        setSelectedEvent(event);
+    const handleViewDetails = (event: EventResponse | UiEvent) => {
+        setSelectedEvent(event as EventResponse);
         setIsDetailSheetOpen(true);
     };
 
     const renderContent = () => {
         if (isLoading) {
-            return Array.from({ length: EVENTS_PER_PAGE }).map((_, index) => (
+            return Array.from({ length: 8 }).map((_, index) => (
                 <EventCardSkeleton key={index} />
             ));
         }
 
         if (isError) {
+            console.error("EventListPage Error:", error);
             return (
                 <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
                     <div className="rounded-full bg-red-100 p-4 mb-4">
@@ -86,37 +87,20 @@ export default function EventListScreen() {
             );
         }
 
-        return data.content.map((event) => (
-            <EventCard key={event.id} event={event} onViewDetails={handleViewDetails} />
-        ));
+        return data.content.map((event) => {
+            if (!event) return null;
+            return (
+                <EventCard key={event.id} event={event} onViewDetails={handleViewDetails} />
+            );
+        });
     };
 
     return (
         <AnimatedPage>
             <div className="container mx-auto px-4 py-8 max-w-7xl">
-                {/* Header Section */}
-                <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        <h1 className="text-4xl font-bold tracking-tight mb-2">Upcoming Events</h1>
-                        <p className="text-muted-foreground text-lg">
-                            Discover and join events in your community
-                        </p>
-                    </div>
-                    {user && (user.role === 'EVENT_ORGANIZER') && (
-                        <RippleButton
-                            onClick={() => setIsAddEventModalOpen(true)}
-                            size="lg"
-                            className="shrink-0"
-                        >
-                            <Plus className="mr-2 h-5 w-5" />
-                            Create Event
-                        </RippleButton>
-                    )}
-                </div>
-
                 {/* Filter Panel */}
                 <div className="mb-8">
-                    <EventFilterPanel onFilterChange={handleFilterChange} />
+                    <EventFilterPanel onFilterChange={handleFilterChange} initialFilters={filters} />
                 </div>
 
                 {/* Results Count */}

@@ -3,9 +3,12 @@ import Navbar from './Navbar';
 import { FloatingDock } from '@/components/ui/floating-dock';
 import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 const DashboardLayout = () => {
     const { user } = useAuth();
+    const location = useLocation();
 
     const dockItems = [
         {
@@ -37,8 +40,19 @@ const DashboardLayout = () => {
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 pb-24">
-                {/* Outlet renders the active child route */}
-                <Outlet />
+                <AnimatePresence mode="wait" initial={false}>
+                    <motion.div
+                        key={location.pathname}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.2 }}
+                        className="h-full"
+                    >
+                        {/* Outlet renders the active child route */}
+                        <Outlet />
+                    </motion.div>
+                </AnimatePresence>
             </main>
 
             {/* Floating Dock at the bottom */}

@@ -1,9 +1,9 @@
 import {
-  Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse,
-  type CreateEventRequest, EventManagerApi, type RegistrationResponse, type UpdateStatusRequestStatusEnum,
-  type UpdateEventRequest
+    Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse,
+    type CreateEventRequest, EventManagerApi, type RegistrationResponse, type UpdateStatusRequestStatusEnum,
+    type UpdateEventRequest
 } from '@/api-client';
-import axiosInstance from '../utils/axiosInstance';
+import axiosInstance from '@/utils/axiosInstance';
 
 const config = new Configuration({ basePath: '' });
 const eventsApi = new EventsApi(config, undefined, axiosInstance);
@@ -82,62 +82,62 @@ const createEvent = async (eventData: CreateEventRequest, files?: File[]): Promi
 };
 
 export interface MyEventsParams {
-  page?: number;
-  size?: number;
-  sort?: string;
-  direction?: 'ASC' | 'DESC';
+    page?: number;
+    size?: number;
+    sort?: string;
+    direction?: 'ASC' | 'DESC';
 }
 
 const getMyEvents = async (params: MyEventsParams = {}): Promise<PageEventResponse> => {
-  try {
-    const response = await eventsApi.getMyEvents({
-      page: params.page,
-      size: params.size,
-      sort: params.sort,
-      direction: params.direction
-    });
+    try {
+        const response = await eventsApi.getMyEvents({
+            page: params.page,
+            size: params.size,
+            sort: params.sort,
+            direction: params.direction
+        });
 
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch my events:", error);
-    throw error;
-  }
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch my events:", error);
+        throw error;
+    }
 };
 
 const getEventRegistrations = async (eventId: number): Promise<RegistrationResponse[]> => {
-  try {
-    const response = await eventManagerApi.getRegistrationsForEvent({eventId});
-    return response.data;
-  } catch (error) {
-    console.error('Failed to fetch event Registrations:', error);
-    throw error;
-  }
+    try {
+        const response = await eventManagerApi.getRegistrationsForEvent({ eventId });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch event Registrations:', error);
+        throw error;
+    }
 }
 
 const updateRegistrationStatus = async (
-  registrationId: number,
-  status: UpdateStatusRequestStatusEnum
+    registrationId: number,
+    status: UpdateStatusRequestStatusEnum
 
 ) => {
-  const response = await eventManagerApi.updateRegistrationStatus({
-    registrationId,
-    updateStatusRequest: {status: status},
-  });
+    const response = await eventManagerApi.updateRegistrationStatus({
+        registrationId,
+        updateStatusRequest: { status: status },
+    });
 
-  return response.data;
+    return response.data;
 };
 
 const updateEvent = async (eventId: number, data: UpdateEventRequest): Promise<EventResponse> => {
-  const response = await eventsApi.updateEvent({
-    id: eventId,
-    updateEventRequest: data,
-  });
-  return response.data;
+    const response = await eventsApi.updateEvent({
+        id: eventId,
+        updateEventRequest: data,
+    });
+    return response.data;
 }
 
 const deleteEvent = async (id: number): Promise<void> => {
-  const response = await eventsApi.deleteEvent({id});
-  return response.data;
+    const response = await eventsApi.deleteEvent({ id });
+    return response.data;
 }
 
 

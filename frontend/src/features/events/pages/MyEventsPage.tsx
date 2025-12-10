@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useGetMyEvents } from '@/hooks/useMyEvents';
-import EventCard from './EventCard';
-import EventCardSkeleton from './EventCardSkeleton';
-import EventDetailSheet from './EventDetailSheet';
+import { useGetMyEvents } from '../hooks/useMyEvents';
+import EventCard from '../components/EventCard';
+import EventCardSkeleton from '../components/EventCardSkeleton';
+import EventDetailSheet from '../components/EventDetailSheet';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import {
   Pagination,
