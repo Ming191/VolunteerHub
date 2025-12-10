@@ -4,6 +4,9 @@ services:
 
     container_name: volunteerhub_postgres
 
+    labels:
+      logging: "promtail"
+
     environment:
       - POSTGRES_USER=myuser
       - POSTGRES_PASSWORD=mypassword
@@ -19,6 +22,8 @@ services:
   backend:
     build: ./backend
     container_name: volunteerhub_backend
+    labels:
+      logging: "promtail"
     ports:
       - "8080:8080"
     environment:
@@ -32,6 +37,8 @@ services:
       - SPRING_MAIL_USERNAME=user@example.com
       - SPRING_MAIL_PASSWORD=xxxx xxxx xxxx xxxx
       - PROMETHEUS_URL=http://prometheus:9090
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_JPA_SHOW_SQL=false
     depends_on:
       - postgres-db
       - rabbitmq
@@ -41,6 +48,8 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: volunteerhub_rabbitmq
+    labels:
+      logging: "promtail"
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -51,6 +60,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: volunteerhub_redis
+    labels:
+      logging: "promtail"
     ports:
       - "6379:6379"
     volumes:
@@ -88,6 +99,44 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
+      - loki
+    restart: always
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: volunteerhub_loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    restart: always
+
+  tempo:
+    image: grafana/tempo:2.6.0
+    container_name: volunteerhub_tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./monitoring/tempo/tempo-config.yml:/etc/tempo.yaml
+      - tempo_data:/tmp/tempo
+    ports:
+      - "14268:14268" # jaeger ingest
+      - "3200:3200" # tempo
+      - "3202:3202"
+      - "9411:9411" # zipkin
+    restart: always
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: volunteerhub_promtail
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      - loki
     restart: always
 
 volumes:
@@ -100,4 +149,8 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  loki_data:
+    driver: local
+  tempo_data:
     driver: local
