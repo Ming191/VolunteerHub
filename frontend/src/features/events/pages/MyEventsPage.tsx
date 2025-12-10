@@ -46,10 +46,8 @@ export default function MyEventsScreen() {
     }
   };
 
-  const handleViewDetails = (event: EventResponse | unknown) => {
-    // We strictly use EventResponse here, so we cast if needed,
-    // but the signature must match EventCard's prop expectation.
-    setSelectedEvent(event as EventResponse);
+  const handleViewDetails = (event: EventResponse) => {
+    setSelectedEvent(event);
     setIsDetailSheetOpen(true);
   };
 
