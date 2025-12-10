@@ -16,7 +16,7 @@ export const UserDistributionChart = ({ roleCounts, totalUsers }: UserDistributi
                 {Object.entries(roleCounts).map(([role, count]) => (
                     <div key={role} className="space-y-2">
                         <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground capitalize">{role.toLowerCase().replace('_', ' ')}</span>
+                            <span className="text-muted-foreground capitalize">{role.toLowerCase().replaceAll('_', ' ')}</span>
                             <span className="font-medium">{String(count)}</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">

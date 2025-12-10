@@ -28,7 +28,7 @@ const formSchema = z
                 message: 'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)'
             }),
         confirmPassword: z.string(),
-        role: z.enum(['VOLUNTEER', 'EVENT_ORGANIZER', 'ADMIN'], {
+        role: z.enum(['VOLUNTEER', 'EVENT_ORGANIZER'], {
             message: 'You need to select a role.',
         }),
         gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'], {
