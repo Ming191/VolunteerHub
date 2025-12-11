@@ -13,25 +13,25 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { SuspenseFallback } from '@/components/common/SuspenseFallback';
 
 // Import Page Components (Lazy Loaded)
-const TabbedAuthScreen = lazy(() => import('@/features/auth/components/TabbedAuthScreen'));
-const EmailVerificationScreen = lazy(() => import('@/features/auth/components/EmailVerificationScreen'));
-const EventListPage = lazy(() => import('@/features/events/pages/EventListPage'));
-const DateTimePicker = lazy(() => import('@/features/events/components/DateTimePicker'));
-const AdminPendingEvents = lazy(() => import('@/features/admin/pages/AdminPendingEvents'));
-const ProfilePage = lazy(() => import('@/features/users/pages/ProfilePage'));
-const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage'));
-const VolunteerDashboard = lazy(() => import('@/features/volunteer/pages/VolunteerDashboard'));
-const OrganizerDashboard = lazy(() => import('@/features/organizer/pages/OrganizerDashboard'));
-const AdminDashboard = lazy(() => import('@/features/admin/pages/AdminDashboardPage'));
-const AdminUsers = lazy(() => import('@/features/admin/pages/AdminUsers'));
+const TabbedAuthScreen = lazy(() => import('@/features/auth/components/TabbedAuthScreen').then(module => ({ default: module.TabbedAuthScreen })));
+const EmailVerificationScreen = lazy(() => import('@/features/auth/components/EmailVerificationScreen').then(module => ({ default: module.EmailVerificationScreen })));
+const EventListPage = lazy(() => import('@/features/events/pages/EventListPage').then(module => ({ default: module.EventListScreen })));
+const DateTimePicker = lazy(() => import('@/features/events/components/DateTimePicker').then(module => ({ default: module.DateTimePicker })));
+const AdminPendingEvents = lazy(() => import('@/features/admin/pages/AdminPendingEvents').then(module => ({ default: module.AdminPendingEvents })));
+const ProfilePage = lazy(() => import('@/features/users/pages/ProfilePage').then(module => ({ default: module.ProfilePage })));
+const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage').then(module => ({ default: module.NotificationsPage })));
+const VolunteerDashboard = lazy(() => import('@/features/volunteer/pages/VolunteerDashboard').then(module => ({ default: module.VolunteerDashboard })));
+const OrganizerDashboard = lazy(() => import('@/features/organizer/pages/OrganizerDashboard').then(module => ({ default: module.OrganizerDashboard })));
+const AdminDashboard = lazy(() => import('@/features/admin/pages/AdminDashboardPage').then(module => ({ default: module.AdminDashboardPage })));
+const AdminUsers = lazy(() => import('@/features/admin/pages/AdminUsers').then(module => ({ default: module.AdminUsers })));
 
 // Import a Toaster for notifications
 import { Toaster } from '@/components/ui/sonner';
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars.tsx";
-import MyEventsPage from "@/features/events/pages/MyEventsPage";
+import { MyEventsScreen as MyEventsPage } from "@/features/events/pages/MyEventsPage";
 import { fcmService } from "@/features/notifications/services/fcmService.ts";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import MyRegistrationsScreen from "@/features/events/pages/MyRegistrationsPage";
+import { MyRegistrationsScreen } from "@/features/events/pages/MyRegistrationsPage";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 // const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;

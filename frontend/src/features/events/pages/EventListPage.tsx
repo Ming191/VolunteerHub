@@ -3,63 +3,37 @@ import { EventListSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
-import EventCard from '../components/EventCard';
-import EventFilterPanel from '../components/EventFilterPanel';
-import AddEventModal from '../components/AddEventModal';
-import EventDetailSheet from '../components/EventDetailSheet';
+import { EventCard } from '../components/EventCard';
+import { EventFilterPanel } from '../components/EventFilterPanel';
+import { AddEventModal } from '../components/AddEventModal';
+import { EventDetailSheet } from '../components/EventDetailSheet';
 import AnimatedPage from '@/components/common/AnimatedPage';
-import { useGetEvents } from '../hooks/useEvents';
-import type { SearchEventsParams } from '../api/eventService';
+import { useEventSearch } from '../hooks/useEventSearch';
 import type { UiEvent } from '@/types/ui-models';
 import type { EventResponse } from '@/api-client';
 
-const EVENTS_PER_PAGE = 8;
-type FilterState = Omit<SearchEventsParams, 'page' | 'size'>;
+export const EventListScreen = () => {
+  const {
+    events: data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    page,
+    filters,
+    handlePageChange,
+    handleFilterChange,
+    handleClearFilters
+  } = useEventSearch();
 
-export default function EventListScreen() {
-  const [page, setPage] = useState(1); // Use 1-based indexing for UI
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    q: '',
-    location: '',
-    tags: [],
-    upcoming: false,
-    matchAllTags: false,
-  });
 
-  const { data, isLoading, isError, error, refetch } = useGetEvents({
-    ...filters,
-    page: page - 1, // Convert to 0-based index for the API
-    size: EVENTS_PER_PAGE,
-  });
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage > 0 && newPage <= (data?.totalPages || 1)) {
-      setPage(newPage);
-    }
-  };
-
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-    setPage(1); // Reset to first page when filters change
-  };
 
   const handleViewDetails = (event: EventResponse | UiEvent) => {
     setSelectedEvent(event as EventResponse);
     setIsDetailSheetOpen(true);
-  };
-
-  const handleClearFilters = () => {
-    setFilters({
-      q: '',
-      location: '',
-      tags: [],
-      upcoming: false,
-      matchAllTags: false
-    });
-    setPage(1);
   };
 
   return (
@@ -81,8 +55,6 @@ export default function EventListScreen() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {/* Loading State */}
           {isLoading && <EventListSkeleton count={8} />}
-
-
 
           {/* Error State */}
           {isError && (

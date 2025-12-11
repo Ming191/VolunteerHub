@@ -12,7 +12,7 @@ import type { EventResponse } from '@/api-client';
 import { useRegisterForEvent } from "../hooks/useRegistration";
 import { useState } from "react";
 import { EventRegistrationsModal } from "./EventRegistrationsModal";
-import EditEventModal from "./EditEventModal";
+import { EditEventModal } from "./EditEventModal";
 import { useDeleteEvent } from "../hooks/useMyEvents";
 import { useEventPermissions } from "../hooks/useEventPermissions";
 
@@ -34,7 +34,7 @@ interface EventDetailSheetProps {
 
 type SheetView = 'event-details' | 'registrations';
 
-export default function EventDetailSheet({ event, isOpen, onOpenChange }: EventDetailSheetProps) {
+export const EventDetailSheet = ({ event, isOpen, onOpenChange }: EventDetailSheetProps) => {
     const [isEditEventModalOpen, setEditEventModalOpen] = useState(false);
     const registerMutation = useRegisterForEvent();
     const deleteEventMutation = useDeleteEvent();

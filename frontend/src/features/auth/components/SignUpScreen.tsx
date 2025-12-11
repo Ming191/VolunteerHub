@@ -12,7 +12,7 @@ interface SignUpScreenProps {
     isTabbed?: boolean;
 }
 
-export default function SignUpScreen({ isTabbed = false }: SignUpScreenProps) {
+export const SignUpScreen = ({ isTabbed = false }: SignUpScreenProps) => {
     const { form, onSubmit, isSubmitting } = useSignUpForm();
 
     const cardContent = (

@@ -20,9 +20,9 @@ interface EventCardProps<T extends UiEvent | EventResponse> {
     onViewDetails?: (event: T) => void;
 }
 
-export default function EventCard<T extends UiEvent | EventResponse>({ event, onViewDetails }: EventCardProps<T>) {
+export const EventCard = <T extends UiEvent | EventResponse>({ event, onViewDetails }: EventCardProps<T>) => {
     // Helper to check if it's the new UI model (has availableSpotsText precaculated)
-    const isUiEvent = (e: any): e is UiEvent => 'availableSpotsText' in e;
+    const isUiEvent = (e: UiEvent | EventResponse): e is UiEvent => 'availableSpotsText' in e;
 
     const availableSpotsText = isUiEvent(event)
         ? event.availableSpotsText
@@ -31,7 +31,8 @@ export default function EventCard<T extends UiEvent | EventResponse>({ event, on
     const hasImage = event.imageUrls && event.imageUrls.length > 0;
 
     // safe tags access
-    const tags = (Array.isArray(event.tags) ? event.tags : Array.from((event.tags as any) || [])) as string[];
+    // Safe tags access - handle potential Set or Array from API
+    const tags = (Array.isArray(event.tags) ? event.tags : Array.from(event.tags || [])) as string[];
 
     return (
         <Card className="flex flex-col h-full">

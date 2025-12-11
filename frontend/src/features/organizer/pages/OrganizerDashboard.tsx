@@ -1,8 +1,3 @@
-import { useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { DashboardApi, Configuration } from '@/api-client';
-import axiosInstance from '@/utils/axiosInstance';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DashboardStatSkeleton } from '@/components/ui/loaders';
@@ -11,48 +6,21 @@ import { Clock, TrendingUp, Users, AlertCircle, FileCheck, PlusCircle, Settings,
 import { formatDistanceToNow } from 'date-fns';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { ApiErrorState } from '@/components/ui/api-error-state';
+import { StatsCard } from '@/components/common/StatsCard';
+import { useOrganizerDashboard } from '../hooks/useOrganizerDashboard';
 
-// Stats Card Component
-const StatsCard = ({ title, value, description, icon: Icon }: {
-  title: string;
-  value: number;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) => (
-  <Card>
-    <CardHeader className="flex flex-row items-center justify-between pb-2">
-      <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-      <Icon className="h-4 w-4 text-muted-foreground" />
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value.toLocaleString()}</div>
-      <p className="text-xs text-muted-foreground">{description}</p>
-    </CardContent>
-  </Card>
-);
-
-export default function OrganizerDashboard() {
-  const navigate = useNavigate();
-
-  const dashboardApi = useMemo(() => new DashboardApi(new Configuration(), '', axiosInstance), []);
-
-
-
-  const { data: dashboardData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['organizer-dashboard'],
-    queryFn: async () => {
-      const response = await dashboardApi.getOrganizerDashboard();
-      return response.data;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  const handleNavigateToEvent = useCallback((eventId: number) => navigate(`/events/${eventId}`), [navigate]);
-  const handleNavigateToMyEvents = useCallback(() => navigate('/my-events'), [navigate]);
-  const handleNavigateToCreateEvent = useCallback(() => navigate('/my-events'), [navigate]);
-
-
-  // ... imports
+export const OrganizerDashboard = () => {
+  const {
+    dashboardData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    handleNavigateToEvent,
+    handleNavigateToMyEvents,
+    handleNavigateToCreateEvent,
+    handleNavigateToAnalytics
+  } = useOrganizerDashboard();
 
   if (isLoading) {
     return (
@@ -249,7 +217,7 @@ export default function OrganizerDashboard() {
                 <Users className="h-5 w-5 mb-2" />
                 <span className="text-sm">Registrations</span>
               </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col" onClick={() => navigate('/events')}>
+              <Button variant="outline" className="h-auto py-4 flex-col" onClick={handleNavigateToAnalytics}>
                 <TrendingUp className="h-5 w-5 mb-2" />
                 <span className="text-sm">Analytics</span>
               </Button>

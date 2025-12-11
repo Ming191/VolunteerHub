@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useGetMyEvents } from '../hooks/useMyEvents';
-import EventCard from '../components/EventCard';
-import EventCardSkeleton from '../components/EventCardSkeleton';
-import EventDetailSheet from '../components/EventDetailSheet';
+import { EventCard } from '../components/EventCard';
+import { EventCardSkeleton } from '../components/EventCardSkeleton';
+import { EventDetailSheet } from '../components/EventDetailSheet';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import {
   Pagination,
@@ -23,7 +23,7 @@ type MyFilterState = {
   direction?: 'ASC' | 'DESC';
 };
 
-export default function MyEventsScreen() {
+export const MyEventsScreen = () => {
   const [page, setPage] = useState(1);
   const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);

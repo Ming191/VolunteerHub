@@ -18,7 +18,7 @@ interface EventFilterPanelProps {
     initialFilters?: FilterState;
 }
 
-export default function EventFilterPanel({ onFilterChange, initialFilters }: EventFilterPanelProps) {
+export const EventFilterPanel = ({ onFilterChange, initialFilters }: EventFilterPanelProps) => {
     const { data: tags } = useGetEventTags();
     const [filters, setFilters] = useState<FilterState>(initialFilters || {
         q: '',

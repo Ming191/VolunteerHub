@@ -2,7 +2,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/animate-ui/components/radix/dialog';
 import { eventService } from '../api/eventService';
 import type { UpdateEventRequest, EventResponse } from '@/api-client';
-import EventForm, { type EventFormValues } from './EventForm';
+import { EventForm, type EventFormValues } from './EventForm';
 
 interface EditEventModalProps {
   open: boolean;
@@ -15,7 +15,7 @@ const formatDateForBackend = (date: Date): string => {
   return date.toISOString().substring(0, 19);
 };
 
-export default function EditEventModal({ open, onOpenChange, onSuccess, event }: EditEventModalProps) {
+export const EditEventModal = ({ open, onOpenChange, onSuccess, event }: EditEventModalProps) => {
 
   const handleError = (error: unknown): void => {
     const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };

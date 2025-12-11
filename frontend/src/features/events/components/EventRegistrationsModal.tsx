@@ -7,7 +7,6 @@ import type { UpdateStatusRequestStatusEnum } from "@/api-client";
 // Tách riêng content của registrations
 export function EventRegistrationsModal({ eventId }: { eventId: number }) {
   const { data: registrations, isLoading } = useGetEventRegistrations(eventId);
-  console.log(registrations);
   const updateStatusMutation = useUpdateRegistrationStatus(eventId);
 
   if (isLoading) {

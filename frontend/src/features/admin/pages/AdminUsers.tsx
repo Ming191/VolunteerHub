@@ -1,13 +1,8 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { type UserResponse } from '@/api-client';
-import axiosInstance from '@/utils/axiosInstance';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, Mail, MoreVertical, Lock, Unlock } from 'lucide-react';
 import {
     DropdownMenu,
@@ -17,55 +12,27 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { TableRowSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorState } from '@/components/ui/api-error-state';
+import { useAdminUsers } from '../hooks/useAdminUsers';
 
-interface PageUserResponse {
-    content: UserResponse[];
-    totalElements: number;
-    totalPages: number;
-}
+type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
-import { useDebounce } from '@/hooks/useDebounce';
+export const AdminUsers = () => {
+    const {
+        users,
+        isLoading,
+        isError,
+        error,
+        refetch,
+        searchQuery,
+        setSearchQuery,
+        handleToggleLock
+    } = useAdminUsers();
 
-export default function AdminUsers() {
-    const [searchQuery, setSearchQuery] = useState('');
-    const debouncedSearchQuery = useDebounce(searchQuery, 500);
-    const queryClient = useQueryClient();
-
-    // Fetch users
-    const { data: usersPage, isLoading, isError, error, refetch } = useQuery<PageUserResponse, Error>({
-        queryKey: ['adminUsers', debouncedSearchQuery],
-        queryFn: async () => {
-            const response = await axiosInstance.get(`/admin/users?search=${debouncedSearchQuery}`);
-            return response.data;
-        },
-    });
-
-    const users = usersPage?.content || [];
-
-    // Mutation for locking/unlocking users
-    const toggleLockMutation = useMutation<void, Error, { userId: number; isLocked: boolean }>({
-        mutationFn: async ({ userId, isLocked }) => {
-            await axiosInstance.patch(`/admin/users/${userId}/lock`, { isLocked: !isLocked });
-        },
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-            toast.success(`User ${variables.isLocked ? 'unlocked' : 'locked'} successfully.`);
-        },
-        onError: (err) => {
-            toast.error(`Failed to toggle lock status: ${err.message}`);
-        },
-    });
-
-    const handleToggleLock = (userId: number, isLocked: boolean) => {
-        toggleLockMutation.mutate({ userId, isLocked });
-    };
-
-    const getRoleBadgeVariant = (role: string) => {
+    const getRoleBadgeVariant = (role: string): BadgeVariant => {
         switch (role) {
             case 'ADMIN':
                 return 'default';
@@ -119,7 +86,7 @@ export default function AdminUsers() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <h4 className="font-medium text-sm truncate">{user.name}</h4>
-                                                <Badge variant={getRoleBadgeVariant(user.role) as any} className="text-[10px] px-1.5 py-0 h-5 font-normal">
+                                                <Badge variant={getRoleBadgeVariant(user.role)} className="text-[10px] px-1.5 py-0 h-5 font-normal">
                                                     {user.role.replace('_', ' ')}
                                                 </Badge>
                                                 {user.isLocked && (
