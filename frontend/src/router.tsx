@@ -29,12 +29,12 @@ import {
 
 // 6. Create Router
 const routeTree = rootRoute.addChildren([
-    indexRoute,
     signinRoute,
     signupRoute,
     verifyEmailRoute,
     testRoute,
     authenticatedLayoutRoute.addChildren([
+        indexRoute,
         dashboardRoute,
         eventsRoute,
         profileRoute,

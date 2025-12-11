@@ -14,11 +14,9 @@ import {
 // 3. Protected Routes Layout
 export const authenticatedLayoutRoute = createRoute({
     getParentRoute: () => rootRoute,
-    id: 'authenticated',
+    id: '_auth',
     beforeLoad: ({ context }) => {
         if (!context.auth.isAuthenticated && !context.auth.isLoading) {
-            // Check storage as fallback to avoid race conditions during login
-            // where React context hasn't updated yet but storage has.
             if (!authStorage.getAccessToken()) {
                 throw redirect({
                     to: '/signin',
