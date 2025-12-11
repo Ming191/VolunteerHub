@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -10,7 +10,7 @@ interface PendingApprovalsCardProps {
 
 export const PendingApprovalsCard = ({ events }: PendingApprovalsCardProps) => {
     const navigate = useNavigate();
-    const handleNavigate = () => navigate('/admin/pending-events');
+    const handleNavigate = () => navigate({ to: '/admin/pending-events' });
 
     return (
         <Card className="lg:col-span-2">

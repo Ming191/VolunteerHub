@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useGetEvents } from './useEvents';
 import type { SearchEventsParams } from '../api/eventService';
 
@@ -6,14 +6,18 @@ export const EVENTS_PER_PAGE = 8;
 export type FilterState = Omit<SearchEventsParams, 'page' | 'size'>;
 
 export const useEventSearch = () => {
-    const [page, setPage] = useState(1);
-    const [filters, setFilters] = useState<FilterState>({
-        q: '',
-        location: '',
-        tags: [],
-        upcoming: false,
-        matchAllTags: false,
-    });
+    const navigate = useNavigate();
+    const search = useSearch({ from: '/authenticated/events' });
+
+    // Default values
+    const page = search.page || 1;
+    const filters: FilterState = {
+        q: search.q || '',
+        location: search.location || '',
+        tags: search.tags || [],
+        upcoming: search.upcoming || false,
+        matchAllTags: search.matchAllTags || false,
+    };
 
     const { data: events, isLoading, isError, error, refetch } = useGetEvents({
         ...filters,
@@ -23,24 +27,25 @@ export const useEventSearch = () => {
 
     const handlePageChange = (newPage: number) => {
         if (newPage > 0 && newPage <= (events?.totalPages || 1)) {
-            setPage(newPage);
+            navigate({
+                to: '/events',
+                search: (prev) => ({ ...prev, page: newPage }),
+            });
         }
     };
 
     const handleFilterChange = (newFilters: FilterState) => {
-        setFilters(newFilters);
-        setPage(1); // Reset to first page when filters change
+        navigate({
+            to: '/events',
+            search: (prev) => ({ ...prev, ...newFilters, page: 1 }),
+        });
     };
 
     const handleClearFilters = () => {
-        setFilters({
-            q: '',
-            location: '',
-            tags: [],
-            upcoming: false,
-            matchAllTags: false
+        navigate({
+            to: '/events',
+            search: {},
         });
-        setPage(1);
     };
 
     return {

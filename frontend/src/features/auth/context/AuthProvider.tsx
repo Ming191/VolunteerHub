@@ -1,6 +1,6 @@
 import { type ReactNode, useState, useEffect, useCallback } from "react";
 import type { LoginRequest, RegisterRequest } from "@/api-client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 import { authService } from "../api/authService";
 import { fcmService } from "@/features/notifications/services/fcmService.ts";
 import { AuthContext } from "./AuthContext.ts";
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 console.error("FCM registration failed after login:", err)
             );
 
-            navigate('/dashboard');
+            navigate({ to: '/dashboard' });
         } catch (error) {
             console.error("Login failed:", error);
             throw error;
@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const register = useCallback(async (data: RegisterRequest) => {
         try {
             await authService.register(data);
-            navigate('/signin');
+            navigate({ to: '/signin' });
         } catch (error) {
             console.error("Registration failed:", error);
             throw error;
@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         setUser(null);
         authStorage.clearAuth();
-        navigate('/signin');
+        navigate({ to: '/signin' });
     }, [navigate]);
 
     const value: AuthContextType = {

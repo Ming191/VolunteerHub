@@ -15,20 +15,21 @@ const formatDate = (dateString: string) => {
     });
 };
 
-interface EventCardProps<T extends UiEvent | EventResponse> {
-    event: T;
-    onViewDetails?: (event: T) => void;
+interface EventCardProps {
+    event: UiEvent | EventResponse;
+    onViewDetails?: (event: UiEvent | EventResponse) => void;
 }
 
-export const EventCard = <T extends UiEvent | EventResponse>({ event, onViewDetails }: EventCardProps<T>) => {
-    const isUiEvent = (e: UiEvent | EventResponse): e is UiEvent => 'availableSpotsText' in e;
+export default function EventCard({ event, onViewDetails }: EventCardProps) {
+    const isUiEvent = (e: any): e is UiEvent => 'availableSpotsText' in e;
 
     const availableSpotsText = isUiEvent(event)
         ? event.availableSpotsText
         : (event.maxParticipants ? `${event.availableSpots} spots available` : 'Unlimited spots');
 
     const hasImage = event.imageUrls && event.imageUrls.length > 0;
-    const tags = (Array.isArray(event.tags) ? event.tags : Array.from(event.tags || [])) as string[];
+
+    const tags = (Array.isArray(event.tags) ? event.tags : Array.from((event.tags as any) || [])) as string[];
 
     return (
         <Card className="flex flex-col h-full">

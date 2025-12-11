@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearch } from '@tanstack/react-router';
 import { authService } from '@/features/auth/api/authService';
 
 export type VerificationStatus = 'verifying' | 'success' | 'error';
@@ -16,12 +16,10 @@ interface UseEmailVerificationReturn {
 }
 
 export const useEmailVerification = (): UseEmailVerificationReturn => {
-    const [searchParams] = useSearchParams();
+    const { token } = useSearch({ from: '/verify-email' });
     const [status, setStatus] = useState<VerificationStatus>('verifying');
     const [message, setMessage] = useState('');
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-
-    const token = searchParams.get('token');
 
     useEffect(() => {
         if (!token) {

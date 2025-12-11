@@ -16,9 +16,5 @@ export const useGetEvents = (params: SearchEventsParams) => {
         queryFn: () => eventService.searchEvents(params),
 
         placeholderData: (previousData) => previousData,
-        // select: (data) => ({
-        //     ...data,
-        //     content: data.content.map(mapToUiEvent),
-        // }),
     });
 };

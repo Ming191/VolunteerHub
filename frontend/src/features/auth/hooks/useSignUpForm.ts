@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { signUpSchema } from '../schemas/signupSchema';
@@ -28,7 +28,7 @@ export function useSignUpForm() {
             toast.success('Registration successful!', {
                 description: 'Please check your email to verify your account.',
             });
-            navigate('/signin');
+            navigate({ to: '/signin' });
         } catch (error: unknown) {
             const errorMessage = error instanceof Error && 'response' in error
                 ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Registration failed. Please try again.')

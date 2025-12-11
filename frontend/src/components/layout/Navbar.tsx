@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import { NotificationList } from '@/components/animate-ui/components/community/notification-list';
 
 import { Button } from '@/components/ui/button';
@@ -69,7 +69,7 @@ const Navbar = () => {
                             <div className="font-normal text-sm text-muted-foreground">{user?.email}</div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate('/profile')}>Profile</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate({ to: '/profile' })}>Profile</DropdownMenuItem>
                         <DropdownMenuItem>Settings</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={logout} className="text-red-500">
