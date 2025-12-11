@@ -13,7 +13,7 @@ type RegistrationStatus = 'APPROVED' | 'PENDING';
 
 const EVENTS_PER_PAGE = 8;
 
-export default function MyRegistrationsScreen() {
+export const MyRegistrationsScreen = () => {
   const [page, setPage] = useState(1);
   const [searchByName, setSearchByName] = useState('');
 

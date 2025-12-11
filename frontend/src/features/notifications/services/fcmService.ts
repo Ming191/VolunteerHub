@@ -1,6 +1,7 @@
 import { messaging, getToken, onMessage, VAPID_KEY } from '@/utils/firebaseConfig';
 import { UserProfileApi, Configuration } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
+import type { MessagePayload } from 'firebase/messaging';
 
 const config = new Configuration({ basePath: '' });
 const userProfileApi = new UserProfileApi(config, undefined, axiosInstance);
@@ -49,7 +50,6 @@ const getFcmToken = async (): Promise<string | null> => {
 
         const permission = await requestNotificationPermission();
         if (permission !== 'granted') {
-            console.log('Notification permission not granted');
             return null;
         }
 
@@ -58,7 +58,6 @@ const getFcmToken = async (): Promise<string | null> => {
         });
 
         if (token) {
-            console.log('FCM token generated:', token.substring(0, 20) + '...');
             localStorage.setItem('fcmToken', token);
             return token;
         } else {
@@ -75,17 +74,21 @@ const getFcmToken = async (): Promise<string | null> => {
  * Register FCM token with the backend
  * @param token - FCM device token
  * @returns True if successful, false otherwise
+ * @throws Error if registration fails - handled by caller or retry logic
  */
 const registerFcmToken = async (token: string): Promise<boolean> => {
     try {
         await userProfileApi.addFcmToken({
             requestBody: { token },
         });
-        console.log('FCM token registered with backend');
         return true;
     } catch (error) {
         console.error('Failed to register FCM token with backend:', error);
-        setTimeout(() => userProfileApi.addFcmToken({ requestBody: { token } }), 3000);
+        // Simple retry once after 3 seconds
+        setTimeout(() => {
+            userProfileApi.addFcmToken({ requestBody: { token } })
+                .catch(e => console.error('Retry failed for FCM token registration:', e));
+        }, 3000);
         return false;
     }
 };
@@ -116,15 +119,14 @@ const registerDeviceForNotifications = async (): Promise<boolean> => {
  * @param callback - Function to handle incoming messages
  */
 const setupForegroundMessageListener = (
-    callback: (payload: any) => void
+    callback: (payload: MessagePayload) => void
 ): (() => void) => {
     if (!messaging) {
         console.warn('Firebase Messaging not initialized, skipping foreground listener');
-        return () => {};
+        return () => { };
     }
 
     const unsubscribe = onMessage(messaging, (payload) => {
-        console.log('Foreground message received:', payload);
         callback(payload);
     });
 

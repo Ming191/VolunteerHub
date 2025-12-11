@@ -1,18 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Calendar, MapPin, Edit, Heart, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserProfileApi, PostsApi, Configuration, type UserResponse, type PostResponse } from '@/api-client';
-import axiosInstance from '@/utils/axiosInstance';
 import Loading from '@/components/common/Loading';
-import EditProfileModal from '@/features/users/components/EditProfileModal';
-import ChangePasswordModal from "@/features/users/components/ChangePasswordModal";
-
-const config = new Configuration({ basePath: '' });
-const userProfileApi = new UserProfileApi(config, undefined, axiosInstance);
-const postsApi = new PostsApi(config, undefined, axiosInstance);
+import { EditProfileModal } from '@/features/users/components/EditProfileModal';
+import { ChangePasswordModal } from "@/features/users/components/ChangePasswordModal";
+import { useProfileData } from '../hooks/useProfileData';
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -34,38 +29,16 @@ const formatRelativeTime = (dateString: string) => {
     return formatDate(dateString);
 };
 
-export default function ProfilePage() {
-    const [profile, setProfile] = useState<UserResponse | null>(null);
-    const [posts, setPosts] = useState<PostResponse[]>([]);
-    const [loading, setLoading] = useState(true);
+export const ProfilePage = () => {
+    const { profile, posts, loading, refetch } = useProfileData();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
-
-    const fetchProfileData = async (showLoading = true) => {
-        try {
-            if (showLoading) setLoading(true);
-            const [profileRes, postsRes] = await Promise.all([
-                userProfileApi.getMyProfile(),
-                postsApi.getMyPosts(),
-            ]);
-            setProfile(profileRes.data);
-            setPosts(postsRes.data.content);
-        } catch (error) {
-            console.error('Failed to fetch profile data:', error);
-        } finally {
-            if (showLoading) setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchProfileData();
-    }, []);
 
     const handleModalClose = (open: boolean) => {
         setIsEditModalOpen(open);
         if (!open) {
             // Refetch profile data in background when modal closes
-            fetchProfileData(false);
+            refetch(false);
         }
     };
 
@@ -224,4 +197,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-

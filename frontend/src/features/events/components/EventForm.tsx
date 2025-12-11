@@ -1,8 +1,3 @@
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -10,46 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import DateTimePicker from './DateTimePicker';
-import { useGetEventTags } from '../hooks/useEventTags';
+import { DateTimePicker } from './DateTimePicker';
 import { FileUpload } from '@/components/ui/file-upload';
+import { useEventForm } from '../hooks/useEventForm';
+import { type EventFormValues } from '../schemas/eventFormSchema';
 
-const MAX_IMAGES = 5;
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const TITLE_MIN_LENGTH = 3;
-const TITLE_MAX_LENGTH = 200;
-const DESCRIPTION_MIN_LENGTH = 10;
-const DESCRIPTION_MAX_LENGTH = 5000;
-const LOCATION_MIN_LENGTH = 3;
-const LOCATION_MAX_LENGTH = 200;
-
-const formSchema = z.object({
-    title: z.string()
-        .min(TITLE_MIN_LENGTH, `Title must be at least ${TITLE_MIN_LENGTH} characters`)
-        .max(TITLE_MAX_LENGTH, `Title must be less than ${TITLE_MAX_LENGTH} characters`),
-    description: z.string()
-        .min(DESCRIPTION_MIN_LENGTH, `Description must be at least ${DESCRIPTION_MIN_LENGTH} characters`)
-        .max(DESCRIPTION_MAX_LENGTH, `Description must be less than ${DESCRIPTION_MAX_LENGTH} characters`),
-    location: z.string()
-        .min(LOCATION_MIN_LENGTH, `Location must be at least ${LOCATION_MIN_LENGTH} characters`)
-        .max(LOCATION_MAX_LENGTH, `Location must be less than ${LOCATION_MAX_LENGTH} characters`),
-    eventDateTime: z.date({ message: 'Event start date and time is required' }),
-    endDateTime: z.date({ message: 'Event end date and time is required' }),
-    registrationDeadline: z.date().optional(),
-    maxParticipants: z.number().int().positive().optional(),
-    waitlistEnabled: z.boolean(),
-    tags: z.array(z.string()).optional(),
-})
-    .refine((data) => data.endDateTime > data.eventDateTime, {
-        message: 'End date must be after start date',
-        path: ['endDateTime'],
-    })
-    .refine((data) => !data.registrationDeadline || data.registrationDeadline < data.eventDateTime, {
-        message: 'Registration deadline must be before event start',
-        path: ['registrationDeadline'],
-    });
-
-export type EventFormValues = z.infer<typeof formSchema>;
+// Re-export type for consumers
+export type { EventFormValues } from '../schemas/eventFormSchema';
 
 interface EventFormProps {
     defaultValues?: Partial<EventFormValues>;
@@ -60,108 +22,21 @@ interface EventFormProps {
     isSubmitting?: boolean;
 }
 
-export default function EventForm({
-    defaultValues,
-    initialImages = [],
-    onSubmit,
-    onCancel,
-    submitLabel,
-    isSubmitting: externalIsSubmitting
-}: EventFormProps) {
-    const [files, setFiles] = useState<File[]>([]);
-    const [existingImages, setExistingImages] = useState<string[]>(initialImages);
-    const { data: eventTags, isLoading: tagsLoading } = useGetEventTags();
+export const EventForm = (props: EventFormProps) => {
+    const {
+        form,
+        files,
+        existingImages,
+        setExistingImages,
+        eventTags,
+        tagsLoading,
+        isSubmitting,
+        handleFileChange,
+        handleSubmit,
+        MAX_IMAGES
+    } = useEventForm(props);
 
-    const form = useForm<EventFormValues>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            title: '',
-            description: '',
-            location: '',
-            waitlistEnabled: false,
-            tags: [],
-            ...defaultValues,
-            // Ensure dates are Dates if passed as strings (though type says Partial<Values> which has Date)
-            // The parent helper `formatDateForBackend` is for output. Input should be Date objects.
-        },
-    });
-
-    const { isSubmitting: formIsSubmitting } = form.formState;
-    const isSubmitting = externalIsSubmitting || formIsSubmitting;
-
-    // Reset form when defaultValues change (important for Edit modal when opening different events)
-    useEffect(() => {
-        if (defaultValues) {
-            form.reset({
-                title: '',
-                description: '',
-                location: '',
-                waitlistEnabled: false,
-                tags: [],
-                ...defaultValues
-            });
-        }
-        if (initialImages) {
-            setExistingImages(initialImages);
-        }
-    }, [defaultValues, initialImages, form]);
-
-
-    const validateFile = (file: File): boolean => {
-        if (!file.type.startsWith('image/')) {
-            toast.error(`${file.name} is not an image file`);
-            return false;
-        }
-        if (file.size > MAX_IMAGE_SIZE) {
-            toast.error(`${file.name} exceeds 5MB limit`);
-            return false;
-        }
-        return true;
-    };
-
-    const handleFileChange = (newFiles: File[]): void => {
-        const validFiles = newFiles.filter(validateFile);
-        const combinedFiles = [...files, ...validFiles].slice(0, MAX_IMAGES - existingImages.length);
-        setFiles(combinedFiles);
-    };
-
-    const validateUserPermissions = (): { isValid: boolean; userRole?: string } => {
-        const storedUser = localStorage.getItem('user');
-        const accessToken = localStorage.getItem('accessToken');
-
-        if (!storedUser || !accessToken) {
-            return { isValid: false };
-        }
-
-        try {
-            const user = JSON.parse(storedUser);
-            const isValid = user.role === 'EVENT_ORGANIZER' || user.role === 'ADMIN';
-            return { isValid, userRole: user.role };
-        } catch {
-            return { isValid: false };
-        }
-    };
-
-    const handleSubmit = async (values: EventFormValues) => {
-        // Permission check
-        const { isValid, userRole } = validateUserPermissions();
-
-        if (!isValid) {
-            toast.error('Authentication required', {
-                description: 'Please log in to manage events.',
-            });
-            return;
-        }
-
-        if (userRole !== 'EVENT_ORGANIZER' && userRole !== 'ADMIN') {
-            toast.error('Permission denied', {
-                description: `Only Event Organizers and Admins can manage events. Your role: ${userRole}`,
-            });
-            return;
-        }
-
-        await onSubmit(values, files, existingImages);
-    };
+    const { onCancel, submitLabel } = props;
 
     return (
         <Form {...form}>

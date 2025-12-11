@@ -2,10 +2,10 @@ import { useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from '@/components/animate-ui/components/animate/tabs';
-import LoginScreen from './LoginScreen';
-import SignUpScreen from './SignUpScreen';
+import { LoginScreen } from './LoginScreen';
+import { SignUpScreen } from './SignUpScreen';
 
-export default function TabbedAuthScreen() {
+export const TabbedAuthScreen = () => {
     const location = useLocation();
     const [activeTab, setActiveTab] = useState('login');
 
@@ -28,12 +28,12 @@ export default function TabbedAuthScreen() {
                             <TabsTrigger value="signup">Sign Up</TabsTrigger>
                         </TabsList>
                     </div>
-                    
+
                     <TabsContents>
                         <TabsContent value="login">
                             <LoginScreen isTabbed />
                         </TabsContent>
-                        
+
                         <TabsContent value="signup">
                             <SignUpScreen isTabbed />
                         </TabsContent>
