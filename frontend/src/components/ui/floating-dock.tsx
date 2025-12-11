@@ -8,15 +8,15 @@ import {
     useSpring,
     useTransform,
 } from "motion/react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import React, { useRef, useState } from "react";
 
 export const FloatingDock = ({
-                                 items,
-                                 desktopClassName,
-                                 mobileClassName,
-                             }: {
+    items,
+    desktopClassName,
+    mobileClassName,
+}: {
     items: { title: string; icon: React.ReactNode; href: string }[];
     desktopClassName?: string;
     mobileClassName?: string;
@@ -30,13 +30,15 @@ export const FloatingDock = ({
 };
 
 const FloatingDockMobile = ({
-                                items,
-                                className,
-                            }: {
+    items,
+    className,
+}: {
     items: { title: string; icon: React.ReactNode; href: string }[];
     className?: string;
 }) => {
     const [open, setOpen] = useState(false);
+    const location = useLocation();
+
     return (
         <div className={cn("relative block md:hidden", className)}>
             <AnimatePresence>
@@ -65,7 +67,12 @@ const FloatingDockMobile = ({
                                 <Link
                                     to={item.href}
                                     key={item.title}
-                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-neutral-900"
+                                    className={cn(
+                                        "flex h-10 w-10 items-center justify-center rounded-full",
+                                        location.pathname === item.href
+                                            ? "bg-neutral-200 dark:bg-neutral-800 border-2 border-neutral-300 dark:border-neutral-700"
+                                            : "bg-gray-50 dark:bg-neutral-900"
+                                    )}
                                 >
                                     <div className="h-4 w-4">{item.icon}</div>
                                 </Link>
@@ -80,14 +87,14 @@ const FloatingDockMobile = ({
             >
                 <IconLayoutNavbarCollapse className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
             </button>
-        </div>
+        </div >
     );
 };
 
 const FloatingDockDesktop = ({
-                                 items,
-                                 className,
-                             }: {
+    items,
+    className,
+}: {
     items: { title: string; icon: React.ReactNode; href: string }[];
     className?: string;
 }) => {
@@ -109,17 +116,19 @@ const FloatingDockDesktop = ({
 };
 
 function IconContainer({
-                           mouseX,
-                           title,
-                           icon,
-                           href,
-                       }: {
+    mouseX,
+    title,
+    icon,
+    href,
+}: {
     mouseX: MotionValue;
     title: string;
     icon: React.ReactNode;
     href: string;
 }) {
     const ref = useRef<HTMLDivElement>(null);
+    const location = useLocation();
+    const isActive = location.pathname === href;
 
     const distance = useTransform(mouseX, (val) => {
         const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
@@ -168,7 +177,12 @@ function IconContainer({
                 style={{ width, height }}
                 onMouseEnter={() => setHovered(true)}
                 onMouseLeave={() => setHovered(false)}
-                className="relative flex aspect-square items-center justify-center rounded-full bg-gray-200 dark:bg-neutral-800"
+                className={cn(
+                    "relative flex aspect-square items-center justify-center rounded-full",
+                    isActive
+                        ? "bg-neutral-300 dark:bg-neutral-700"
+                        : "bg-gray-200 dark:bg-neutral-800"
+                )}
             >
                 <AnimatePresence>
                     {hovered && (
