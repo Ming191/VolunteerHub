@@ -10,7 +10,7 @@ import { PlatformInsightsCard } from '../components/PlatformInsightsCard';
 import { InfrastructureLinks } from '../components/InfrastructureLinks';
 import { QuickActionsGrid } from '../components/QuickActionsGrid';
 
-export default function AdminDashboardPage() {
+export const AdminDashboardPage = () => {
     const { data: dashboardData, isLoading: isDashboardLoading, isError: isDashboardError } = useAdminDashboardData();
     const { data: metricsData, isLoading: isMetricsLoading } = useSystemMetrics();
 

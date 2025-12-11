@@ -1,7 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function EventCardSkeleton() {
+export const EventCardSkeleton = () => {
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="p-0">

@@ -1,57 +1,18 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import AnimatedPage from '@/components/common/AnimatedPage';
-
-// Define the validation schema with Zod
-const formSchema = z.object({
-    email: z.string().email({ message: 'Please enter a valid email.' }),
-    password: z.string().min(1, { message: 'Password is required.' }),
-});
+import { useLoginForm } from '../hooks/useLoginForm';
 
 interface LoginScreenProps {
     isTabbed?: boolean;
 }
 
-export default function LoginScreen({ isTabbed = false }: LoginScreenProps) {
-    const { login } = useAuth();
-    useNavigate();
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            email: '',
-            password: '',
-        },
-    });
-
-    const { isSubmitting } = form.formState;
-
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
-            await login(values);
-            toast.success('Login successful!');
-        } catch (error: unknown) {
-            let errorMessage = 'Login failed. Please try again.';
-            if (error instanceof Error) {
-                errorMessage = error.message;
-            } else if (typeof error === 'object' && error !== null && 'response' in error) {
-                const response = (error as { response?: { data?: { message?: string } } }).response;
-                if (response?.data?.message) {
-                    errorMessage = response.data.message;
-                }
-            }
-            toast.error(errorMessage);
-        }
-    }
+export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
+    const { form, onSubmit, isSubmitting } = useLoginForm();
 
     const cardContent = (
         <Card className="w-full max-w-sm">
@@ -61,7 +22,7 @@ export default function LoginScreen({ isTabbed = false }: LoginScreenProps) {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={onSubmit} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="email"
