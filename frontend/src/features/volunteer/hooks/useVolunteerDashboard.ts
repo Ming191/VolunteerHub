@@ -20,6 +20,7 @@ export const useVolunteerDashboard = () => {
 
     const handleNavigateToEvent = useCallback(() => navigate({ to: '/events' }), [navigate]);
     const handleNavigateToEvents = useCallback(() => navigate({ to: '/events' }), [navigate]);
+    const handleNavigateToRegisteredEvents = useCallback(() => navigate({ to: '/my-registrations' }), [navigate]);
     const handleNavigateToNotifications = useCallback(() => navigate({ to: '/notifications' }), [navigate]);
     const handleNavigateToProfile = useCallback(() => navigate({ to: '/profile' }), [navigate]);
 
@@ -31,6 +32,7 @@ export const useVolunteerDashboard = () => {
         refetch,
         handleNavigateToEvent,
         handleNavigateToEvents,
+        handleNavigateToRegisteredEvents,
         handleNavigateToNotifications,
         handleNavigateToProfile
     };

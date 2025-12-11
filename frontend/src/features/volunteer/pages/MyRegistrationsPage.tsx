@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import AnimatedPage from '@/components/common/AnimatedPage';
-import { ApiErrorState } from '@/components/ui/api-error-state';
-import { EventListSkeleton } from '@/components/ui/loaders';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import AnimatedPage from '@/components/common/AnimatedPage.tsx';
+import { ApiErrorState } from '@/components/ui/api-error-state.tsx';
+import { Input } from '@/components/ui/input.tsx';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select.tsx';
 import { Search } from 'lucide-react';
-import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
-import { useGetMyRegistrationEvents } from "@/features/events/hooks/useRegistration";
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination.tsx';
+import { useGetMyRegistrationEvents } from "@/features/volunteer/hooks/useRegistration.ts";
+import {EventDetailSheet} from "@/features/events/components/EventDetailSheet.tsx";
+import { RegistrationCard } from "@/features/events/components/RegistrationCard.tsx";
+import type { EventResponse } from "@/api-client";
+import { eventService } from "@/features/events/api/eventService.ts"; // giả sử bạn export sẵn
 
-type RegistrationStatus = 'APPROVED' | 'PENDING';
+type RegistrationStatus = 'APPROVED' | 'PENDING' | 'COMPLETED' | 'CANCELLED';
 
 const EVENTS_PER_PAGE = 8;
 
@@ -21,6 +23,8 @@ export const MyRegistrationsScreen = () => {
   // Destructure refetch
   const { data, isLoading, isError, error, refetch } = useGetMyRegistrationEvents();
   const [statusFilter, setStatusFilter] = useState<RegistrationStatus | 'ALL'>('ALL');
+  const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
+  const [isDetailOpen, setDetailOpen] = useState(false);
 
   if (isError) {
     return (
@@ -31,6 +35,9 @@ export const MyRegistrationsScreen = () => {
       </AnimatedPage>
     );
   }
+
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error: {error.message}</div>;
 
   const filteredEvents = data?.filter((event) => {
     const matchesSearchByName = event.eventTitle.toLowerCase().includes(searchByName.toLowerCase());
@@ -44,6 +51,16 @@ export const MyRegistrationsScreen = () => {
   const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= totalPages) {
       setPage(newPage);
+    }
+  };
+
+  const handleSelectEvent = async (eventId: number) => {
+    try {
+      const eventDetail = await eventService.getEventById(eventId);
+      setSelectedEvent(eventDetail);
+      setDetailOpen(true);
+    } catch (err) {
+      console.error("Failed to load event detail", err);
     }
   };
 
@@ -83,6 +100,8 @@ export const MyRegistrationsScreen = () => {
               <SelectItem value="ALL">All</SelectItem>
               <SelectItem value="APPROVED">Approved</SelectItem>
               <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -95,35 +114,25 @@ export const MyRegistrationsScreen = () => {
           </div>
         )}
 
-
-
-        {/* Events grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-          {isLoading && <EventListSkeleton count={8} />}
-
-          {!isLoading && paginatedEvents.length === 0 ? (
-            <div className="col-span-full">
-              <EmptyState
-                title="No Registrations Found"
-                description="Try adjusting your filters or search terms."
-              />
+        {/* Events list */}
+        <div className="space-y-4 mb-8">
+          {paginatedEvents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="rounded-full bg-muted p-4 mb-4">
+                <Search className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No Registrations Found</h3>
+              <p className="text-muted-foreground max-w-md">
+                Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.
+              </p>
             </div>
           ) : (
-            !isLoading && paginatedEvents.map((event) => (
-              <div
-                key={event.id}
-                // ... components
-                className="border rounded-lg p-4 shadow-sm bg-card hover:shadow-md transition"
-              >
-                <h3 className="text-lg font-semibold mb-2">{event.eventTitle}</h3>
-                <p className="text-sm text-muted-foreground mb-1">📍 {event.registeredAt}</p>
-                <p
-                  className={`text-sm font-medium ${event.status === 'APPROVED' ? 'text-green-600' : 'text-yellow-600'
-                    }`}
-                >
-                  {event.status}
-                </p>
-              </div>
+            paginatedEvents.map((registration) => (
+              <RegistrationCard
+                key={registration.id}
+                registration={registration}
+                onClick={() => handleSelectEvent(registration.eventId)}
+              />
             ))
           )}
         </div>
@@ -171,6 +180,13 @@ export const MyRegistrationsScreen = () => {
             </Pagination>
           </div>
         )}
+
+        {/* Event detail sheet */}
+        <EventDetailSheet
+          event={selectedEvent}
+          isOpen={isDetailOpen}
+          onOpenChange={setDetailOpen}
+        />
       </div>
     </AnimatedPage>
   );

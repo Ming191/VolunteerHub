@@ -24,6 +24,10 @@ class RedisConfig {
             registerModule(KotlinModule.Builder().build())
             registerModule(JavaTimeModule())
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            activateDefaultTyping(
+                polymorphicTypeValidator,
+                ObjectMapper.DefaultTyping.NON_FINAL
+            )
         }
 
         val serializer = GenericJackson2JsonRedisSerializer(objectMapper)

@@ -18,6 +18,7 @@ export const VolunteerDashboard = () => {
     refetch,
     handleNavigateToEvent,
     handleNavigateToEvents,
+    handleNavigateToRegisteredEvents,
     handleNavigateToNotifications,
     handleNavigateToProfile
   } = useVolunteerDashboard();
@@ -208,7 +209,7 @@ export const VolunteerDashboard = () => {
                 <Calendar className="h-5 w-5 mb-2" />
                 <span className="text-sm">Browse Events</span>
               </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col" onClick={handleNavigateToEvents}>
+              <Button variant="outline" className="h-auto py-4 flex-col" onClick={handleNavigateToRegisteredEvents}>
                 <Users className="h-5 w-5 mb-2" />
                 <span className="text-sm">My Registrations</span>
               </Button>
