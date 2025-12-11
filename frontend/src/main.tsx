@@ -8,7 +8,7 @@ import './index.css';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import {AuthProvider} from "@/utils/AuthProvider.tsx";
+import { AuthProvider } from "@/features/auth/context/AuthProvider.tsx";
 
 const queryClient = new QueryClient();
 

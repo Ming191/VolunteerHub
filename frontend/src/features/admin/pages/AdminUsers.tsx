@@ -1,0 +1,186 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { type UserResponse } from '@/api-client';
+import axiosInstance from '@/utils/axiosInstance';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
+import { Search, Mail, MoreVertical, Lock, Unlock } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import AnimatedPage from '@/components/common/AnimatedPage';
+import { TableRowSkeleton } from '@/components/ui/loaders';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ApiErrorState } from '@/components/ui/api-error-state';
+
+interface PageUserResponse {
+    content: UserResponse[];
+    totalElements: number;
+    totalPages: number;
+}
+
+import { useDebounce } from '@/hooks/useDebounce';
+
+export default function AdminUsers() {
+    const [searchQuery, setSearchQuery] = useState('');
+    const debouncedSearchQuery = useDebounce(searchQuery, 500);
+    const queryClient = useQueryClient();
+
+    // Fetch users
+    const { data: usersPage, isLoading, isError, error, refetch } = useQuery<PageUserResponse, Error>({
+        queryKey: ['adminUsers', debouncedSearchQuery],
+        queryFn: async () => {
+            const response = await axiosInstance.get(`/admin/users?search=${debouncedSearchQuery}`);
+            return response.data;
+        },
+    });
+
+    const users = usersPage?.content || [];
+
+    // Mutation for locking/unlocking users
+    const toggleLockMutation = useMutation<void, Error, { userId: number; isLocked: boolean }>({
+        mutationFn: async ({ userId, isLocked }) => {
+            await axiosInstance.patch(`/admin/users/${userId}/lock`, { isLocked: !isLocked });
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+            toast.success(`User ${variables.isLocked ? 'unlocked' : 'locked'} successfully.`);
+        },
+        onError: (err) => {
+            toast.error(`Failed to toggle lock status: ${err.message}`);
+        },
+    });
+
+    const handleToggleLock = (userId: number, isLocked: boolean) => {
+        toggleLockMutation.mutate({ userId, isLocked });
+    };
+
+    const getRoleBadgeVariant = (role: string) => {
+        switch (role) {
+            case 'ADMIN':
+                return 'default';
+            case 'MODERATOR':
+                return 'secondary';
+            case 'USER':
+            default:
+                return 'outline';
+        }
+    };
+
+    return (
+        <AnimatedPage>
+            <div className="max-w-6xl mx-auto p-6 space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>User Management</CardTitle>
+                        <CardDescription>Manage users, their roles, and lock status.</CardDescription>
+                        <div className="relative mt-4">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search users by name or email..."
+                                className="pl-9"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    </CardHeader>
+
+                    <CardContent>
+                        {isError ? (
+                            <ApiErrorState error={error} onRetry={refetch} />
+                        ) : isLoading ? (
+                            <div className="space-y-4">
+                                {[...Array(5)].map((_, i) => (
+                                    <TableRowSkeleton key={i} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-1">
+                                {users.map((user) => (
+                                    <div
+                                        key={user.id}
+                                        className="p-3 rounded-lg hover:bg-muted/50 transition-colors flex items-center gap-4 group"
+                                    >
+                                        <Avatar className="h-9 w-9 border">
+                                            <AvatarImage src={user.profilePictureUrl} />
+                                            <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-medium text-sm truncate">{user.name}</h4>
+                                                <Badge variant={getRoleBadgeVariant(user.role) as any} className="text-[10px] px-1.5 py-0 h-5 font-normal">
+                                                    {user.role.replace('_', ' ')}
+                                                </Badge>
+                                                {user.isLocked && (
+                                                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5 font-normal">
+                                                        LOCKED
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                                                <Mail className="h-3 w-3" />
+                                                <span className="truncate">{user.email}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuItem onClick={() => navigator.clipboard.writeText(user.email)}>
+                                                        Copy Email
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggleLock(user.id, user.isLocked);
+                                                    }}>
+                                                        {user.isLocked ? (
+                                                            <>
+                                                                <Unlock className="mr-2 h-4 w-4" />
+                                                                Unlock User
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Lock className="mr-2 h-4 w-4" />
+                                                                Lock User
+                                                            </>
+                                                        )}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </div>
+                                ))}
+                                {users.length === 0 && (
+                                    <EmptyState
+                                        title="No users found"
+                                        description="Try adjusting your search terms."
+                                        className="py-12 border-none bg-transparent"
+                                    />
+                                )}
+                            </div>
+                        )}
+
+                    </CardContent >
+                </Card >
+            </div >
+        </AnimatedPage >
+    );
+}

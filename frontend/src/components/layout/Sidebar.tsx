@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
     Sidebar,
     SidebarContent,
