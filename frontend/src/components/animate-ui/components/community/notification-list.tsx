@@ -154,8 +154,9 @@ function NotificationList() {
                 displayNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`px-4 py-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 transition-colors ${!notification.isRead ? 'bg-blue-50 dark:bg-blue-950/20' : ''
-                      }`}
+                    className={`px-4 py-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 transition-colors ${
+                      !notification.isRead ? 'bg-blue-50 dark:bg-blue-950/20' : ''
+                    }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex items-start gap-3">
