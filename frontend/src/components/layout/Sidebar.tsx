@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { Link, useLocation } from '@tanstack/react-router';
 import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
@@ -58,10 +58,10 @@ const AppSidebar = () => {
                                         asChild
                                         isActive={location.pathname === item.path}
                                     >
-                                        <NavLink to={item.path}>
+                                        <Link to={item.path}>
                                             <item.icon className="h-5 w-5" />
                                             <span>{item.title}</span>
-                                        </NavLink>
+                                        </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
                             ))}

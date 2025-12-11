@@ -109,7 +109,7 @@ export const VolunteerDashboard = () => {
                   <div
                     key={event.id}
                     className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => handleNavigateToEvent(event.id)}
+                    onClick={() => handleNavigateToEvent()}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -145,7 +145,7 @@ export const VolunteerDashboard = () => {
                   <div
                     key={`${registration.eventId}-${registration.registeredAt}`}
                     className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => handleNavigateToEvent(registration.eventId)}
+                    onClick={() => handleNavigateToEvent()}
                   >
                     <p className="font-medium text-sm line-clamp-1">{registration.eventTitle}</p>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
@@ -176,7 +176,7 @@ export const VolunteerDashboard = () => {
                   <div
                     key={event.id}
                     className="p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => handleNavigateToEvent(event.id)}
+                    onClick={() => handleNavigateToEvent()}
                   >
                     <p className="font-medium text-sm line-clamp-1">{event.title}</p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">

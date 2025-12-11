@@ -4,7 +4,7 @@ import * as React from 'react';
 import { ArrowUpRight, Bell, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { NotificationsApi, Configuration, type NotificationResponse } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
 import { formatDistanceToNow } from 'date-fns';
@@ -81,7 +81,7 @@ function NotificationList() {
     }
     setIsOpen(false);
     if (notification.link) {
-      navigate(notification.link);
+      navigate({ to: notification.link });
     }
   };
 
@@ -185,7 +185,7 @@ function NotificationList() {
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    navigate('/notifications');
+                    navigate({ to: '/notifications' });
                   }}
                   className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1 mx-auto"
                 >
@@ -201,4 +201,3 @@ function NotificationList() {
 }
 
 export { NotificationList };
-  

@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { DashboardApi, Configuration } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
 
@@ -18,10 +18,13 @@ export const useOrganizerDashboard = () => {
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
-    const handleNavigateToEvent = useCallback((eventId: number) => navigate(`/events/${eventId}`), [navigate]);
-    const handleNavigateToMyEvents = useCallback(() => navigate('/my-events'), [navigate]);
-    const handleNavigateToCreateEvent = useCallback(() => navigate('/my-events'), [navigate]); // Assuming create is on my-events or opens a modal there
-    const handleNavigateToAnalytics = useCallback(() => navigate('/events'), [navigate]);
+    // Navigation to `/events/${eventId}` is disabled because no such route exists in the router configuration.
+    const handleNavigateToEvent = useCallback((_eventId: number) => {
+        // No-op: event details route is not defined. Implement modal or add route as needed.
+    }, []);
+    const handleNavigateToMyEvents = useCallback(() => navigate({ to: '/my-events' }), [navigate]);
+    const handleNavigateToCreateEvent = useCallback(() => navigate({ to: '/my-events' }), [navigate]); // Assuming create is on my-events or opens a modal there
+    const handleNavigateToAnalytics = useCallback(() => navigate({ to: '/events' }), [navigate]);
 
     return {
         dashboardData,

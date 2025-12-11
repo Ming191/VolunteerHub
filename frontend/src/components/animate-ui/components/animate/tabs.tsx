@@ -1,5 +1,3 @@
-
-
 import {
   Tabs as TabsPrimitive,
   TabsList as TabsListPrimitive,

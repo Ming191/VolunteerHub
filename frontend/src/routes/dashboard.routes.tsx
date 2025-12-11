@@ -1,0 +1,67 @@
+import { createRoute, redirect } from '@tanstack/react-router';
+import { Suspense } from 'react';
+import { rootRoute } from './root.route';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { authStorage } from '@/features/auth/utils/authStorage';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { SuspenseFallback } from '@/components/common/SuspenseFallback';
+import {
+    AdminDashboard,
+    OrganizerDashboard,
+    VolunteerDashboard
+} from './lazy-components';
+
+// 3. Protected Routes Layout
+export const authenticatedLayoutRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    id: '_auth',
+    beforeLoad: ({ context }) => {
+        if (!context.auth.isAuthenticated && !context.auth.isLoading) {
+            if (!authStorage.getAccessToken()) {
+                throw redirect({
+                    to: '/signin',
+                });
+            }
+        }
+    },
+    component: () => <DashboardLayout />,
+});
+
+// 4. Dashboard Logic (Route splitting based on role)
+const DashboardRouter = () => {
+    const { user } = useAuth();
+
+    if (!user) {
+        // Show a loading or safe default state instead of a blank screen
+        return <SuspenseFallback />;
+    }
+
+    const role = user.role ?? 'VOLUNTEER';
+
+    return (
+        <Suspense fallback={<SuspenseFallback />}>
+            {role === 'ADMIN' ? (
+                <AdminDashboard />
+            ) : role === 'EVENT_ORGANIZER' ? (
+                <OrganizerDashboard />
+            ) : (
+                // Default safe dashboard for VOLUNTEER or any unexpected role
+                <VolunteerDashboard />
+            )}
+        </Suspense>
+    );
+};
+
+export const dashboardRoute = createRoute({
+    getParentRoute: () => authenticatedLayoutRoute,
+    path: '/dashboard',
+    component: DashboardRouter,
+});
+
+export const indexRoute = createRoute({
+    getParentRoute: () => authenticatedLayoutRoute,
+    path: '/',
+    beforeLoad: () => {
+        throw redirect({ to: '/dashboard' });
+    }
+});

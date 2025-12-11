@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { loginSchema } from '../schemas/loginSchema';
@@ -24,7 +24,7 @@ export function useLoginForm() {
         try {
             await login(values);
             toast.success('Login successful!');
-            navigate('/dashboard');
+            navigate({ to: '/dashboard' });
         } catch (error: unknown) {
             let errorMessage = 'Login failed. Please try again.';
             if (error instanceof Error) {

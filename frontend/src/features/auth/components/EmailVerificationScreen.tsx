@@ -1,4 +1,4 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,7 @@ export const EmailVerificationScreen = () => {
     const { status, message, userInfo } = useEmailVerification();
 
     const handleContinueToLogin = () => {
-        navigate('/signin');
+        navigate({ to: '/signin' });
     };
 
     const renderContent = () => {

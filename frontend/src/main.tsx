@@ -1,28 +1,29 @@
-// src/main.tsx
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router } from 'react-router-dom';
-import App from './App.tsx';
+import { RouterProvider } from '@tanstack/react-router';
 import './index.css';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from "@/features/auth/context/AuthProvider.tsx";
+import { router } from './router';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const queryClient = new QueryClient();
 
+// Custom wrapper to provide auth context to the router
+const AppRouter = () => {
+    const auth = useAuth();
+    return <RouterProvider router={router} context={{ auth }} />;
+};
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <Router>
-            {/* 3. Wrap everything in the QueryClientProvider */}
-            <QueryClientProvider client={queryClient}>
-                <AuthProvider>
-                    <App />
-                </AuthProvider>
-                {/* Optional: Add the devtools */}
-                <ReactQueryDevtools initialIsOpen={false} />
-            </QueryClientProvider>
-        </Router>
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+                <AppRouter />
+            </AuthProvider>
+            <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
     </React.StrictMode>
 );
