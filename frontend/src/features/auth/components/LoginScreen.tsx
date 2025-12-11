@@ -11,7 +11,7 @@ interface LoginScreenProps {
     isTabbed?: boolean;
 }
 
-export default function LoginScreen({ isTabbed = false }: LoginScreenProps) {
+export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
     const { form, onSubmit, isSubmitting } = useLoginForm();
 
     const cardContent = (

@@ -1,56 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { authService } from '@/features/auth/api/authService';
 import { fadeOnly, fadeTransition } from '@/lib/fadeAnimations';
+import { useEmailVerification } from '../hooks/useEmailVerification';
+import AnimatedPage from '@/components/common/AnimatedPage';
 
-type VerificationStatus = 'verifying' | 'success' | 'error';
-
-export default function EmailVerificationScreen() {
-    const [searchParams] = useSearchParams();
+export const EmailVerificationScreen = () => {
     const navigate = useNavigate();
-    const [status, setStatus] = useState<VerificationStatus>('verifying');
-    const [message, setMessage] = useState('');
-    const [userInfo, setUserInfo] = useState<{ name: string; email: string } | null>(null);
-
-    const token = searchParams.get('token');
-
-    useEffect(() => {
-        if (!token) {
-            setStatus('error');
-            setMessage('Invalid verification link. No token provided.');
-            return;
-        }
-
-        const verifyEmail = async () => {
-            try {
-                const response = await authService.verifyEmail(token);
-                setStatus('success');
-                setMessage(response.message || 'Email verified successfully!');
-                setUserInfo({
-                    name: response.name,
-                    email: response.email
-                });
-            } catch (error: unknown) {
-                setStatus('error');
-                let errorMessage = 'Failed to verify email. The link may be invalid or expired.';
-
-                if (error && typeof error === 'object' && 'response' in error) {
-                    const axiosError = error as { response?: { data?: { message?: string; error?: string } } };
-                    errorMessage = axiosError.response?.data?.message
-                        || axiosError.response?.data?.error
-                        || errorMessage;
-                }
-
-                setMessage(errorMessage);
-            }
-        };
-
-        verifyEmail();
-    }, [token]);
+    const { status, message, userInfo } = useEmailVerification();
 
     const handleContinueToLogin = () => {
         navigate('/signin');
@@ -154,7 +113,7 @@ export default function EmailVerificationScreen() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
+        <AnimatedPage className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
             <Card className="w-full max-w-2xl">
                 <CardHeader className="text-center">
                     <motion.div
@@ -176,7 +135,7 @@ export default function EmailVerificationScreen() {
                     {renderContent()}
                 </CardContent>
             </Card>
-        </div>
+        </AnimatedPage>
     );
-}
+};
 

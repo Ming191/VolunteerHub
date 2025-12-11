@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             navigate('/dashboard');
         } catch (error) {
-            console.log("Login failed:", error);
+            console.error("Login failed:", error);
             throw error;
         }
     }, [navigate]);
@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await authService.register(data);
             navigate('/signin');
         } catch (error) {
-            console.log("Registration failed:", error);
+            console.error("Registration failed:", error);
             throw error;
         }
     }, [navigate]);

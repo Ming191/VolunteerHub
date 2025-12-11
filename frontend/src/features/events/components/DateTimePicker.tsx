@@ -14,13 +14,13 @@ interface DateTimePickerProps {
     disablePastDates?: boolean;
 }
 
-export default function DateTimePicker({
-                                           value,
-                                           onChange,
-                                           placeholder = 'Pick a date and time',
-                                           disabled = false,
-                                           disablePastDates = true,
-                                       }: DateTimePickerProps) {
+export const DateTimePicker = ({
+    value,
+    onChange,
+    placeholder = 'Pick a date and time',
+    disabled = false,
+    disablePastDates = true,
+}: DateTimePickerProps) => {
     const handleTimeChange = (timeString: string) => {
         if (!timeString) return;
 
@@ -46,7 +46,7 @@ export default function DateTimePicker({
                 </RippleButton>
             </PopoverTrigger>
             <PopoverContent className="w-full min-w-[320px] p-0" align="start">
-            <Calendar
+                <Calendar
                     mode="single"
                     selected={value}
                     onSelect={onChange}
