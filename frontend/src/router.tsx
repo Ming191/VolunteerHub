@@ -26,6 +26,7 @@ import {
     adminReportsRoute,
     adminSettingsRoute
 } from './routes/admin.routes';
+import { blogRoute } from './routes/blog.routes';
 
 // 6. Create Router
 const routeTree = rootRoute.addChildren([
@@ -45,6 +46,7 @@ const routeTree = rootRoute.addChildren([
         myRegistrationsRoute,
         adminReportsRoute,
         adminSettingsRoute,
+        blogRoute,
     ]),
 ]);
 
