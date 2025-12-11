@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { registrationService } from "@/services/registrationService.ts";
+import { registrationService } from "@/features/volunteer/api/registrationService.ts";
 import { toast } from "sonner";
 
 const REGISTRATION_QUERY_KEY = 'my-registrations';

@@ -1,11 +1,12 @@
 import type { RegistrationResponse } from "@/api-client";
 import { useQuery } from "@tanstack/react-query";
-import { eventService } from "@/services/eventService";
+import { eventService } from "@/features/events/api/eventService";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
-import { useCancelRegistration } from "@/hooks/useRegistration";
+
 import { Loader2 } from "lucide-react";
+import {useCancelRegistration} from "@/features/volunteer/hooks/useRegistration.ts";
 
 interface RegistrationCardProps {
     registration: RegistrationResponse;

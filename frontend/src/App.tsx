@@ -31,7 +31,7 @@ import { GravityStarsBackground } from "@/components/animate-ui/components/backg
 import MyEventsPage from "@/features/events/pages/MyEventsPage";
 import { fcmService } from "@/features/notifications/services/fcmService.ts";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import MyRegistrationsScreen from "@/features/events/pages/MyRegistrationsPage";
+import MyRegistrationsScreen from "@/features/volunteer/pages/MyRegistrationsPage.tsx";
 
 // --- Placeholder Pages (to be replaced in later phases) ---
 // const Dashboard = () => <div className="text-3xl font-bold">Welcome to your Dashboard!</div>;
