@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { EventListSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorState } from '@/components/ui/api-error-state';
@@ -6,7 +7,6 @@ import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, Pagi
 import { EventCard } from '../components/EventCard';
 import { EventFilterPanel } from '../components/EventFilterPanel';
 import { AddEventModal } from '../components/AddEventModal';
-import { EventDetailSheet } from '../components/EventDetailSheet';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { useEventSearch } from '../hooks/useEventSearch';
 import type { UiEvent } from '@/types/ui-models';
@@ -28,13 +28,15 @@ export const EventListScreen = () => {
   } = useEventSearch();
 
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
-  const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
 
+
+  const navigate = useNavigate();
 
   const handleViewDetails = (event: EventResponse | UiEvent) => {
-    setSelectedEvent(event as EventResponse);
-    setIsDetailSheetOpen(true);
+    navigate({
+      to: '/blog',
+      search: { eventId: event.id.toString() },
+    });
   };
 
   return (
@@ -180,13 +182,6 @@ export const EventListScreen = () => {
             </Pagination>
           </div>
         )}
-
-        {/* Event Detail Sheet */}
-        <EventDetailSheet
-          event={selectedEvent}
-          isOpen={isDetailSheetOpen}
-          onOpenChange={setIsDetailSheetOpen}
-        />
 
         {/* Add Event Modal */}
         <AddEventModal
