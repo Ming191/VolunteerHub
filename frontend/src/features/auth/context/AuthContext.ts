@@ -1,7 +1,7 @@
-import type {LoginRequest, RegisterRequest} from "@/api-client";
-import {createContext} from "react";
+import type { LoginRequest, RegisterRequest } from "@/api-client";
+import { createContext } from "react";
 
-interface User {
+export interface User {
     userId: number;
     email: string;
     name: string;
@@ -9,7 +9,7 @@ interface User {
     isEmailVerified: boolean;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
     user: User | null;
     login: (data: LoginRequest) => Promise<void>;
     register: (data: RegisterRequest) => Promise<void>;

@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet } from '@tanstack/react-router';
 import Navbar from './Navbar';
 import { FloatingDock } from '@/components/ui/floating-dock';
 import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck } from 'lucide-react';

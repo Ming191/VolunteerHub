@@ -26,10 +26,6 @@ const StatsCard = memo(({ title, value, description, icon: Icon }: StatsCardProp
 StatsCard.displayName = 'StatsCard';
 
 export const StatsGrid = ({ stats }: { stats: AdminDashboardResponse['stats'] }) => {
-    // Memoize the mapped values to prevent unnecessary re-renders if the stats object reference changes but values rely on it.
-    // However, since stats is likely a new object from React Query every fetch, memoizing components is more important.
-    // The StatsCard is already memoized.
-
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <StatsCard
