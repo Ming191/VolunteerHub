@@ -18,7 +18,10 @@ export const useOrganizerDashboard = () => {
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
-    const handleNavigateToEvent = useCallback((eventId: number) => navigate({ to: `/events/${eventId}` }), [navigate]);
+    // Navigation to `/events/${eventId}` is disabled because no such route exists in the router configuration.
+    const handleNavigateToEvent = useCallback((_eventId: number) => {
+        // No-op: event details route is not defined. Implement modal or add route as needed.
+    }, []);
     const handleNavigateToMyEvents = useCallback(() => navigate({ to: '/my-events' }), [navigate]);
     const handleNavigateToCreateEvent = useCallback(() => navigate({ to: '/my-events' }), [navigate]); // Assuming create is on my-events or opens a modal there
     const handleNavigateToAnalytics = useCallback(() => navigate({ to: '/events' }), [navigate]);
