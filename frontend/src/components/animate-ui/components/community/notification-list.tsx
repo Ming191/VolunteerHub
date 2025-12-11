@@ -81,7 +81,7 @@ function NotificationList() {
     }
     setIsOpen(false);
     if (notification.link) {
-      navigate({ to: notification.link as any });
+      navigate({ to: notification.link });
     }
   };
 
