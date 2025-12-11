@@ -1,9 +1,10 @@
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { EventResponse } from '@/api-client';
+import {useGetRegistrationStatus} from "@/features/volunteer/hooks/useRegistration.ts";
 
 export function useEventPermissions(event: EventResponse | null) {
     const { user } = useAuth();
-
+    const { data } = useGetRegistrationStatus(event?.id);
     if (!event || !user) {
         return {
             isAdmin: false,
@@ -18,6 +19,7 @@ export function useEventPermissions(event: EventResponse | null) {
     const isOrganizer = user.role === 'EVENT_ORGANIZER';
     const isVolunteer = user.role === 'VOLUNTEER';
     const isOwner = user.userId === event.creatorId;
+    const isRegistered = isVolunteer && data?.registered
     const canRegister = isVolunteer && !event.isFull && event.isApproved;
 
     return {
@@ -25,6 +27,7 @@ export function useEventPermissions(event: EventResponse | null) {
         isOrganizer,
         isVolunteer,
         isOwner,
+        isRegistered,
         canRegister,
     };
 }

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { eventService } from '../api/eventService';
 import type { CreateEventRequest } from '@/api-client';
 import { EventForm, type EventFormValues } from './EventForm';
+import {useMemo} from "react";
 
 interface AddEventModalProps {
     open: boolean;
@@ -84,8 +85,11 @@ export const AddEventModal = ({ open, onOpenChange, onSuccess }: AddEventModalPr
             throw error;
         }
     };
+  const defaultValues = useMemo(() => ({} as Partial<EventFormValues>), []); // Stable empty object
+  const initialImages = useMemo(() => [], []); // Stable empty array
 
-    return (
+
+  return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -95,11 +99,13 @@ export const AddEventModal = ({ open, onOpenChange, onSuccess }: AddEventModalPr
                     </DialogDescription>
                 </DialogHeader>
 
-                <EventForm
-                    onSubmit={handleCreateEvent}
-                    onCancel={() => onOpenChange(false)}
-                    submitLabel="Create Event"
-                />
+              <EventForm
+                defaultValues={defaultValues} // Stable
+                initialImages={initialImages} // Stable
+                onSubmit={handleCreateEvent}
+                onCancel={() => onOpenChange(false)}
+                submitLabel="Create Event"
+              />
             </DialogContent>
         </Dialog>
     );

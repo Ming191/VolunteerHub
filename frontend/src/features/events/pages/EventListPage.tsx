@@ -11,6 +11,7 @@ import AnimatedPage from '@/components/common/AnimatedPage';
 import { useEventSearch } from '../hooks/useEventSearch';
 import type { UiEvent } from '@/types/ui-models';
 import type { EventResponse } from '@/api-client';
+import { Button } from "@/components/ui/button";
 
 export const EventListScreen = () => {
   const {
@@ -39,6 +40,11 @@ export const EventListScreen = () => {
   return (
     <AnimatedPage>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="flex justify-end mb-6">
+          <Button onClick={() => setIsAddEventModalOpen(true)}>
+            Create Event
+          </Button>
+        </div>
         {/* Filter Panel */}
         <div className="mb-8">
           <EventFilterPanel onFilterChange={handleFilterChange} initialFilters={filters} />

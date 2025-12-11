@@ -12,7 +12,7 @@ interface UseEventFormProps {
     isSubmitting?: boolean;
 }
 
-export const useEventForm = ({
+export const  useEventForm = ({
     defaultValues,
     initialImages = [],
     onSubmit,
@@ -52,7 +52,7 @@ export const useEventForm = ({
         if (initialImages) {
             setExistingImages(initialImages);
         }
-    }, [defaultValues, initialImages, form]);
+    }, [defaultValues, initialImages, ]);
 
     const validateFile = (file: File): boolean => {
         if (!file.type.startsWith('image/')) {
