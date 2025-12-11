@@ -1,10 +1,4 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -12,68 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import AnimatedPage from '@/components/common/AnimatedPage';
-
-const formSchema = z
-    .object({
-        username: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-        email: z.email({ message: 'Please enter a valid email.' }),
-        password: z
-            .string()
-            .min(8, { message: 'Password must be at least 8 characters.' })
-            .max(100, { message: 'Password must be no more than 100 characters.' })
-            .regex(/.*[A-Z].*/, { message: 'Password must contain at least one uppercase letter.' })
-            .regex(/.*[a-z].*/, { message: 'Password must contain at least one lowercase letter.' })
-            .regex(/.*\d.*/, { message: 'Password must contain at least one digit.' })
-            .regex(/.*[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-].*/, {
-                message: 'Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)'
-            }),
-        confirmPassword: z.string(),
-        role: z.enum(['VOLUNTEER', 'EVENT_ORGANIZER'], {
-            message: 'You need to select a role.',
-        }),
-        gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'], {
-            message: 'Gender is required.',
-        }),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-        message: "Passwords don't match",
-        path: ['confirmPassword'],
-    });
+import { useSignUpForm } from '../hooks/useSignUpForm';
 
 interface SignUpScreenProps {
     isTabbed?: boolean;
 }
 
 export default function SignUpScreen({ isTabbed = false }: SignUpScreenProps) {
-    const { register } = useAuth();
-    const navigate = useNavigate();
-
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            username: '',
-            email: '',
-            password: '',
-            confirmPassword: '',
-        },
-    });
-
-    const { isSubmitting } = form.formState;
-
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
-            await register(values);
-            toast.success('Registration successful!', {
-                description: 'Please check your email to verify your account.',
-            });
-            navigate('/signin');
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error && 'response' in error
-                ? ((error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Registration failed. Please try again.')
-                : 'Registration failed. Please try again.';
-            toast.error(errorMessage);
-        }
-    }
+    const { form, onSubmit, isSubmitting } = useSignUpForm();
 
     const cardContent = (
         <Card className="w-full max-w-md">
@@ -83,7 +23,7 @@ export default function SignUpScreen({ isTabbed = false }: SignUpScreenProps) {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={onSubmit} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="username"
