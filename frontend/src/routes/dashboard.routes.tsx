@@ -31,13 +31,23 @@ export const authenticatedLayoutRoute = createRoute({
 const DashboardRouter = () => {
     const { user } = useAuth();
 
-    if (!user) return null;
+    if (!user) {
+        // Show a loading or safe default state instead of a blank screen
+        return <SuspenseFallback />;
+    }
+
+    const role = user.role ?? 'VOLUNTEER';
 
     return (
         <Suspense fallback={<SuspenseFallback />}>
-            {user.role === 'ADMIN' && <AdminDashboard />}
-            {user.role === 'EVENT_ORGANIZER' && <OrganizerDashboard />}
-            {(user.role === 'VOLUNTEER' || !user.role) && <VolunteerDashboard />}
+            {role === 'ADMIN' ? (
+                <AdminDashboard />
+            ) : role === 'EVENT_ORGANIZER' ? (
+                <OrganizerDashboard />
+            ) : (
+                // Default safe dashboard for VOLUNTEER or any unexpected role
+                <VolunteerDashboard />
+            )}
         </Suspense>
     );
 };
