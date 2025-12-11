@@ -16,7 +16,7 @@ export default defineConfig({
             output: {
                 manualChunks: {
                     // Vendor chunks for better caching
-                    'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+                    'react-vendor': ['react', 'react-dom', '@tanstack/react-router'],
                     'query-vendor': ['@tanstack/react-query'],
                     'ui-vendor': ['framer-motion', 'lucide-react'],
                     'form-vendor': ['react-hook-form', 'zod'],
@@ -26,14 +26,12 @@ export default defineConfig({
         },
         chunkSizeWarningLimit: 1000,
         sourcemap: false,
-
-
     },
     optimizeDeps: {
         include: [
             'react',
             'react-dom',
-            'react-router-dom',
+            '@tanstack/react-router',
             '@tanstack/react-query',
             'framer-motion',
             'lucide-react',

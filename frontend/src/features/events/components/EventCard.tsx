@@ -21,7 +21,6 @@ interface EventCardProps<T extends UiEvent | EventResponse> {
 }
 
 export const EventCard = <T extends UiEvent | EventResponse>({ event, onViewDetails }: EventCardProps<T>) => {
-    // Helper to check if it's the new UI model (has availableSpotsText precaculated)
     const isUiEvent = (e: UiEvent | EventResponse): e is UiEvent => 'availableSpotsText' in e;
 
     const availableSpotsText = isUiEvent(event)
@@ -29,9 +28,6 @@ export const EventCard = <T extends UiEvent | EventResponse>({ event, onViewDeta
         : (event.maxParticipants ? `${event.availableSpots} spots available` : 'Unlimited spots');
 
     const hasImage = event.imageUrls && event.imageUrls.length > 0;
-
-    // safe tags access
-    // Safe tags access - handle potential Set or Array from API
     const tags = (Array.isArray(event.tags) ? event.tags : Array.from(event.tags || [])) as string[];
 
     return (

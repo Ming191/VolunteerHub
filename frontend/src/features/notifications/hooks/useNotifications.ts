@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { NotificationsApi, Configuration, type NotificationResponse } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
 import { toast } from 'sonner';
@@ -134,7 +134,7 @@ export const useNotifications = () => {
             markAsReadMutation.mutate(notification.id);
         }
         if (notification.link) {
-            navigate(notification.link);
+            navigate({ to: notification.link });
         }
     };
 

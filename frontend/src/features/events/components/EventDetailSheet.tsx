@@ -84,19 +84,12 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange }: EventDetailShe
                                 imageUrls={event.imageUrls}
                                 title={event.title}
                             />
-
                             <EventBadges event={event} />
-
                             <EventDateInfo event={event} />
-
                             <Separator />
-
                             <EventParticipation event={event} />
-
                             <Separator />
-
                             <EventDescription description={event.description} />
-
                             <EventTags tags={event.tags} />
                         </div>
 
