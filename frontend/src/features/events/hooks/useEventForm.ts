@@ -14,12 +14,12 @@ interface UseEventFormProps {
 
 export const useEventForm = ({
     defaultValues,
-    initialImages = [],
+    initialImages,
     onSubmit,
     isSubmitting: externalIsSubmitting
 }: UseEventFormProps) => {
     const [files, setFiles] = useState<File[]>([]);
-    const [existingImages, setExistingImages] = useState<string[]>(initialImages);
+    const [existingImages, setExistingImages] = useState<string[]>(initialImages || []);
     const { data: eventTags, isLoading: tagsLoading } = useGetEventTags();
 
     const form = useForm<EventFormValues>({
