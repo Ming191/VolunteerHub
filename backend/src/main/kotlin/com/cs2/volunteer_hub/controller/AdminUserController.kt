@@ -40,8 +40,12 @@ class AdminUserController(private val adminService: AdminService) {
         @RequestParam(defaultValue = "asc")
         direction: String
     ): ResponseEntity<PageUserResponse> {
+        val safePage = page.coerceAtLeast(0)
+        val safeSize = size.coerceIn(1, 100)
+        val safeDirection =
+            runCatching { Sort.Direction.fromString(direction) }.getOrDefault(Sort.Direction.ASC)
         val pageable =
-            PageRequest.of(page, size, Sort.Direction.fromString(direction.uppercase()), sort)
+            PageRequest.of(safePage, safeSize, safeDirection, sort)
         val users = adminService.getAllUsers(pageable)
         return ResponseEntity.ok(PageUserResponse.from(users))
     }
