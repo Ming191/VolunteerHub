@@ -22,7 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableMethodSecurity
 class SecurityConfig {
     @Bean
-    fun passwordEncoder() : PasswordEncoder {
+    fun passwordEncoder(): PasswordEncoder {
         return BCryptPasswordEncoder()
     }
 
@@ -38,36 +38,51 @@ class SecurityConfig {
         configuration.allowedOrigins = listOf("http://localhost:5173", "http://localhost:5174")
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
+        configuration.exposedHeaders = listOf("Content-Disposition")
         configuration.allowCredentials = true
         configuration.maxAge = 3600L
-        
+
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)
         return source
     }
 
     @Bean
-    fun securityFilterChain(http: HttpSecurity, jwtAuthenticationFilter: JwtAuthenticationFilter): SecurityFilterChain {
+    fun securityFilterChain(
+            http: HttpSecurity,
+            jwtAuthenticationFilter: JwtAuthenticationFilter
+    ): SecurityFilterChain {
         http
-            .csrf { it.disable() }
-            .cors { cors -> cors.configurationSource(corsConfigurationSource()) }  // Enable CORS with explicit configuration
-            .sessionManagement { session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            }
-            .authorizeHttpRequests { auth ->
-                auth
-                    .requestMatchers("/api/auth/**").permitAll()
-                    .requestMatchers("/api/events/*").permitAll()
-                    .requestMatchers("/api/enums/**").permitAll()
-                    .requestMatchers(
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/swagger-ui.html",
-                        "/actuator/**"
-                    ).permitAll()
-                    .anyRequest().authenticated()
-            }
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+                // CSRF protection is disabled because this application uses stateless JWT authentication for all endpoints.
+                // Since JWTs are sent in the Authorization header and not as cookies, CSRF attacks are not a concern.
+                .csrf { it.disable() }
+                .cors { cors ->
+                    cors.configurationSource(corsConfigurationSource())
+                } // Enable CORS with explicit configuration
+                .sessionManagement { session ->
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                }
+                .authorizeHttpRequests { auth ->
+                    auth.requestMatchers("/api/auth/**")
+                            .permitAll()
+                            .requestMatchers("/api/events/*")
+                            .permitAll()
+                            .requestMatchers("/api/enums/**")
+                            .permitAll()
+                            .requestMatchers(
+                                    "/swagger-ui/**",
+                                    "/v3/api-docs/**",
+                                    "/swagger-ui.html",
+                                    "/actuator/**"
+                            )
+                            .permitAll()
+                            .anyRequest()
+                            .authenticated()
+                }
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter::class.java
+                )
 
         return http.build()
     }
