@@ -50,7 +50,7 @@ export const EventGrid = ({
                     <Award className="h-8 w-8 text-muted-foreground opacity-50" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">You have no events</h3>
-                <p className="text-muted-foreground max-w-md">Creates events will appear here.</p>
+                <p className="text-muted-foreground max-w-md">Created events will appear here.</p>
             </div>
         );
     }
