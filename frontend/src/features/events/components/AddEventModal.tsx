@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/animate-ui/components/radix/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/animate-ui/components/radix/dialog';
 import { eventService } from '../api/eventService';
 import type { CreateEventRequest } from '@/api-client';
 import { EventForm, type EventFormValues } from './EventForm';
+import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
+import { Loader2 } from 'lucide-react';
 
 interface AddEventModalProps {
     open: boolean;
@@ -15,6 +18,7 @@ const formatDateForBackend = (date: Date): string => {
 };
 
 export const AddEventModal = ({ open, onOpenChange, onSuccess }: AddEventModalProps) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleError = (error: unknown): void => {
         const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
@@ -51,6 +55,7 @@ export const AddEventModal = ({ open, onOpenChange, onSuccess }: AddEventModalPr
     };
 
     const handleCreateEvent = async (values: EventFormValues, files: File[]) => {
+        setIsSubmitting(true);
         try {
             const eventData = {
                 title: values.title,
@@ -79,27 +84,51 @@ export const AddEventModal = ({ open, onOpenChange, onSuccess }: AddEventModalPr
             }
         } catch (error) {
             handleError(error);
-            // Re-throw to let EventForm know it failed (if it handles isSubmitting state internally)
-            // But EventForm uses useForm's isSubmitting which depends on promise resolution.
-            throw error;
+            // Don't rethrow here as we handle the error via toast.
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
+            <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+                <DialogHeader className="px-6 py-4 border-b shrink-0">
                     <DialogTitle>Create New Event</DialogTitle>
                     <DialogDescription>
                         Fill in the details below to create a new volunteer event. Events require admin approval before being published.
                     </DialogDescription>
                 </DialogHeader>
 
-                <EventForm
-                    onSubmit={handleCreateEvent}
-                    onCancel={() => onOpenChange(false)}
-                    submitLabel="Create Event"
-                />
+                <div className="flex-1 overflow-y-auto px-6 py-6">
+                    <EventForm
+                        onSubmit={handleCreateEvent}
+                        onCancel={() => onOpenChange(false)}
+                        submitLabel="Create Event"
+                        formId="create-event-form"
+                        hideActions={true}
+                        isSubmitting={isSubmitting}
+                    />
+                </div>
+
+                <DialogFooter className="px-6 py-4 border-t shrink-0 bg-background">
+                    <RippleButton
+                        type="button"
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                        disabled={isSubmitting}
+                    >
+                        Cancel
+                    </RippleButton>
+                    <RippleButton
+                        type="submit"
+                        form="create-event-form"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Create Event
+                    </RippleButton>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

@@ -20,6 +20,8 @@ interface EventFormProps {
     onCancel: () => void;
     submitLabel: string;
     isSubmitting?: boolean;
+    formId?: string;
+    hideActions?: boolean;
 }
 
 export const EventForm = (props: EventFormProps) => {
@@ -36,11 +38,11 @@ export const EventForm = (props: EventFormProps) => {
         MAX_IMAGES
     } = useEventForm(props);
 
-    const { onCancel, submitLabel } = props;
+    const { onCancel, submitLabel, formId, hideActions } = props;
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <form id={formId} onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                 <FormField
                     control={form.control}
                     name="title"
@@ -271,20 +273,22 @@ export const EventForm = (props: EventFormProps) => {
                     )}
                 </div>
 
-                <div className="flex justify-end gap-2">
-                    <RippleButton
-                        type="button"
-                        variant="outline"
-                        onClick={onCancel}
-                        disabled={isSubmitting}
-                    >
-                        Cancel
-                    </RippleButton>
-                    <RippleButton type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {submitLabel}
-                    </RippleButton>
-                </div>
+                {!hideActions && (
+                    <div className="flex justify-end gap-2">
+                        <RippleButton
+                            type="button"
+                            variant="outline"
+                            onClick={onCancel}
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </RippleButton>
+                        <RippleButton type="submit" disabled={isSubmitting}>
+                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {submitLabel}
+                        </RippleButton>
+                    </div>
+                )}
             </form>
         </Form>
     );

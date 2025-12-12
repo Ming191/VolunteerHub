@@ -12,8 +12,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SmartPagination } from '@/components/common/SmartPagination';
 import AnimatedPage from '@/components/common/AnimatedPage';
-import { TableRowSkeleton } from '@/components/ui/loaders';
+import { UserListItemSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import { useAdminUsers } from '../hooks/useAdminUsers';
@@ -24,6 +25,7 @@ export const AdminUsers = () => {
     const {
         users,
         isLoading,
+        isFetching,
         isError,
         error,
         refetch,
@@ -69,13 +71,13 @@ export const AdminUsers = () => {
                         {isError ? (
                             <ApiErrorState error={error} onRetry={refetch} />
                         ) : isLoading ? (
-                            <div className="space-y-4">
-                                {[...Array(5)].map((_, i) => (
-                                    <TableRowSkeleton key={i} />
+                            <div className="space-y-1">
+                                {[...Array(20)].map((_, i) => (
+                                    <UserListItemSkeleton key={i} />
                                 ))}
                             </div>
                         ) : (
-                            <div className="space-y-1">
+                            <div className={`space-y-1 transition-opacity duration-200 ${isFetching ? 'opacity-50 pointer-events-none' : ''}`}>
                                 {users.map((user) => (
                                     <div
                                         key={user.id}
@@ -148,29 +150,12 @@ export const AdminUsers = () => {
                             </div>
                         )}
 
-                        <div className="flex items-center justify-between mt-4 border-t pt-4">
-                            <div className="text-sm text-muted-foreground">
-                                Page {page + 1} of {totalPages || 1}
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                                    disabled={page === 0 || isLoading}
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(p => p + 1)}
-                                    disabled={page >= (totalPages - 1) || isLoading}
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </div>
+                        <SmartPagination
+                            currentPage={page + 1}
+                            totalPages={totalPages || 0}
+                            onPageChange={(p) => setPage(p - 1)}
+                            className="mt-4 border-t pt-4"
+                        />
                     </CardContent>
                 </Card>
             </div>

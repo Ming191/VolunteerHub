@@ -23,7 +23,7 @@ export const useOrganizerDashboard = () => {
         // No-op: event details route is not defined. Implement modal or add route as needed.
     }, []);
     const handleNavigateToMyEvents = useCallback(() => navigate({ to: '/my-events' }), [navigate]);
-    const handleNavigateToCreateEvent = useCallback(() => navigate({ to: '/my-events' }), [navigate]); // Assuming create is on my-events or opens a modal there
+    const handleNavigateToCreateEvent = useCallback(() => navigate({ to: '/my-events', search: { action: 'create' } }), [navigate]);
     const handleNavigateToAnalytics = useCallback(() => navigate({ to: '/events' }), [navigate]);
 
     return {
