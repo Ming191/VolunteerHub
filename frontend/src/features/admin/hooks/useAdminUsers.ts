@@ -15,6 +15,8 @@ export const useAdminUsers = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
     const queryClient = useQueryClient();
+    const [page, setPage] = useState(0);
+    const pageSize = 20;
 
     // Fetch users
     const {
@@ -24,19 +26,27 @@ export const useAdminUsers = () => {
         error,
         refetch
     } = useQuery<PageUserResponse, Error>({
-        queryKey: ['adminUsers', debouncedSearchQuery],
+        queryKey: ['adminUsers', debouncedSearchQuery, page],
         queryFn: async () => {
-            const response = await axiosInstance.get(`/admin/users?search=${debouncedSearchQuery}`);
+            const response = await axiosInstance.get(`/api/admin/users`, {
+                params: {
+                    q: debouncedSearchQuery,
+                    page: page,
+                    size: pageSize
+                }
+            });
             return response.data;
         },
     });
 
     const users = usersPage?.content || [];
+    const totalPages = usersPage?.totalPages || 0;
+    const totalElements = usersPage?.totalElements || 0;
 
     // Mutation for locking/unlocking users
     const toggleLockMutation = useMutation<void, Error, { userId: number; isLocked: boolean }>({
         mutationFn: async ({ userId, isLocked }) => {
-            await axiosInstance.patch(`/admin/users/${userId}/lock`, { isLocked: !isLocked });
+            await axiosInstance.patch(`/api/admin/users/${userId}/lock`, { isLocked: !isLocked });
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
@@ -59,6 +69,10 @@ export const useAdminUsers = () => {
         refetch,
         searchQuery,
         setSearchQuery,
-        handleToggleLock
+        handleToggleLock,
+        page,
+        setPage,
+        totalPages,
+        totalElements
     };
 };

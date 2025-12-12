@@ -28,20 +28,21 @@ class PrometheusClientService(private val restTemplate: RestTemplate) {
     @TimeLimiter(name = "prometheus")
     fun query(query: String): CompletableFuture<PrometheusResponse?> {
         return CompletableFuture.supplyAsync(
-                {
-                    try {
-                        val url = UriComponentsBuilder.fromUriString("$prometheusUrl/api/v1/query")
-                                    .queryParam("query", query)
-                                    .build()
-                                    .toUri()
-                        logger.debug("Querying Prometheus: $query")
-                        restTemplate.getForObject(url, PrometheusResponse::class.java)
-                    } catch (e: Exception) {
-                        logger.error("Failed to query Prometheus: ${e.message}", e)
-                        null
-                    }
-                },
-                executor
+            {
+                try {
+                    val url =
+                        UriComponentsBuilder.fromUriString("$prometheusUrl/api/v1/query")
+                            .queryParam("query", query)
+                            .build()
+                            .toUri()
+                    logger.debug("Querying Prometheus: $query")
+                    restTemplate.getForObject(url, PrometheusResponse::class.java)
+                } catch (e: Exception) {
+                    logger.error("Failed to query Prometheus: ${e.message}", e)
+                    null
+                }
+            },
+            executor
         )
     }
 
@@ -51,7 +52,7 @@ class PrometheusClientService(private val restTemplate: RestTemplate) {
             throwable: Throwable
     ): CompletableFuture<PrometheusResponse?> {
         logger.warn(
-                "Prometheus circuit breaker activated for query: $query. Reason: ${throwable.message}"
+            "Prometheus circuit breaker activated for query: $query. Reason: ${throwable.message}"
         )
         return CompletableFuture.completedFuture(null)
     }
@@ -73,27 +74,27 @@ class PrometheusClientService(private val restTemplate: RestTemplate) {
             step: String = "15s"
     ): CompletableFuture<PrometheusResponse?> {
         return CompletableFuture.supplyAsync(
-                {
-                    try {
-                        val url =
-                                UriComponentsBuilder.fromUriString(
-                                                "$prometheusUrl/api/v1/query_range"
-                                        )
-                                        .queryParam("query", query)
-                                        .queryParam("start", start)
-                                        .queryParam("end", end)
-                                        .queryParam("step", step)
-                                        .build()
-                                        .toUri()
+            {
+                try {
+                    val url =
+                        UriComponentsBuilder.fromUriString(
+                            "$prometheusUrl/api/v1/query_range"
+                        )
+                            .queryParam("query", query)
+                            .queryParam("start", start)
+                            .queryParam("end", end)
+                            .queryParam("step", step)
+                            .build()
+                            .toUri()
 
-                        logger.debug("Querying Prometheus (range): $query")
-                        restTemplate.getForObject(url, PrometheusResponse::class.java)
-                    } catch (e: Exception) {
-                        logger.error("Failed to query Prometheus range: ${e.message}", e)
-                        null
-                    }
-                },
-                executor
+                    logger.debug("Querying Prometheus (range): $query")
+                    restTemplate.getForObject(url, PrometheusResponse::class.java)
+                } catch (e: Exception) {
+                    logger.error("Failed to query Prometheus range: ${e.message}", e)
+                    null
+                }
+            },
+            executor
         )
     }
 
@@ -106,7 +107,7 @@ class PrometheusClientService(private val restTemplate: RestTemplate) {
             throwable: Throwable
     ): CompletableFuture<PrometheusResponse?> {
         logger.warn(
-                "Prometheus circuit breaker activated for range query: $query. Reason: ${throwable.message}"
+            "Prometheus circuit breaker activated for range query: $query. Reason: ${throwable.message}"
         )
         return CompletableFuture.completedFuture(null)
     }
@@ -114,7 +115,13 @@ class PrometheusClientService(private val restTemplate: RestTemplate) {
     /** Extract a single numeric value from Prometheus response */
     fun extractValue(response: PrometheusResponse?): Double {
         return try {
-            response?.data?.result?.firstOrNull()?.value?.get(1)?.toString()?.toDouble() ?: 0.0
+            val valueStr = response?.data?.result?.firstOrNull()?.value?.get(1)?.toString()
+            when (valueStr) {
+                "+Inf", "Inf" -> Double.POSITIVE_INFINITY
+                "-Inf" -> Double.NEGATIVE_INFINITY
+                "NaN" -> Double.NaN
+                else -> valueStr?.toDouble() ?: 0.0
+            }
         } catch (e: Exception) {
             logger.warn("Failed to extract value from Prometheus response: ${e.message}")
             0.0

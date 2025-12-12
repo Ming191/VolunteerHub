@@ -8,13 +8,13 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import java.time.LocalDateTime
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
-import java.time.LocalDateTime
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -24,70 +24,97 @@ class AdminUserController(private val adminService: AdminService) {
 
     @Operation(
         summary = "Get all users",
-        description = "Retrieve all users in the system",
+        description = "Retrieve all users in the system (Paginated)",
         security = [SecurityRequirement(name = "bearerAuth")]
     )
     @GetMapping
-    fun getAllUsers(): ResponseEntity<List<UserResponse>> {
-        val users = adminService.getAllUsers()
-        return ResponseEntity.ok(users)
+    fun getAllUsers(
+        @Parameter(description = "Page number (0-based)")
+        @RequestParam(defaultValue = "0")
+        page: Int,
+        @Parameter(description = "Page size") @RequestParam(defaultValue = "20") size: Int,
+        @Parameter(description = "Sort field")
+        @RequestParam(defaultValue = "createdAt")
+        sort: String,
+        @Parameter(description = "Sort direction (asc or desc)")
+        @RequestParam(defaultValue = "asc")
+        direction: String
+    ): ResponseEntity<PageUserResponse> {
+        val pageable =
+            PageRequest.of(page, size, Sort.Direction.fromString(direction.uppercase()), sort)
+        val users = adminService.getAllUsers(pageable)
+        return ResponseEntity.ok(PageUserResponse.from(users))
     }
 
     /**
-     * Search and filter users with multiple criteria
-     * Example: GET /api/admin/users/search?q=john&role=VOLUNTEER&verified=true&page=0&size=20
+     * Search and filter users with multiple criteria Example: GET
+     * /api/admin/users/search?q=john&role=VOLUNTEER&verified=true&page=0&size=20
      */
     @Operation(
         summary = "Search and filter users",
-        description = "Search users by text (name, email, phone), filter by role, verification status, lock status, location, and registration date range. Supports pagination.",
+        description =
+            "Search users by text (name, email, phone), filter by role, verification status, lock status, location, and registration date range. Supports pagination.",
         security = [SecurityRequirement(name = "bearerAuth")]
     )
     @GetMapping("/search")
     fun searchUsers(
         @Parameter(description = "Search text (searches name, email, phone)")
-        @RequestParam(required = false) q: String?,
+        @RequestParam(required = false)
+        q: String?,
         @Parameter(description = "Filter by user role")
-        @RequestParam(required = false) role: Role?,
+        @RequestParam(required = false)
+        role: Role?,
         @Parameter(description = "Filter by email verification status")
-        @RequestParam(required = false) verified: Boolean?,
+        @RequestParam(required = false)
+        verified: Boolean?,
         @Parameter(description = "Filter by account lock status")
-        @RequestParam(required = false) locked: Boolean?,
+        @RequestParam(required = false)
+        locked: Boolean?,
         @Parameter(description = "Filter by location")
-        @RequestParam(required = false) location: String?,
-        @Parameter(description = "Filter users registered after this date (ISO format: yyyy-MM-dd'T'HH:mm:ss)")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) registeredAfter: LocalDateTime?,
-        @Parameter(description = "Filter users registered before this date (ISO format: yyyy-MM-dd'T'HH:mm:ss)")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) registeredBefore: LocalDateTime?,
+        @RequestParam(required = false)
+        location: String?,
+        @Parameter(
+            description =
+                "Filter users registered after this date (ISO format: yyyy-MM-dd'T'HH:mm:ss)"
+        )
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+        registeredAfter: LocalDateTime?,
+        @Parameter(
+            description =
+                "Filter users registered before this date (ISO format: yyyy-MM-dd'T'HH:mm:ss)"
+        )
+        @RequestParam(required = false)
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+        registeredBefore: LocalDateTime?,
         @Parameter(description = "Page number (0-based)")
-        @RequestParam(defaultValue = "0") page: Int,
-        @Parameter(description = "Page size")
-        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "0")
+        page: Int,
+        @Parameter(description = "Page size") @RequestParam(defaultValue = "20") size: Int,
         @Parameter(description = "Sort field")
-        @RequestParam(defaultValue = "createdAt") sort: String,
+        @RequestParam(defaultValue = "createdAt")
+        sort: String,
         @Parameter(description = "Sort direction (asc or desc)")
-        @RequestParam(defaultValue = "asc") direction: String
+        @RequestParam(defaultValue = "asc")
+        direction: String
     ): ResponseEntity<PageUserResponse> {
-        val pageable = PageRequest.of(
-            page,
-            size,
-            Sort.Direction.fromString(direction.uppercase()),
-            sort
-        )
+        val pageable =
+            PageRequest.of(page, size, Sort.Direction.fromString(direction.uppercase()), sort)
 
-        val users = adminService.searchUsers(
-            searchText = q,
-            role = role,
-            verified = verified,
-            locked = locked,
-            location = location,
-            registeredAfter = registeredAfter,
-            registeredBefore = registeredBefore,
-            pageable = pageable
-        )
+        val users =
+            adminService.searchUsers(
+                searchText = q,
+                role = role,
+                verified = verified,
+                locked = locked,
+                location = location,
+                registeredAfter = registeredAfter,
+                registeredBefore = registeredBefore,
+                pageable = pageable
+            )
 
         return ResponseEntity.ok(PageUserResponse.from(users))
     }
-
 
     @Operation(
         summary = "Lock user account",
