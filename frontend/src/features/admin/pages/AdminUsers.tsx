@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Mail, MoreVertical, Lock, Unlock } from 'lucide-react';
+import { Search, Mail, MoreVertical, Lock, Unlock, Download } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,7 +34,8 @@ export const AdminUsers = () => {
         handleToggleLock,
         page,
         setPage,
-        totalPages
+        totalPages,
+        handleExportUsers
     } = useAdminUsers();
 
     const getRoleBadgeVariant = (role: string): BadgeVariant => {
@@ -56,14 +57,20 @@ export const AdminUsers = () => {
                     <CardHeader>
                         <CardTitle>User Management</CardTitle>
                         <CardDescription>Manage users, their roles, and lock status.</CardDescription>
-                        <div className="relative mt-4">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search users by name or email..."
-                                className="pl-9"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                        <div className="flex items-center gap-4 mt-4">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search users by name or email..."
+                                    className="pl-9"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <Button variant="outline" onClick={handleExportUsers}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Export CSV
+                            </Button>
                         </div>
                     </CardHeader>
 

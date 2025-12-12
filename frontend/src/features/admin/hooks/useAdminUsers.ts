@@ -63,6 +63,33 @@ export const useAdminUsers = () => {
         toggleLockMutation.mutate({ userId, isLocked });
     };
 
+    const handleExportUsers = async () => {
+        try {
+            const response = await axiosInstance.get('/api/admin/export/users.csv', {
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+            const link = document.createElement('a');
+            link.href = url;
+            const contentDisposition = response.headers['content-disposition'];
+            let fileName = 'users.csv';
+            if (contentDisposition) {
+                const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (fileNameMatch && fileNameMatch.length === 2)
+                    fileName = fileNameMatch[1];
+            }
+
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url); // Cleanup
+        } catch (error) {
+            console.error('Failed to export users:', error);
+            toast.error('Failed to export users');
+        }
+    };
+
     return {
         users,
         isLoading,
@@ -73,6 +100,7 @@ export const useAdminUsers = () => {
         searchQuery,
         setSearchQuery,
         handleToggleLock,
+        handleExportUsers,
         page,
         setPage,
         totalPages,
