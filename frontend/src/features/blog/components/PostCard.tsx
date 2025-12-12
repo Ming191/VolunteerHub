@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import type { PostResponse, CommentResponse } from '@/features/blog/api/blogService.ts';
 import { blogService } from '@/features/blog/api/blogService.ts';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
@@ -9,12 +8,35 @@ import { Textarea } from '@/components/ui/textarea.tsx';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils.ts';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import type { CommentResponse, PostResponse } from "@/api-client";
+import { userService } from '@/features/users/api/userService';
 
 interface PostCardProps {
     post: PostResponse;
 }
+
+const CommentItem = ({ comment }: { comment: CommentResponse }) => {
+    const { data: author } = useQuery({
+        queryKey: ['user', comment.author.id],
+        queryFn: () => userService.getUserById(comment.author.id),
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+
+    return (
+        <div className="flex gap-3">
+            <Avatar className="h-8 w-8">
+                <AvatarImage src={author?.profilePictureUrl} />
+                <AvatarFallback>{comment.author.name[0]}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 bg-muted p-2 rounded-lg rounded-tl-none text-sm">
+                <span className="font-semibold block text-xs mb-1">{comment.author.name}</span>
+                <p>{comment.content}</p>
+            </div>
+        </div>
+    );
+};
 
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     const [showComments, setShowComments] = useState(false);
@@ -24,6 +46,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     const [likesCount, setLikesCount] = useState(post.totalLikes);
     const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
     const [comments, setComments] = useState<CommentResponse[]>([]);
+
+    const { data: author } = useQuery({
+        queryKey: ['user', post.author.id],
+        queryFn: () => userService.getUserById(post.author.id),
+        staleTime: 1000 * 60 * 5,
+    });
 
     const likeMutation = useMutation({
         mutationFn: () => blogService.toggleLike(post.id),
@@ -82,7 +110,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <Card className="w-full mb-4 animate-in fade-in zoom-in-95 duration-300">
             <CardHeader className="flex flex-row items-center gap-4 p-4">
                 <Avatar>
-                    <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
+                    <AvatarImage src={author?.profilePictureUrl} alt={post.author.name} />
                     <AvatarFallback>{post.author.name[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col flex-1">
@@ -136,16 +164,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     <Separator className="mb-4" />
                     <div className="space-y-4 mb-4">
                         {comments.map((comment) => (
-                            <div key={comment.id} className="flex gap-3">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={comment.author.profilePictureUrl} />
-                                    <AvatarFallback>{comment.author.name[0]}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 bg-muted p-2 rounded-lg rounded-tl-none text-sm">
-                                    <span className="font-semibold block text-xs mb-1">{comment.author.name}</span>
-                                    <p>{comment.content}</p>
-                                </div>
-                            </div>
+                            <CommentItem key={comment.id} comment={comment} />
                         ))}
                     </div>
                     <div className="flex gap-2 items-center">
