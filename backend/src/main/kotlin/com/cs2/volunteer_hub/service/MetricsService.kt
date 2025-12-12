@@ -131,7 +131,7 @@ class MetricsService(private val prometheusClient: PrometheusClientService) {
             )
 
         // If max is -1 (undefined) or 0, use committed as effective max
-        val effectiveMaxBytes = if (memoryMaxBytes > 0) memoryMaxBytes else memoryCommittedBytes
+        val effectiveMaxBytes = if (memoryMaxBytes > 0 && memoryMaxBytes.isFinite()) memoryMaxBytes else memoryCommittedBytes
         val memoryMaxMB = effectiveMaxBytes / (1024 * 1024)
 
         // Memory usage percentage
