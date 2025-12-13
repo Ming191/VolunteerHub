@@ -12,7 +12,9 @@ data class PostRequest(
 
 data class AuthorResponse(
     val id: Long,
-    val name: String
+    val name: String,
+    val profilePictureUrl: String?,
+    val bio: String?
 )
 
 data class PostResponse(

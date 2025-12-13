@@ -15,7 +15,11 @@ class CommentMapper {
             id = comment.id,
             content = comment.content,
             createdAt = comment.createdAt,
-            author = AuthorResponse(id = comment.author.id, name = comment.author.name),
+            author = AuthorResponse(
+              id = comment.author.id,
+              name = comment.author.name,
+              profilePictureUrl = comment.author.profilePictureUrl,
+              bio = comment.author.bio),
             parentCommentId = comment.parentComment?.id,
             replyCount = comment.replies.size,
             replies = emptyList()
@@ -34,7 +38,11 @@ class CommentMapper {
             id = comment.id,
             content = comment.content,
             createdAt = comment.createdAt,
-            author = AuthorResponse(id = comment.author.id, name = comment.author.name),
+            author = AuthorResponse(
+              id = comment.author.id,
+              name = comment.author.name,
+              profilePictureUrl = comment.author.profilePictureUrl,
+              bio = comment.author.bio),
             parentCommentId = comment.parentComment?.id,
             replyCount = comment.replies.size,
             replies = replies

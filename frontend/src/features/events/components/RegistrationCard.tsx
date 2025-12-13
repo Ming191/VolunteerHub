@@ -3,10 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { eventService } from "@/features/events/api/eventService";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 
 import { Loader2 } from "lucide-react";
-import {useCancelRegistration} from "@/features/volunteer/hooks/useRegistration.ts";
+import { useCancelRegistration } from "@/features/volunteer/hooks/useRegistration.ts";
 
 interface RegistrationCardProps {
     registration: RegistrationResponse;
@@ -31,7 +31,7 @@ export function RegistrationCard({ registration, onClick }: RegistrationCardProp
 
     const canCancel = isApproved && isUpcoming;
 
-    const handleCancel = (e: React.MouseEvent) => {
+    const handleCancel = (e: MouseEvent) => {
         e.stopPropagation();
         cancelMutation.mutate(registration.id, {
             onSuccess: () => {

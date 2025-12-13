@@ -31,7 +31,7 @@ export const blogService = {
         formData.append('request', requestBlob);
         if (files && files.length > 0) {
           files.forEach(file => {
-            // Key 'files' phải khớp với @RequestPart("files")
+            // Key 'files' must match @RequestPart("files") in the backend
             formData.append('files', file);
           });
         }

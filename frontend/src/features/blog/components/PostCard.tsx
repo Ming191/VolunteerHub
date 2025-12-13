@@ -9,26 +9,19 @@ import { Dialog, DialogContent } from '@/components/ui/dialog.tsx'; // Import Di
 import { Heart, MessageCircle, Share2, MoreHorizontal, Send, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils.ts';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { CommentResponse, PostResponse } from "@/api-client";
-import { userService } from '@/features/users/api/userService';
 
 interface PostCardProps {
   post: PostResponse;
 }
 
 const CommentItem = ({ comment }: { comment: CommentResponse }) => {
-  const { data: author } = useQuery({
-    queryKey: ['user', comment.author.id],
-    queryFn: () => userService.getUserById(comment.author.id),
-    staleTime: 1000 * 60 * 5,
-  });
-
   return (
     <div className="flex gap-3">
       <Avatar className="h-8 w-8">
-        <AvatarImage src={author?.profilePictureUrl} />
+        <AvatarImage src={comment.author.profilePictureUrl} />
         <AvatarFallback>{comment.author.name[0]}</AvatarFallback>
       </Avatar>
       <div className="flex-1 bg-muted p-2 rounded-lg rounded-tl-none text-sm">
@@ -50,26 +43,22 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [likesCount, setLikesCount] = useState(post.totalLikes);
   const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
   const [comments, setComments] = useState<CommentResponse[]>([]);
-
-  const { data: author } = useQuery({
-    queryKey: ['user', post.author.id],
-    queryFn: () => userService.getUserById(post.author.id),
-    staleTime: 1000 * 60 * 5,
-  });
+  const [commentsCount, setCommentsCount] = useState(post.totalComments);
 
   // ... (Giữ nguyên các logic likeMutation, commentMutation như cũ)
   const likeMutation = useMutation({
     mutationFn: () => blogService.toggleLike(post.id),
     onMutate: async () => {
       const previousLiked = isLiked;
+      const previousLikesCount = likesCount;
       setIsLiked(!previousLiked);
       setLikesCount(prev => previousLiked ? prev - 1 : prev + 1);
-      return { previousLiked };
+      return { previousLiked, previousLikesCount };
     },
     onError: (err, newTodo, context) => {
       if (context) {
         setIsLiked(context.previousLiked);
-        setLikesCount(post.totalLikes);
+        setLikesCount(context.previousLikesCount);
       }
       toast.error("Failed to update like");
     },
@@ -79,6 +68,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     mutationFn: (content: string) => blogService.addComment(post.id, content),
     onSuccess: (newCommentData) => {
       setComments(prev => [...prev, newCommentData]);
+      setCommentsCount(prev => prev + 1);
       setNewComment('');
     },
     onError: () => {
@@ -91,6 +81,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       try {
         const fetchedComments = await blogService.getComments(post.id);
         setComments(fetchedComments);
+        setCommentsCount(fetchedComments.length);
       } catch (e) {
         console.error(e);
       }
@@ -128,7 +119,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <Card className="w-full mb-4 animate-in fade-in zoom-in-95 duration-300">
         <CardHeader className="flex flex-row items-center gap-4 p-4">
           <Avatar>
-            <AvatarImage src={author?.profilePictureUrl} alt={post.author.name} />
+            <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
             <AvatarFallback>{post.author.name[0]}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col flex-1">
@@ -180,7 +171,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   {images.length > 2 && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                             <span className="text-white text-2xl font-bold">
-                                                +{images.length - 1}
+                                                +{images.length - 2}
                                             </span>
                     </div>
                   )}
@@ -210,7 +201,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             onClick={handleExpandComments}
           >
             <MessageCircle className="h-4 w-4" />
-            <span>{post.totalComments || comments.length} Comments</span>
+            <span>{commentsCount} Comments</span>
           </Button>
           <Button variant="ghost" size="sm" className="flex items-center gap-2" title="Feature is in developing">
             <Share2 className="h-4 w-4" />
