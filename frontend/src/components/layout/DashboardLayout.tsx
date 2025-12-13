@@ -1,7 +1,7 @@
 import { Outlet } from '@tanstack/react-router';
 import Navbar from './Navbar';
 import { FloatingDock } from '@/components/ui/floating-dock';
-import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const DashboardLayout = () => {
@@ -23,11 +23,6 @@ const DashboardLayout = () => {
             icon: <UserCog className="h-full w-full" />,
             href: '/my-events',
         }] : []),
-        {
-            title: 'Community',
-            icon: <MessageSquare className="h-full w-full" />,
-            href: '/blog',
-        },
         ...(user?.role === 'ADMIN' ? [{
             title: 'Admin Panel',
             icon: <ShieldCheck className="h-full w-full" />,

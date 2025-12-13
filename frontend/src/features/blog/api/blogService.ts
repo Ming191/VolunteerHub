@@ -1,5 +1,5 @@
 import axiosInstance from '@/utils/axiosInstance';
-import {type CommentRequest, CommentsApi, Configuration, LikesApi, PostsApi} from "@/api-client";
+import {type CommentRequest, CommentsApi, Configuration, LikesApi, type PostResponse, PostsApi} from "@/api-client";
 
 const config = new Configuration({ basePath: '' });
 const postsApi = new PostsApi(config, undefined, axiosInstance);
@@ -21,15 +21,28 @@ export const blogService = {
 
     // Create Post for Event
     createPost: async (eventId: number, content: string, files?: File[]) => {
+        const formData = new FormData();
         const postRequestPayload = {
           content,
         }
+        const requestBlob = new Blob([JSON.stringify(postRequestPayload)], {
+          type: 'application/json'
+        });
+        formData.append('request', requestBlob);
+        if (files && files.length > 0) {
+          files.forEach(file => {
+            // Key 'files' phải khớp với @RequestPart("files")
+            formData.append('files', file);
+          });
+        }
 
-        const response = await postsApi.createPostForEvent({
-          eventId: eventId,
-          request: postRequestPayload,
-          files: files,
-        })
+        const url = `api/posts/event/${eventId}`;
+
+        const response = await axiosInstance.post<PostResponse>(url, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
         return response.data;
     },
 
