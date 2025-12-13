@@ -44,33 +44,32 @@ class ExportService(
     }
 
     fun writeUsersToCsv(writer: Writer) {
-        userRepository.findAllByCustomStream().use { users ->
-            CSVPrinter(writer, CSVFormat.DEFAULT).use { csvPrinter ->
-                csvPrinter.printRecord(
-                    "ID",
-                    "Name",
-                    "Email",
-                    "Phone",
-                    "Role",
-                    "Email Verified",
-                    "Is Locked",
-                    "Location",
-                    "Registration Date"
-                )
+        val users = userRepository.findAll()
+        CSVPrinter(writer, CSVFormat.DEFAULT).use { csvPrinter ->
+            csvPrinter.printRecord(
+                "ID",
+                "Name",
+                "Email",
+                "Phone",
+                "Role",
+                "Email Verified",
+                "Is Locked",
+                "Location",
+                "Registration Date"
+            )
 
-                users.forEach { user ->
-                    csvPrinter.printRecord(
-                        user.id,
-                        user.name,
-                        user.email,
-                        user.phone ?: "",
-                        user.role.toString(),
-                        user.emailVerified,
-                        user.isLocked,
-                        user.location ?: "",
-                        user.createdAt.toString()
-                    )
-                }
+            users.forEach { user ->
+                csvPrinter.printRecord(
+                    user.id,
+                    user.name,
+                    user.email,
+                    user.phone ?: "",
+                    user.role.toString(),
+                    user.emailVerified,
+                    user.isLocked,
+                    user.location ?: "",
+                    user.createdAt.toString()
+                )
             }
         }
-}
+    }
