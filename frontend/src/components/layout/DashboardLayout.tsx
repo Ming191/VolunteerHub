@@ -1,7 +1,7 @@
 import { Outlet } from '@tanstack/react-router';
 import Navbar from './Navbar';
 import { FloatingDock } from '@/components/ui/floating-dock';
-import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck, Users } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const DashboardLayout = () => {
@@ -23,11 +23,18 @@ const DashboardLayout = () => {
             icon: <UserCog className="h-full w-full" />,
             href: '/my-events',
         }] : []),
-        ...(user?.role === 'ADMIN' ? [{
-            title: 'Admin Panel',
-            icon: <ShieldCheck className="h-full w-full" />,
-            href: '/admin/pending-events',
-        }] : []),
+        ...(user?.role === 'ADMIN' ? [
+            {
+                title: 'Admin Panel',
+                icon: <ShieldCheck className="h-full w-full" />,
+                href: '/admin/pending-events',
+            },
+            {
+                title: 'Users',
+                icon: <Users className="h-full w-full" />,
+                href: '/admin/users',
+            }
+        ] : []),
     ];
 
     return (
@@ -36,9 +43,10 @@ const DashboardLayout = () => {
             <Navbar />
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 pb-24">
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 pb-24 sm:pb-16">
                 {/* Outlet renders the active child route */}
                 <Outlet />
+                {/* Spacer for Floating Dock removed; use padding instead */}
             </main>
 
             {/* Floating Dock at the bottom */}

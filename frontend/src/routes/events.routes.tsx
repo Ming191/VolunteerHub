@@ -27,6 +27,9 @@ export const eventsRoute = createRoute({
 export const myEventsRoute = createRoute({
     getParentRoute: () => authenticatedLayoutRoute,
     path: '/my-events',
+    validateSearch: z.object({
+        action: z.enum(['create']).optional(),
+    }),
     component: () => <Suspense fallback={<SuspenseFallback />}><MyEventsPage /></Suspense>,
 });
 
