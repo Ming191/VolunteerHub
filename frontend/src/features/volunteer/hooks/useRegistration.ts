@@ -42,7 +42,7 @@ export const useGetRegistrationStatus = (eventId: number | undefined, enabled: b
 export const useCancelRegistration = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (registrationId: number) => registrationService.cancelRegistration(registrationId),
+    mutationFn: (eventId: number) => registrationService.cancelRegistration(eventId),
     onSuccess: () => {
       toast.success("Registration Cancelled", {
         description: "You have successfully cancelled your registration",
@@ -62,9 +62,7 @@ export const useGetMyRegistrationEvents = () => {
   return useQuery({
     queryKey: [REGISTRATION_QUERY_KEY],
     queryFn: () => registrationService.getMyRegistrationEvents(),
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    staleTime: Infinity, // dữ liệu luôn được coi là fresh
+    staleTime: 5 * 60 * 1000, // 5 minutes - balance freshness with performance
     placeholderData: (prev) => prev
   })
 }

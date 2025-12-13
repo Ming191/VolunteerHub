@@ -37,7 +37,6 @@ export default function MyRegistrationsScreen() {
   }
 
   if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error: {error.message}</div>;
 
   const filteredEvents = data?.filter((event) => {
     const matchesSearchByName = event.eventTitle.toLowerCase().includes(searchByName.toLowerCase());
