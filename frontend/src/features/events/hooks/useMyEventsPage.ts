@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useGetMyEvents } from './useMyEvents';
 import type { EventResponse } from '@/api-client';
 
-const EVENTS_PER_PAGE = 8;
+import { EVENTS_PER_PAGE } from './useEventSearch';
 
 interface MyEventsFilters {
     sort?: string;
