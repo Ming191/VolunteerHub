@@ -43,11 +43,10 @@ const DashboardLayout = () => {
             <Navbar />
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 pb-6">
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 pb-24 sm:pb-16">
                 {/* Outlet renders the active child route */}
                 <Outlet />
-                {/* Spacer for Floating Dock */}
-                <div className="h-24 sm:h-16 w-full block" aria-hidden="true" />
+                {/* Spacer for Floating Dock removed; use padding instead */}
             </main>
 
             {/* Floating Dock at the bottom */}
