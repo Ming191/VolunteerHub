@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import { Card, CardContent } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Textarea } from '@/components/ui/textarea.tsx';
@@ -16,6 +16,12 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
   const [selectedImages, setSelectedImages] = useState<{ file: File; url: string }[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return() => {
+      selectedImages.forEach(img => URL.revokeObjectURL(img.url));
+    };
+  }, [selectedImages]);
 
   const handleSubmit = () => {
     if (!content.trim() && selectedImages.length === 0) return;
@@ -72,7 +78,6 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
   };
 
   const removeAllImages = () => {
-    selectedImages.forEach(img => URL.revokeObjectURL(img.url));
     setSelectedImages([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';

@@ -18,7 +18,11 @@ class PostMapper {
             content = post.content,
             createdAt = post.createdAt,
             updatedAt = post.updatedAt,
-            author = AuthorResponse(id = post.author.id, name = post.author.name),
+            author = AuthorResponse(
+              id = post.author.id,
+              name = post.author.name,
+              profilePictureUrl = post.author.profilePictureUrl,
+              bio = post.author.bio),
             totalLikes = post.likes.size,
             totalComments = post.comments.size,
             isLikedByCurrentUser = isLikedByCurrentUser,

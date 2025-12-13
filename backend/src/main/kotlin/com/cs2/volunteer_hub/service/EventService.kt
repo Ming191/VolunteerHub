@@ -139,17 +139,12 @@ class EventService(
         )
     }
 
-  @Cacheable(value = ["eventById"], key = "#id")
-  fun getEventJsonById(id: Long): String {
-    val event = eventRepository.findById(id).orElseThrow()
-    val dto = eventMapper.toEventResponse(event)
-    return objectMapper.writeValueAsString(dto)
-  }
-
-  fun getEventById(id: Long): EventResponse {
-    val json = getEventJsonById(id)
-    return objectMapper.readValue(json, EventResponse::class.java)
-  }
+    @Cacheable(value = ["event"], key = "#id")
+    @Transactional(readOnly = true)
+    fun getEventById(id: Long): EventResponse {
+          val event = eventRepository.findById(id).orElseThrow()
+          return eventMapper.toEventResponse(event)
+        }
 
     @Caching(evict = [
         CacheEvict(value = ["events"], allEntries = true),
