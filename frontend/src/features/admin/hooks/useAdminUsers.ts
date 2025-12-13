@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import axiosInstance from '@/utils/axiosInstance';
@@ -18,6 +18,11 @@ export const useAdminUsers = () => {
     const [page, setPage] = useState(0);
     const pageSize = 20;
 
+    // Reset page to 0 when search query changes
+    useEffect(() => {
+        setPage(0);
+    }, [debouncedSearchQuery]);
+
     // Fetch users
     const {
         data: usersPage,
@@ -29,9 +34,10 @@ export const useAdminUsers = () => {
     } = useQuery<PageUserResponse, Error>({
         queryKey: ['adminUsers', debouncedSearchQuery, page],
         queryFn: async () => {
-            const response = await axiosInstance.get(`/api/admin/users`, {
+            const endpoint = debouncedSearchQuery ? '/api/admin/users/search' : '/api/admin/users';
+            const response = await axiosInstance.get(endpoint, {
                 params: {
-                    q: debouncedSearchQuery,
+                    q: debouncedSearchQuery || undefined,
                     page: page,
                     size: pageSize
                 }
@@ -48,7 +54,8 @@ export const useAdminUsers = () => {
     // Mutation for locking/unlocking users
     const toggleLockMutation = useMutation<void, Error, { userId: number; isLocked: boolean }>({
         mutationFn: async ({ userId, isLocked }) => {
-            await axiosInstance.patch(`/api/admin/users/${userId}/lock`, { isLocked: !isLocked });
+            const endpoint = isLocked ? `/api/admin/users/${userId}/unlock` : `/api/admin/users/${userId}/lock`;
+            await axiosInstance.patch(endpoint);
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
@@ -74,16 +81,24 @@ export const useAdminUsers = () => {
             const contentDisposition = response.headers['content-disposition'];
             let fileName = 'users.csv';
             if (contentDisposition) {
-                const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-                if (fileNameMatch && fileNameMatch.length === 2)
+                const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (fileNameMatch && fileNameMatch[1]) {
                     fileName = fileNameMatch[1];
+                    if (fileNameMatch[2]) {
+                        fileName = fileName.slice(1, -1);
+                    }
+                }
             }
 
             link.setAttribute('download', fileName);
             document.body.appendChild(link);
-            link.click();
-            link.parentNode?.removeChild(link);
-            window.URL.revokeObjectURL(url); // Cleanup
+            try {
+                link.click();
+                toast.success('Users exported successfully');
+            } finally {
+                link.parentNode?.removeChild(link);
+                window.URL.revokeObjectURL(url); // Cleanup
+            }
         } catch (error) {
             console.error('Failed to export users:', error);
             toast.error('Failed to export users');

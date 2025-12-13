@@ -2,18 +2,22 @@ package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.model.Event
 import java.io.Writer
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVPrinter
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ExportService(
         private val eventRepository: EventRepository,
         private val userRepository: UserRepository
 ) {
+    @Transactional(readOnly = true)
     fun writeEventsToCsv(writer: Writer) {
-        val events = eventRepository.findAll()
         CSVPrinter(writer, CSVFormat.DEFAULT).use { csvPrinter ->
             csvPrinter.printRecord(
                 "ID",
@@ -27,24 +31,32 @@ class ExportService(
                 "Created At"
             )
 
-            for (event in events) {
-                csvPrinter.printRecord(
-                    event.id,
-                    event.title,
-                    event.location,
-                    event.eventDateTime.toString(),
-                    event.endDateTime.toString(),
-                    event.status.toString(),
-                    event.creator.id,
-                    event.creator.name,
-                    event.createdAt.toString()
-                )
-            }
+            var pageNumber = 0
+            val pageSize = 500
+            var page: Page<Event>
+
+            do {
+                page = eventRepository.findAll(PageRequest.of(pageNumber, pageSize))
+                for (event in page.content) {
+                    csvPrinter.printRecord(
+                        event.id,
+                        event.title,
+                        event.location,
+                        event.eventDateTime.toString(),
+                        event.endDateTime.toString(),
+                        event.status.toString(),
+                        event.creator.id,
+                        event.creator.name,
+                        event.createdAt.toString()
+                    )
+                }
+                pageNumber++
+                writer.flush()
+            } while (page.hasNext())
         }
     }
 
     fun writeUsersToCsv(writer: Writer) {
-        val users = userRepository.findAll()
         CSVPrinter(writer, CSVFormat.DEFAULT).use { csvPrinter ->
             csvPrinter.printRecord(
                 "ID",
@@ -58,18 +70,28 @@ class ExportService(
                 "Registration Date"
             )
 
-            users.forEach { user ->
-                csvPrinter.printRecord(
-                    user.id,
-                    user.name,
-                    user.email,
-                    user.phone ?: "",
-                    user.role.toString(),
-                    user.emailVerified,
-                    user.isLocked,
-                    user.location ?: "",
-                    user.createdAt.toString()
-                )
-            }
+            var pageNumber = 0
+            val pageSize = 500
+            var page: Page<com.cs2.volunteer_hub.model.User>
+
+            do {
+                page = userRepository.findAll(PageRequest.of(pageNumber, pageSize))
+                for (user in page.content) {
+                    csvPrinter.printRecord(
+                        user.id,
+                        user.name,
+                        user.email,
+                        user.phoneNumber ?: "",
+                        user.role.name,
+                        user.isEmailVerified,
+                        user.isLocked,
+                        user.location ?: "",
+                        user.createdAt.toString()
+                    )
+                }
+                pageNumber++
+                writer.flush()
+            } while (page.hasNext())
         }
     }
+}

@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearch } from '@tanstack/react-router';
 import { useGetMyEvents } from './useMyEvents';
 import type { EventResponse } from '@/api-client';
 
@@ -9,9 +10,6 @@ interface MyEventsFilters {
     direction?: 'ASC' | 'DESC';
 }
 
-import { useSearch } from '@tanstack/react-router';
-
-// ...
 
 export const useMyEventsPage = () => {
     const search = useSearch({ from: '/_auth/my-events' });
@@ -25,6 +23,11 @@ export const useMyEventsPage = () => {
         sort: undefined,
         direction: 'DESC',
     });
+
+    // Synchronize modal state with URL search params
+    useEffect(() => {
+        setIsCreateModalOpen(initialCreateOpen);
+    }, [initialCreateOpen]);
 
     const { data: eventsData, isLoading, isError, error, refetch } = useGetMyEvents({
         page: page - 1,
