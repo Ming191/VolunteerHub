@@ -139,7 +139,7 @@ class EventService(
         )
     }
 
-  @Cacheable(value = ["eventById"], key = "#id")
+  @Cacheable(value = ["event"], key = "#id")
   fun getEventJsonById(id: Long): String {
     val event = eventRepository.findById(id).orElseThrow()
     val dto = eventMapper.toEventResponse(event)
