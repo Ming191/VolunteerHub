@@ -18,10 +18,10 @@ class ExportController(private val exportService: ExportService) {
     fun exportEventsToCsv(response: HttpServletResponse) {
         response.contentType = "text/csv"
         val currentDateTime =
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
         response.setHeader(
-            "Content-Disposition",
-            "attachment; filename=events_$currentDateTime.csv"
+                "Content-Disposition",
+                "attachment; filename=\"events_$currentDateTime.csv\""
         )
         exportService.writeEventsToCsv(response.writer)
     }
@@ -30,10 +30,10 @@ class ExportController(private val exportService: ExportService) {
     fun exportUsersToCsv(response: HttpServletResponse) {
         response.contentType = "text/csv"
         val currentDateTime =
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
         response.setHeader(
-            "Content-Disposition",
-            "attachment; filename=\"users_$currentDateTime.csv\""
+                "Content-Disposition",
+                "attachment; filename=\"users_$currentDateTime.csv\""
         )
         exportService.writeUsersToCsv(response.writer)
     }

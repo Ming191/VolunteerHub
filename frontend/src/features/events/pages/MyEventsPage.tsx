@@ -18,7 +18,7 @@ export const MyEventsScreen = () => {
     isLoading,
     isError,
     error,
-    setPage,
+    handlePageChange,
     setIsDetailSheetOpen,
     setIsCreateModalOpen,
     handleViewDetails,
@@ -42,7 +42,7 @@ export const MyEventsScreen = () => {
               onChange={(e) => handleFilterChange({ sort: e.target.value || undefined })}
             >
               <option value="">Sort by</option>
-              <option value="startDate">Start Date</option>
+              <option value="eventDateTime">Start Date</option>
               <option value="createdAt">Created At</option>
             </select>
 
@@ -67,6 +67,8 @@ export const MyEventsScreen = () => {
           error={error}
           events={eventsData?.content || []}
           onViewDetails={handleViewDetails}
+          emptyStateTitle="You have no events"
+          emptyStateDescription="Created events will appear here."
         />
 
         {/* Pagination */}
@@ -75,7 +77,7 @@ export const MyEventsScreen = () => {
             <SmartPagination
               currentPage={page}
               totalPages={eventsData.totalPages}
-              onPageChange={setPage}
+              onPageChange={handlePageChange}
             />
           </div>
         )}

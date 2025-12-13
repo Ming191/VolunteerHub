@@ -153,16 +153,20 @@ export const AdminUsers = () => {
                                         description="Try adjusting your search terms."
                                         className="py-12 border-none bg-transparent"
                                     />
+
+                                )}
+                                {users.length > 0 && (
+                                    <SmartPagination
+                                        currentPage={page + 1}
+                                        totalPages={totalPages || 0}
+                                        onPageChange={(p) => setPage(p - 1)}
+                                        className="mt-4 border-t pt-4"
+                                    />
                                 )}
                             </div>
                         )}
 
-                        <SmartPagination
-                            currentPage={page + 1}
-                            totalPages={totalPages || 0}
-                            onPageChange={(p) => setPage(p - 1)}
-                            className="mt-4 border-t pt-4"
-                        />
+
                     </CardContent>
                 </Card>
             </div>

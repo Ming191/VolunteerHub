@@ -10,6 +10,8 @@ interface EventGridProps {
     events: EventResponse[];
     onViewDetails: (event: EventResponse) => void;
     skeletonsCount?: number;
+    emptyStateTitle?: string;
+    emptyStateDescription?: string;
 }
 
 export const EventGrid = ({
@@ -18,7 +20,9 @@ export const EventGrid = ({
     error,
     events,
     onViewDetails,
-    skeletonsCount = 8
+    skeletonsCount = 8,
+    emptyStateTitle = "No events found",
+    emptyStateDescription = "Try adjusting your filters or search terms."
 }: EventGridProps) => {
 
     if (isLoading) {
@@ -49,8 +53,8 @@ export const EventGrid = ({
                 <div className="rounded-full bg-muted p-4 mb-4">
                     <Award className="h-8 w-8 text-muted-foreground opacity-50" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">You have no events</h3>
-                <p className="text-muted-foreground max-w-md">Created events will appear here.</p>
+                <h3 className="text-lg font-semibold mb-2">{emptyStateTitle}</h3>
+                <p className="text-muted-foreground max-w-md">{emptyStateDescription}</p>
             </div>
         );
     }
