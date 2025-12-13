@@ -15,8 +15,7 @@ import { useSearch } from '@tanstack/react-router';
 
 export const useMyEventsPage = () => {
     const search = useSearch({ from: '/_auth/my-events' });
-    // @ts-ignore - search param is validated in route but TS might complain if types aren't fully propagated yet
-    const initialCreateOpen = search?.action === 'create';
+    const initialCreateOpen = (search as { action?: 'create' })?.action === 'create';
 
     const [page, setPage] = useState(1);
     const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
