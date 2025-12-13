@@ -86,12 +86,14 @@ export const EventListScreen = () => {
         </div>
 
         {/* Pagination */}
-        <SmartPagination
-          currentPage={page}
-          totalPages={data?.totalPages || 0}
-          onPageChange={handlePageChange}
-          className="mt-8"
-        />
+        {!isLoading && !isError && data && data.totalPages > 1 && (
+          <SmartPagination
+            currentPage={page}
+            totalPages={data.totalPages}
+            onPageChange={handlePageChange}
+            className="mt-8"
+          />
+        )}
 
         {/* Event Detail Sheet */}
         <EventDetailSheet
