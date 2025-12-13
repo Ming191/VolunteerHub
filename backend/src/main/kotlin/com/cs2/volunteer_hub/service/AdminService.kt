@@ -96,8 +96,8 @@ class AdminService(
             spec = spec?.and(beforeSpec) ?: beforeSpec
         }
 
-        logger.info(
-                "Searching users with filters - text: $searchText, role: $role, verified: $verified, locked: $locked, location: $location"
+        logger.debug(
+            "Searching users with filters - hasText: ${!searchText.isNullOrBlank()}, role: $role, verified: $verified, locked: $locked, hasLocation: ${!location.isNullOrBlank()}"
         )
 
         return if (spec != null) {
