@@ -33,7 +33,7 @@ class ExportController(private val exportService: ExportService) {
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
         response.setHeader(
             "Content-Disposition",
-            "attachment; filename=users_$currentDateTime.csv"
+            "attachment; filename=\"users_$currentDateTime.csv\""
         )
         exportService.writeUsersToCsv(response.writer)
     }
