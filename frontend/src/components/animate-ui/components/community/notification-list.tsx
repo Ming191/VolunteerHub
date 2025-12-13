@@ -180,19 +180,17 @@ function NotificationList() {
             </div>
 
             {/* Footer */}
-            {displayNotifications.length > 0 && (
-              <div className="px-4 py-3 border-t bg-muted/50">
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    navigate({ to: '/notifications' });
-                  }}
-                  className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1 mx-auto"
-                >
-                  View all notifications <ArrowUpRight className="size-4" />
-                </button>
-              </div>
-            )}
+            <div className="px-4 py-3 border-t bg-muted/50">
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate({ to: '/notifications' });
+                }}
+                className="text-sm text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1 mx-auto"
+              >
+                View all notifications <ArrowUpRight className="size-4" />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

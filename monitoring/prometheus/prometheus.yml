@@ -7,7 +7,7 @@ scrape_configs:
   - job_name: 'volunteerhub-backend'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['host.docker.internal:8080']
+      - targets: ['backend:8080']
         labels:
           application: 'volunteerhub'
           environment: 'local'

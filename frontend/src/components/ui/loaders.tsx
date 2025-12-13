@@ -69,3 +69,23 @@ export function EventListSkeleton({ count = 6 }: { count?: number }) {
         </div>
     );
 }
+
+export function UserListItemSkeleton() {
+    return (
+        <div className="p-3 rounded-lg flex items-center gap-4 border border-transparent">
+            {/* Avatar */}
+            <Skeleton className="h-9 w-9 rounded-full" />
+
+            {/* Content */}
+            <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="flex items-center gap-1">
+                    <Skeleton className="h-3 w-40" />
+                </div>
+            </div>
+        </div>
+    );
+}

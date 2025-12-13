@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Mail, MoreVertical, Lock, Unlock } from 'lucide-react';
+import { Search, Mail, MoreVertical, Lock, Unlock, Download } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,8 +12,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SmartPagination } from '@/components/common/SmartPagination';
 import AnimatedPage from '@/components/common/AnimatedPage';
-import { TableRowSkeleton } from '@/components/ui/loaders';
+import { UserListItemSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import { useAdminUsers } from '../hooks/useAdminUsers';
@@ -24,12 +25,17 @@ export const AdminUsers = () => {
     const {
         users,
         isLoading,
+        isFetching,
         isError,
         error,
         refetch,
         searchQuery,
         setSearchQuery,
-        handleToggleLock
+        handleToggleLock,
+        page,
+        setPage,
+        totalPages,
+        handleExportUsers
     } = useAdminUsers();
 
     const getRoleBadgeVariant = (role: string): BadgeVariant => {
@@ -51,14 +57,20 @@ export const AdminUsers = () => {
                     <CardHeader>
                         <CardTitle>User Management</CardTitle>
                         <CardDescription>Manage users, their roles, and lock status.</CardDescription>
-                        <div className="relative mt-4">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search users by name or email..."
-                                className="pl-9"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                        <div className="flex items-center gap-4 mt-4">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search users by name or email..."
+                                    className="pl-9"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <Button variant="outline" onClick={handleExportUsers} aria-label="Export users to CSV">
+                                <Download className="mr-2 h-4 w-4" />
+                                Export CSV
+                            </Button>
                         </div>
                     </CardHeader>
 
@@ -66,13 +78,13 @@ export const AdminUsers = () => {
                         {isError ? (
                             <ApiErrorState error={error} onRetry={refetch} />
                         ) : isLoading ? (
-                            <div className="space-y-4">
-                                {[...Array(5)].map((_, i) => (
-                                    <TableRowSkeleton key={i} />
+                            <div className="space-y-1">
+                                {[...Array(20)].map((_, i) => (
+                                    <UserListItemSkeleton key={i} />
                                 ))}
                             </div>
                         ) : (
-                            <div className="space-y-1">
+                            <div className={`space-y-1 transition-opacity duration-200 ${isFetching ? 'opacity-50 pointer-events-none' : ''}`}>
                                 {users.map((user) => (
                                     <div
                                         key={user.id}
@@ -141,13 +153,23 @@ export const AdminUsers = () => {
                                         description="Try adjusting your search terms."
                                         className="py-12 border-none bg-transparent"
                                     />
+
+                                )}
+                                {users.length > 0 && (
+                                    <SmartPagination
+                                        currentPage={page + 1}
+                                        totalPages={totalPages || 0}
+                                        onPageChange={(p) => setPage(p - 1)}
+                                        className="mt-4 border-t pt-4"
+                                    />
                                 )}
                             </div>
                         )}
 
-                    </CardContent >
-                </Card >
-            </div >
-        </AnimatedPage >
+
+                    </CardContent>
+                </Card>
+            </div>
+        </AnimatedPage>
     );
 }

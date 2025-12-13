@@ -73,11 +73,11 @@ type ParentModeHighlightProps = {
 
 type ControlledParentModeHighlightProps<T extends React.ElementType = 'div'> =
   BaseHighlightProps<T> &
-    ParentModeHighlightProps & {
-      mode: 'parent';
-      controlledItems: true;
-      children: React.ReactNode;
-    };
+  ParentModeHighlightProps & {
+    mode: 'parent';
+    controlledItems: true;
+    children: React.ReactNode;
+  };
 
 type ControlledChildrenModeHighlightProps<T extends React.ElementType = 'div'> =
   BaseHighlightProps<T> & {
@@ -88,12 +88,12 @@ type ControlledChildrenModeHighlightProps<T extends React.ElementType = 'div'> =
 
 type UncontrolledParentModeHighlightProps<T extends React.ElementType = 'div'> =
   BaseHighlightProps<T> &
-    ParentModeHighlightProps & {
-      mode: 'parent';
-      controlledItems?: false;
-      itemsClassName?: string;
-      children: React.ReactElement | React.ReactElement[];
-    };
+  ParentModeHighlightProps & {
+    mode: 'parent';
+    controlledItems?: false;
+    itemsClassName?: string;
+    children: React.ReactElement | React.ReactElement[];
+  };
 
 type UncontrolledChildrenModeHighlightProps<
   T extends React.ElementType = 'div',
@@ -135,19 +135,23 @@ function Highlight<T extends React.ElementType = 'div'>({
   const localRef = React.useRef<HTMLDivElement>(null);
   React.useImperativeHandle(ref, () => localRef.current as HTMLDivElement);
 
-  const [activeValue, setActiveValue] = React.useState<string | null>(
-    value ?? defaultValue ?? null,
+  const [activeValueState, setActiveValueState] = React.useState<string | null>(
+    defaultValue ?? null,
   );
   const [boundsState, setBoundsState] = React.useState<Bounds | null>(null);
   const [activeClassNameState, setActiveClassNameState] =
     React.useState<string>('');
 
+  const activeValue = value !== undefined ? value : activeValueState;
+
   const safeSetActiveValue = React.useCallback(
     (id: string | null) => {
-      setActiveValue((prev) => (prev === id ? prev : id));
+      if (value === undefined) {
+        setActiveValueState(id);
+      }
       if (id !== activeValue) onValueChange?.(id);
     },
-    [activeValue, onValueChange],
+    [activeValue, onValueChange, value],
   );
 
   const safeSetBounds = React.useCallback(
@@ -190,10 +194,7 @@ function Highlight<T extends React.ElementType = 'div'>({
     setBoundsState((prev) => (prev === null ? prev : null));
   }, []);
 
-  React.useEffect(() => {
-    if (value !== undefined) setActiveValue(value);
-    else if (defaultValue !== undefined) setActiveValue(defaultValue);
-  }, [value, defaultValue]);
+
 
   const id = React.useId();
 
@@ -462,22 +463,22 @@ function HighlightItem<T extends React.ElementType>({
 
   const commonHandlers = hover
     ? {
-        onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => {
-          setActiveValue(childValue);
-          element.props.onMouseEnter?.(e);
-        },
-        onMouseLeave: (e: React.MouseEvent<HTMLDivElement>) => {
-          setActiveValue(null);
-          element.props.onMouseLeave?.(e);
-        },
-      }
+      onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => {
+        setActiveValue(childValue);
+        element.props.onMouseEnter?.(e);
+      },
+      onMouseLeave: (e: React.MouseEvent<HTMLDivElement>) => {
+        setActiveValue(null);
+        element.props.onMouseLeave?.(e);
+      },
+    }
     : click
       ? {
-          onClick: (e: React.MouseEvent<HTMLDivElement>) => {
-            setActiveValue(childValue);
-            element.props.onClick?.(e);
-          },
-        }
+        onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+          setActiveValue(childValue);
+          element.props.onClick?.(e);
+        },
+      }
       : {};
 
   if (asChild) {
@@ -496,7 +497,7 @@ function HighlightItem<T extends React.ElementType>({
           ...props,
         },
         <>
-          <AnimatePresence initial={false} mode="wait">
+          <AnimatePresence initial={false}>
             {isActive && !isDisabled && (
               <motion.div
                 layoutId={`transition-background-${contextId}`}
@@ -558,7 +559,7 @@ function HighlightItem<T extends React.ElementType>({
       {...commonHandlers}
     >
       {mode === 'children' && (
-        <AnimatePresence initial={false} mode="wait">
+        <AnimatePresence initial={false}>
           {isActive && !isDisabled && (
             <motion.div
               layoutId={`transition-background-${contextId}`}
@@ -605,7 +606,7 @@ function HighlightItem<T extends React.ElementType>({
 export {
   Highlight,
   HighlightItem,
-    // eslint-disable-next-line react-refresh/only-export-components
+  // eslint-disable-next-line react-refresh/only-export-components
   useHighlight,
   type HighlightProps,
   type HighlightItemProps,
