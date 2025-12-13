@@ -67,7 +67,7 @@ export const AdminUsers = () => {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <Button variant="outline" onClick={handleExportUsers}>
+                            <Button variant="outline" onClick={handleExportUsers} aria-label="Export users to CSV">
                                 <Download className="mr-2 h-4 w-4" />
                                 Export CSV
                             </Button>
