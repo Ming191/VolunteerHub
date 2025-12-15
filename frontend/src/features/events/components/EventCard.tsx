@@ -65,16 +65,18 @@ export const EventCard = <T extends UiEvent | EventResponse>({ event, onViewDeta
                         <span>{event.isFull ? 'Full' : availableSpotsText}</span>
                     </div>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                    {tags.slice(0, 3).map((tag: string) => (
-                        <Badge key={tag} variant="secondary">
-                            {tag.replace(/_/g, ' ')}
-                        </Badge>
-                    ))}
-                    {tags.length > 3 && (
-                        <Badge variant="outline">+{tags.length - 3} more</Badge>
-                    )}
-                </div>
+                {tags.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {tags.slice(0, 3).map((tag: string) => (
+                            <Badge key={tag} variant="secondary">
+                                {tag.replace(/_/g, ' ')}
+                            </Badge>
+                        ))}
+                        {tags.length > 3 && (
+                            <Badge variant="outline">+{tags.length - 3} more</Badge>
+                        )}
+                    </div>
+                )}
             </CardContent>
             <CardFooter className="p-4 pt-0">
                 <Button

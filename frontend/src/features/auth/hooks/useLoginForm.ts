@@ -24,7 +24,8 @@ export function useLoginForm() {
         try {
             await login(values);
             toast.success('Login successful!');
-            navigate({ to: '/dashboard' });
+            // Navigation will happen automatically via auth state change
+            // The DashboardLayout or other auth checks will handle routing
         } catch (error: unknown) {
             let errorMessage = 'Login failed. Please try again.';
             if (error instanceof Error) {

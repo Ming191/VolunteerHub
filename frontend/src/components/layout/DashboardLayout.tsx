@@ -1,11 +1,31 @@
-import { Outlet } from '@tanstack/react-router';
+import { Outlet, useNavigate } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import Navbar from './Navbar';
 import { FloatingDock } from '@/components/ui/floating-dock';
 import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck, Users } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { SuspenseFallback } from '@/components/common/SuspenseFallback';
 
 const DashboardLayout = () => {
-    const { user } = useAuth();
+    const { user, isLoading, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+
+    // Redirect to signin if not authenticated after loading completes
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            navigate({ to: '/signin', replace: true });
+        }
+    }, [isLoading, isAuthenticated, navigate]);
+
+    // Show loading state while auth is initializing
+    if (isLoading) {
+        return <SuspenseFallback />;
+    }
+
+    // If not authenticated, return null (will redirect via useEffect)
+    if (!isAuthenticated) {
+        return null;
+    }
 
     const dockItems = [
         {

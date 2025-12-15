@@ -43,7 +43,12 @@ const Navbar = () => {
         <header className="flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b sticky top-0 z-40">
             {/* Left side: Logo and Page Title */}
             <div className="flex items-center gap-4">
-                <div className="text-2xl font-bold text-primary">VolunteerHub</div>
+                <div 
+                    className="text-2xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity" 
+                    onClick={() => navigate({ to: '/dashboard' })}
+                >
+                    VolunteerHub
+                </div>
                 <div className="text-xl font-semibold text-muted-foreground">/ {pageTitle}</div>
             </div>
 
@@ -70,7 +75,7 @@ const Navbar = () => {
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate({ to: '/profile' })}>Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Settings</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate({ to: '/settings' })}>Settings</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={logout} className="text-red-500">
                             Log Out

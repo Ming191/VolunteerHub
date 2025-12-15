@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { EventListSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import { SmartPagination } from '@/components/common/SmartPagination';
 import { EventCard } from '../components/EventCard';
+import { EventCardSkeleton } from '../components/EventCardSkeleton';
 import { EventFilterPanel } from '../components/EventFilterPanel';
 import { AddEventModal } from '../components/AddEventModal';
 import { EventDetailSheet } from '../components/EventDetailSheet';
@@ -54,7 +54,13 @@ export const EventListScreen = () => {
         {/* Events Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {/* Loading State */}
-          {isLoading && <EventListSkeleton count={8} />}
+          {isLoading && (
+            <>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <EventCardSkeleton key={i} />
+              ))}
+            </>
+          )}
 
           {/* Error State */}
           {isError && (
