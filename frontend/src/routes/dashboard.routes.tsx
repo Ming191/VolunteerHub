@@ -2,7 +2,6 @@ import { createRoute, redirect } from '@tanstack/react-router';
 import { Suspense } from 'react';
 import { rootRoute } from './root.route';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { authStorage } from '@/features/auth/utils/authStorage';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { SuspenseFallback } from '@/components/common/SuspenseFallback';
 import {
@@ -16,12 +15,17 @@ export const authenticatedLayoutRoute = createRoute({
     getParentRoute: () => rootRoute,
     id: '_auth',
     beforeLoad: ({ context }) => {
-        if (!context.auth.isAuthenticated && !context.auth.isLoading) {
-            if (!authStorage.getAccessToken()) {
-                throw redirect({
-                    to: '/signin',
-                });
-            }
+        // If auth is still loading, allow the route to load
+        // The component will show a loading state
+        if (context.auth.isLoading) {
+            return;
+        }
+        
+        // If auth finished loading and user is not authenticated, redirect
+        if (!context.auth.isAuthenticated) {
+            throw redirect({
+                to: '/signin',
+            });
         }
     },
     component: () => <DashboardLayout />,

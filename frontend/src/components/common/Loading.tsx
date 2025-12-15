@@ -1,11 +1,16 @@
-import { LoaderCircle } from 'lucide-react';
-
+/**
+ * @deprecated Use SuspenseFallback for code-splitting and page-specific 
+ * skeletons (SettingsPageSkeleton, ProfilePageSkeleton, etc.) for data loading.
+ * 
+ * This minimal fallback is kept for backward compatibility only.
+ */
 const Loading = () => {
     return (
-        <div className="flex items-center justify-center space-x-2">
-            <LoaderCircle className="h-8 w-8 animate-spin text-blue-500" />
-            <span className="text-gray-500">Loading...</span>
-        </div>
+        <div
+            className="min-h-[200px] w-full"
+            aria-busy="true"
+            aria-label="Loading"
+        />
     );
 };
 

@@ -4,7 +4,8 @@ import { SuspenseFallback } from '@/components/common/SuspenseFallback';
 import { authenticatedLayoutRoute } from './dashboard.routes';
 import {
     ProfilePage,
-    NotificationsPage
+    NotificationsPage,
+    SettingsPage
 } from './lazy-components';
 
 export const profileRoute = createRoute({
@@ -18,3 +19,10 @@ export const notificationsRoute = createRoute({
     path: '/notifications',
     component: () => <Suspense fallback={<SuspenseFallback />}><NotificationsPage /></Suspense>,
 });
+
+export const settingsRoute = createRoute({
+    getParentRoute: () => authenticatedLayoutRoute,
+    path: '/settings',
+    component: () => <Suspense fallback={<SuspenseFallback />}><SettingsPage /></Suspense>,
+});
+
