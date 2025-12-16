@@ -100,7 +100,10 @@ class EmailQueueListener(
     private fun shouldSendEmail(email: String): Boolean {
         val user =
                 userRepository.findByEmail(email)
-                        ?: return true // Default to true if user not found (safe fallback)
+        if (user == null) {
+            logger.warn("User not found for email $email. Defaulting to sending email. This may indicate a data integrity issue.")
+            return true // Default to true if user not found (safe fallback)
+        }
         val settings = userSettingsRepository.findByUserId(user.id) ?: return true
 
         if (!settings.emailNotificationsEnabled) {

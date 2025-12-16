@@ -56,7 +56,8 @@ class SettingsController(private val settingsService: SettingsService) {
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<List<ActiveSessionResponse>> {
         // Extract current token from Authorization header
-        val currentToken = authorization?.removePrefix("Bearer ")?.trim()
+        val currentToken = authorization?.takeIf { it.startsWith("Bearer ") }
+            ?.removePrefix("Bearer ")?.trim()
         val sessions = settingsService.getActiveSessions(currentUser.username, currentToken)
         return ResponseEntity.ok(sessions)
     }
