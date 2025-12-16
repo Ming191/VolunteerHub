@@ -49,17 +49,21 @@ export const NotificationsSection = ({ settings, updateSettings, disabled }: Not
                         checked={settings?.pushNotificationsEnabled ?? true}
                         onCheckedChange={async (checked) => {
                             if (checked) {
-                                // Request permission first
-                                const permission = await fcmService.requestNotificationPermission();
-                                if (permission === 'granted') {
-                                    const registered = await fcmService.registerDeviceForNotifications();
-                                    if (registered) {
-                                        updateSettings('pushNotificationsEnabled', true);
+                                try {
+                                    // Request permission first
+                                    const permission = await fcmService.requestNotificationPermission();
+                                    if (permission === 'granted') {
+                                        const registered = await fcmService.registerDeviceForNotifications();
+                                        if (registered) {
+                                            updateSettings('pushNotificationsEnabled', true);
+                                        } else {
+                                            toast.error('Failed to register device for notifications');
+                                        }
                                     } else {
-                                        toast.error('Failed to register device for notifications');
+                                        toast.error('Notification permission denied by browser');
                                     }
-                                } else {
-                                    toast.error('Notification permission denied by browser');
+                                } catch {
+                                    toast.error('Failed to enable push notifications');
                                 }
                             } else {
                                 updateSettings('pushNotificationsEnabled', false);
