@@ -43,12 +43,13 @@ const Navbar = () => {
         <header className="flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b sticky top-0 z-40">
             {/* Left side: Logo and Page Title */}
             <div className="flex items-center gap-4">
-                <div 
-                    className="text-2xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity" 
+                <button
+                    className="text-2xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity bg-transparent border-0 p-0"
                     onClick={() => navigate({ to: '/dashboard' })}
+                    aria-label="Navigate to dashboard"
                 >
                     VolunteerHub
-                </div>
+                </button>
                 <div className="text-xl font-semibold text-muted-foreground">/ {pageTitle}</div>
             </div>
 
