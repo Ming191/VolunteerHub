@@ -34,7 +34,7 @@ class RefreshTokenService(
             val now = LocalDateTime.now()
             existingTokens.forEach { token ->
                 token.revokedAt = now
-                token.replacedByToken = "Re-login"
+                token.replacedByToken = null
             }
             refreshTokenRepository.saveAll(existingTokens)
         }
