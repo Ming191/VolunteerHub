@@ -31,113 +31,115 @@ class AuthService(
         @Value("\${jwt.refresh-token.expiration:2592000000}") // Default: 30 days
         private val refreshTokenExpiration: Long
 ) {
-    private val logger = LoggerFactory.getLogger(AuthService::class.java)
+        private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
-    @Transactional
-    fun registerUser(request: RegisterRequest): User {
-        logger.info(
-                "Registration request received - email: ${request.email}, requested role: ${request.role}"
-        )
+        @Transactional
+        fun registerUser(request: RegisterRequest): User {
+                logger.info(
+                        "Registration request received - email: ${request.email}, requested role: ${request.role}"
+                )
 
-        if (userRepository.findByEmail(request.email) != null) {
-            throw IllegalArgumentException("Email is already in use")
+                if (userRepository.findByEmail(request.email) != null) {
+                        throw IllegalArgumentException("Email is already in use")
+                }
+
+                val hashedPassword = passwordEncoder.encode(request.password)
+                val assignedRole = request.role ?: Role.VOLUNTEER
+                logger.info("Assigning role: $assignedRole to user: ${request.email}")
+
+                val user =
+                        User(
+                                name = request.username,
+                                gender = request.gender,
+                                email = request.email,
+                                passwordHash = hashedPassword,
+                                role = assignedRole,
+                                isEmailVerified = false
+                        )
+                val savedUser = userRepository.save(user)
+                logger.info(
+                        "User saved with role: ${savedUser.role}, email verified: ${savedUser.isEmailVerified}"
+                )
+
+                // Create user settings eagerly to prevent race conditions
+                val userSettings = UserSettings(user = savedUser)
+                userSettingsRepository.save(userSettings)
+                logger.info("Created default settings for user: ${savedUser.id}")
+
+                val token = emailVerificationService.createVerificationToken(savedUser)
+                emailVerificationService.sendVerificationEmail(savedUser, token)
+
+                return savedUser
         }
 
-        val hashedPassword = passwordEncoder.encode(request.password)
-        val assignedRole = request.role ?: Role.VOLUNTEER
-        logger.info("Assigning role: $assignedRole to user: ${request.email}")
-
-        val user =
-                User(
-                        name = request.username,
-                        gender = request.gender,
-                        email = request.email,
-                        passwordHash = hashedPassword,
-                        role = assignedRole,
-                        isEmailVerified = false
+        fun loginUser(
+                request: LoginRequest,
+                ipAddress: String? = null,
+                userAgent: String? = null
+        ): TokenResponse {
+                authenticationManager.authenticate(
+                        UsernamePasswordAuthenticationToken(request.email, request.password)
                 )
-        val savedUser = userRepository.save(user)
-        logger.info(
-                "User saved with role: ${savedUser.role}, email verified: ${savedUser.isEmailVerified}"
-        )
 
-        // Create user settings eagerly to prevent race conditions
-        val userSettings = UserSettings(userId = savedUser.id, user = savedUser)
-        userSettingsRepository.save(userSettings)
-        logger.info("Created default settings for user: ${savedUser.id}")
+                val userDetails = userDetailsService.loadUserByUsername(request.email)
 
-        val token = emailVerificationService.createVerificationToken(savedUser)
-        emailVerificationService.sendVerificationEmail(savedUser, token)
+                val user =
+                        userRepository.findByEmail(request.email)
+                                ?: throw IllegalArgumentException("User not found")
 
-        return savedUser
-    }
+                user.lastLoginAt = LocalDateTime.now()
+                userRepository.save(user)
+                logger.info("Updated last login for user: ${user.email}")
 
-    fun loginUser(
-            request: LoginRequest,
-            ipAddress: String? = null,
-            userAgent: String? = null
-    ): TokenResponse {
-        authenticationManager.authenticate(
-                UsernamePasswordAuthenticationToken(request.email, request.password)
-        )
+                // Generate access token
+                val accessToken = jwtTokenProvider.generateToken(userDetails)
 
-        val userDetails = userDetailsService.loadUserByUsername(request.email)
+                // Generate refresh token
+                val refreshToken =
+                        refreshTokenService.createRefreshToken(user, ipAddress, userAgent)
 
-        val user =
-                userRepository.findByEmail(request.email)
+                return TokenResponse(
+                        accessToken = accessToken,
+                        refreshToken = refreshToken.token,
+                        accessTokenExpiresIn = jwtTokenProvider.getExpirationMillis(),
+                        refreshTokenExpiresIn = refreshTokenExpiration
+                )
+        }
+
+        fun refreshAccessToken(
+                refreshToken: String,
+                ipAddress: String? = null,
+                userAgent: String? = null
+        ): TokenResponse {
+                // Rotate the refresh token (security best practice)
+                val newRefreshToken =
+                        refreshTokenService.rotateRefreshToken(refreshToken, ipAddress, userAgent)
+
+                // Generate new access token
+                val userDetails = userDetailsService.loadUserByUsername(newRefreshToken.user.email)
+                val accessToken = jwtTokenProvider.generateToken(userDetails)
+
+                return TokenResponse(
+                        accessToken = accessToken,
+                        refreshToken = newRefreshToken.token,
+                        accessTokenExpiresIn = jwtTokenProvider.getExpirationMillis(),
+                        refreshTokenExpiresIn = refreshTokenExpiration
+                )
+        }
+
+        fun logout(refreshToken: String) {
+                refreshTokenService.revokeToken(refreshToken)
+        }
+
+        fun logoutAllDevices(userEmail: String) {
+                val user =
+                        userRepository.findByEmail(userEmail)
+                                ?: throw IllegalArgumentException("User not found")
+                refreshTokenService.revokeAllUserTokens(user)
+        }
+
+        fun getUserByEmail(email: String): User {
+                return userRepository.findByEmail(email)
                         ?: throw IllegalArgumentException("User not found")
-
-        user.lastLoginAt = LocalDateTime.now()
-        userRepository.save(user)
-        logger.info("Updated last login for user: ${user.email}")
-
-        // Generate access token
-        val accessToken = jwtTokenProvider.generateToken(userDetails)
-
-        // Generate refresh token
-        val refreshToken = refreshTokenService.createRefreshToken(user, ipAddress, userAgent)
-
-        return TokenResponse(
-                accessToken = accessToken,
-                refreshToken = refreshToken.token,
-                accessTokenExpiresIn = jwtTokenProvider.getExpirationMillis(),
-                refreshTokenExpiresIn = refreshTokenExpiration
-        )
-    }
-
-    fun refreshAccessToken(
-            refreshToken: String,
-            ipAddress: String? = null,
-            userAgent: String? = null
-    ): TokenResponse {
-        // Rotate the refresh token (security best practice)
-        val newRefreshToken =
-                refreshTokenService.rotateRefreshToken(refreshToken, ipAddress, userAgent)
-
-        // Generate new access token
-        val userDetails = userDetailsService.loadUserByUsername(newRefreshToken.user.email)
-        val accessToken = jwtTokenProvider.generateToken(userDetails)
-
-        return TokenResponse(
-                accessToken = accessToken,
-                refreshToken = newRefreshToken.token,
-                accessTokenExpiresIn = jwtTokenProvider.getExpirationMillis(),
-                refreshTokenExpiresIn = refreshTokenExpiration
-        )
-    }
-
-    fun logout(refreshToken: String) {
-        refreshTokenService.revokeToken(refreshToken)
-    }
-
-    fun logoutAllDevices(userEmail: String) {
-        val user =
-                userRepository.findByEmail(userEmail)
-                        ?: throw IllegalArgumentException("User not found")
-        refreshTokenService.revokeAllUserTokens(user)
-    }
-
-    fun getUserByEmail(email: String): User {
-        return userRepository.findByEmail(email) ?: throw IllegalArgumentException("User not found")
-    }
+        }
 }
