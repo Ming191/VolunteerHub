@@ -6,6 +6,7 @@ import type { CreateEventRequest } from '@/api-client';
 import { EventForm, type EventFormValues } from './EventForm';
 import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
 import { Loader2 } from 'lucide-react';
+import {useMemo} from "react";
 
 interface AddEventModalProps {
     open: boolean;
@@ -89,6 +90,9 @@ export const AddEventModal = ({ open, onOpenChange, onSuccess }: AddEventModalPr
             setIsSubmitting(false);
         }
     };
+  const defaultValues = useMemo(() => ({} as Partial<EventFormValues>), []); // Stable empty object
+  const initialImages = useMemo(() => [], []); // Stable empty array
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

@@ -16,6 +16,7 @@ import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.EventSpecifications
 import com.cs2.volunteer_hub.validation.EventDateValidator
 import com.cs2.volunteer_hub.validation.EventLifecycleValidator
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
@@ -34,17 +35,18 @@ import org.springframework.web.multipart.MultipartFile
 
 @Service
 class EventService(
-    private val eventRepository: EventRepository,
-    private val userRepository: UserRepository,
-    private val rabbitTemplate: RabbitTemplate,
-    private val fileValidationService: FileValidationService,
-    private val eventMapper: EventMapper,
-    private val eventCapacityService: EventCapacityService,
-    private val authorizationService: AuthorizationService,
-    private val eventDateValidator: EventDateValidator,
-    private val eventLifecycleValidator: EventLifecycleValidator,
-    private val eventQueueService: EventQueueService,
-    @field:Value($$"${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
+  private val eventRepository: EventRepository,
+  private val userRepository: UserRepository,
+  private val rabbitTemplate: RabbitTemplate,
+  private val fileValidationService: FileValidationService,
+  private val eventMapper: EventMapper,
+  private val eventCapacityService: EventCapacityService,
+  private val authorizationService: AuthorizationService,
+  private val eventDateValidator: EventDateValidator,
+  private val eventLifecycleValidator: EventLifecycleValidator,
+  private val eventQueueService: EventQueueService,
+  private val objectMapper: ObjectMapper,
+  @field:Value($$"${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
     private val logger = LoggerFactory.getLogger(EventService::class.java)
 
@@ -140,13 +142,9 @@ class EventService(
     @Cacheable(value = ["event"], key = "#id")
     @Transactional(readOnly = true)
     fun getEventById(id: Long): EventResponse {
-        val event = eventRepository.findByIdOrThrow(id)
-
-        if (!event.isApproved) {
-            throw ResourceNotFoundException("Event", "id", id)
+          val event = eventRepository.findById(id).orElseThrow()
+          return eventMapper.toEventResponse(event)
         }
-        return eventMapper.toEventResponse(event)
-    }
 
     @Caching(evict = [
         CacheEvict(value = ["events"], allEntries = true),

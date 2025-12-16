@@ -36,7 +36,7 @@ class MeService(
 ) {
     private val logger = LoggerFactory.getLogger(MeService::class.java)
 
-    @Cacheable(value = ["userRegistrations"], key = "#userEmail")
+    //@Cacheable(value = ["userRegistrations"], key = "#userEmail")
     fun getMyRegistrations(userEmail: String): List<RegistrationResponse> {
         return registrationRepository.findAllByUserEmailOrderByEventEventDateTimeDesc(userEmail)
             .map(registrationMapper::toRegistrationResponse)
