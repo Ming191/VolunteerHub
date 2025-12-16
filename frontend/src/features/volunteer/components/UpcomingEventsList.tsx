@@ -3,10 +3,11 @@ import { Calendar, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 // import type { EventResponse } from '@/api-client';
 
+import type { EventResponse } from '@/api-client';
+
 interface UpcomingEventsListProps {
-    // events: EventResponse[];
-    events: any[];
-    onEventClick: () => void;
+    events: EventResponse[];
+    onEventClick: (event: EventResponse) => void;
 }
 
 export const UpcomingEventsList = ({ events, onEventClick }: UpcomingEventsListProps) => {
