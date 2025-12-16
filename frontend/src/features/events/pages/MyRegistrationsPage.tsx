@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { ApiErrorState } from '@/components/ui/api-error-state';
-import { EventListSkeleton } from '@/components/ui/loaders';
+import { EventCardSkeleton } from '../components/EventCardSkeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Search } from 'lucide-react';
-import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
+import { SmartPagination } from '@/components/common/SmartPagination';
 import { useGetMyRegistrationEvents } from "@/features/events/hooks/useRegistration";
 
 type RegistrationStatus = 'APPROVED' | 'PENDING';
@@ -77,7 +77,7 @@ export const MyRegistrationsScreen = () => {
             }}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Trạng thái" />
+              <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All</SelectItem>
@@ -99,7 +99,13 @@ export const MyRegistrationsScreen = () => {
 
         {/* Events grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-          {isLoading && <EventListSkeleton count={8} />}
+          {isLoading && (
+            <>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <EventCardSkeleton key={i} />
+              ))}
+            </>
+          )}
 
           {!isLoading && paginatedEvents.length === 0 ? (
             <div className="col-span-full">
@@ -129,48 +135,12 @@ export const MyRegistrationsScreen = () => {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(page - 1);
-                    }}
-                    className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <PaginationItem key={i + 1}>
-                    <PaginationLink
-                      href="#"
-                      isActive={page === i + 1}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handlePageChange(i + 1);
-                      }}
-                    >
-                      {i + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(page + 1);
-                    }}
-                    className={page >= totalPages ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+        <SmartPagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          className="mt-8 justify-center"
+        />
       </div>
     </AnimatedPage>
   );

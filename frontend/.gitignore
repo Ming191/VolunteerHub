@@ -29,3 +29,6 @@ src/api-client
 # OpenApi
 openapi.json
 openapitools.json
+
+*storybook.log
+storybook-static
