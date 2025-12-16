@@ -31,7 +31,7 @@ export const NewOpportunitiesList = ({ events, onEventClick }: NewOpportunitiesL
                         </button>
                     ))}
                     {events.length === 0 && (
-                        <div className="col-span-3 text-center py-8 text-muted-foreground text-sm">
+                        <div className="col-span-full text-center py-8 text-muted-foreground text-sm">
                             <TrendingUp className="h-8 w-8 mx-auto mb-2 opacity-50" />
                             <p>No new events found</p>
                         </div>
