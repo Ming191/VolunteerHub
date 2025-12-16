@@ -13,3 +13,5 @@ export const AdminPendingEvents = lazy(() => import('@/features/admin/pages/Admi
 export const AdminUsers = lazy(() => import('@/features/admin/pages/AdminUsers').then(m => ({ default: m.AdminUsers })));
 export const MyRegistrationsScreen = lazy(() => import('@/features/events/pages/MyRegistrationsPage').then(m => ({ default: m.MyRegistrationsScreen })));
 export const DateTimePicker = lazy(() => import('@/features/events/components/DateTimePicker').then(m => ({ default: m.DateTimePicker })));
+export const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+

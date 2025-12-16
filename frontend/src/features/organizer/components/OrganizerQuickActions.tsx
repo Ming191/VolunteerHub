@@ -1,0 +1,45 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, Settings, Users, TrendingUp } from 'lucide-react';
+
+interface OrganizerQuickActionsProps {
+    onCreateEvent: () => void;
+    onManageEvents: () => void;
+    onRegistrations: () => void;
+    onAnalytics: () => void;
+}
+
+export const OrganizerQuickActions = ({
+    onCreateEvent,
+    onManageEvents,
+    onRegistrations,
+    onAnalytics
+}: OrganizerQuickActionsProps) => {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-base">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Button variant="outline" className="h-auto py-4 flex-col" onClick={onCreateEvent}>
+                        <PlusCircle className="h-5 w-5 mb-2" />
+                        <span className="text-sm">Create Event</span>
+                    </Button>
+                    <Button variant="outline" className="h-auto py-4 flex-col" onClick={onManageEvents}>
+                        <Settings className="h-5 w-5 mb-2" />
+                        <span className="text-sm">Manage Events</span>
+                    </Button>
+                    <Button variant="outline" className="h-auto py-4 flex-col" onClick={onRegistrations}>
+                        <Users className="h-5 w-5 mb-2" />
+                        <span className="text-sm">Registrations</span>
+                    </Button>
+                    <Button variant="outline" className="h-auto py-4 flex-col" onClick={onAnalytics}>
+                        <TrendingUp className="h-5 w-5 mb-2" />
+                        <span className="text-sm">Analytics</span>
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
