@@ -25,7 +25,15 @@ const DashboardLayout = () => {
 
     // If not authenticated, return null (will redirect via useEffect)
     if (!isAuthenticated) {
-        return null;
+        return (
+            <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center justify-center h-screen w-full text-lg"
+            >
+                Redirecting...
+            </div>
+        );
     }
 
     const dockItems = [
