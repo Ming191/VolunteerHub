@@ -82,7 +82,7 @@ class PostService(
     @Transactional(readOnly = true)
     fun getPostsForEvent(eventId: Long, userEmail: String, pageable: Pageable): Page<PostResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
-        authorizationService.requireEventPostPermission(eventId, user.id)
+        authorizationService.requireEventReadPermission(eventId)
 
         val spec = PostSpecifications.forEvent(eventId)
         val postPage = postRepository.findAll(spec, pageable)

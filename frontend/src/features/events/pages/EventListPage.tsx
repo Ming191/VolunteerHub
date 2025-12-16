@@ -1,16 +1,17 @@
 import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { EventListSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorState } from '@/components/ui/api-error-state';
-import { SmartPagination } from '@/components/common/SmartPagination';
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
 import { EventCard } from '../components/EventCard';
-import { EventCardSkeleton } from '../components/EventCardSkeleton';
 import { EventFilterPanel } from '../components/EventFilterPanel';
 import { AddEventModal } from '../components/AddEventModal';
-import { EventDetailSheet } from '../components/EventDetailSheet';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { useEventSearch } from '../hooks/useEventSearch';
 import type { UiEvent } from '@/types/ui-models';
 import type { EventResponse } from '@/api-client';
+import { Button } from "@/components/ui/button";
 
 export const EventListScreen = () => {
   const {
@@ -27,18 +28,25 @@ export const EventListScreen = () => {
   } = useEventSearch();
 
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
-  const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
 
+
+  const navigate = useNavigate();
 
   const handleViewDetails = (event: EventResponse | UiEvent) => {
-    setSelectedEvent(event as EventResponse);
-    setIsDetailSheetOpen(true);
+    navigate({
+      to: '/blog',
+      search: { eventId: event.id.toString() },
+    });
   };
 
   return (
     <AnimatedPage>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="flex justify-end mb-6">
+          <Button onClick={() => setIsAddEventModalOpen(true)}>
+            Create Event
+          </Button>
+        </div>
         {/* Filter Panel */}
         <div className="mb-8">
           <EventFilterPanel onFilterChange={handleFilterChange} initialFilters={filters} />
@@ -54,13 +62,7 @@ export const EventListScreen = () => {
         {/* Events Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {/* Loading State */}
-          {isLoading && (
-            <>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <EventCardSkeleton key={i} />
-              ))}
-            </>
-          )}
+          {isLoading && <EventListSkeleton count={8} />}
 
           {/* Error State */}
           {isError && (
@@ -92,21 +94,94 @@ export const EventListScreen = () => {
         </div>
 
         {/* Pagination */}
-        {!isLoading && !isError && data && data.totalPages > 1 && (
-          <SmartPagination
-            currentPage={page}
-            totalPages={data.totalPages}
-            onPageChange={handlePageChange}
-            className="mt-8"
-          />
-        )}
+        {data && data.totalPages > 1 && (
+          <div className="flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    size="default"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(page - 1);
+                    }}
+                    className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
+                    aria-disabled={page <= 1}
+                  />
+                </PaginationItem>
+                {/* Smart pagination: show max 7 pages with ellipsis */}
+                {(() => {
+                  const totalPages = data.totalPages || 0;
+                  const pages: (number | 'ellipsis')[] = [];
+                  const maxVisible = 7;
 
-        {/* Event Detail Sheet */}
-        <EventDetailSheet
-          event={selectedEvent}
-          isOpen={isDetailSheetOpen}
-          onOpenChange={setIsDetailSheetOpen}
-        />
+                  if (totalPages <= maxVisible) {
+                    for (let i = 1; i <= totalPages; i++) {
+                      pages.push(i);
+                    }
+                  } else {
+                    pages.push(1);
+                    const start = Math.max(2, page - 1);
+                    const end = Math.min(totalPages - 1, page + 1);
+
+                    if (start > 2) {
+                      pages.push('ellipsis');
+                    }
+
+                    for (let i = start; i <= end; i++) {
+                      pages.push(i);
+                    }
+
+                    if (end < totalPages - 1) {
+                      pages.push('ellipsis');
+                    }
+
+                    pages.push(totalPages);
+                  }
+
+                  return pages.map((pageNum, index) => {
+                    if (pageNum === 'ellipsis') {
+                      return (
+                        <PaginationItem key={`ellipsis-${index}`}>
+                          <span className="px-4 text-muted-foreground">...</span>
+                        </PaginationItem>
+                      );
+                    }
+
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          size="default"
+                          href="#"
+                          isActive={page === pageNum}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handlePageChange(pageNum);
+                          }}
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  });
+                })()}
+                <PaginationItem>
+                  <PaginationNext
+                    size="default"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(page + 1);
+                    }}
+                    className={page >= (data.totalPages || 0) ? 'pointer-events-none opacity-50' : ''}
+                    aria-disabled={page >= (data.totalPages || 0)}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
 
         {/* Add Event Modal */}
         <AddEventModal

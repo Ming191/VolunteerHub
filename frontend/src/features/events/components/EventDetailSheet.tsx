@@ -9,12 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft } from 'lucide-react';
 import type { EventResponse } from '@/api-client';
-import { useRegisterForEvent } from "../hooks/useRegistration";
 import { useState } from "react";
-import { EventRegistrationsModal } from "./EventRegistrationsModal";
-import { EditEventModal } from "./EditEventModal";
-import { useDeleteEvent } from "../hooks/useMyEvents";
-import { useEventPermissions } from "../hooks/useEventPermissions";
 
 // Sub-components
 import { EventHeader } from './sheet/EventHeader';
@@ -25,11 +20,16 @@ import { EventParticipation } from './sheet/EventParticipation';
 import { EventDescription } from './sheet/EventDescription';
 import { EventTags } from './sheet/EventTags';
 import { EventSheetFooter } from './sheet/EventSheetFooter';
+import {EditEventModal} from "./EditEventModal.tsx";
+import { useDeleteEvent } from "../hooks/useMyEvents.ts";
+import {EventRegistrationsModal} from "@/features/events/components/EventRegistrationsModal.tsx";
+import {useEventPermissions} from "@/features/events/hooks/useEventPermissions.ts";
+import {useRegisterForEvent} from "@/features/volunteer/hooks/useRegistration.ts";
 
 interface EventDetailSheetProps {
-    event: EventResponse | null;
-    isOpen: boolean;
-    onOpenChange: (open: boolean) => void;
+  event: EventResponse | null;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 type SheetView = 'event-details' | 'registrations';
@@ -43,7 +43,7 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange }: EventDetailShe
     // Use custom hook for permissions
     const { canRegister } = useEventPermissions(event);
 
-    if (!event) return null;
+  if (!event) return null;
 
     const handleRegister = () => {
         if (!event) return;
