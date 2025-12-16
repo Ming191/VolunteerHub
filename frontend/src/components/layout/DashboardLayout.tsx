@@ -5,6 +5,7 @@ import { FloatingDock } from '@/components/ui/floating-dock';
 import { LayoutDashboard, CalendarDays, UserCog, ShieldCheck, Users } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { SuspenseFallback } from '@/components/common/SuspenseFallback';
+import { ThemeListener } from '@/features/settings/components/ThemeListener';
 
 const DashboardLayout = () => {
     const { user, isLoading, isAuthenticated } = useAuth();
@@ -61,6 +62,7 @@ const DashboardLayout = () => {
         <div className="flex flex-col h-screen w-full">
             {/* Navbar Component */}
             <Navbar />
+            <ThemeListener />
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 pb-24 sm:pb-16">
