@@ -35,6 +35,7 @@ export const SuspenseFallback: React.FC = () => {  // Minimal: just prevents lay
         Loading…
       </span>
     </div>
+  )
 };
 
 export default SuspenseFallback;
