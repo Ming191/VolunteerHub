@@ -14,8 +14,16 @@ interface RefreshTokenRepository : JpaRepository<RefreshToken, Long> {
 
     fun findAllByUserAndRevokedAtIsNullOrderByCreatedAtDesc(user: User): List<RefreshToken>
 
+    fun findByUserAndIpAddressAndUserAgentAndRevokedAtIsNull(
+            user: User,
+            ipAddress: String?,
+            userAgent: String?
+    ): List<RefreshToken>
+
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE RefreshToken rt SET rt.revokedAt = :revokedAt WHERE rt.user = :user AND rt.revokedAt IS NULL")
+    @Query(
+            "UPDATE RefreshToken rt SET rt.revokedAt = :revokedAt WHERE rt.user = :user AND rt.revokedAt IS NULL"
+    )
     fun revokeAllUserTokens(user: User, revokedAt: LocalDateTime = LocalDateTime.now())
 
     @Modifying(clearAutomatically = true)
