@@ -7,15 +7,8 @@ import {
     type DeleteAccountRequest,
 } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
-import { authStorage } from '@/features/auth/utils/authStorage';
-
 const config = new Configuration({ basePath: '' });
 const settingsApi = new UserSettingsApi(config, undefined, axiosInstance);
-
-const getAuthorizationHeader = (): string => {
-    const token = authStorage.getAccessToken();
-    return token ? `Bearer ${token}` : '';
-};
 
 /**
  * Get current user settings
@@ -39,7 +32,7 @@ export const updateSettings = async (
  * Get active sessions
  */
 export const getActiveSessions = async (): Promise<ActiveSessionResponse[]> => {
-    const response = await settingsApi.getActiveSessions({ authorization: getAuthorizationHeader() });
+    const response = await settingsApi.getActiveSessions();
     return response.data;
 };
 
@@ -54,7 +47,7 @@ export const revokeSession = async (sessionId: number): Promise<void> => {
  * Revoke all other sessions
  */
 export const revokeAllOtherSessions = async (): Promise<void> => {
-    await settingsApi.revokeAllOtherSessions({ authorization: getAuthorizationHeader() });
+    await settingsApi.revokeAllOtherSessions({});
 };
 
 /**
