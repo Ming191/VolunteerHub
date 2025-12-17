@@ -42,7 +42,7 @@ export const useGetRegistrationStatus = (eventId: number | undefined, enabled: b
 export const useCancelRegistration = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (registrationId: number) => registrationService.cancelRegistration(registrationId),
+    mutationFn: (evenId: number) => registrationService.cancelRegistration(evenId),
     onSuccess: () => {
       toast.success("Registration Cancelled", {
         description: "You have successfully cancelled your registration",

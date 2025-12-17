@@ -10,7 +10,6 @@ import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { useEventPermissions } from '@/features/events/hooks/useEventPermissions.ts';
 
 const BlogPage = () => {
-    // @ts-ignore - Search params are typed in route definition
     const { eventId } = useSearch({ from: '/_auth/blog' });
     const [isDetailOpen, setIsDetailOpen] = useState(false);
 
