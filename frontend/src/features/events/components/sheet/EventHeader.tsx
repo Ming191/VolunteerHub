@@ -1,6 +1,7 @@
 import { SheetHeader, SheetTitle, SheetDescription } from '@/components/animate-ui/components/radix/sheet';
 import { Button } from '@/components/ui/button';
 import { useEventPermissions } from '../../hooks/useEventPermissions';
+import { useNavigate } from '@tanstack/react-router';
 import type { EventResponse } from '@/api-client';
 
 interface EventHeaderProps {
@@ -11,9 +12,17 @@ interface EventHeaderProps {
 
 export function EventHeader({ event, onEdit, onDelete }: EventHeaderProps) {
     const { isOrganizer, isOwner } = useEventPermissions(event);
+    const navigate = useNavigate();
+
+    const handleViewBlog = () => {
+        navigate({
+            to: '/blog',
+            search: { eventId: event.id.toString() },
+        });
+    };
 
     return (
-        <SheetHeader className="pb-4 flex justify-between items-start">
+        <SheetHeader className="pb-4 flex flex-row justify-between items-start">
             <div className="flex flex-col">
                 <SheetTitle className="text-2xl">{event.title}</SheetTitle>
                 <SheetDescription>
@@ -21,24 +30,33 @@ export function EventHeader({ event, onEdit, onDelete }: EventHeaderProps) {
                 </SheetDescription>
             </div>
 
-            {(isOrganizer && isOwner) ? (
-                <div className="flex gap-2">
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={onEdit}
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={onDelete}
-                    >
-                        Delete
-                    </Button>
-                </div>
-            ) : null}
+            <div className="flex gap-2">
+                <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleViewBlog}
+                >
+                    Community
+                </Button>
+                {(isOrganizer && isOwner) ? (
+                    <>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={onEdit}
+                        >
+                            Edit
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={onDelete}
+                        >
+                            Delete
+                        </Button>
+                    </>
+                ) : null}
+            </div>
         </SheetHeader>
     );
 }
