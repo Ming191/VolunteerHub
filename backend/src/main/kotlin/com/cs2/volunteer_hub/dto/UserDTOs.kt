@@ -70,3 +70,10 @@ data class PageUserResponse(
         }
     }
 }
+
+data class PublicUserResponse(
+    val id: Long,
+    val name: String,
+    val profilePictureUrl: String?,
+    val bio: String?
+)

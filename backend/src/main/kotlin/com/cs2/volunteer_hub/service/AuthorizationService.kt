@@ -50,4 +50,18 @@ class AuthorizationService(
 
         return event
     }
+
+    /**
+     * Verify user has permission to read posts in an event
+     * Access is allowed if the event is approved, regardless of user registration.
+     */
+    fun requireEventReadPermission(eventId: Long): Event {
+        val event = eventRepository.findByIdOrThrow(eventId)
+
+        if (!event.isApproved) {
+            throw UnauthorizedAccessException("Cannot interact with unapproved events.")
+        }
+        
+        return event
+    }
 }
