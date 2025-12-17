@@ -123,7 +123,7 @@ export const MyRegistrationsScreen = () => {
               </div>
               <h3 className="text-lg font-semibold mb-2">No Registrations Found</h3>
               <p className="text-muted-foreground max-w-md">
-                Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.
+                Try changing your search filters or keywords.
               </p>
             </div>
           ) : (
