@@ -56,10 +56,9 @@ const getMyRegistrationEvents = async (): Promise<RegistrationResponse[]> => {
 /**
  * Cancel a registration
  */
-const cancelRegistration = async (registrationId: number): Promise<void> => {
+const cancelRegistration = async (eventId: number): Promise<void> => {
   try {
-    // @ts-ignore
-    await registrationsApi.cancelRegistration(registrationId);
+    await registrationsApi.cancelRegistration({eventId});
   } catch (error) {
     console.error('Failed to cancel registration:', error);
     throw error;

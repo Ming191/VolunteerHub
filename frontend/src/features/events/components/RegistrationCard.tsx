@@ -33,7 +33,7 @@ export function RegistrationCard({ registration, onClick }: RegistrationCardProp
 
     const handleCancel = (e: MouseEvent) => {
         e.stopPropagation();
-        cancelMutation.mutate(registration.id, {
+        cancelMutation.mutate(registration.eventId, {
             onSuccess: () => {
                 setCancelDialogOpen(false);
             }
