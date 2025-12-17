@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { EventListSkeleton } from '@/components/ui/loaders';
+import { EventCardSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
 import { EventCard } from '../components/EventCard';
 import { EventFilterPanel } from '../components/EventFilterPanel';
 import { AddEventModal } from '../components/AddEventModal';
+import { EventDetailSheet } from '../components/EventDetailSheet';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { useEventSearch } from '../hooks/useEventSearch';
 import type { UiEvent } from '@/types/ui-models';
 import type { EventResponse } from '@/api-client';
-import { Button } from "@/components/ui/button";
+
 
 export const EventListScreen = () => {
   const {
@@ -27,26 +27,18 @@ export const EventListScreen = () => {
     handleClearFilters
   } = useEventSearch();
 
+  const [selectedEvent, setSelectedEvent] = useState<EventResponse | UiEvent | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
 
-
-  const navigate = useNavigate();
-
   const handleViewDetails = (event: EventResponse | UiEvent) => {
-    navigate({
-      to: '/blog',
-      search: { eventId: event.id.toString() },
-    });
+    setSelectedEvent(event);
+    setIsDetailOpen(true);
   };
 
   return (
     <AnimatedPage>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex justify-end mb-6">
-          <Button onClick={() => setIsAddEventModalOpen(true)}>
-            Create Event
-          </Button>
-        </div>
         {/* Filter Panel */}
         <div className="mb-8">
           <EventFilterPanel onFilterChange={handleFilterChange} initialFilters={filters} />
@@ -62,7 +54,13 @@ export const EventListScreen = () => {
         {/* Events Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {/* Loading State */}
-          {isLoading && <EventListSkeleton count={8} />}
+          {isLoading && (
+            <>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <EventCardSkeleton key={i} />
+              ))}
+            </>
+          )}
 
           {/* Error State */}
           {isError && (
@@ -188,6 +186,13 @@ export const EventListScreen = () => {
           open={isAddEventModalOpen}
           onOpenChange={setIsAddEventModalOpen}
           onSuccess={() => refetch()}
+        />
+
+        {/* Event Detail Sheet */}
+        <EventDetailSheet
+          event={selectedEvent as EventResponse}
+          isOpen={isDetailOpen}
+          onOpenChange={setIsDetailOpen}
         />
       </div>
     </AnimatedPage>

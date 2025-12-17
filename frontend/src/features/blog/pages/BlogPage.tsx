@@ -1,17 +1,12 @@
-import { useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { BlogFeed } from '@/features/blog/components/BlogFeed.tsx';
-import { Button } from '@/components/ui/button.tsx';
-import { Info } from 'lucide-react';
 import { eventService } from '@/features/events/api/eventService.ts';
-import { EventDetailSheet } from '@/features/events/components/EventDetailSheet.tsx';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { useEventPermissions } from '@/features/events/hooks/useEventPermissions.ts';
 
 const BlogPage = () => {
     const { eventId } = useSearch({ from: '/_auth/blog' });
-    const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     const { data: event, isLoading } = useQuery({
         queryKey: ['event', eventId],
@@ -22,7 +17,7 @@ const BlogPage = () => {
     const { canPost } = useEventPermissions(event || null);
 
     return (
-        <div className="container py-6 relative">
+        <div className="container py-6 relative mx-auto max-w-7xl">
             <div className="mb-6 flex items-start justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">
@@ -34,18 +29,6 @@ const BlogPage = () => {
                             : 'Connect with other volunteers, share your experiences, and stay updated.'}
                     </p>
                 </div>
-
-                {eventId && (
-                    <Button
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => setIsDetailOpen(true)}
-                        disabled={isLoading}
-                    >
-                        <Info className="h-4 w-4" />
-                        {isLoading ? 'Loading Event...' : 'View Event Details'}
-                    </Button>
-                )}
             </div>
 
             {isLoading && eventId ? (
@@ -57,14 +40,6 @@ const BlogPage = () => {
                 <BlogFeed
                     eventId={eventId ? Number(eventId) : undefined}
                     canPost={canPost}
-                />
-            )}
-
-            {event && (
-                <EventDetailSheet
-                    event={event}
-                    isOpen={isDetailOpen}
-                    onOpenChange={setIsDetailOpen}
                 />
             )}
         </div>
