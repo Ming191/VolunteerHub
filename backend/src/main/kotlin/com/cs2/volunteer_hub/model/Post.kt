@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.model
 
 import com.fasterxml.jackson.annotation.JsonManagedReference
 import jakarta.persistence.*
+import org.hibernate.annotations.Formula
 import java.time.LocalDateTime
 
 @Entity
@@ -38,7 +39,18 @@ data class Post(
     @OneToMany(mappedBy = "post", cascade = [CascadeType.ALL], orphanRemoval = true)
     val likes: MutableList<Like> = mutableListOf(),
 
-    @OneToMany(mappedBy = "post", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
+    @Formula("(select count(*) from likes l where l.post_id = id)")
+    val totalLikesCount: Int = 0,
+
+    @Formula("(select count(*) from comments c where c.post_id = id)")
+    val totalCommentsCount: Int = 0,
+
+    @OneToMany(
+        mappedBy = "post",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
     @JsonManagedReference("post-images")
     val images: MutableList<Image> = mutableListOf(),
 
