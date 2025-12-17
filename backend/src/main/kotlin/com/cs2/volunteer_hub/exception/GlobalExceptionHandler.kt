@@ -103,6 +103,18 @@ class GlobalExceptionHandler {
     }
 
     /**
+     * Handle custom UnauthorizedAccessException (403 Forbidden)
+     */
+    @ExceptionHandler(UnauthorizedAccessException::class)
+    fun handleUnauthorizedAccess(ex: UnauthorizedAccessException): ResponseEntity<Map<String, String>> {
+        logger.warn("Unauthorized access: ${ex.message}")
+
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
+            .body(mapOf("error" to (ex.message ?: "Access denied")))
+    }
+
+    /**
      * Handle bad credentials (401 Unauthorized)
      */
     @ExceptionHandler(BadCredentialsException::class)

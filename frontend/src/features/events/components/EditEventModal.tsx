@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { eventService } from '../api/eventService';
 import type { UpdateEventRequest, EventResponse } from '@/api-client';
 import { EventForm, type EventFormValues } from './EventForm';
+import {useMemo} from "react";
 
 interface EditEventModalProps {
   open: boolean;
@@ -85,7 +86,7 @@ export const EditEventModal = ({ open, onOpenChange, onSuccess, event }: EditEve
     }
   };
 
-  const defaultValues: Partial<EventFormValues> = {
+  const defaultValues: Partial<EventFormValues> = useMemo(() => ({
     title: event.title || "",
     description: event.description || "",
     location: event.location || "",
@@ -95,7 +96,12 @@ export const EditEventModal = ({ open, onOpenChange, onSuccess, event }: EditEve
     maxParticipants: event.maxParticipants || undefined,
     waitlistEnabled: event.waitlistEnabled ?? false,
     tags: Array.isArray(event.tags) ? [...event.tags] : [],
-  };
+  }), [event]);
+
+  const initialImages = useMemo(() =>
+      Array.isArray(event.imageUrls) ? [...event.imageUrls] : [],
+    [event]
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -109,6 +115,7 @@ export const EditEventModal = ({ open, onOpenChange, onSuccess, event }: EditEve
 
         <EventForm
           defaultValues={defaultValues}
+          initialImages={initialImages}
           onSubmit={handleUpdateEvent}
           onCancel={() => onOpenChange(false)}
           submitLabel="Save Changes"

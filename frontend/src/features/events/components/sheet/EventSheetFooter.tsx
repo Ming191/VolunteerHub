@@ -12,7 +12,7 @@ interface EventSheetFooterProps {
 
 export function EventSheetFooter({ event, onViewRegistrations, onRegister }: EventSheetFooterProps) {
     const { user } = useAuth();
-    const { isOrganizer, isOwner, isAdmin, canRegister } = useEventPermissions(event);
+    const { isOrganizer, isOwner, isAdmin, canRegister, isRegistered } = useEventPermissions(event);
 
     return (
         <SheetFooter className="sticky bottom-0 bg-background pt-4 pb-4 border-t mt-6">
@@ -38,7 +38,15 @@ export function EventSheetFooter({ event, onViewRegistrations, onRegister }: Eve
                     size="lg"
                     disabled
                 >
-                    Admin can only view
+                    Admin view only
+                </Button>
+            ) : isRegistered ? (
+                <Button
+                    className="w-full"
+                    size="lg"
+                    disabled
+                >
+                    Registered
                 </Button>
             ) : (
                 <Button

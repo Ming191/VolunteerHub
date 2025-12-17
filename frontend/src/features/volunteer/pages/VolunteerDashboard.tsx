@@ -18,6 +18,7 @@ export const VolunteerDashboard = () => {
     refetch,
     handleNavigateToEvent,
     handleNavigateToEvents,
+    handleNavigateToRegisteredEvents,
     handleNavigateToNotifications,
     handleNavigateToProfile
   } = useVolunteerDashboard();
@@ -65,7 +66,7 @@ export const VolunteerDashboard = () => {
 
             <VolunteerQuickActions
               onBrowse={handleNavigateToEvents}
-              onRegistrations={handleNavigateToEvents}
+              onRegistrations={handleNavigateToRegisteredEvents}
               onNotifications={handleNavigateToNotifications}
               onProfile={handleNavigateToProfile}
             />
