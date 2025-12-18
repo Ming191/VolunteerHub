@@ -1,14 +1,7 @@
 import { createRoute, redirect } from "@tanstack/react-router";
-import { Suspense } from "react";
 import { rootRoute } from "./root.route";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { SuspenseFallback } from "@/components/common/SuspenseFallback";
-import {
-  AdminDashboard,
-  OrganizerDashboard,
-  VolunteerDashboard,
-} from "./lazy-components";
+import { DashboardRouter } from "./components/DashboardRouter";
 
 // 3. Protected Routes Layout
 export const authenticatedLayoutRoute = createRoute({
@@ -30,31 +23,6 @@ export const authenticatedLayoutRoute = createRoute({
   },
   component: () => <DashboardLayout />,
 });
-
-// Dashboard Logic (Route splitting based on role)
-const DashboardRouter = () => {
-  const { user } = useAuth();
-
-  if (!user) {
-    // Show a loading or safe default state instead of a blank screen
-    return <SuspenseFallback />;
-  }
-
-  const role = user.role ?? "VOLUNTEER";
-
-  return (
-    <Suspense fallback={<SuspenseFallback />}>
-      {role === "ADMIN" ? (
-        <AdminDashboard />
-      ) : role === "EVENT_ORGANIZER" ? (
-        <OrganizerDashboard />
-      ) : (
-        // Default safe dashboard for VOLUNTEER or any unexpected role
-        <VolunteerDashboard />
-      )}
-    </Suspense>
-  );
-};
 
 export const dashboardRoute = createRoute({
   getParentRoute: () => authenticatedLayoutRoute,
