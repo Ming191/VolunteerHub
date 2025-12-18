@@ -1,11 +1,20 @@
-import { SkeletonTransition } from '@/components/common/SkeletonTransition';
-import { OrganizerDashboardSkeleton } from '../components/OrganizerDashboardSkeleton';
-import AnimatedPage from '@/components/common/AnimatedPage';
-import { ApiErrorState } from '@/components/ui/api-error-state';
-import { useOrganizerDashboard } from '../hooks/useOrganizerDashboard';
-import { OrganizerStats, PendingRegistrationsList, EventsInReviewList, TopEventsList, OrganizerQuickActions } from '../components';
+import { SkeletonTransition } from "@/components/common/SkeletonTransition";
+import { OrganizerDashboardSkeleton } from "../components/OrganizerDashboardSkeleton";
+import AnimatedPage from "@/components/common/AnimatedPage";
+import { HeroSection } from "@/components/common/HeroSection";
+import { ApiErrorState } from "@/components/ui/api-error-state";
+import { useOrganizerDashboard } from "../hooks/useOrganizerDashboard";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import {
+  OrganizerStats,
+  PendingRegistrationsList,
+  EventsInReviewList,
+  TopEventsList,
+  OrganizerQuickActions,
+} from "../components";
 
 export const OrganizerDashboard = () => {
+  const { user } = useAuth();
   const {
     dashboardData,
     isLoading,
@@ -15,22 +24,24 @@ export const OrganizerDashboard = () => {
     handleNavigateToEvent,
     handleNavigateToMyEvents,
     handleNavigateToCreateEvent,
-    handleNavigateToAnalytics
+    handleNavigateToAnalytics,
   } = useOrganizerDashboard();
 
   const stats = dashboardData?.stats || {
     pendingRegistrations: 0,
-    eventsPendingAdminApproval: 0
+    eventsPendingAdminApproval: 0,
   };
 
-  const recentPendingRegistrations = dashboardData?.recentPendingRegistrations || [];
-  const eventsPendingAdminApproval = dashboardData?.eventsPendingAdminApproval || [];
+  const recentPendingRegistrations =
+    dashboardData?.recentPendingRegistrations || [];
+  const eventsPendingAdminApproval =
+    dashboardData?.eventsPendingAdminApproval || [];
   const topEvents = dashboardData?.topEventsByRegistration || [];
 
   const componentStats = {
     pendingRegistrations: stats.pendingRegistrations || 0,
     eventsPendingAdminApproval: stats.eventsPendingAdminApproval || 0,
-    totalEvents: stats.totalEvents || 0
+    totalEvents: stats.totalEvents || 0,
   };
 
   return (
@@ -40,13 +51,24 @@ export const OrganizerDashboard = () => {
         skeleton={<OrganizerDashboardSkeleton />}
       >
         {isError ? (
-          <div className="max-w-6xl mx-auto p-6">
+          <div className="max-w-7xl mx-auto">
             <ApiErrorState error={error} onRetry={refetch} />
           </div>
         ) : (
-          <div className="max-w-6xl mx-auto p-6 space-y-6">
+          <div className="max-w-7xl mx-auto space-y-8">
+            {/* Organizer Hero Section */}
+            <HeroSection
+              title={`Welcome back, ${
+                user?.name?.split(" ")[0] || "Organizer"
+              }!`}
+              subtitle="Manage your events, review registrations, and create meaningful volunteer opportunities for your community."
+              variant="organizer"
+            />
+
+            {/* Stats Overview */}
             <OrganizerStats stats={componentStats} />
 
+            {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <PendingRegistrationsList
                 registrations={recentPendingRegistrations}
@@ -64,6 +86,7 @@ export const OrganizerDashboard = () => {
               />
             </div>
 
+            {/* Quick Actions */}
             <OrganizerQuickActions
               onCreateEvent={handleNavigateToCreateEvent}
               onManageEvents={handleNavigateToMyEvents}
@@ -75,4 +98,4 @@ export const OrganizerDashboard = () => {
       </SkeletonTransition>
     </AnimatedPage>
   );
-}
+};

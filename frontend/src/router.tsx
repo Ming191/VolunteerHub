@@ -1,67 +1,70 @@
-import { createRouter } from '@tanstack/react-router';
-import { rootRoute } from './routes/root.route';
+import { createRouter } from "@tanstack/react-router";
+import { rootRoute } from "./routes/root.route";
 import {
-    signinRoute,
-    signupRoute,
-    verifyEmailRoute,
-    testRoute
-} from './routes/auth.routes';
+  signinRoute,
+  signupRoute,
+  verifyEmailRoute,
+  testRoute,
+} from "./routes/auth.routes";
 import {
-    authenticatedLayoutRoute,
-    dashboardRoute,
-    indexRoute
-} from './routes/dashboard.routes';
+  authenticatedLayoutRoute,
+  dashboardRoute,
+  indexRoute,
+} from "./routes/dashboard.routes";
 import {
-    eventsRoute,
-    myEventsRoute,
-    myRegistrationsRoute
-} from './routes/events.routes';
+  eventsRoute,
+  myEventsRoute,
+  myRegistrationsRoute,
+} from "./routes/events.routes";
 import {
-    profileRoute,
-    notificationsRoute,
-    settingsRoute
-} from './routes/user.routes';
+  profileRoute,
+  notificationsRoute,
+  settingsRoute,
+} from "./routes/user.routes";
 import {
-    adminPendingEventsRoute,
-    adminUsersRoute,
-    adminReportsRoute,
-    adminSettingsRoute
-} from './routes/admin.routes';
-import { blogRoute } from './routes/blog.routes';
+  adminPendingEventsRoute,
+  adminUsersRoute,
+  adminReportsRoute,
+  adminSettingsRoute,
+} from "./routes/admin.routes";
+import { blogRoute } from "./routes/blog.routes";
+import { landingRoute, publicEventsRoute } from "./routes/public.routes";
 
 // 6. Create Router
 const routeTree = rootRoute.addChildren([
-    signinRoute,
-    signupRoute,
-    verifyEmailRoute,
-    testRoute,
-    authenticatedLayoutRoute.addChildren([
-        indexRoute,
-        dashboardRoute,
-        eventsRoute,
-        profileRoute,
-        notificationsRoute,
-        settingsRoute,
-        myEventsRoute,
-        adminPendingEventsRoute,
-        adminUsersRoute,
-        myRegistrationsRoute,
-        adminReportsRoute,
-        adminSettingsRoute,
-        blogRoute,
-    ]),
+  landingRoute,
+  publicEventsRoute,
+  signinRoute,
+  signupRoute,
+  verifyEmailRoute,
+  testRoute,
+  authenticatedLayoutRoute.addChildren([
+    indexRoute,
+    dashboardRoute,
+    eventsRoute,
+    profileRoute,
+    notificationsRoute,
+    settingsRoute,
+    myEventsRoute,
+    adminPendingEventsRoute,
+    adminUsersRoute,
+    myRegistrationsRoute,
+    adminReportsRoute,
+    adminSettingsRoute,
+    blogRoute,
+  ]),
 ]);
 
 export const router = createRouter({
-    routeTree,
-    context: {
-        auth: undefined!,
-    },
-    defaultPreload: 'intent',
+  routeTree,
+  context: {
+    auth: undefined!,
+  },
+  defaultPreload: "intent",
 });
 
-declare module '@tanstack/react-router' {
-    interface Register {
-        router: typeof router;
-    }
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
 }

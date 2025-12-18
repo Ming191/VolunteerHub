@@ -1,17 +1,26 @@
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { EventListSkeleton } from '@/components/ui/loaders';
-import { EmptyState } from '@/components/ui/empty-state';
-import { ApiErrorState } from '@/components/ui/api-error-state';
-import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination';
-import { EventCard } from '../components/EventCard';
-import { EventFilterPanel } from '../components/EventFilterPanel';
-import { AddEventModal } from '../components/AddEventModal';
-import AnimatedPage from '@/components/common/AnimatedPage';
-import { useEventSearch } from '../hooks/useEventSearch';
-import type { UiEvent } from '@/types/ui-models';
-import type { EventResponse } from '@/api-client';
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { EventListSkeleton } from "@/components/ui/loaders";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ApiErrorState } from "@/components/ui/api-error-state";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationLink,
+  PaginationNext,
+} from "@/components/ui/pagination";
+import { EventCard } from "../components/EventCard";
+import { EventFilterPanel } from "../components/EventFilterPanel";
+import { AddEventModal } from "../components/AddEventModal";
+import AnimatedPage from "@/components/common/AnimatedPage";
+import { HeroSection } from "@/components/common/HeroSection";
+import { useEventSearch } from "../hooks/useEventSearch";
+import type { UiEvent } from "@/types/ui-models";
+import type { EventResponse } from "@/api-client";
 import { Button } from "@/components/ui/button";
+import { Plus, Search } from "lucide-react";
 
 export const EventListScreen = () => {
   const {
@@ -24,17 +33,16 @@ export const EventListScreen = () => {
     filters,
     handlePageChange,
     handleFilterChange,
-    handleClearFilters
+    handleClearFilters,
   } = useEventSearch();
 
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
-
 
   const navigate = useNavigate();
 
   const handleViewDetails = (event: EventResponse | UiEvent) => {
     navigate({
-      to: '/blog',
+      to: "/blog",
       search: { eventId: event.id.toString() },
     });
   };
@@ -42,20 +50,54 @@ export const EventListScreen = () => {
   return (
     <AnimatedPage>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex justify-end mb-6">
-          <Button onClick={() => setIsAddEventModalOpen(true)}>
-            Create Event
-          </Button>
-        </div>
+        {/* Hero Section */}
+        <HeroSection
+          title="Discover Volunteer Opportunities"
+          subtitle="Join events that match your passion and make a meaningful impact in your community."
+          variant="default"
+        >
+          <div className="flex flex-wrap gap-4">
+            <Button
+              onClick={() => setIsAddEventModalOpen(true)}
+              size="lg"
+              className="bg-volunteer-600 hover:bg-volunteer-700 text-white"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Create Event
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-2 hover:bg-volunteer-50 dark:hover:bg-volunteer-900/20"
+            >
+              <Search className="mr-2 h-5 w-5" />
+              Advanced Search
+            </Button>
+          </div>
+        </HeroSection>
+
         {/* Filter Panel */}
         <div className="mb-8">
-          <EventFilterPanel onFilterChange={handleFilterChange} initialFilters={filters} />
+          <EventFilterPanel
+            onFilterChange={handleFilterChange}
+            initialFilters={filters}
+          />
         </div>
 
         {/* Results Count */}
         {!isLoading && data && data.totalElements > 0 && (
-          <div className="mb-6 text-sm text-muted-foreground">
-            Showing {data.content.length} of {data.totalElements} event{data.totalElements !== 1 ? 's' : ''}
+          <div className="mb-6 flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing{" "}
+              <span className="font-semibold text-foreground">
+                {data.content.length}
+              </span>{" "}
+              of{" "}
+              <span className="font-semibold text-foreground">
+                {data.totalElements}
+              </span>{" "}
+              event{data.totalElements !== 1 ? "s" : ""}
+            </div>
           </div>
         )}
 
@@ -87,7 +129,11 @@ export const EventListScreen = () => {
           {!isLoading && !isError && data && data.content.length > 0 && (
             <>
               {data.content.map((event) => (
-                <EventCard key={event.id} event={event} onViewDetails={handleViewDetails} />
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onViewDetails={handleViewDetails}
+                />
               ))}
             </>
           )}
@@ -106,14 +152,16 @@ export const EventListScreen = () => {
                       e.preventDefault();
                       handlePageChange(page - 1);
                     }}
-                    className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
+                    className={
+                      page <= 1 ? "pointer-events-none opacity-50" : ""
+                    }
                     aria-disabled={page <= 1}
                   />
                 </PaginationItem>
                 {/* Smart pagination: show max 7 pages with ellipsis */}
                 {(() => {
                   const totalPages = data.totalPages || 0;
-                  const pages: (number | 'ellipsis')[] = [];
+                  const pages: (number | "ellipsis")[] = [];
                   const maxVisible = 7;
 
                   if (totalPages <= maxVisible) {
@@ -126,7 +174,7 @@ export const EventListScreen = () => {
                     const end = Math.min(totalPages - 1, page + 1);
 
                     if (start > 2) {
-                      pages.push('ellipsis');
+                      pages.push("ellipsis");
                     }
 
                     for (let i = start; i <= end; i++) {
@@ -134,17 +182,19 @@ export const EventListScreen = () => {
                     }
 
                     if (end < totalPages - 1) {
-                      pages.push('ellipsis');
+                      pages.push("ellipsis");
                     }
 
                     pages.push(totalPages);
                   }
 
                   return pages.map((pageNum, index) => {
-                    if (pageNum === 'ellipsis') {
+                    if (pageNum === "ellipsis") {
                       return (
                         <PaginationItem key={`ellipsis-${index}`}>
-                          <span className="px-4 text-muted-foreground">...</span>
+                          <span className="px-4 text-muted-foreground">
+                            ...
+                          </span>
                         </PaginationItem>
                       );
                     }
@@ -174,7 +224,11 @@ export const EventListScreen = () => {
                       e.preventDefault();
                       handlePageChange(page + 1);
                     }}
-                    className={page >= (data.totalPages || 0) ? 'pointer-events-none opacity-50' : ''}
+                    className={
+                      page >= (data.totalPages || 0)
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
                     aria-disabled={page >= (data.totalPages || 0)}
                   />
                 </PaginationItem>
@@ -192,4 +246,4 @@ export const EventListScreen = () => {
       </div>
     </AnimatedPage>
   );
-}
+};
