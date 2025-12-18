@@ -1,0 +1,181 @@
+
+
+:root {
+
+  --color-primary-50: #f0fdf9;
+  --color-primary-100: #ccfbef;
+  --color-primary-200: #99f6e0;
+  --color-primary-300: #5fe9ce;
+  --color-primary-400: #2dd4b8;
+  --color-primary-500: #3b9883;
+  --color-primary-600: #0d9373;
+  --color-primary-700: #0a7560;
+  --color-primary-800: #0a5d4d;
+  --color-primary-900: #0a4d40;
+
+
+  --color-secondary-50: #f8f9fa;
+  --color-secondary-100: #e9ecef;
+  --color-secondary-200: #dee2e6;
+  --color-secondary-300: #ced4da;
+  --color-secondary-400: #6c757d;
+  --color-secondary-500: #495057;
+  --color-secondary-600: #343a40;
+  --color-secondary-700: #262e35;
+  --color-secondary-800: #1a1f24;
+  --color-secondary-900: #0d1013;
+
+
+  --color-accent-orange: #ff8c42;
+  --color-accent-orange-light: #ffb380;
+  --color-accent-orange-dark: #e67a2e;
+
+  --color-accent-coral: #ff6b6b;
+  --color-accent-coral-light: #ff9999;
+  --color-accent-coral-dark: #ee5a5a;
+
+  --color-accent-purple: #8b5cf6;
+  --color-accent-purple-light: #a78bfa;
+  --color-accent-purple-dark: #7c3aed;
+
+
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+
+
+  /* Default/Idle States */
+  --color-interactive-default: var(--color-primary-500);
+  --color-interactive-default-bg: var(--color-primary-50);
+  --color-interactive-default-border: var(--color-primary-300);
+
+  /* Hover States - Must be distinct from default */
+  --color-interactive-hover: var(--color-primary-600);
+  --color-interactive-hover-bg: var(--color-primary-100);
+  --color-interactive-hover-border: var(--color-primary-400);
+
+  /* Active/Pressed States - Must be distinct from hover */
+  --color-interactive-active: var(--color-primary-700);
+  --color-interactive-active-bg: var(--color-primary-200);
+  --color-interactive-active-border: var(--color-primary-500);
+
+  /* Focus States - High contrast for accessibility */
+  --color-interactive-focus: var(--color-primary-500);
+  --color-interactive-focus-ring: var(--color-primary-300);
+  --color-interactive-focus-ring-offset: #ffffff;
+
+  /* Disabled States - Low opacity, no interaction */
+  --color-interactive-disabled: var(--color-gray-400);
+  --color-interactive-disabled-bg: var(--color-gray-100);
+  --color-interactive-disabled-border: var(--color-gray-200);
+
+
+
+  /* Success - Green tones */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-contrast: #ffffff;
+
+  /* Error - Red tones */
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+  --color-error-contrast: #ffffff;
+
+  /* Warning - Amber/Orange tones */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-contrast: #ffffff;
+
+  /* Info - Blue tones */
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+  --color-info-contrast: #ffffff;
+
+  /* ========================================
+     SEMANTIC BACKGROUND COLORS
+     ======================================== */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: var(--color-gray-50);
+  --color-bg-tertiary: var(--color-gray-100);
+  --color-bg-elevated: #ffffff;
+  --color-bg-overlay: rgba(17, 24, 39, 0.5);
+
+  /* ========================================
+     SEMANTIC TEXT COLORS
+     ======================================== */
+  --color-text-primary: var(--color-secondary-700);
+  --color-text-secondary: var(--color-gray-600);
+  --color-text-tertiary: var(--color-gray-500);
+  --color-text-disabled: var(--color-gray-400);
+  --color-text-inverse: #ffffff;
+  --color-text-link: var(--color-primary-600);
+  --color-text-link-hover: var(--color-primary-700);
+
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+  --color-border-default: var(--color-gray-200);
+  --color-border-strong: var(--color-gray-300);
+  --color-border-subtle: var(--color-gray-100);
+  --color-border-primary: var(--color-primary-500);
+
+  /* ========================================
+     SHADOW COLORS
+     ======================================== */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-primary: 0 10px 15px -3px rgba(59, 152, 131, 0.3), 0 4px 6px -2px rgba(59, 152, 131, 0.2);
+}
+
+/* ========================================
+   DARK MODE OVERRIDES
+   ======================================== */
+.dark {
+  /* Backgrounds */
+  --color-bg-primary: var(--color-secondary-900);
+  --color-bg-secondary: var(--color-secondary-800);
+  --color-bg-tertiary: var(--color-secondary-700);
+  --color-bg-elevated: var(--color-secondary-800);
+  --color-bg-overlay: rgba(0, 0, 0, 0.7);
+
+  /* Text */
+  --color-text-primary: var(--color-gray-50);
+  --color-text-secondary: var(--color-gray-300);
+  --color-text-tertiary: var(--color-gray-400);
+  --color-text-disabled: var(--color-gray-600);
+
+  /* Borders */
+  --color-border-default: var(--color-gray-700);
+  --color-border-strong: var(--color-gray-600);
+  --color-border-subtle: var(--color-gray-800);
+
+  /* Interactive States - Adjusted for dark mode */
+  --color-interactive-default-bg: rgba(59, 152, 131, 0.1);
+  --color-interactive-hover-bg: rgba(59, 152, 131, 0.2);
+  --color-interactive-active-bg: rgba(59, 152, 131, 0.3);
+  --color-interactive-disabled-bg: var(--color-gray-800);
+}
+
+

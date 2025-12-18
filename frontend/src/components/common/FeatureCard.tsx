@@ -1,13 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { LucideIcon } from "lucide-react";
-import type { ComponentType } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 
-interface StatsCardProps {
+interface FeatureCardProps {
+  icon: LucideIcon;
   title: string;
-  value: number;
   description: string;
-  icon: LucideIcon | ComponentType<{ className?: string }>;
   variant?: "default" | "volunteer" | "orange" | "purple" | "blue";
+  onClick?: () => void;
 }
 
 const variantStyles = {
@@ -15,68 +14,73 @@ const variantStyles = {
     iconBg:
       "bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30",
     iconColor: "text-green-600 dark:text-green-400",
-    valueColor: "text-gray-900 dark:text-white",
+    titleColor: "text-gray-900 dark:text-white",
     borderColor: "border-green-100 dark:border-green-900/30",
   },
   volunteer: {
     iconBg:
       "bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/30 dark:to-emerald-800/30",
     iconColor: "text-green-600 dark:text-green-400",
-    valueColor: "text-green-600 dark:text-green-400",
+    titleColor: "text-green-600 dark:text-green-400",
     borderColor: "border-green-100 dark:border-green-900/30",
   },
   orange: {
     iconBg:
       "bg-gradient-to-br from-orange-100 to-amber-200 dark:from-orange-900/30 dark:to-amber-800/30",
     iconColor: "text-orange-600 dark:text-orange-400",
-    valueColor: "text-orange-600 dark:text-orange-400",
+    titleColor: "text-orange-600 dark:text-orange-400",
     borderColor: "border-orange-100 dark:border-orange-900/30",
   },
   purple: {
     iconBg:
       "bg-gradient-to-br from-purple-100 to-violet-200 dark:from-purple-900/30 dark:to-violet-800/30",
     iconColor: "text-purple-600 dark:text-purple-400",
-    valueColor: "text-purple-600 dark:text-purple-400",
+    titleColor: "text-purple-600 dark:text-purple-400",
     borderColor: "border-purple-100 dark:border-purple-900/30",
   },
   blue: {
     iconBg:
       "bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-900/30 dark:to-indigo-800/30",
     iconColor: "text-blue-600 dark:text-blue-400",
-    valueColor: "text-blue-600 dark:text-blue-400",
+    titleColor: "text-blue-600 dark:text-blue-400",
     borderColor: "border-blue-100 dark:border-blue-900/30",
   },
 };
 
-export const StatsCard = ({
-  title,
-  value,
-  description,
+export const FeatureCard = ({
   icon: Icon,
+  title,
+  description,
   variant = "default",
-}: StatsCardProps) => {
+  onClick,
+}: FeatureCardProps) => {
   const styles = variantStyles[variant];
+  const isClickable = !!onClick;
 
   return (
     <Card
-      className={`transition-shadow hover:shadow-lg border-2 ${styles.borderColor} bg-white/80 dark:bg-gray-900/80 backdrop-blur`}
+      className={`transition-all hover:shadow-xl border-2 ${
+        styles.borderColor
+      } bg-white/80 dark:bg-gray-900/80 backdrop-blur ${
+        isClickable ? "cursor-pointer" : ""
+      }`}
+      onClick={onClick}
     >
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          {title}
-        </CardTitle>
-        <div className={`p-2.5 rounded-xl ${styles.iconBg} shadow-md`}>
-          <Icon className={`h-5 w-5 ${styles.iconColor}`} />
+      <CardContent className="p-6 space-y-4">
+        {/* Icon */}
+        <div
+          className={`inline-flex p-3.5 rounded-xl ${styles.iconBg} shadow-md`}
+        >
+          <Icon className={`h-8 w-8 ${styles.iconColor}`} />
         </div>
-      </CardHeader>
 
-      <CardContent>
-        <div className={`text-2xl font-bold ${styles.valueColor}`}>
-          {value.toLocaleString()}
+        {/* Content */}
+        <div className="space-y-2">
+          <h3 className={`text-xl font-bold ${styles.titleColor}`}>{title}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            {description}
+          </p>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {description}
-        </p>
       </CardContent>
     </Card>
   );
