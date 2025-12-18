@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 import type { CommentResponse } from "@/api-client";
 import { CommentReplyForm } from './CommentReplyForm';
-import { itemVariants, MAX_COMMENT_DEPTH } from './constants';
+import { MAX_COMMENT_DEPTH } from './constants';
 
 interface CommentItemProps {
     comment: CommentResponse;
@@ -34,13 +34,7 @@ export const CommentItem = React.memo(({
     }, [comment.id, onReply]);
 
     return (
-        <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate="show"
-            exit="exit"
-            className={`flex flex-col gap-2 ${depth > 0 ? 'ml-6 mt-3' : ''}`}
-        >
+        <div className={`flex flex-col gap-2 ${depth > 0 ? 'ml-6 mt-3' : ''}`}>
             <div className="flex gap-3">
                 <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarImage src={comment.author.profilePictureUrl} alt={comment.author.name} />
@@ -103,7 +97,7 @@ export const CommentItem = React.memo(({
                     </div>
                 </AnimatePresence>
             )}
-        </motion.div>
+        </div>
     );
 });
 

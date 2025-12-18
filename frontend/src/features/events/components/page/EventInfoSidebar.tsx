@@ -4,6 +4,7 @@ import { Calendar, MapPin, Clock, Users, Ticket } from 'lucide-react';
 import type { EventResponse } from '@/api-client';
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
+import { EventMap } from './EventMap';
 
 interface EventInfoSidebarProps {
     event: EventResponse;
@@ -47,6 +48,14 @@ export const EventInfoSidebar = ({ event, onRegister, isOrganizer }: EventInfoSi
                         </div>
                     </div>
 
+                    {(event.latitude != null && event.longitude != null) && (
+                        <div className="rounded-md overflow-hidden border">
+                            <EventMap
+                                latitude={event.latitude}
+                                longitude={event.longitude}
+                            />
+                        </div>
+                    )}
                     <div className="flex items-start gap-3">
                         <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
                         <div>

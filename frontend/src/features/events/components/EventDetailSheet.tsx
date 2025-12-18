@@ -30,11 +30,14 @@ interface EventDetailSheetProps {
   event: EventResponse | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onEventUpdateStart?: (eventId: number) => void;
+  onEventUpdateEnd?: () => void;
+  onImageProcessingStart?: (eventId: number) => void;
 }
 
 type SheetView = 'event-details' | 'registrations';
 
-export const EventDetailSheet = ({ event, isOpen, onOpenChange }: EventDetailSheetProps) => {
+export const EventDetailSheet = ({ event, isOpen, onOpenChange, onEventUpdateStart, onEventUpdateEnd, onImageProcessingStart }: EventDetailSheetProps) => {
     const [isEditEventModalOpen, setEditEventModalOpen] = useState(false);
     const registerMutation = useRegisterForEvent();
     const deleteEventMutation = useDeleteEvent();
@@ -135,6 +138,9 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange }: EventDetailShe
                 onSuccess={() => {
                     // reload data or callback
                 }}
+                onUpdateStart={onEventUpdateStart}
+                onUpdateEnd={onEventUpdateEnd}
+                onImageProcessingStart={onImageProcessingStart}
             />
         </Sheet>
     );

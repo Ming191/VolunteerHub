@@ -8,7 +8,6 @@
  * - CommentItem: Individual comment with replies (comments/CommentItem.tsx)
  * - CommentInput: Reusable input component (comments/CommentInput.tsx)
  * - CommentReplyForm: Reply form component (comments/CommentReplyForm.tsx)
- * - useCommentMutations: Custom hook for mutations (comments/useCommentMutations.ts)
- */
+ * - useCommentMutations: Custom hook for mutations (comments/useCommentMutations.ts) */
 
 export { PostComments } from './comments';
