@@ -6,7 +6,8 @@ import { authenticatedLayoutRoute } from './dashboard.routes';
 import {
     EventListPage,
     MyEventsPage,
-    MyRegistrationsScreen
+    MyRegistrationsScreen,
+    EventDetailsPage
 } from './lazy-components';
 
 export const eventsRoute = createRoute({
@@ -22,6 +23,12 @@ export const eventsRoute = createRoute({
         size: z.number().optional(),
     }),
     component: () => <Suspense fallback={<SuspenseFallback />}><EventListPage /></Suspense>,
+});
+
+export const eventDetailsRoute = createRoute({
+    getParentRoute: () => authenticatedLayoutRoute,
+    path: '/events/$eventId',
+    component: () => <Suspense fallback={<SuspenseFallback />}><EventDetailsPage /></Suspense>,
 });
 
 export const myEventsRoute = createRoute({

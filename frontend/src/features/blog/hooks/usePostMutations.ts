@@ -1,0 +1,111 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { blogService } from '@/features/blog/api/blogService.ts';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+
+interface CreatePostParams {
+    content: string;
+    files: File[] | null;
+    eventId?: number;
+}
+
+export const usePostMutations = (eventId?: number) => {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    const queryKey = ['posts', eventId ? `event-${eventId}` : 'feed'];
+
+    const createOptimisticPost = (content: string, files: File[] | null) => ({
+        id: Date.now(),
+        content,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        author: {
+            id: user?.userId || 0,
+            name: user?.name || 'You',
+        },
+        totalLikes: 0,
+        totalComments: 0,
+        isLikedByCurrentUser: false,
+        imageUrls: files ? files.map(f => URL.createObjectURL(f)) : [],
+        isOptimistic: true,
+    });
+
+    const createPostMutation = useMutation({
+        mutationFn: ({ content, files, eventId: postEventId }: CreatePostParams) => {
+            const targetEventId = postEventId || eventId;
+            if (!targetEventId) {
+                throw new Error("Cannot create post without event (Feed posting not supported yet)");
+            }
+            return blogService.createPost(targetEventId, content, files || undefined);
+        },
+        onMutate: async ({ content, files }) => {
+            await queryClient.cancelQueries({ queryKey: ['posts'] });
+
+            const previousPosts = queryClient.getQueryData(queryKey);
+            const optimisticPost = createOptimisticPost(content, files);
+
+            queryClient.setQueryData(queryKey, (old: any) => {
+                if (!old) {
+                    return {
+                        pages: [{ content: [optimisticPost], pageNumber: 0, last: true, totalElements: 1 }],
+                        pageParams: [0]
+                    };
+                }
+
+                const newPages = [...old.pages];
+                if (newPages.length > 0) {
+                    newPages[0] = {
+                        ...newPages[0],
+                        content: [optimisticPost, ...newPages[0].content]
+                    };
+                }
+
+                return { ...old, pages: newPages };
+            });
+
+            return { previousPosts, optimisticPost };
+        },
+        onSuccess: (savedPost) => {
+            queryClient.setQueryData(queryKey, (old: any) => {
+                if (!old) return old;
+
+                const newPages = old.pages.map((page: any) => ({
+                    ...page,
+                    content: page.content.map((post: any) => {
+                        if (post.isOptimistic) {
+                            // Use server URLs only; blob URLs won't work after refresh
+                            return { ...savedPost, imageUrls: savedPost.imageUrls || [] };
+                        }
+                        return post;
+                    })
+                }));
+
+                return { ...old, pages: newPages };
+            });
+            toast.success("Post created!");
+        },
+        onError: (_err, _variables, context: any) => {
+            if (context?.previousPosts) {
+                queryClient.setQueryData(queryKey, context.previousPosts);
+            }
+            toast.error("Failed to create post");
+        },
+        onSettled: (_data, _error, _variables, context: any) => {
+            // Cleanup optimistic blob URLs
+            if (context?.optimisticPost?.imageUrls) {
+                context.optimisticPost.imageUrls.forEach((url: string) => {
+                    URL.revokeObjectURL(url);
+                });
+            }
+
+            setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ['posts'] });
+            }, 5000);
+        }
+    });
+
+    return {
+        createPostMutation,
+    };
+};
+

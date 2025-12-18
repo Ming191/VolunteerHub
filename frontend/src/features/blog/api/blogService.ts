@@ -50,7 +50,7 @@ export const blogService = {
   },
 
   getComments: async (postId: number) => {
-    const response = await commentApi.getCommentsForPost({ postId });
+    const response = await commentApi.getNestedCommentsForPost({ postId });
     return response.data;
   },
 

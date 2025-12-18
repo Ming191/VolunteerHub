@@ -9,17 +9,17 @@ import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.stereotype.Service
 
 /**
- * Centralized authorization service
- * Eliminates duplicate ownership and permission checking across services
+ * Centralized authorization service Eliminates duplicate ownership and permission checking across
+ * services
  */
 @Service
 class AuthorizationService(
-    private val eventRepository: EventRepository,
-    private val registrationRepository: RegistrationRepository
+        private val eventRepository: EventRepository,
+        private val registrationRepository: RegistrationRepository
 ) {
     /**
-     * Verify event ownership and return the event
-     * Throws UnauthorizedAccessException if user is not the creator
+     * Verify event ownership and return the event Throws UnauthorizedAccessException if user is not
+     * the creator
      */
     fun requireEventOwnership(eventId: Long, userEmail: String): Event {
         val event = eventRepository.findByIdOrThrow(eventId)
@@ -30,38 +30,47 @@ class AuthorizationService(
     }
 
     /**
-     * Verify user has permission to post in an event
-     * User must be an approved member of the event
+     * Verify user has permission to post in an event User must be an approved member of the event
      */
     fun requireEventPostPermission(eventId: Long, userId: Long): Event {
         val event = eventRepository.findByIdOrThrow(eventId)
 
-        if (!event.isApproved) {
+        // Allow creator to post updates even if event is unapproved
+        if (!event.isApproved && event.creator.id != userId) {
             throw UnauthorizedAccessException("Cannot interact with unapproved events.")
         }
 
-        val spec = RegistrationSpecifications.forEvent(eventId)
-            .and(RegistrationSpecifications.byUser(userId))
-            .and(RegistrationSpecifications.isApproved())
+        // If creator, bypass registration check
+        if (event.creator.id == userId) {
+            return event
+        }
+
+        val spec =
+                RegistrationSpecifications.forEvent(eventId)
+                        .and(RegistrationSpecifications.byUser(userId))
+                        .and(RegistrationSpecifications.isApproved())
 
         if (!registrationRepository.exists(spec)) {
-            throw UnauthorizedAccessException("You must be an approved member of the event to post.")
+            throw UnauthorizedAccessException(
+                    "You must be an approved member of the event to post."
+            )
         }
 
         return event
     }
 
     /**
-     * Verify user has permission to read posts in an event
-     * Access is allowed if the event is approved, regardless of user registration.
+     * Verify user has permission to read posts in an event Access is allowed if the event is
+     * approved, regardless of user registration.
      */
-    fun requireEventReadPermission(eventId: Long): Event {
+    fun requireEventReadPermission(eventId: Long, userId: Long? = null): Event {
         val event = eventRepository.findByIdOrThrow(eventId)
 
-        if (!event.isApproved) {
+        // Allow access if event is approved OR if the user is the creator
+        if (!event.isApproved && (userId == null || event.creator.id != userId)) {
             throw UnauthorizedAccessException("Cannot interact with unapproved events.")
         }
-        
+
         return event
     }
 }

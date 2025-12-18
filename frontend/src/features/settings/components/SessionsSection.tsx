@@ -1,7 +1,7 @@
 import { LogOut, Laptop, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 import type { ActiveSessionResponse } from '@/api-client';
 
 interface SessionsSectionProps {
@@ -57,7 +57,7 @@ export const SessionsSection = ({
                                         <div className="text-sm text-muted-foreground">
                                             {session.ipAddress || 'Unknown IP'} • {
                                                 session.createdAt
-                                                    ? formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })
+                                                    ? formatDistanceToNowUTC(session.createdAt, { addSuffix: true })
                                                     : 'Unknown time'
                                             }
                                         </div>
