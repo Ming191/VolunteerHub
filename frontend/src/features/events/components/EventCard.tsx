@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Users } from 'lucide-react';
+import { Calendar, MapPin, Users, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,9 +18,16 @@ const formatDate = (dateString: string) => {
 interface EventCardProps<T extends UiEvent | EventResponse> {
     event: T;
     onViewDetails?: (event: T) => void;
+    isUpdating?: boolean;
+    isProcessingImages?: boolean;
 }
 
-export const EventCard = <T extends UiEvent | EventResponse>({ event, onViewDetails }: EventCardProps<T>) => {
+export const EventCard = <T extends UiEvent | EventResponse>({
+    event,
+    onViewDetails,
+    isUpdating = false,
+    isProcessingImages = false
+}: EventCardProps<T>) => {
     const isUiEvent = (e: UiEvent | EventResponse): e is UiEvent => 'availableSpotsText' in e;
 
     const availableSpotsText = isUiEvent(event)
@@ -31,7 +38,22 @@ export const EventCard = <T extends UiEvent | EventResponse>({ event, onViewDeta
     const tags = (Array.isArray(event.tags) ? event.tags : Array.from(event.tags || [])) as string[];
 
     return (
-        <Card className="flex flex-col h-full">
+        <Card className="flex flex-col h-full relative">
+            {(isUpdating || isProcessingImages) && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+                    <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-sm font-medium">
+                            {isProcessingImages ? 'Processing images...' : 'Updating...'}
+                        </p>
+                        {isProcessingImages && (
+                            <p className="text-xs text-muted-foreground text-center px-4">
+                                This may take a few moments
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
             <CardHeader className="p-0">
                 {hasImage ? (
                     <img

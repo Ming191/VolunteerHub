@@ -4,6 +4,7 @@ import { EventImages } from '../sheet/EventImages';
 import type { EventResponse } from '@/api-client';
 import { BlogFeed } from '@/features/blog/components/BlogFeed';
 import { useEventPermissions } from '@/features/events/hooks/useEventPermissions';
+import { EventMap } from './EventMap';
 
 interface EventContentTabsProps {
     event: EventResponse;
@@ -48,10 +49,13 @@ export const EventContentTabs = ({ event }: EventContentTabsProps) => {
                         <CardContent className="pt-6">
                             <h3 className="text-xl font-semibold mb-4">Event Location</h3>
                             <p className="text-muted-foreground mb-4">{event.location}</p>
-                            <div className="h-[300px] w-full bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
-                                Map Placeholder
-                            </div>
-                        </CardContent>
+                            {event.latitude != null && event.longitude != null ? (
+                                <EventMap latitude={event.latitude} longitude={event.longitude} />
+                            ) : (
+                                <div className="h-[300px] w-full bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
+                                    No map coordinates available for this location.
+                                </div>
+                            )}                        </CardContent>
                     </Card>
                 </TabsContent>
 

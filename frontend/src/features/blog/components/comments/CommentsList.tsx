@@ -1,10 +1,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button.tsx';
 import { Loader2, MessageSquare } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import type { CommentResponse } from "@/api-client";
 import { CommentItem } from './CommentItem';
-import { containerVariants } from './constants';
 
 interface CommentsListProps {
     comments: CommentResponse[];
@@ -60,23 +59,16 @@ export const CommentsList: React.FC<CommentsListProps> = ({
     }
 
     return (
-        <motion.div
-            className="space-y-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-        >
-            <AnimatePresence mode="popLayout">
-                {comments.map((comment) => (
-                    <CommentItem
-                        key={comment.id}
-                        comment={comment}
-                        postId={postId}
-                        onReply={onReply}
-                    />
-                ))}
-            </AnimatePresence>
-        </motion.div>
+        <div className="space-y-4">
+            {comments.map((comment) => (
+                <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    postId={postId}
+                    onReply={onReply}
+                />
+            ))}
+        </div>
     );
 };
 
