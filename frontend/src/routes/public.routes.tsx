@@ -4,8 +4,10 @@ import { LandingPage } from "@/features/home/LandingPage";
 import { Suspense, lazy } from "react";
 import { SuspenseFallback } from "@/components/common/SuspenseFallback";
 
-const EventListPage = lazy(
-  () => import("@/features/events/pages/EventListPage")
+const EventListPageComponent = lazy(() =>
+  import("@/features/events/pages/EventListPage").then((m) => ({
+    default: m.EventListScreen,
+  }))
 );
 
 // Landing page route (public)
@@ -27,7 +29,7 @@ export const publicEventsRoute = createRoute({
   path: "/events",
   component: () => (
     <Suspense fallback={<SuspenseFallback />}>
-      <EventListPage />
+      <EventListPageComponent />
     </Suspense>
   ),
 });
