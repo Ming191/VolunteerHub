@@ -1,12 +1,11 @@
 import React, { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostCard } from './PostCard.tsx';
 import { CreatePost } from './CreatePost.tsx';
 import { blogService } from '@/features/blog/api/blogService.ts';
-import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
+import { usePostMutations } from '@/features/blog/hooks/usePostMutations';
 
 interface BlogFeedProps {
   eventId?: number;
@@ -14,9 +13,8 @@ interface BlogFeedProps {
 }
 
 export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
   const { ref, inView } = useInView();
+  const { createPostMutation } = usePostMutations(eventId);
 
   const fetchPosts = async ({ pageParam = 0 }) => {
     if (eventId) {
@@ -48,94 +46,8 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
     }
   }, [inView, hasNextPage, fetchNextPage]);
 
-  const createPostMutation = useMutation({
-    mutationFn: ({ content, files }: { content: string; files: File[] | null }) => {
-      if (!eventId) {
-        throw new Error("Cannot create post without event (Feed posting not supported yet)");
-      }
-      return blogService.createPost(eventId, content, files || undefined);
-    },
-    onMutate: async ({ content, files }) => {
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-
-      const previousPosts = queryClient.getQueryData(['posts', eventId ? `event-${eventId}` : 'feed']);
-
-      const optimisticPost = {
-        id: Date.now(),
-        content,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        author: {
-          id: user?.userId || 0,
-          name: user?.name || 'You',
-        },
-        totalLikes: 0,
-        totalComments: 0,
-        isLikedByCurrentUser: false,
-        imageUrls: files ? files.map(f => URL.createObjectURL(f)) : [],
-        isOptimistic: true,
-      };
-
-      queryClient.setQueryData(['posts', eventId ? `event-${eventId}` : 'feed'], (old: any) => {
-        if (!old) {
-          return {
-            pages: [{ content: [optimisticPost], pageNumber: 0, last: true, totalElements: 1 }],
-            pageParams: [0]
-          };
-        }
-
-        const newPages = [...old.pages];
-        if (newPages.length > 0) {
-          newPages[0] = {
-            ...newPages[0],
-            content: [optimisticPost, ...newPages[0].content]
-          };
-        }
-
-        return {
-          ...old,
-          pages: newPages
-        };
-      });
-
-      return { previousPosts };
-    },
-    onSuccess: (savedPost) => {
-      queryClient.setQueryData(['posts', eventId ? `event-${eventId}` : 'feed'], (old: any) => {
-        if (!old) return old;
-
-        const newPages = old.pages.map((page: any) => ({
-          ...page,
-          content: page.content.map((post: any) => {
-            if (post.isOptimistic) {
-              const mergedImages = (savedPost.imageUrls && savedPost.imageUrls.length > 0)
-                ? savedPost.imageUrls
-                : post.imageUrls;
-              return { ...savedPost, imageUrls: mergedImages };
-            }
-            return post;
-          })
-        }));
-
-        return { ...old, pages: newPages };
-      });
-      toast.success("Post created!");
-    },
-    onError: (err, newPost, context: any) => {
-      if (context?.previousPosts) {
-        queryClient.setQueryData(['posts', eventId ? `event-${eventId}` : 'feed'], context.previousPosts);
-      }
-      toast.error("Failed to create post");
-    },
-    onSettled: () => {
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['posts'] });
-      }, 5000);
-    }
-  });
-
   const handleNewPost = (content: string, files: File[] | null) => {
-    createPostMutation.mutate({ content, files });
+    createPostMutation.mutate({ content, files, eventId });
   };
 
   if (isLoading) {

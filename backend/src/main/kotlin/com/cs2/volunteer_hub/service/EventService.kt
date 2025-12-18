@@ -5,18 +5,15 @@ import com.cs2.volunteer_hub.dto.CreateEventRequest
 import com.cs2.volunteer_hub.dto.EventCreationMessage
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
-import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.findByEmailOrThrow
-import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.EventSpecifications
 import com.cs2.volunteer_hub.validation.EventDateValidator
 import com.cs2.volunteer_hub.validation.EventLifecycleValidator
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
@@ -26,7 +23,6 @@ import org.springframework.cache.annotation.Caching
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
@@ -35,24 +31,27 @@ import org.springframework.web.multipart.MultipartFile
 
 @Service
 class EventService(
-  private val eventRepository: EventRepository,
-  private val userRepository: UserRepository,
-  private val rabbitTemplate: RabbitTemplate,
-  private val fileValidationService: FileValidationService,
-  private val eventMapper: EventMapper,
-  private val eventCapacityService: EventCapacityService,
-  private val authorizationService: AuthorizationService,
-  private val eventDateValidator: EventDateValidator,
-  private val eventLifecycleValidator: EventLifecycleValidator,
-  private val eventQueueService: EventQueueService,
-  private val objectMapper: ObjectMapper,
-  @field:Value($$"${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
+    private val eventRepository: EventRepository,
+    private val userRepository: UserRepository,
+    private val rabbitTemplate: RabbitTemplate,
+    private val fileValidationService: FileValidationService,
+    private val eventMapper: EventMapper,
+    private val eventCapacityService: EventCapacityService,
+    private val authorizationService: AuthorizationService,
+    private val eventDateValidator: EventDateValidator,
+    private val eventLifecycleValidator: EventLifecycleValidator,
+    private val eventQueueService: EventQueueService,
+    @field:Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
     private val logger = LoggerFactory.getLogger(EventService::class.java)
 
     @CacheEvict(value = ["events"], allEntries = true)
     @Transactional
-    fun createEvent(request: CreateEventRequest, creatorEmail: String, files: List<MultipartFile>?): EventResponse {
+    fun createEvent(
+        request: CreateEventRequest,
+        creatorEmail: String,
+        files: List<MultipartFile>?
+    ): EventResponse {
         val creator = userRepository.findByEmailOrThrow(creatorEmail)
 
         files?.let { fileValidationService.validateFiles(it, maxFilesPerEvent) }
@@ -82,48 +81,45 @@ class EventService(
         }
 
         val savedEvent = eventRepository.save(newEvent)
-        logger.info("Created event ID: ${savedEvent.id} with ${savedEvent.images.size} images pending upload")
+        logger.info(
+            "Created event ID: ${savedEvent.id} with ${savedEvent.images.size} images pending upload"
+        )
 
         if (savedEvent.images.isNotEmpty()) {
             val message = EventCreationMessage(eventId = savedEvent.id)
 
-            TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
-                override fun afterCommit() {
-                    rabbitTemplate.convertAndSend(
-                        RabbitMQConfig.EXCHANGE_NAME,
-                        RabbitMQConfig.EVENT_CREATION_PENDING_ROUTING_KEY,
-                        message
-                    )
-                    logger.info("Sent event creation message to queue for Event ID: ${savedEvent.id}")
+            TransactionSynchronizationManager.registerSynchronization(
+                object : TransactionSynchronization {
+                    override fun afterCommit() {
+                        rabbitTemplate.convertAndSend(
+                            RabbitMQConfig.EXCHANGE_NAME,
+                            RabbitMQConfig.EVENT_CREATION_PENDING_ROUTING_KEY,
+                            message
+                        )
+                        logger.info(
+                            "Sent event creation message to queue for Event ID: ${savedEvent.id}"
+                        )
+                    }
                 }
-            })
-        } else {
-            eventRepository.save(savedEvent)
+            )
         }
 
         return eventMapper.toEventResponse(savedEvent)
     }
 
-
-    /**
-     * Get all approved events with pagination support
-     */
+    /** Get all approved events with pagination support */
     @Transactional(readOnly = true)
     fun getAllApprovedEvents(pageable: Pageable): Page<EventResponse> {
         val spec = EventSpecifications.isApproved()
         val eventPage = eventRepository.findAll(spec, pageable)
         val eventResponses = eventMapper.toEventResponseList(eventPage.content)
 
-        return PageImpl(
-            eventResponses,
-            pageable,
-            eventPage.totalElements
-        )
+        return PageImpl(eventResponses, pageable, eventPage.totalElements)
     }
 
     /**
-     * Get all events created by a specific user (non-cancelled)
-     * Used for "My Events" feature on profile page
+     * Get all events created by a specific user (non-cancelled) Used for "My Events" feature on
+     * profile page
      */
     @Transactional(readOnly = true)
     fun getEventsByCreator(userEmail: String, pageable: Pageable): Page<EventResponse> {
@@ -132,32 +128,32 @@ class EventService(
         val eventPage = eventRepository.findAll(spec, pageable)
         val eventResponses = eventMapper.toEventResponseList(eventPage.content)
 
-        return PageImpl(
-            eventResponses,
-            pageable,
-            eventPage.totalElements
-        )
+        return PageImpl(eventResponses, pageable, eventPage.totalElements)
     }
 
-    @Cacheable(value = ["event"], key = "#id")
+    @Cacheable(value = ["events"], key = "#id")
     @Transactional(readOnly = true)
     fun getEventById(id: Long): EventResponse {
-          val event = eventRepository.findById(id).orElseThrow()
-          return eventMapper.toEventResponse(event)
-        }
+        val event = eventRepository.findById(id).orElseThrow()
+        return eventMapper.toEventResponse(event)
+    }
 
-    @Caching(evict = [
-        CacheEvict(value = ["events"], allEntries = true),
-        CacheEvict(value = ["event"], key = "#id")
-    ])
+    @Caching(
+        evict = [
+            CacheEvict(value = ["events"], allEntries = true),
+            CacheEvict(value = ["events"], key = "#id")
+        ]
+    )
     @Transactional
-    fun updateEvent(id: Long, request: UpdateEventRequest, currentUserEmail: String): EventResponse {
+    fun updateEvent(
+        id: Long,
+        request: UpdateEventRequest,
+        currentUserEmail: String
+    ): EventResponse {
         val event = authorizationService.requireEventOwnership(id, currentUserEmail)
 
         eventLifecycleValidator.validateUpdateAllowed(event)
-        request.maxParticipants?.let {
-            eventCapacityService.validateCapacityChange(id, it)
-        }
+        request.maxParticipants?.let { eventCapacityService.validateCapacityChange(id, it) }
         if (request.eventDateTime != null || request.endDateTime != null) {
             eventLifecycleValidator.validateDateChangeAllowed(
                 event,
@@ -192,10 +188,12 @@ class EventService(
         return eventMapper.toEventResponse(updatedEvent)
     }
 
-    @Caching(evict = [
-        CacheEvict(value = ["events"], allEntries = true),
-        CacheEvict(value = ["event"], key = "#id")
-    ])
+    @Caching(
+        evict = [
+            CacheEvict(value = ["events"], allEntries = true),
+            CacheEvict(value = ["events"], key = "#id")
+        ]
+    )
     @Transactional
     fun deleteEvent(id: Long, currentUserEmail: String) {
         val event = authorizationService.requireEventOwnership(id, currentUserEmail)
@@ -208,10 +206,12 @@ class EventService(
      * Cancel an event with a reason
      * Validates cancellation rules and notifies participants
      */
-    @Caching(evict = [
-        CacheEvict(value = ["events"], allEntries = true),
-        CacheEvict(value = ["event"], key = "#id")
-    ])
+    @Caching(
+        evict = [
+            CacheEvict(value = ["events"], allEntries = true),
+            CacheEvict(value = ["events"], key = "#id")
+        ]
+    )
     @Transactional
     fun cancelEvent(id: Long, reason: String?, currentUserEmail: String): EventResponse {
         val event = authorizationService.requireEventOwnership(id, currentUserEmail)
@@ -224,14 +224,18 @@ class EventService(
 
         val savedEvent = eventRepository.save(event)
 
-        eventQueueService.queueEvent(EventLifecycleEvent(
-            eventId = savedEvent.id,
-            from = from,
-            to = EventStatus.CANCELLED,
-            reason = reason
-        ))
+        eventQueueService.queueEvent(
+            EventLifecycleEvent(
+                eventId = savedEvent.id,
+                from = from,
+                to = EventStatus.CANCELLED,
+                reason = reason
+            )
+        )
 
-        logger.info("Cancelled event ID: $id by user: $currentUserEmail with reason: $reason")
+        logger.info(
+            "Cancelled event ID: $id by user: $currentUserEmail with reason: $reason"
+        )
         return eventMapper.toEventResponse(savedEvent)
     }
 }

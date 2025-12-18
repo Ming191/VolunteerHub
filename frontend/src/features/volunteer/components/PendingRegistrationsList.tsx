@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Clock, CheckCircle2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 
 interface PendingRegistration {
     eventId: number;
@@ -10,7 +10,7 @@ interface PendingRegistration {
 
 interface PendingRegistrationsListProps {
     registrations: PendingRegistration[];
-    onEventClick: () => void;
+    onEventClick: (id: number) => void;
 }
 
 export const PendingRegistrationsList = ({ registrations, onEventClick }: PendingRegistrationsListProps) => {
@@ -26,12 +26,12 @@ export const PendingRegistrationsList = ({ registrations, onEventClick }: Pendin
                         <div
                             key={`${registration.eventId}-${registration.registeredAt}`}
                             className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                            onClick={onEventClick}
+                            onClick={() => onEventClick(registration.eventId)}
                         >
                             <p className="font-medium text-sm line-clamp-1">{registration.eventTitle}</p>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                                 <Clock className="h-3 w-3" />
-                                <span>Registered {formatDistanceToNow(new Date(registration.registeredAt), { addSuffix: true })}</span>
+                                <span>Registered {formatDistanceToNowUTC(registration.registeredAt, { addSuffix: true })}</span>
                             </div>
                         </div>
                     ))}

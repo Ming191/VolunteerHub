@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Clock, Users } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 
 // Based on usage in OrganizerDashboard.tsx
 interface PendingRegistration {
@@ -37,7 +37,15 @@ export const PendingRegistrationsList = ({ registrations, onRegistrationClick }:
                                 </div>
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <Clock className="h-3 w-3" />
-                                    {formatDistanceToNow(new Date(registration.timestamp), { addSuffix: true })}
+                                    {(() => {
+                                        try {
+                                            const date = registration.timestamp ? new Date(registration.timestamp) : new Date();
+                                            if (isNaN(date.getTime())) return 'Recently';
+                                            return formatDistanceToNowUTC(registration.timestamp, { addSuffix: true });
+                                        } catch (e) {
+                                            return 'Recently';
+                                        }
+                                    })()}
                                 </div>
                             </div>
                         </div>
