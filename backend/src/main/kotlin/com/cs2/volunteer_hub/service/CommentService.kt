@@ -161,9 +161,14 @@ class CommentService(
     }
 
     @Transactional
-    fun deleteComment(commentId: Long, userEmail: String) {
+    fun deleteComment(postId: Long, commentId: Long, userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
         val comment = commentRepository.findByIdOrThrow(commentId)
+
+        // Verify the comment belongs to the post
+        if (comment.post.id != postId) {
+            throw IllegalArgumentException("Comment does not belong to the specified post")
+        }
 
         // Verify the user is the author of the comment
         if (comment.author.id != user.id) {
