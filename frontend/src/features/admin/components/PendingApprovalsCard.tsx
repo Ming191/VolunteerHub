@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileCheck } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 import type { DashboardActionItem } from '@/api-client';
 
 interface PendingApprovalsCardProps {
@@ -31,7 +31,7 @@ export const PendingApprovalsCard = ({ events }: PendingApprovalsCardProps) => {
                             <p className="font-medium text-sm">{event.primaryText}</p>
                             <p className="text-xs text-muted-foreground mt-1">{event.secondaryText}</p>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })}
+                                {formatDistanceToNowUTC(event.timestamp, { addSuffix: true })}
                             </p>
                         </button>
                     ))}

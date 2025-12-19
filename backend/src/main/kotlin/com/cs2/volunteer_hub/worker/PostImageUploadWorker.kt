@@ -8,20 +8,20 @@ import com.cs2.volunteer_hub.model.ImageStatus
 import com.cs2.volunteer_hub.repository.PostRepository
 import com.cs2.volunteer_hub.service.ImageUploadService
 import com.cs2.volunteer_hub.service.TemporaryFileStorageService
+import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.util.concurrent.ConcurrentHashMap
 
 @Component
 class PostImageUploadWorker(
-    private val imageUploadService: ImageUploadService,
-    private val tempFileService: TemporaryFileStorageService,
-    private val postRepository: PostRepository,
-    private val rabbitTemplate: RabbitTemplate
+        private val imageUploadService: ImageUploadService,
+        private val tempFileService: TemporaryFileStorageService,
+        private val postRepository: PostRepository,
+        private val rabbitTemplate: RabbitTemplate
 ) {
     private val logger = LoggerFactory.getLogger(PostImageUploadWorker::class.java)
 
@@ -55,7 +55,9 @@ class PostImageUploadWorker(
     private fun processPostCreation(message: PostCreationMessage) {
         val postId = message.postId
 
-        logger.info("Processing image upload for Post ID: $postId (attempt ${message.retryCount + 1})")
+        logger.info(
+                "Processing image upload for Post ID: $postId (attempt ${message.retryCount + 1})"
+        )
 
         val post = postRepository.findById(postId).orElse(null)
         if (post == null) {
@@ -64,9 +66,10 @@ class PostImageUploadWorker(
         }
 
         // Check if already processed
-        val imagesToUpload = post.images.filter {
-            it.status == ImageStatus.PENDING_UPLOAD && it.temporaryFilePath != null
-        }
+        val imagesToUpload =
+                post.images.filter {
+                    it.status == ImageStatus.PENDING_UPLOAD && it.temporaryFilePath != null
+                }
 
         if (imagesToUpload.isEmpty()) {
             logger.info("No pending images for Post ID: $postId. May have been processed already.")
@@ -81,17 +84,22 @@ class PostImageUploadWorker(
             try {
                 val fileBytes = tempFileService.read(image.temporaryFilePath!!)
 
-                val url = imageUploadService.uploadImageFromBytes(
-                    fileBytes,
-                    image.contentType,
-                    image.originalFileName
-                ).get() // Wait for CompletableFuture
+                val url =
+                        imageUploadService
+                                .uploadImageFromBytes(
+                                        fileBytes,
+                                        image.contentType,
+                                        image.originalFileName
+                                )
+                                .get() // Wait for CompletableFuture
 
                 uploadedUrls[image.id] = url
                 logger.info("Successfully uploaded image ID: ${image.id} for Post ID: $postId")
-
             } catch (e: Exception) {
-                logger.error("Failed to upload image ID: ${image.id} for Post ID: $postId. Error: ${e.message}", e)
+                logger.error(
+                        "Failed to upload image ID: ${image.id} for Post ID: $postId. Error: ${e.message}",
+                        e
+                )
                 failedImages.add(image.id)
             } finally {
                 // Always clean up temporary file
@@ -113,14 +121,12 @@ class PostImageUploadWorker(
         when {
             failedImages.isEmpty() -> {
                 // All succeeded
-                val successMessage = PostImageUploadSuccessMessage(
-                    postId = postId,
-                    uploadedUrls = uploadedUrls
-                )
+                val successMessage =
+                        PostImageUploadSuccessMessage(postId = postId, uploadedUrls = uploadedUrls)
                 rabbitTemplate.convertAndSend(
-                    RabbitMQConfig.EXCHANGE_NAME,
-                    RabbitMQConfig.POST_IMAGE_UPLOAD_SUCCEEDED_ROUTING_KEY,
-                    successMessage
+                        RabbitMQConfig.EXCHANGE_NAME,
+                        RabbitMQConfig.POST_IMAGE_UPLOAD_SUCCEEDED_ROUTING_KEY,
+                        successMessage
                 )
                 logger.info("All images uploaded successfully for Post ID: $postId")
             }
@@ -130,43 +136,53 @@ class PostImageUploadWorker(
             }
             else -> {
                 // Partial success - still considered failure
-                logger.warn("Partial upload failure for Post ID: $postId. ${uploadedUrls.size} succeeded, ${failedImages.size} failed")
-                handleRetryOrFailure(message, uploadedUrls, "Partial upload failure: ${failedImages.size} images failed")
+                logger.warn(
+                        "Partial upload failure for Post ID: $postId. ${uploadedUrls.size} succeeded, ${failedImages.size} failed"
+                )
+                handleRetryOrFailure(
+                        message,
+                        uploadedUrls,
+                        "Partial upload failure: ${failedImages.size} images failed"
+                )
             }
         }
     }
 
     private fun handleRetryOrFailure(
-        message: PostCreationMessage,
-        uploadedUrls: Map<Long, String>,
-        error: String
+            message: PostCreationMessage,
+            uploadedUrls: Map<Long, String>,
+            error: String
     ) {
         if (message.retryCount < RabbitMQConfig.MAX_RETRY_COUNT) {
             // Retry
             val retryMessage = message.copy(retryCount = message.retryCount + 1)
-            logger.warn("Retrying upload for Post ID: ${message.postId} (attempt ${retryMessage.retryCount + 1}/${RabbitMQConfig.MAX_RETRY_COUNT})")
+            logger.warn(
+                    "Retrying upload for Post ID: ${message.postId} (attempt ${retryMessage.retryCount + 1}/${RabbitMQConfig.MAX_RETRY_COUNT})"
+            )
 
             rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.POST_CREATION_PENDING_ROUTING_KEY,
-                retryMessage
+                    RabbitMQConfig.EXCHANGE_NAME,
+                    RabbitMQConfig.POST_CREATION_PENDING_ROUTING_KEY,
+                    retryMessage
             )
         } else {
             // Max retries exceeded - compensate
-            logger.error("Max retries exceeded for Post ID: ${message.postId}. Triggering compensation.")
-
-            val failureMessage = PostImageUploadFailureMessage(
-                postId = message.postId,
-                uploadedUrls = uploadedUrls,
-                error = error,
-                retryCount = message.retryCount
+            logger.error(
+                    "Max retries exceeded for Post ID: ${message.postId}. Triggering compensation."
             )
+
+            val failureMessage =
+                    PostImageUploadFailureMessage(
+                            postId = message.postId,
+                            uploadedUrls = uploadedUrls,
+                            error = error,
+                            retryCount = message.retryCount
+                    )
             rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.POST_IMAGE_UPLOAD_FAILED_ROUTING_KEY,
-                failureMessage
+                    RabbitMQConfig.EXCHANGE_NAME,
+                    RabbitMQConfig.POST_IMAGE_UPLOAD_FAILED_ROUTING_KEY,
+                    failureMessage
             )
         }
     }
 }
-

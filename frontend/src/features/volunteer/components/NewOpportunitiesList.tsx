@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Clock, TrendingUp } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDate } from '@/lib/dateUtils';
 import type { DashboardEventItem } from '@/api-client';
 
 interface NewOpportunitiesListProps {
@@ -25,7 +25,7 @@ export const NewOpportunitiesList = ({ events, onEventClick }: NewOpportunitiesL
                             <p className="font-medium text-sm line-clamp-1">{event.title}</p>
                             <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                                 <Clock className="h-3 w-3" />
-                                {format(new Date(event.eventDateTime), 'MMM dd, yyyy')}
+                                {formatDate(event.eventDateTime, 'MMM dd, yyyy')}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{event.location}</p>
                         </button>

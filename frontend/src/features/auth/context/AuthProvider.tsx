@@ -1,10 +1,11 @@
 import { type ReactNode, useState, useEffect, useCallback } from "react";
-import type { LoginRequest, RegisterRequest } from "@/api-client";
+import { type LoginRequest, type RegisterRequest, Configuration, UserProfileApi } from "@/api-client";
 import { router } from "@/router";
 import { authService } from "../api/authService";
 import { fcmService } from "@/features/notifications/services/fcmService.ts";
 import { AuthContext } from "./AuthContext.ts";
 import { authStorage, type AuthUser } from "../utils/authStorage";
+import axiosInstance from '@/utils/axiosInstance';
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -15,6 +16,9 @@ interface AuthContextType {
     isLoading: boolean;
 }
 
+
+const config = new Configuration({ basePath: '' });
+const userProfileApi = new UserProfileApi(config, undefined, axiosInstance);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -27,7 +31,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 const storedUser = authStorage.getUser();
 
                 if (accessToken && storedUser) {
+                    // Optimistically set stored user
                     setUser(storedUser);
+
+                    try {
+                        // Refresh profile data to get latest avatar
+                        const profileRes = await userProfileApi.getMyProfile();
+                        const freshUser = {
+                            ...storedUser,
+                            ...profileRes.data,
+                            // Ensure mapping is correct if field names differ
+                        };
+                        // @ts-ignore - profilePictureUrl might be missing in type definition if unrelated
+                        if (profileRes.data.profilePictureUrl) {
+                            // @ts-ignore
+                            freshUser.profilePictureUrl = profileRes.data.profilePictureUrl;
+                        }
+
+                        setUser(freshUser);
+                        authStorage.setUser(freshUser);
+                    } catch (err) {
+                        console.warn("Failed to refresh profile on init:", err);
+                    }
 
                     // Register FCM token for already logged-in users
                     fcmService.registerDeviceForNotifications().catch(err =>
@@ -48,15 +73,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = useCallback(async (data: LoginRequest) => {
         try {
             const response = await authService.login(data);
+
+            // Set token first so axios interceptor picks it up
+            authStorage.setAuth(response.accessToken, response.refreshToken, {
+                userId: response.userId,
+                email: response.email,
+                name: response.name,
+                role: response.role,
+                isEmailVerified: response.isEmailVerified,
+            });
+
+            // Fetch full profile to get avatar
+            let profilePictureUrl: string | undefined;
+            try {
+                const profileRes = await userProfileApi.getMyProfile();
+                // @ts-ignore
+                profilePictureUrl = profileRes.data.profilePictureUrl;
+            } catch (e) {
+                console.warn("Failed to fetch profile after login", e);
+            }
+
             const userData: AuthUser = {
                 userId: response.userId,
                 email: response.email,
                 name: response.name,
                 role: response.role,
                 isEmailVerified: response.isEmailVerified,
+                profilePictureUrl: profilePictureUrl,
             };
 
-            authStorage.setAuth(response.accessToken, response.refreshToken, userData);
+            // Update storage with full user data
+            authStorage.setUser(userData);
             setUser(userData);
 
             // Register FCM token after successful login

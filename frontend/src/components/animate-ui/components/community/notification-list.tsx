@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { NotificationsApi, Configuration, type NotificationResponse } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 
 const config = new Configuration({ basePath: '' });
@@ -154,9 +154,8 @@ function NotificationList() {
                 displayNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`px-4 py-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 transition-colors ${
-                      !notification.isRead ? 'bg-blue-50 dark:bg-blue-950/20' : ''
-                    }`}
+                    className={`px-4 py-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 transition-colors ${!notification.isRead ? 'bg-blue-50 dark:bg-blue-950/20' : ''
+                      }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex items-start gap-3">
@@ -165,7 +164,7 @@ function NotificationList() {
                           {notification.content}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {formatDistanceToNow(new Date(notification.createdAt), {
+                          {formatDistanceToNowUTC(notification.createdAt, {
                             addSuffix: true,
                           })}
                         </p>

@@ -7,6 +7,7 @@ export interface User {
     name: string;
     role: string;
     isEmailVerified: boolean;
+    profilePictureUrl?: string;
 }
 
 export interface AuthContextType {

@@ -4,6 +4,7 @@ export interface AuthUser {
     name: string;
     role: string;
     isEmailVerified: boolean;
+    profilePictureUrl?: string;
 }
 
 const STORAGE_KEYS = {

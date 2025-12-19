@@ -1,4 +1,6 @@
 import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { EventMap } from './page/EventMap';
 import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -39,6 +41,51 @@ export const EventForm = (props: EventFormProps) => {
     } = useEventForm(props);
 
     const { onCancel, submitLabel, formId, hideActions } = props;
+    const [isGeocoding, setIsGeocoding] = useState(false);
+
+    // Watch location for geocoding
+    const locationValue = form.watch('location');
+    const latitude = form.watch('latitude');
+    const longitude = form.watch('longitude');
+
+    // Debounced geocoding
+    useEffect(() => {
+        if (!locationValue || locationValue.length < 3) return;
+
+        // Skip if location matches current lat/long (to avoid loops if we reverse geocode later)
+        // For now, simple text entry triggers lookup
+
+        const timeoutId = setTimeout(async () => {
+            setIsGeocoding(true);
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationValue)}&limit=1`
+                );
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+
+                    // Only update if no manual pin drop has happened yet OR if user explicitly types a new address
+                    // For simplicity, we always update on address change, user can refine causing "manual override"
+                    form.setValue('latitude', lat);
+                    form.setValue('longitude', lon);
+                }
+            } catch (error) {
+                console.error("Geocoding failed", error);
+            } finally {
+                setIsGeocoding(false);
+            }
+        }, 1500); // 1.5s debounce to be nice to OSM
+
+        return () => clearTimeout(timeoutId);
+    }, [locationValue, form]);
+
+    const handleLocationSelect = (lat: number, lng: number) => {
+        form.setValue('latitude', lat);
+        form.setValue('longitude', lng);
+    };
 
     return (
         <Form {...form}>
@@ -88,6 +135,30 @@ export const EventForm = (props: EventFormProps) => {
                         </FormItem>
                     )}
                 />
+
+                <div className="space-y-2">
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Map Location
+                    </label>
+                    <div className="relative border rounded-md overflow-hidden">
+                        <EventMap
+                            latitude={latitude}
+                            longitude={longitude}
+                            interactive={true}
+                            onLocationSelect={handleLocationSelect}
+                        />
+                        {isGeocoding && (
+                            <div className="absolute top-2 right-2 bg-white/80 p-1.5 rounded-full shadow-sm animate-spin">
+                                <Loader2 className="h-4 w-4 text-primary" />
+                            </div>
+                        )}
+                        <p className="text-xs text-muted-foreground p-2 bg-muted/30">
+                            {latitude && longitude
+                                ? "Click on the map to refine the location pin."
+                                : "Enter a location above to find it on the map, or click to set manually."}
+                        </p>
+                    </div>
+                </div>
 
                 <FormField
                     control={form.control}
@@ -260,6 +331,7 @@ export const EventForm = (props: EventFormProps) => {
 
                     {files.length + existingImages.length < MAX_IMAGES && (
                         <FileUpload
+                            files={files}
                             onChange={handleFileChange}
                             accept="image/*"
                             multiple={true}

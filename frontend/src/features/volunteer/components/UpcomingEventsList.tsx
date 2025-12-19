@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Calendar, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDate } from '@/lib/dateUtils';
 // import type { EventResponse } from '@/api-client';
 
 import type { EventResponse } from '@/api-client';
 
 interface UpcomingEventsListProps {
     events: EventResponse[];
-    onEventClick: (event: EventResponse) => void;
+    onEventClick: (id: number) => void;
 }
 
 export const UpcomingEventsList = ({ events, onEventClick }: UpcomingEventsListProps) => {
@@ -23,7 +23,7 @@ export const UpcomingEventsList = ({ events, onEventClick }: UpcomingEventsListP
                         <div
                             key={event.id}
                             className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                            onClick={onEventClick}
+                            onClick={() => onEventClick(event.id)}
                         >
                             <div className="flex justify-between items-start">
                                 <div>
@@ -32,7 +32,7 @@ export const UpcomingEventsList = ({ events, onEventClick }: UpcomingEventsListP
                                 </div>
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <Clock className="h-3 w-3" />
-                                    {format(new Date(event.eventDateTime), 'MMM dd, h:mm a')}
+                                    {formatDate(event.eventDateTime, 'MMM dd, h:mm a')}
                                 </div>
                             </div>
                         </div>
