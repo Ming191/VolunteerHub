@@ -13,7 +13,6 @@ export const useOrganizerDashboard = () => {
         queryKey: ['organizer-dashboard'],
         queryFn: async () => {
             const response = await dashboardApi.getOrganizerDashboard();
-            console.log('Dashboard Data:', response.data);
             return response.data;
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
