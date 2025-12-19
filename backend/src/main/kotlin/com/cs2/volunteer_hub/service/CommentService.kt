@@ -122,7 +122,11 @@ class CommentService(
 
     /** Get replies for a specific comment */
     @Transactional(readOnly = true)
-    fun getRepliesForComment(postId: Long, commentId: Long, userEmail: String?): List<CommentResponse> {
+    fun getRepliesForComment(
+            postId: Long,
+            commentId: Long,
+            userEmail: String?
+    ): List<CommentResponse> {
         val user = userEmail?.let { userRepository.findByEmailOrThrow(it) }
         val post = postRepository.findByIdOrThrow(postId)
 
@@ -191,5 +195,16 @@ class CommentService(
         cacheEvictionService.evictPosts(comment.post.event.id)
 
         commentRepository.delete(comment)
+    }
+
+    @Transactional
+    fun adminDeleteComment(commentId: Long) {
+        val comment = commentRepository.findByIdOrThrow(commentId)
+
+        cacheManager.getCache("comments")?.evict(comment.post.id)
+        cacheEvictionService.evictPosts(comment.post.event.id)
+
+        commentRepository.delete(comment)
+        logger.info("Admin deleted comment ID: $commentId")
     }
 }

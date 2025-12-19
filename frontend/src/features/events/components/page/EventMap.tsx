@@ -74,7 +74,7 @@ export const EventMap = ({ latitude, longitude, onLocationSelect, interactive = 
             >
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 <LocationMarker
                     initialPos={(latitude && longitude) ? [latitude, longitude] : null}

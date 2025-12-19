@@ -6,9 +6,12 @@ const REGISTRATION_QUERY_KEY = 'my-registrations';
 const CHECK_REGISTRATION_QUERY_KEY = 'check-registration';
 
 export const useRegisterForEvent = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (eventId: number) => registrationService.registerForEvent(eventId),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: [CHECK_REGISTRATION_QUERY_KEY, variables] });
+      queryClient.invalidateQueries({ queryKey: [REGISTRATION_QUERY_KEY] });
       if (data.status === 'WAITLISTED') {
         toast.success("Added to Waitlist", {
           description: `Your position: ${data.waitlistPosition}`,
@@ -43,11 +46,12 @@ export const useCancelRegistration = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (eventId: number) => registrationService.cancelRegistration(eventId),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("Registration Cancelled", {
         description: "You have successfully cancelled your registration",
       });
       queryClient.invalidateQueries({ queryKey: [REGISTRATION_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: [CHECK_REGISTRATION_QUERY_KEY, variables] });
     },
     onError: (error: any) => {
       toast.error("Cancellation Failed", {
