@@ -50,7 +50,14 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
 
   const handleNewPost = (content: string, files: File[] | null) => {
     setHasImages(!!files && files.length > 0);
-    createPostMutation.mutate({ content, files, eventId });
+    createPostMutation.mutate(
+      { content, files, eventId },
+      {
+        onSettled: () => {
+          setHasImages(false);
+        },
+      },
+    );
   };
 
   if (isLoading) {
