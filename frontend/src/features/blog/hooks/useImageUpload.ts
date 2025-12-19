@@ -27,28 +27,30 @@ export const useImageUpload = () => {
     const handleFileSelect = useCallback((files: FileList | null) => {
         if (!files || files.length === 0) return;
 
-        const remainingSlots = MAX_IMAGES - selectedImages.length;
-        const countToAdd = Math.min(files.length, remainingSlots);
+        setSelectedImages(prev => {
+            const remainingSlots = MAX_IMAGES - prev.length;
+            const countToAdd = Math.min(files.length, remainingSlots);
 
-        if (files.length > remainingSlots) {
-            toast.warning(`Maximum ${MAX_IMAGES} images allowed. Only added ${countToAdd} images.`);
-        }
+            if (files.length > remainingSlots) {
+                toast.warning(`Maximum ${MAX_IMAGES} images allowed. Only added ${countToAdd} images.`);
+            }
 
-        const newImages: ImagePreview[] = [];
-        for (let i = 0; i < countToAdd; i++) {
-            const file = files[i];
-            newImages.push({
-                file,
-                url: URL.createObjectURL(file)
-            });
-        }
+            const newImages: ImagePreview[] = [];
+            for (let i = 0; i < countToAdd; i++) {
+                const file = files[i];
+                newImages.push({
+                    file,
+                    url: URL.createObjectURL(file)
+                });
+            }
 
-        setSelectedImages(prev => [...prev, ...newImages]);
+            return [...prev, ...newImages];
+        });
 
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
-    }, [selectedImages.length]);
+    }, []);
 
     const removeImage = useCallback((indexToRemove: number) => {
         setSelectedImages(prev => {
@@ -60,12 +62,12 @@ export const useImageUpload = () => {
     }, []);
 
     const removeAllImages = useCallback(() => {
-        selectedImages.forEach(img => URL.revokeObjectURL(img.url));
+        imagesRef.current.forEach(img => URL.revokeObjectURL(img.url));
         setSelectedImages([]);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
-    }, [selectedImages]);
+    }, []);
 
     const openFileDialog = useCallback(() => {
         fileInputRef.current?.click();
