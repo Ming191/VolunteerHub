@@ -15,8 +15,21 @@ import {
 
 export const EventDetailsPage = () => {
     const { eventId } = useParams({ from: '/_auth/events/$eventId' });
-    const id = parseInt(eventId);
     const navigate = useNavigate();
+    const id = parseInt(eventId, 10);
+
+    if (isNaN(id)) {
+        return (
+            <AnimatedPage>
+                <div className="container mx-auto py-8">
+                    <ApiErrorState 
+                        error={new Error('Invalid event ID')} 
+                        onRetry={() => navigate({ to: '/events' })}
+                    />
+                </div>
+            </AnimatedPage>
+        );
+    }
 
     const { data: event, isLoading, isError, error, refetch } = useGetEvent(id);
     const { isOrganizer } = useEventPermissions(event || null);
