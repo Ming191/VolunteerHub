@@ -14,6 +14,7 @@ import { EventMap } from './EventMap';
 interface EventContentTabsProps {
     event: EventResponse;
     defaultTab?: string;
+    onRefetchEvent?: () => void;
 }
 
 const AttendeesList = ({ event }: { event: EventResponse }) => {
@@ -88,7 +89,7 @@ const AttendeesList = ({ event }: { event: EventResponse }) => {
     );
 };
 
-export const EventContentTabs = ({ event, defaultTab = 'about' }: EventContentTabsProps) => {
+export const EventContentTabs = ({ event, defaultTab = 'about', onRefetchEvent }: EventContentTabsProps) => {
     const { canPost } = useEventPermissions(event);
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState(defaultTab);
@@ -104,6 +105,11 @@ export const EventContentTabs = ({ event, defaultTab = 'about' }: EventContentTa
             navigate({ to: `/events/${event.id}/registration` });
         } else if (value === 'about') {
             navigate({ to: `/events/${event.id}` });
+        }
+        
+        // Refetch event data when gallery tab becomes active to update gallery images
+        if (value === 'gallery' && onRefetchEvent) {
+            onRefetchEvent();
         }
     };
 

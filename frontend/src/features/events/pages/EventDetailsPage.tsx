@@ -91,7 +91,7 @@ export const EventDetailsPage = () => {
 
                         <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 px-6">
                             <div className="lg:col-span-2 space-y-8">
-                                <EventContentTabs event={event} defaultTab={defaultTab} />
+                                <EventContentTabs event={event} defaultTab={defaultTab} onRefetchEvent={refetch} />
                             </div>
 
                             <div className="lg:col-span-1">
