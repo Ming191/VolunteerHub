@@ -76,9 +76,12 @@ export const usePostMutations = (eventId?: number) => {
                 const newPages = old.pages.map((page: any) => ({
                     ...page,
                     content: page.content.map((post: any) => {
-                        if (post.isOptimistic) {
-                            // Use server URLs only; blob URLs won't work after refresh
-                            return { ...savedPost, imageUrls: savedPost.imageUrls || [] };
+                        if (post.isOptimistic && post.id === context.optimisticPost.id) {
+                            return {
+                                ...post,
+                                ...savedPost,
+                                imageUrls: savedPost.imageUrls || post.imageUrls || [],
+                            };
                         }
                         return post;
                     })

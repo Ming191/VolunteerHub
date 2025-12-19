@@ -146,12 +146,13 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mapOf("error" to (ex.message ?: "Resource not found")))
     }
 
-    /** Handle IllegalArgumentException (e.g., date parsing errors) */
+    /** Handle IllegalArgumentException - sanitized for security */
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgument(ex: IllegalArgumentException): ResponseEntity<Map<String, String>> {
-        logger.warn("Invalid argument: ${ex.message}")
+        logger.warn("Invalid argument exception: ${ex.message}", ex)
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mapOf("error" to (ex.message ?: "Invalid argument")))
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(mapOf("error" to "Invalid request. Please check your input and try again."))
     }
 
     /** Handle all other unexpected exceptions (500 Internal Server Error) */

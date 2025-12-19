@@ -116,7 +116,7 @@ class CommentController(private val commentService: CommentService) {
         @PathVariable commentId: Long,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<Unit> {
-        commentService.deleteComment(commentId, currentUser.username)
+        commentService.deleteComment(postId, commentId, currentUser.username)
         return ResponseEntity.noContent().build()
     }
 }
