@@ -18,3 +18,11 @@ export const useGetEvents = (params: SearchEventsParams) => {
         placeholderData: (previousData) => previousData,
     });
 };
+
+export const useGetEvent = (id: number) => {
+    return useQuery({
+        queryKey: [EVENTS_QUERY_KEY, id],
+        queryFn: () => eventService.getEventById(id),
+        enabled: !!id,
+    });
+};

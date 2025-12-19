@@ -1,8 +1,8 @@
-import { format } from 'date-fns';
+import { formatDate as formatUTCDate } from '@/lib/dateUtils';
 
 export const formatDate = (dateString: string) => {
     try {
-        return format(new Date(dateString), 'PPP');
+        return formatUTCDate(dateString, 'PPP');
     } catch {
         return dateString;
     }
@@ -10,7 +10,7 @@ export const formatDate = (dateString: string) => {
 
 export const formatTime = (dateString: string) => {
     try {
-        return format(new Date(dateString), 'p');
+        return formatUTCDate(dateString, 'p');
     } catch {
         return dateString;
     }

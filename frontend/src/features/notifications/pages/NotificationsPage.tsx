@@ -1,5 +1,5 @@
 import { Bell, Check, Loader2, Trash2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger, TabsContents } from '@/components/animate-ui/components/animate/tabs';
@@ -105,7 +105,7 @@ export const NotificationsPage = () => {
                               {notification.content}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              {formatDistanceToNow(new Date(notification.createdAt), {
+                              {formatDistanceToNowUTC(notification.createdAt, {
                                 addSuffix: true,
                               })}
                             </p>
@@ -184,7 +184,7 @@ export const NotificationsPage = () => {
                             {notification.content}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {formatDistanceToNow(new Date(notification.createdAt), {
+                            {formatDistanceToNowUTC(notification.createdAt, {
                               addSuffix: true,
                             })}
                           </p>
