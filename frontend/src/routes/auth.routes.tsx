@@ -4,7 +4,6 @@ import { z } from "zod";
 import { SuspenseFallback } from "@/components/common/SuspenseFallback";
 import { rootRoute } from "./root.route";
 import {
-  TabbedAuthScreen,
   ModernSignInScreen,
   ModernSignUpScreen,
   ForgotPasswordScreen,

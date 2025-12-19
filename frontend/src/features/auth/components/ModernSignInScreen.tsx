@@ -218,7 +218,7 @@ export const ModernSignInScreen = () => {
                         <button
                           type="button"
                           onClick={() =>
-                            navigate({ to: "/forgot-password" as any })
+                            (window.location.href = "/forgot-password")
                           }
                           className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-500 dark:hover:text-green-400 transition-colors"
                         >
