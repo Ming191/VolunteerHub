@@ -10,9 +10,10 @@ interface EventInfoSidebarProps {
     event: EventResponse;
     onRegister: () => void;
     isOrganizer?: boolean;
+    isRegistered?: boolean;
 }
 
-export const EventInfoSidebar = ({ event, onRegister, isOrganizer }: EventInfoSidebarProps) => {
+export const EventInfoSidebar = ({ event, onRegister, isOrganizer, isRegistered }: EventInfoSidebarProps) => {
     return (
         <Card className="sticky top-6">
             <CardHeader>
@@ -83,7 +84,9 @@ export const EventInfoSidebar = ({ event, onRegister, isOrganizer }: EventInfoSi
 
                             <Button className="w-full" size="lg" onClick={onRegister} disabled={event.isFull}>
                                 <Ticket className="mr-2 h-4 w-4" />
-                                {event.isFull ? 'Join Waitlist' : 'Register Now'}
+                                {event.isFull ? 'Join Waitlist' :
+                                  isRegistered ? 'Registered':
+                                  'Register Now'}
                             </Button>
                         </div>
                     </>

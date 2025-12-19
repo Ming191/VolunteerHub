@@ -21,8 +21,9 @@ export function useEventPermissions(event: EventResponse | null) {
     const isAdmin = user.role === 'ADMIN';
     const isOrganizer = user.role === 'EVENT_ORGANIZER';
     const isOwner = user.userId === event.creatorId;
-    const isRegistered = isVolunteer && data?.registered;
+    const isRegistered = isVolunteer && (data?.status === 'APPROVED' || data?.status === 'PENDING');
     const isApprovedMember = isVolunteer && data?.status === 'APPROVED';
+    const isRejected = isVolunteer && data?.status === 'REJECTED';
     const canRegister = isVolunteer && !event.isFull && event.isApproved;    // Backend strictly requires approved registration to post
     const canPost = isApprovedMember || isOwner;
 
@@ -33,6 +34,7 @@ export function useEventPermissions(event: EventResponse | null) {
         isOwner,
         isRegistered,
         isApprovedMember,
+        isRejected,
         canRegister,
         canPost,
     };

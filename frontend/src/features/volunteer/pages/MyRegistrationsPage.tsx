@@ -4,12 +4,12 @@ import { ApiErrorState } from '@/components/ui/api-error-state.tsx';
 import { Input } from '@/components/ui/input.tsx';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select.tsx';
 import { Search } from 'lucide-react';
-import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationNext } from '@/components/ui/pagination.tsx';
 import { useGetMyRegistrationEvents } from "@/features/volunteer/hooks/useRegistration.ts";
 import {EventDetailSheet} from "@/features/events/components/EventDetailSheet.tsx";
 import { RegistrationCard } from "@/features/events/components/RegistrationCard.tsx";
 import type { EventResponse } from "@/api-client";
-import { eventService } from "@/features/events/api/eventService.ts"; // giả sử bạn export sẵn
+import { eventService } from "@/features/events/api/eventService.ts";
+import {SmartPagination} from "@/components/common/SmartPagination.tsx"; // giả sử bạn export sẵn
 
 type RegistrationStatus = 'APPROVED' | 'PENDING' | 'COMPLETED' | 'CANCELLED';
 
@@ -140,44 +140,11 @@ export const MyRegistrationsScreen = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(page - 1);
-                    }}
-                    className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <PaginationItem key={i + 1}>
-                    <PaginationLink
-                      href="#"
-                      isActive={page === i + 1}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handlePageChange(i + 1);
-                      }}
-                    >
-                      {i + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(page + 1);
-                    }}
-                    className={page >= totalPages ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            <SmartPagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
 
