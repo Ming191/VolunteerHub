@@ -69,14 +69,20 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
 
   return (
     <div className="max-w-2xl mx-auto w-full pb-10 relative">
-      {/* Image Upload Loading Indicator */}
-      {createPostMutation.isPending && hasImages && (
+      {/* Post Submission Loading Indicator */}
+      {createPostMutation.isPending && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3 bg-card p-6 rounded-lg shadow-lg border">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <div className="text-center">
-              <p className="text-sm font-medium">Uploading images...</p>
-              <p className="text-xs text-muted-foreground mt-1">Please wait while we process your images</p>
+              <p className="text-sm font-medium">
+                {hasImages ? 'Uploading images...' : 'Creating post...'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {hasImages 
+                  ? 'Please wait while we process your images' 
+                  : 'Your post is being submitted'}
+              </p>
             </div>
           </div>
         </div>
