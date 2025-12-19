@@ -61,7 +61,7 @@ const EventImageItem = ({
 
 export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
-    const [emblaRef, emblaApi] = useEmblaCarousel({ startIndex: 0, loop: true });
+    const [emblaRef, emblaApi] = useEmblaCarousel({ startIndex: selectedImageIndex ?? 0, loop: true });
     const [canScrollPrev, setCanScrollPrev] = useState(false);
     const [canScrollNext, setCanScrollNext] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -90,7 +90,7 @@ export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesP
 
     useEffect(() => {
         if (emblaApi && selectedImageIndex !== null) {
-            emblaApi.scrollTo(selectedImageIndex);
+            emblaApi.scrollTo(selectedImageIndex, true); // Jump instantly without animation
         }
     }, [emblaApi, selectedImageIndex]);
 
