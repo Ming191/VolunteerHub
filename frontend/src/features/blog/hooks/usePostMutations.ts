@@ -38,13 +38,16 @@ export const usePostMutations = (eventId?: number) => {
             }
             return blogService.createPost(targetEventId, content, files || undefined);
         },
-        onMutate: async ({ content, files }) => {
-            await queryClient.cancelQueries({ queryKey: ['posts'] });
+        onMutate: async ({ content, files, eventId: mutationEventId }) => {
+            const targetEventId = mutationEventId || eventId;
+            const targetQueryKey = ['posts', targetEventId ? `event-${targetEventId}` : 'feed'];
 
-            const previousPosts = queryClient.getQueryData(queryKey);
+            await queryClient.cancelQueries({ queryKey: targetQueryKey });
+
+            const previousPosts = queryClient.getQueryData(targetQueryKey);
             const optimisticPost = createOptimisticPost(content, files);
 
-            queryClient.setQueryData(queryKey, (old: any) => {
+            queryClient.setQueryData(targetQueryKey, (old: any) => {
                 if (!old) {
                     return {
                         pages: [{ content: [optimisticPost], pageNumber: 0, last: true, totalElements: 1 }],
@@ -63,10 +66,11 @@ export const usePostMutations = (eventId?: number) => {
                 return { ...old, pages: newPages };
             });
 
-            return { previousPosts, optimisticPost };
+            return { previousPosts, optimisticPost, targetQueryKey };
         },
-        onSuccess: (savedPost) => {
-            queryClient.setQueryData(queryKey, (old: any) => {
+        onSuccess: (savedPost, _variables, context: any) => {
+            const key = context?.targetQueryKey || queryKey;
+            queryClient.setQueryData(key, (old: any) => {
                 if (!old) return old;
 
                 const newPages = old.pages.map((page: any) => ({
@@ -86,7 +90,7 @@ export const usePostMutations = (eventId?: number) => {
         },
         onError: (_err, _variables, context: any) => {
             if (context?.previousPosts) {
-                queryClient.setQueryData(queryKey, context.previousPosts);
+                queryClient.setQueryData(context.targetQueryKey || queryKey, context.previousPosts);
             }
             toast.error("Failed to create post");
         },
@@ -99,7 +103,7 @@ export const usePostMutations = (eventId?: number) => {
             }
 
             setTimeout(() => {
-                queryClient.invalidateQueries({ queryKey: ['posts'] });
+                queryClient.invalidateQueries({ queryKey: context?.targetQueryKey || queryKey });
             }, 5000);
         }
     });

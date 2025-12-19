@@ -11,10 +11,17 @@ const MAX_IMAGES = 5;
 export const useImageUpload = () => {
     const [selectedImages, setSelectedImages] = useState<ImagePreview[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const imagesRef = useRef<ImagePreview[]>(selectedImages);
+
+    // Keep ref in sync with state for cleanup
+    useEffect(() => {
+        imagesRef.current = selectedImages;
+    }, [selectedImages]);
 
     useEffect(() => {
         return () => {
-            selectedImages.forEach(img => URL.revokeObjectURL(img.url));
+            // Use ref to access latest images on unmount without capturing outdated state
+            imagesRef.current.forEach(img => URL.revokeObjectURL(img.url));
         };
     }, []);
     const handleFileSelect = useCallback((files: FileList | null) => {

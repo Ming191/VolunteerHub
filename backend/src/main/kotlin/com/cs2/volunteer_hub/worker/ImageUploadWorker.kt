@@ -61,11 +61,9 @@ class ImageUploadWorker(
             // Remove from cache to allow potential recovery on retry
             processedMessages.invalidate(messageId)
             if (message.retryCount >= RabbitMQConfig.MAX_RETRY_COUNT) {
-                handleRetryOrFailure(message, emptyMap(), e.message ?: "Unknown error")
-                throw e // Send to DLQ after max retries
+                throw e
             } else {
                 handleRetryOrFailure(message, emptyMap(), e.message ?: "Unknown error")
-                // Don't rethrow - retry message was already sent
             }
         }
     }
