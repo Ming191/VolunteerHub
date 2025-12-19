@@ -6,6 +6,7 @@ import { CreatePost } from './CreatePost.tsx';
 import { blogService } from '@/features/blog/api/blogService.ts';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { usePostMutations } from '@/features/blog/hooks/usePostMutations';
+import { Loader2 } from 'lucide-react';
 
 interface BlogFeedProps {
   eventId?: number;
@@ -15,6 +16,7 @@ interface BlogFeedProps {
 export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
   const { ref, inView } = useInView();
   const { createPostMutation } = usePostMutations(eventId);
+  const [hasImages, setHasImages] = React.useState(false);
 
   const fetchPosts = async ({ pageParam = 0 }) => {
     if (eventId) {
@@ -47,6 +49,7 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
   }, [inView, hasNextPage, fetchNextPage]);
 
   const handleNewPost = (content: string, files: File[] | null) => {
+    setHasImages(!!files && files.length > 0);
     createPostMutation.mutate({ content, files, eventId });
   };
 
@@ -65,7 +68,20 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto w-full pb-10">
+    <div className="max-w-2xl mx-auto w-full pb-10 relative">
+      {/* Image Upload Loading Indicator */}
+      {createPostMutation.isPending && hasImages && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 bg-card p-6 rounded-lg shadow-lg border">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="text-center">
+              <p className="text-sm font-medium">Uploading images...</p>
+              <p className="text-xs text-muted-foreground mt-1">Please wait while we process your images</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {eventId && canPost && (
         <CreatePost onPost={handleNewPost} disabled={createPostMutation.isPending} />
       )}
@@ -74,7 +90,7 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
         {data?.pages.map((page, i) => (
           <React.Fragment key={i}>
             {page.content.map((post: any) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard key={post.optimisticId || post.id} post={post} />
             ))}
           </React.Fragment>
         ))}

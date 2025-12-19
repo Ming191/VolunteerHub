@@ -16,10 +16,13 @@ interface EventInfoSidebarProps {
 
 export const EventInfoSidebar = ({ event, onRegister, isOrganizer }: EventInfoSidebarProps) => {
     const { user } = useAuth();
-    const { canRegister, isVolunteer, isEventEnded: eventEnded, isRegistrationClosed: registrationClosedByDeadline } = useEventPermissions(event);
+    const { canRegister, isVolunteer, isRegistered, isEventEnded: eventEnded, isRegistrationClosed: registrationClosedByDeadline } = useEventPermissions(event);
 
     // Determine registration status
     const getRegistrationStatus = () => {
+        if (isRegistered) {
+            return { label: 'Registered', color: 'text-green-600' };
+        }
         if (eventEnded) {
             return { label: 'Ended', color: 'text-muted-foreground' };
         }
@@ -32,7 +35,10 @@ export const EventInfoSidebar = ({ event, onRegister, isOrganizer }: EventInfoSi
         return { label: 'Open', color: 'text-green-600' };
     };
 
-    const getButtonConfig = () => {
+    const getButtonConfig = (): { text: string; disabled: boolean; variant?: 'destructive' } => {
+        if (isRegistered) {
+            return { text: 'Unregister', disabled: false, variant: 'destructive' };
+        }
         if (eventEnded) {
             return { text: 'Event Ended', disabled: true };
         }
@@ -119,7 +125,7 @@ export const EventInfoSidebar = ({ event, onRegister, isOrganizer }: EventInfoSi
 
                             {canRegister && (
                                 <Button
-                                    className="w-full"
+                                    className={`w-full ${buttonConfig.variant === 'destructive' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
                                     size="lg"
                                     onClick={onRegister}
                                     disabled={buttonConfig.disabled}

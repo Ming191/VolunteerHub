@@ -15,4 +15,5 @@ export const MyRegistrationsScreen = lazy(() => import('@/features/volunteer/pag
 export const EventDetailsPage = lazy(() => import('@/features/events/pages/EventDetailsPage').then(m => ({ default: m.EventDetailsPage })));
 export const DateTimePicker = lazy(() => import('@/features/events/components/DateTimePicker').then(m => ({ default: m.DateTimePicker })));
 export const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+export const AdminReportsPage = lazy(() => import('@/features/admin/pages/AdminReportsPage').then(m => ({ default: m.AdminReportsPage })));
 
