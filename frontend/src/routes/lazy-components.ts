@@ -5,6 +5,21 @@ export const TabbedAuthScreen = lazy(() =>
     default: m.TabbedAuthScreen,
   }))
 );
+export const ModernSignInScreen = lazy(() =>
+  import("@/features/auth/components/ModernSignInScreen").then((m) => ({
+    default: m.ModernSignInScreen,
+  }))
+);
+export const ModernSignUpScreen = lazy(() =>
+  import("@/features/auth/components/ModernSignUpScreen").then((m) => ({
+    default: m.ModernSignUpScreen,
+  }))
+);
+export const ForgotPasswordScreen = lazy(() =>
+  import("@/features/auth/components/ForgotPasswordScreen").then((m) => ({
+    default: m.ForgotPasswordScreen,
+  }))
+);
 export const EmailVerificationScreen = lazy(() =>
   import("@/features/auth/components/EmailVerificationScreen").then((m) => ({
     default: m.EmailVerificationScreen,
