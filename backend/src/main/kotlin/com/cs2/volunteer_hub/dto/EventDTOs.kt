@@ -1,5 +1,6 @@
 package com.cs2.volunteer_hub.dto
 
+import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.model.EventTag
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
@@ -57,6 +58,7 @@ data class EventResponse(
     val waitlistCount: Int,
     val availableSpots: Int?,
     val isFull: Boolean,
+    val status: EventStatus,
     val isInProgress: Boolean,
     val tags: Set<EventTag>
 )

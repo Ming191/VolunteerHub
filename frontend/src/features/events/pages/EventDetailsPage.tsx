@@ -19,7 +19,7 @@ export const EventDetailsPage = () => {
     const navigate = useNavigate();
 
     const { data: event, isLoading, isError, error, refetch } = useGetEvent(id);
-    const { isOrganizer } = useEventPermissions(event || null);
+    const { isOrganizer,isRejected, isRegistered } = useEventPermissions(event || null);
 
     const handleRegister = () => {
         // Implement registration logic later, possibly opening a modal
@@ -54,7 +54,7 @@ export const EventDetailsPage = () => {
                             </Button>
                         </div>
 
-                        <EventHero event={event} isOrganizer={isOrganizer} />
+                        <EventHero event={event} isOrganizer={isOrganizer} isRejected={isRejected} isRegistered={isRegistered} />
 
                         <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 px-6">
                             <div className="lg:col-span-2 space-y-8">
@@ -62,7 +62,7 @@ export const EventDetailsPage = () => {
                             </div>
 
                             <div className="lg:col-span-1">
-                                <EventInfoSidebar event={event} onRegister={handleRegister} isOrganizer={isOrganizer} />
+                                <EventInfoSidebar event={event} onRegister={handleRegister} isOrganizer={isOrganizer} isRegistered={isRegistered}/>
                             </div>
                         </div>
                     </div>

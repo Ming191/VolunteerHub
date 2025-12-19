@@ -13,7 +13,7 @@ interface EventSheetFooterProps {
 
 export function EventSheetFooter({ event, onViewRegistrations, onRegister }: EventSheetFooterProps) {
     const { user } = useAuth();
-    const { isOrganizer, isOwner, isAdmin, canRegister, isRegistered } = useEventPermissions(event);
+    const { isOrganizer, isRejected,  isOwner, isAdmin, canRegister, isRegistered } = useEventPermissions(event);
     const navigate = useNavigate();
 
     return (
@@ -54,6 +54,14 @@ export function EventSheetFooter({ event, onViewRegistrations, onRegister }: Eve
                     >
                         Registered
                     </Button>
+                ) : isRejected ? (
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    disabled
+                  >
+                    Rejected
+                  </Button>
                 ) : (
                     <Button
                         className="w-full"

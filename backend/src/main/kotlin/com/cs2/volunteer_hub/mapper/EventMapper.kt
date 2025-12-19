@@ -39,7 +39,8 @@ class EventMapper(private val eventCapacityService: EventCapacityService) {
                                 ),
                         isFull = event.maxParticipants?.let { approvedCount >= it } ?: false,
                         isInProgress = event.isInProgress(),
-                        tags = event.tags.toSet()
+                        tags = event.tags.toSet(),
+                        status = event.status
                 )
         }
 
@@ -85,7 +86,8 @@ class EventMapper(private val eventCapacityService: EventCapacityService) {
                                 isFull = event.maxParticipants?.let { stats.approvedCount >= it }
                                                 ?: false,
                                 isInProgress = event.isInProgress(),
-                                tags = event.tags.toSet()
+                                tags = event.tags.toSet(),
+                                status = event.status
                         )
                 }
         }
