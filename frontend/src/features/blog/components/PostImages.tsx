@@ -21,14 +21,10 @@ interface PostImagesProps {
 export const PostImages: React.FC<PostImagesProps> = ({ images }) => {
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
     const [emblaRef, emblaApi] = useEmblaCarousel({ startIndex: 0, loop: true });
-    const [canScrollPrev, setCanScrollPrev] = useState(false);
-    const [canScrollNext, setCanScrollNext] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
 
     const onSelect = useCallback((api: EmblaCarouselType) => {
         setCurrentIndex(api.selectedScrollSnap());
-        setCanScrollPrev(api.canScrollPrev());
-        setCanScrollNext(api.canScrollNext());
     }, []);
 
     useEffect(() => {
@@ -147,16 +143,14 @@ export const PostImages: React.FC<PostImagesProps> = ({ images }) => {
                             <Button
                                 size="icon"
                                 onClick={scrollPrev}
-                                disabled={!canScrollPrev}
-                                className="pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-0 disabled:opacity-30"
+                                className="pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-0"
                             >
                                 <ChevronLeft className="h-5 w-5" />
                             </Button>
                             <Button
                                 size="icon"
                                 onClick={scrollNext}
-                                disabled={!canScrollNext}
-                                className="pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-0 disabled:opacity-30"
+                                className="pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-0"
                             >
                                 <ChevronRight className="h-5 w-5" />
                             </Button>
