@@ -16,7 +16,7 @@ interface PostCommentsProps {
 export const PostComments: React.FC<PostCommentsProps> = ({ postId, onCommentAdded }) => {
     const { user } = useAuth();
     const [newComment, setNewComment] = useState('');
-    const { addCommentMutation, addReplyMutation } = useCommentMutations(postId);
+    const { addCommentMutation, addReplyMutation, updateCommentMutation, deleteCommentMutation } = useCommentMutations(postId);
 
     const { data: comments = [], isLoading, error, refetch } = useQuery({
         queryKey: [QUERY_KEY_PREFIX, postId],
@@ -40,6 +40,14 @@ export const PostComments: React.FC<PostCommentsProps> = ({ postId, onCommentAdd
         addReplyMutation.mutate({ content, parentId: commentId });
     }, [addReplyMutation]);
 
+    const handleUpdateComment = useCallback((commentId: number, content: string) => {
+        updateCommentMutation.mutate({ commentId, content });
+    }, [updateCommentMutation]);
+
+    const handleDeleteComment = useCallback((commentId: number) => {
+        deleteCommentMutation.mutate(commentId);
+    }, [deleteCommentMutation]);
+
     return (
         <div className="bg-muted/30 p-4 pt-0 rounded-b-lg">
             <Separator className="mb-4" />
@@ -52,6 +60,8 @@ export const PostComments: React.FC<PostCommentsProps> = ({ postId, onCommentAdd
                     error={error}
                     onRetry={refetch}
                     onReply={handleReply}
+                    onUpdate={handleUpdateComment}
+                    onDelete={handleDeleteComment}
                 />
             </div>
 

@@ -12,6 +12,8 @@ interface CommentsListProps {
     error: Error | null;
     onRetry: () => void;
     onReply: (commentId: number, content: string) => void;
+    onUpdate: (commentId: number, content: string) => void;
+    onDelete: (commentId: number) => void;
 }
 
 export const CommentsList: React.FC<CommentsListProps> = ({
@@ -21,6 +23,8 @@ export const CommentsList: React.FC<CommentsListProps> = ({
     error,
     onRetry,
     onReply,
+    onUpdate,
+    onDelete,
 }) => {
     if (isLoading) {
         return (
@@ -66,6 +70,8 @@ export const CommentsList: React.FC<CommentsListProps> = ({
                     comment={comment}
                     postId={postId}
                     onReply={onReply}
+                    onUpdate={onUpdate}
+                    onDelete={onDelete}
                 />
             ))}
         </div>
