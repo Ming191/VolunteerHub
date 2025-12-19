@@ -79,4 +79,35 @@ class CommentController(private val commentService: CommentService) {
         val replies = commentService.getRepliesForComment(commentId, currentUser?.username)
         return ResponseEntity.ok(replies)
     }
+
+    @Operation(
+            summary = "Update comment",
+            description = "Update the content of an existing comment. Only the author can update their own comments."
+    )
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping(path = ["/{commentId}"], consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun updateComment(
+            @PathVariable postId: Long,
+            @PathVariable commentId: Long,
+            @Valid @RequestBody commentRequest: CommentRequest,
+            @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<CommentResponse> {
+        val updatedComment = commentService.updateComment(commentId, commentRequest.content, currentUser.username)
+        return ResponseEntity.ok(updatedComment)
+    }
+
+    @Operation(
+            summary = "Delete comment",
+            description = "Delete a comment. Only the author can delete their own comments."
+    )
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/{commentId}")
+    fun deleteComment(
+            @PathVariable postId: Long,
+            @PathVariable commentId: Long,
+            @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<Unit> {
+        commentService.deleteComment(commentId, currentUser.username)
+        return ResponseEntity.noContent().build()
+    }
 }

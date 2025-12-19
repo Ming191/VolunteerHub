@@ -129,4 +129,41 @@ class CommentService(
 
         return comment.replies.sortedBy { it.createdAt }.map(commentMapper::toCommentResponse)
     }
+
+    @Transactional
+    fun updateComment(commentId: Long, newContent: String, userEmail: String): CommentResponse {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val comment = commentRepository.findByIdOrThrow(commentId)
+
+        // Verify the user is the author of the comment
+        if (comment.author.id != user.id) {
+            throw IllegalAccessException("You are not authorized to update this comment")
+        }
+
+        comment.content = newContent
+        val updatedComment = commentRepository.save(comment)
+
+        // Evict cache for the post
+        cacheManager.getCache("comments")?.evict(comment.post.id)
+        cacheEvictionService.evictPosts(comment.post.event.id)
+
+        return commentMapper.toCommentResponse(updatedComment)
+    }
+
+    @Transactional
+    fun deleteComment(commentId: Long, userEmail: String) {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val comment = commentRepository.findByIdOrThrow(commentId)
+
+        // Verify the user is the author of the comment
+        if (comment.author.id != user.id) {
+            throw IllegalAccessException("You are not authorized to delete this comment")
+        }
+
+        // Evict cache for the post
+        cacheManager.getCache("comments")?.evict(comment.post.id)
+        cacheEvictionService.evictPosts(comment.post.event.id)
+
+        commentRepository.delete(comment)
+    }
 }
