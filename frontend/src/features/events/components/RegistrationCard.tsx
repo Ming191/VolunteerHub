@@ -2,11 +2,10 @@ import type { RegistrationResponse } from "@/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { eventService } from "@/features/events/api/eventService";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useState, type MouseEvent } from "react";
-
-import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { useCancelRegistration } from "@/features/volunteer/hooks/useRegistration.ts";
+import {ConfirmDialog} from "@/components/common/ConfirmDialog.tsx";
+import {format} from "date-fns";
 
 interface RegistrationCardProps {
     registration: RegistrationResponse;
@@ -31,8 +30,7 @@ export function RegistrationCard({ registration, onClick }: RegistrationCardProp
 
     const canCancel = isApproved && isUpcoming;
 
-    const handleCancel = (e: MouseEvent) => {
-        e.stopPropagation();
+    const handleCancel = () => {
         cancelMutation.mutate(registration.eventId, {
             onSuccess: () => {
                 setCancelDialogOpen(false);
@@ -47,10 +45,9 @@ export function RegistrationCard({ registration, onClick }: RegistrationCardProp
         >
             <div>
                 <h3 className="text-lg font-semibold mb-1">{registration.eventTitle}</h3>
-                <p className="text-sm text-muted-foreground mb-1">📍 {registration.registeredAt}</p>
+                <p className="text-sm text-muted-foreground mb-1">📍 {format(new Date(registration.registeredAt), "PPpp")}</p>
                 <p
-                    className={`text-sm font-medium ${registration.status === 'APPROVED' ? 'text-green-600' : 'text-yellow-600'
-                        }`}
+                    className={`text-sm font-medium ${registration.status === 'APPROVED' ? 'text-green-600' : 'text-yellow-600'}`}
                 >
                     {registration.status}
                 </p>
@@ -58,39 +55,34 @@ export function RegistrationCard({ registration, onClick }: RegistrationCardProp
                 {/* <p className="text-xs text-gray-400">Event Date: {eventDetail?.eventDateTime}</p> */}
             </div>
 
-            {canCancel && (
-                <div onClick={(e) => e.stopPropagation()}>
-                    <Dialog open={isCancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="destructive" size="sm">
-                                Cancel
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Cancel Registration</DialogTitle>
-                                <DialogDescription>
-                                    Are you sure you want to cancel your registration for <strong>{registration.eventTitle}</strong>?
-                                    This action cannot be undone.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
-                                    Keep Registration
-                                </Button>
-                                <Button
-                                    variant="destructive"
-                                    onClick={handleCancel}
-                                    disabled={cancelMutation.isPending}
-                                >
-                                    {cancelMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Confirm Cancel
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            )}
+          {canCancel && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setCancelDialogOpen(true)}
+              >
+                Cancel
+              </Button>
+
+              <ConfirmDialog
+                open={isCancelDialogOpen}
+                onOpenChange={setCancelDialogOpen}
+                title="Cancel Registration"
+                description={
+                  <>
+                    Are you sure you want to cancel your registration for{" "}
+                    <strong>{registration.eventTitle}</strong>?
+                    This action cannot be undone.
+                  </>
+                }
+                confirmText="Confirm Cancel"
+                confirmVariant="destructive"
+                isLoading={cancelMutation.isPending}
+                onConfirm={handleCancel}
+              />
+            </div>
+          )}
         </div>
     );
 }

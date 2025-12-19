@@ -43,6 +43,11 @@ export const useUpdateRegistrationStatus = (eventId: number) => {
             queryClient.invalidateQueries({
                 queryKey: [EVENT_REGISTRATIONS_QUERY_KEY, eventId],
             });
+
+          // 2️⃣ Refresh event detail (counts pending / approved)
+          queryClient.invalidateQueries({
+            queryKey: [EVENTS_QUERY_KEY, eventId],
+          });
         },
     });
 };
