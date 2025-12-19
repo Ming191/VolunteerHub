@@ -28,3 +28,22 @@ export const formatDate = (date: string | Date | undefined, formatStr: string = 
     const dateObj = typeof date === 'string' ? parseAsUTC(date) : date;
     return format(dateObj, formatStr);
 };
+
+/**
+ * Checks if an event has ended based on its end date/time
+ */
+export const isEventEnded = (endDateTime: string | undefined): boolean => {
+    if (!endDateTime) return false;
+    const endDate = parseAsUTC(endDateTime);
+    return endDate < new Date();
+};
+
+/**
+ * Checks if registration is closed based on the registration deadline
+ */
+export const isRegistrationClosed = (registrationDeadline: string | undefined): boolean => {
+    if (!registrationDeadline) return false;
+    const deadline = parseAsUTC(registrationDeadline);
+    return deadline < new Date();
+};
+

@@ -1,16 +1,55 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Share2, Bookmark } from 'lucide-react';
+import { Share2 } from 'lucide-react';
 import type { EventResponse } from '@/api-client';
 import { format } from 'date-fns';
+import { useEventPermissions } from '../../hooks/useEventPermissions';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface EventHeroProps {
     event: EventResponse;
     isOrganizer?: boolean;
+    onRegister?: () => void;
 }
 
-export const EventHero = ({ event, isOrganizer }: EventHeroProps) => {
+export const EventHero = ({ event, isOrganizer, onRegister }: EventHeroProps) => {
     const bgImage = event.imageUrls?.[0] || null;
+    const { user } = useAuth();
+    const { canRegister, isVolunteer, isEventEnded: eventEnded, isRegistrationClosed: registrationClosedByDeadline } = useEventPermissions(event);
+
+    const getButtonConfig = () => {
+        if (eventEnded) {
+            return { text: 'Event Ended', disabled: true };
+        }
+        if (registrationClosedByDeadline) {
+            return { text: 'Registration Closed', disabled: true };
+        }
+        if (event.isFull) {
+            return { text: event.waitlistEnabled ? 'Join Waitlist' : 'Event Full', disabled: !event.waitlistEnabled };
+        }
+        return { text: 'Register Now', disabled: false };
+    };
+
+    const buttonConfig = getButtonConfig();
+
+    const handleShare = async () => {
+        const shareData = {
+            title: event.title,
+            text: `Check out ${event.title} on VolunteerHub!`,
+            url: window.location.href,
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                // Ideally we'd show a toast here, but for now this is the fallback
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
+    };
 
     return (
         <div className="relative w-full h-[400px] bg-muted overflow-hidden rounded-xl mb-8">
@@ -48,16 +87,23 @@ export const EventHero = ({ event, isOrganizer }: EventHeroProps) => {
                         <span>{format(new Date(event.eventDateTime), 'MMMM d, yyyy')}</span>
                     </div>
 
-                    {!isOrganizer && (
+                    {!isOrganizer && user && isVolunteer && canRegister && (
                         <div className="flex gap-3 pt-4">
-                            <Button size="lg" className="bg-white text-black hover:bg-white/90">
-                                Register Now
+                            <Button
+                                size="lg"
+                                className="bg-white text-black hover:bg-white/90"
+                                onClick={onRegister}
+                                disabled={buttonConfig.disabled}
+                            >
+                                {buttonConfig.text}
                             </Button>
-                            <Button size="lg" variant="outline" className="bg-transparent text-white border-white hover:bg-white/20">
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                className="bg-transparent text-white border-white hover:bg-white/20"
+                                onClick={handleShare}
+                            >
                                 <Share2 className="mr-2 h-4 w-4" /> Share
-                            </Button>
-                            <Button size="icon" variant="outline" className="bg-transparent text-white border-white hover:bg-white/20">
-                                <Bookmark className="h-4 w-4" />
                             </Button>
                         </div>
                     )}

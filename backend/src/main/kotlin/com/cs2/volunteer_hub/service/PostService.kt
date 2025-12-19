@@ -88,9 +88,13 @@ class PostService(
     }
 
     @Transactional(readOnly = true)
-    fun getPostsForEvent(eventId: Long, userEmail: String, pageable: Pageable): Page<PostResponse> {
-        val user = userRepository.findByEmailOrThrow(userEmail)
-        authorizationService.requireEventReadPermission(eventId)
+    fun getPostsForEvent(
+            eventId: Long,
+            userEmail: String?,
+            pageable: Pageable
+    ): Page<PostResponse> {
+        val user = userEmail?.let { userRepository.findByEmailOrThrow(it) }
+        authorizationService.requireEventReadPermission(eventId, user?.id)
 
         val spec = PostSpecifications.forEvent(eventId)
         val postPage = postRepository.findAll(spec, pageable)
@@ -100,7 +104,7 @@ class PostService(
         }
 
         val postIds = postPage.content.map { it.id }
-        val likedPostIds = getLikedPostIdsByUser(user.id, postIds)
+        val likedPostIds = user?.let { getLikedPostIdsByUser(it.id, postIds) } ?: emptySet()
 
         val postResponses = postMapper.toPostResponseList(postPage.content, likedPostIds)
 
@@ -119,9 +123,7 @@ class PostService(
         val post = postRepository.findByIdOrThrow(postId)
 
         if (post.author.id != user.id) {
-            throw UnauthorizedAccessException(
-                    "You don't have permission to update this post."
-            )
+            throw UnauthorizedAccessException("You don't have permission to update this post.")
         }
 
         cacheEvictionService.evictPosts(post.event.id)
@@ -147,9 +149,7 @@ class PostService(
         val post = postRepository.findByIdOrThrow(postId)
 
         if (post.author.id != user.id) {
-            throw UnauthorizedAccessException(
-                "You don't have permission to delete this post."
-            )
+            throw UnauthorizedAccessException("You don't have permission to delete this post.")
         }
 
         cacheEvictionService.evictPosts(post.event.id)
