@@ -1,14 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { registrationService } from "@/features/volunteer/api/registrationService.ts";
 import { toast } from "sonner";
+import {EVENTS_QUERY_KEY} from "@/features/events/hooks/useEvents.ts";
 
 const REGISTRATION_QUERY_KEY = 'my-registrations';
 const CHECK_REGISTRATION_QUERY_KEY = 'check-registration';
 
 export const useRegisterForEvent = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (eventId: number) => registrationService.registerForEvent(eventId),
-    onSuccess: (data) => {
+    onSuccess: (data, eventId) => {
       if (data.status === 'WAITLISTED') {
         toast.success("Added to Waitlist", {
           description: `Your position: ${data.waitlistPosition}`,
@@ -18,6 +20,9 @@ export const useRegisterForEvent = () => {
           description: "You have successfully registered for this event",
         });
       }
+      queryClient.invalidateQueries({
+        queryKey: [EVENTS_QUERY_KEY, eventId],
+      });
     },
     onError: (error: any) => {
       toast.error("Registration Failed", {
