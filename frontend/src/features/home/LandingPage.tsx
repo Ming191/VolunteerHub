@@ -1,315 +1,545 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import type { EventResponse } from "@/api-client";
 import {
   Heart,
   Users,
   Calendar,
-  TrendingUp,
   ArrowRight,
-  Sparkles,
-  HandHeart,
+  CheckCircle2,
+  Target,
+  Globe,
   Award,
+  Shield,
+  Zap,
 } from "lucide-react";
-import AnimatedPage from "@/components/common/AnimatedPage";
-import { usePublicEvents } from "@/features/events/hooks/usePublicEvents";
-import { EventCard } from "@/features/events/components/EventCard";
 import LogoImg from "@/assets/logo.svg";
 
 export const LandingPage = () => {
-  const { data: events, isLoading } = usePublicEvents();
-  const featuredEvents = events?.slice(0, 6) || [];
-
   return (
-    <AnimatedPage className="min-h-screen bg-gradient-hero">
-      {/* Header/Nav - Bright & Clean */}
-      <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-lg border-b-2 border-brand-teal-100 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              src={LogoImg}
-              alt="VolunteerHub"
-              className="h-10 w-10 object-contain"
-            />
-            <span className="text-2xl font-extrabold bg-gradient-to-r from-brand-teal-500 via-brand-orange-500 to-accent-coral bg-clip-text text-transparent">
-              VolunteerHub
-            </span>
-          </div>
+    <div className="min-h-screen bg-white">
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <img
+                src={LogoImg}
+                alt="VolunteerHub"
+                className="h-8 w-8 object-contain"
+              />
+              <span className="text-xl font-bold text-gray-900">
+                VolunteerHub
+              </span>
+            </div>
 
-          <div className="flex items-center gap-3">
-            <Link to="/signin">
-              <Button
-                variant="ghost"
-                className="text-gray-700 hover:text-brand-teal-600 hover:bg-brand-teal-50 font-semibold"
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center gap-8">
+              <a
+                href="#features"
+                className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors"
               >
-                Sign In
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button className="bg-gradient-to-r from-brand-teal-500 to-brand-teal-600 hover:from-brand-teal-400 hover:to-brand-teal-500 text-white shadow-vibrant font-bold px-6 transform hover:scale-105 transition-all">
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+                Features
+              </a>
+              <a
+                href="#how-it-works"
+                className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors"
+              >
+                How It Works
+              </a>
+              <a
+                href="#testimonials"
+                className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors"
+              >
+                Testimonials
+              </a>
+              <Link
+                to="/events"
+                className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors"
+              >
+                Browse Events
+              </Link>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex items-center gap-3">
+              <Link to="/signin">
+                <Button
+                  variant="ghost"
+                  className="text-sm font-medium text-gray-700 hover:text-green-600"
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/signup">
+                <Button className="bg-green-600 hover:bg-green-700 text-white shadow-sm">
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Hero Section - Vibrant & Energetic */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-brand-teal-50 to-brand-orange-50 border-2 border-brand-teal-200 text-brand-teal-700 text-sm font-bold mb-4 animate-pulse-vibrant">
-            <Sparkles className="h-5 w-5 text-brand-orange-500" />
-            Make a difference in your community today
+      {/* Hero Section */}
+      <section className="pt-20 pb-24 lg:pt-32 lg:pb-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 tracking-tight mb-6">
+              Connect volunteers with
+              <span className="text-green-600"> meaningful causes</span>
+            </h1>
+            <p className="text-xl lg:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+              The all-in-one platform for discovering volunteer opportunities,
+              organizing events, and making a lasting impact in your community.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/signup">
+                <Button
+                  size="lg"
+                  className="bg-green-600 hover:bg-green-700 text-white text-base px-8 h-14 shadow-lg"
+                >
+                  Start Volunteering
+                  <Heart className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/events">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-gray-300 hover:border-green-600 hover:bg-green-50 text-base px-8 h-14"
+                >
+                  Browse Events
+                  <Calendar className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Introduction Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left: Text Content */}
+            <div>
+              <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                Empowering communities through volunteering
+              </h2>
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                VolunteerHub bridges the gap between passionate individuals and
+                organizations making a difference. Whether you're looking to
+                volunteer or organize events, we provide the tools you need to
+                create lasting change.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      Find opportunities that match your passion
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      Smart matching based on your interests and availability
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      Track your volunteer journey
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      See the impact you're making in real-time
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      Connect with like-minded volunteers
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      Build meaningful relationships in your community
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Image Placeholder */}
+            <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl aspect-square lg:aspect-auto lg:h-[500px] flex items-center justify-center shadow-xl">
+              <div className="text-center p-8">
+                <Heart className="h-32 w-32 text-green-600 mx-auto mb-4" />
+                <p className="text-2xl font-bold text-green-800">
+                  Making a Difference Together
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+              Everything you need to volunteer effectively
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Powerful features designed to make volunteering seamless and
+              impactful
+            </p>
           </div>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight animate-slide-up">
-            <span className="bg-gradient-to-r from-brand-teal-500 via-brand-orange-500 to-accent-coral bg-clip-text text-transparent drop-shadow-sm">
-              Connect. Volunteer.
-            </span>
-            <br />
-            <span className="text-gray-900">Change Lives.</span>
-          </h1>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Feature Card 1 */}
+            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-lg transition-shadow border border-gray-200">
+              <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                <Target className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Smart Matching
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Find volunteer opportunities tailored to your interests, skills,
+                and availability
+              </p>
+            </div>
 
-          <p className="text-xl md:text-2xl text-gray-700 max-w-2xl mx-auto font-medium leading-relaxed">
-            Join{" "}
-            <span className="text-brand-teal-600 font-bold">10,000+ volunteers</span>{" "}
-            making an impact. Find opportunities that match your passion and skills.
+            {/* Feature Card 2 */}
+            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-lg transition-shadow border border-gray-200">
+              <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                <Calendar className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Event Management
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Organize and manage volunteer events with powerful tools and
+                real-time updates
+              </p>
+            </div>
+
+            {/* Feature Card 3 */}
+            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-lg transition-shadow border border-gray-200">
+              <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                <Award className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Impact Tracking
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Monitor your volunteer hours and see the tangible difference
+                you're making
+              </p>
+            </div>
+
+            {/* Feature Card 4 */}
+            <div className="bg-white rounded-xl p-8 shadow-sm hover:shadow-lg transition-shadow border border-gray-200">
+              <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                <Users className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Community Building
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Connect with passionate volunteers and build lasting
+                relationships
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonial Section */}
+      <section id="testimonials" className="py-20 bg-green-600">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
+          <div className="mb-8">
+            <div className="flex justify-center mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <svg
+                  key={star}
+                  className="w-8 h-8 text-white fill-current"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                </svg>
+              ))}
+            </div>
+          </div>
+          <blockquote className="text-2xl lg:text-3xl font-semibold text-white mb-6 leading-relaxed">
+            "VolunteerHub has transformed how we connect with volunteers. The
+            platform is intuitive, powerful, and has helped us make a real
+            impact in our community."
+          </blockquote>
+          <div className="text-white/90">
+            <p className="font-semibold text-lg">Sarah Johnson</p>
+            <p className="text-white/75">
+              Community Organizer, Hope Foundation
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section (Zig-zag) */}
+      <section id="how-it-works" className="py-20 lg:py-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+              How it works
+            </h2>
+            <p className="text-xl text-gray-600">
+              Get started in three simple steps
+            </p>
+          </div>
+
+          {/* Step 1 */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+            <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl aspect-video lg:aspect-square flex items-center justify-center shadow-lg">
+              <div className="text-center p-8">
+                <Shield className="h-24 w-24 text-green-600 mx-auto mb-4" />
+                <p className="text-xl font-bold text-green-800">
+                  Create Your Profile
+                </p>
+              </div>
+            </div>
+            <div>
+              <div className="bg-green-100 text-green-600 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl mb-4">
+                1
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                Sign up and tell us about yourself
+              </h3>
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                Create your free account in minutes. Share your interests,
+                skills, and availability so we can match you with the perfect
+                volunteer opportunities.
+              </p>
+              <Link to="/signup">
+                <Button className="bg-green-600 hover:bg-green-700 text-white">
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+            <div className="order-2 lg:order-1">
+              <div className="bg-green-100 text-green-600 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl mb-4">
+                2
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                Discover opportunities near you
+              </h3>
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                Browse hundreds of volunteer events and causes. Use smart
+                filters to find opportunities that match your passion, schedule,
+                and location.
+              </p>
+              <Link to="/events">
+                <Button className="bg-green-600 hover:bg-green-700 text-white">
+                  Browse Events
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="order-1 lg:order-2 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl aspect-video lg:aspect-square flex items-center justify-center shadow-lg">
+              <div className="text-center p-8">
+                <Globe className="h-24 w-24 text-blue-600 mx-auto mb-4" />
+                <p className="text-xl font-bold text-blue-800">
+                  Find Your Cause
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl aspect-video lg:aspect-square flex items-center justify-center shadow-lg">
+              <div className="text-center p-8">
+                <Zap className="h-24 w-24 text-purple-600 mx-auto mb-4" />
+                <p className="text-xl font-bold text-purple-800">
+                  Make an Impact
+                </p>
+              </div>
+            </div>
+            <div>
+              <div className="bg-green-100 text-green-600 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl mb-4">
+                3
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                Start making a difference
+              </h3>
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                Register for events, connect with other volunteers, and track
+                your impact. Watch as your contributions make a real difference
+                in your community.
+              </p>
+              <Link to="/signup">
+                <Button className="bg-green-600 hover:bg-green-700 text-white">
+                  Join Now
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Logos Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <p className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wide mb-8">
+            Trusted by organizations worldwide
           </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-50">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="bg-gray-300 h-12 rounded-lg flex items-center justify-center"
+              >
+                <span className="text-gray-600 font-bold">
+                  Organization {i}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
+      {/* Final CTA Section */}
+      <section className="py-20 lg:py-24 bg-green-600">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
+            Ready to start your volunteer journey?
+          </h2>
+          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
+            Join thousands of volunteers making a real impact. Create your free
+            account today and discover opportunities near you.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/signup">
               <Button
                 size="lg"
-                className="bg-gradient-vibrant hover:shadow-2xl text-white text-lg px-10 py-7 shadow-vibrant font-extrabold transform hover:scale-110 transition-all animate-bounce-gentle"
+                className="bg-white text-green-600 hover:bg-gray-100 text-base px-8 h-14 font-semibold shadow-lg"
               >
-                Start Volunteering
-                <Heart className="ml-2 h-6 w-6 fill-white" />
+                Get Started Free
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/events">
               <Button
                 size="lg"
                 variant="outline"
-                className="text-lg px-10 py-7 border-3 border-brand-orange-300 text-brand-orange-600 hover:bg-brand-orange-50 hover:border-brand-orange-500 font-bold transform hover:scale-105 transition-all"
+                className="border-2 border-white text-white hover:bg-white/10 text-base px-8 h-14 font-semibold"
               >
                 Browse Events
-                <Calendar className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Stats Section - Colorful Cards */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <Card className="border-3 border-brand-teal-200 bg-gradient-to-br from-white to-brand-teal-50 backdrop-blur hover:shadow-vibrant transition-all transform hover:scale-105">
-            <CardContent className="p-8 text-center">
-              <div className="inline-flex p-5 rounded-2xl bg-gradient-to-br from-brand-teal-400 to-brand-teal-600 mb-4 shadow-vibrant">
-                <Users className="h-10 w-10 text-white" />
-              </div>
-              <div className="text-5xl font-extrabold text-brand-teal-600">
-                10K+
-              </div>
-              <div className="text-gray-700 mt-2 font-semibold">
-                Active Volunteers
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-3 border-brand-orange-200 bg-gradient-to-br from-white to-brand-orange-50 backdrop-blur hover:shadow-warm transition-all transform hover:scale-105">
-            <CardContent className="p-8 text-center">
-              <div className="inline-flex p-5 rounded-2xl bg-gradient-to-br from-brand-orange-400 to-brand-orange-600 mb-4 shadow-warm">
-                <Calendar className="h-10 w-10 text-white" />
-              </div>
-              <div className="text-5xl font-extrabold text-brand-orange-600">
-                500+
-              </div>
-              <div className="text-gray-700 mt-2 font-semibold">
-                Events This Month
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-3 border-blue-200 bg-gradient-to-br from-white to-blue-50 backdrop-blur hover:shadow-lg hover:shadow-blue-300/50 transition-all transform hover:scale-105">
-            <CardContent className="p-8 text-center">
-              <div className="inline-flex p-5 rounded-2xl bg-gradient-to-br from-accent-blue to-blue-600 mb-4 shadow-lg shadow-blue-300/50">
-                <TrendingUp className="h-10 w-10 text-white" />
-              </div>
-              <div className="text-5xl font-extrabold text-accent-blue">
-                50K+
-              </div>
-              <div className="text-gray-700 mt-2 font-semibold">
-                Hours Contributed
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Features Section - Bright & Inviting */}
-      <section className="container mx-auto px-4 py-20 bg-gradient-to-br from-brand-teal-50/30 to-brand-orange-50/30 rounded-3xl my-12">
-        <div className="text-center mb-12">
-          <h2 className="text-5xl font-extrabold text-gray-900 mb-4">
-            Why Choose VolunteerHub?
-          </h2>
-          <p className="text-2xl text-gray-600 font-medium">
-            Everything you need to start making a difference
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <Card className="border-3 border-brand-teal-200 bg-white hover:shadow-vibrant transition-all transform hover:scale-105 hover:-translate-y-2">
-            <CardContent className="p-10 text-center space-y-4">
-              <div className="inline-flex p-6 rounded-3xl bg-gradient-to-br from-brand-teal-100 to-brand-teal-200">
-                <HandHeart className="h-12 w-12 text-brand-teal-600" />
-              </div>
-              <h3 className="text-2xl font-extrabold text-gray-900">
-                Easy Discovery
-              </h3>
-              <p className="text-gray-600 font-medium leading-relaxed">
-                Find volunteer opportunities that match your interests, skills,
-                and schedule with our smart matching
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-3 border-brand-orange-200 bg-white hover:shadow-warm transition-all transform hover:scale-105 hover:-translate-y-2">
-            <CardContent className="p-10 text-center space-y-4">
-              <div className="inline-flex p-6 rounded-3xl bg-gradient-to-br from-brand-orange-100 to-brand-orange-200">
-                <Users className="h-12 w-12 text-brand-orange-600" />
-              </div>
-              <h3 className="text-2xl font-extrabold text-gray-900">
-                Connect & Collaborate
-              </h3>
-              <p className="text-gray-600 font-medium leading-relaxed">
-                Join a vibrant community of passionate volunteers and make lasting
-                connections that matter
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-3 border-blue-200 bg-white hover:shadow-lg hover:shadow-blue-300/50 transition-all transform hover:scale-105 hover:-translate-y-2">
-            <CardContent className="p-10 text-center space-y-4">
-              <div className="inline-flex p-6 rounded-3xl bg-gradient-to-br from-blue-100 to-blue-200">
-                <Award className="h-12 w-12 text-accent-blue" />
-              </div>
-              <h3 className="text-2xl font-extrabold text-gray-900">
-                Track Impact
-              </h3>
-              <p className="text-gray-600 font-medium leading-relaxed">
-                See your contributions and the real difference you're making in
-                your community in real-time
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Events Preview Section */}
-      <section className="container mx-auto px-4 py-20 bg-gradient-to-br from-green-50/50 to-orange-50/50 dark:from-gray-800/50 dark:to-gray-900/50">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Upcoming Events
-          </h2>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
-            Join these amazing volunteer opportunities
-          </p>
-        </div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {[...Array(6)].map((_, i) => (
-              <Card
-                key={i}
-                className="h-64 animate-pulse bg-gray-200 dark:bg-gray-800"
-              />
-            ))}
-          </div>
-        ) : featuredEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {featuredEvents.map((event: EventResponse) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">
-              No events available at the moment
-            </p>
-          </div>
-        )}
-
-        <div className="text-center mt-12">
-          <Link to="/events">
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-2 border-green-200 hover:bg-green-50 dark:hover:bg-green-900/20"
-            >
-              View All Events
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20">
-        <Card className="max-w-4xl mx-auto bg-gradient-to-br from-green-500 to-green-600 border-0 shadow-2xl">
-          <CardContent className="p-12 text-center text-white space-y-6">
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Ready to Make a Difference?
-            </h2>
-            <p className="text-xl text-green-50">
-              Join our community of volunteers today and start creating positive
-              change
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-              <Link to="/signup">
-                <Button
-                  size="lg"
-                  className="bg-white text-green-600 hover:bg-green-50 text-lg px-8"
-                >
-                  Sign Up Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/signin">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-white text-white hover:bg-white/10 text-lg px-8"
-                >
-                  Sign In
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
       {/* Footer */}
-      <footer className="border-t border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-green-400 to-green-600">
-                <Heart className="h-5 w-5 text-white fill-white" />
+      <footer className="bg-gray-900 py-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            {/* Logo and Brand */}
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src={LogoImg}
+                  alt="VolunteerHub"
+                  className="h-8 w-8 object-contain"
+                />
+                <span className="text-xl font-bold text-white">
+                  VolunteerHub
+                </span>
               </div>
-              <span className="text-lg font-bold text-gray-900 dark:text-white">
-                VolunteerHub
-              </span>
+              <p className="text-gray-400 max-w-md">
+                Connecting volunteers with meaningful causes to create lasting
+                impact in communities worldwide.
+              </p>
             </div>
-            <p className="text-gray-600 dark:text-gray-400">
-              © 2024 VolunteerHub. Making a difference together.
+
+            {/* Links Column 1 */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Platform</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link
+                    to="/events"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Browse Events
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/signup"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Sign Up
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/signin"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Links Column 2 */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Company</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Privacy Policy
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-800 pt-8">
+            <p className="text-center text-gray-400">
+              © 2025 VolunteerHub. All rights reserved.
             </p>
           </div>
         </div>
       </footer>
-    </AnimatedPage>
+    </div>
   );
 };
