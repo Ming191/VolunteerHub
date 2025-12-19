@@ -58,13 +58,8 @@ class ImageUploadWorker(
             throw e // Requeue message
         } catch (e: Exception) {
             logger.error("Unexpected error processing Event ID: ${message.eventId}", e)
-            // Remove from cache to allow potential recovery on retry
             processedMessages.invalidate(messageId)
-            if (message.retryCount >= RabbitMQConfig.MAX_RETRY_COUNT) {
-                throw e
-            } else {
-                handleRetryOrFailure(message, emptyMap(), e.message ?: "Unknown error")
-            }
+            handleRetryOrFailure(message, emptyMap(), e.message ?: "Unknown error")
         }
     }
 
