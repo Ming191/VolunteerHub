@@ -31,6 +31,12 @@ export const eventDetailsRoute = createRoute({
     component: () => <Suspense fallback={<SuspenseFallback />}><EventDetailsPage /></Suspense>,
 });
 
+export const eventRegistrationRoute = createRoute({
+    getParentRoute: () => eventDetailsRoute,
+    path: 'registration',
+    component: () => null, // Virtual route for tab state
+});
+
 export const myEventsRoute = createRoute({
     getParentRoute: () => authenticatedLayoutRoute,
     path: '/my-events',

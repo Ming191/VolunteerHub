@@ -52,6 +52,12 @@ class PostService(
         val author = userRepository.findByEmailOrThrow(userEmail)
         val event = authorizationService.requireEventPostPermission(eventId, author.id)
 
+        if (request.content.isBlank() && (files == null || files.isEmpty())) {
+            throw com.cs2.volunteer_hub.exception.BadRequestException(
+                    "Post must contain either text content or an image."
+            )
+        }
+
         files?.let { fileValidationService.validateFiles(it, maxFilesPerPost) }
 
         val post = Post(content = request.content, author = author, event = event)
@@ -154,6 +160,14 @@ class PostService(
 
         cacheEvictionService.evictPosts(post.event.id)
         postRepository.delete(post)
+    }
+
+    @Transactional
+    fun adminDeletePost(postId: Long) {
+        val post = postRepository.findByIdOrThrow(postId)
+        cacheEvictionService.evictPosts(post.event.id)
+        postRepository.delete(post)
+        logger.info("Admin deleted post ID: $postId")
     }
 
     @Transactional(readOnly = true)

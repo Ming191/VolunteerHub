@@ -15,9 +15,12 @@ interface EventHeroProps {
 export const EventHero = ({ event, isOrganizer, onRegister }: EventHeroProps) => {
     const bgImage = event.imageUrls?.[0] || null;
     const { user } = useAuth();
-    const { canRegister, isVolunteer, isEventEnded: eventEnded, isRegistrationClosed: registrationClosedByDeadline } = useEventPermissions(event);
+    const { canRegister, isVolunteer, isEventEnded: eventEnded, isRegistrationClosed: registrationClosedByDeadline, isRegistered } = useEventPermissions(event);
 
-    const getButtonConfig = () => {
+    const getButtonConfig = (): { text: string; disabled: boolean; variant?: 'secondary' } => {
+        if (isRegistered) {
+            return { text: 'Unregister', disabled: false, variant: 'secondary' };
+        }
         if (eventEnded) {
             return { text: 'Event Ended', disabled: true };
         }
@@ -91,7 +94,7 @@ export const EventHero = ({ event, isOrganizer, onRegister }: EventHeroProps) =>
                         <div className="flex gap-3 pt-4">
                             <Button
                                 size="lg"
-                                className="bg-white text-black hover:bg-white/90"
+                                className={buttonConfig.variant === 'secondary' ? "bg-red-600 text-white hover:bg-red-700" : "bg-white text-black hover:bg-white/90"}
                                 onClick={onRegister}
                                 disabled={buttonConfig.disabled}
                             >
