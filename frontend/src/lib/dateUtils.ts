@@ -35,7 +35,7 @@ export const formatDate = (date: string | Date | undefined, formatStr: string = 
 export const isEventEnded = (endDateTime: string | undefined): boolean => {
     if (!endDateTime) return false;
     const endDate = parseAsUTC(endDateTime);
-    return endDate < new Date();
+    return endDate.getTime() < Date.now();
 };
 
 /**
@@ -44,6 +44,6 @@ export const isEventEnded = (endDateTime: string | undefined): boolean => {
 export const isRegistrationClosed = (registrationDeadline: string | undefined): boolean => {
     if (!registrationDeadline) return false;
     const deadline = parseAsUTC(registrationDeadline);
-    return deadline < new Date();
+    return deadline.getTime() <= Date.now();
 };
 
