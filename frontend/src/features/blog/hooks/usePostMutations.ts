@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { blogService } from '@/features/blog/api/blogService.ts';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { EVENTS_QUERY_KEY } from '@/features/events/hooks/useEvents';
 
 interface CreatePostParams {
     content: string;
@@ -16,6 +17,7 @@ export const usePostMutations = (eventId?: number) => {
 
     const createOptimisticPost = (content: string, files: File[] | null) => ({
         id: Date.now(),
+        optimisticId: `optimistic-${Date.now()}`,
         content,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -68,7 +70,7 @@ export const usePostMutations = (eventId?: number) => {
 
             return { previousPosts, optimisticPost, targetQueryKey };
         },
-        onSuccess: (savedPost, _variables, context: any) => {
+        onSuccess: (savedPost, variables, context: any) => {
             const key = context?.targetQueryKey || queryKey;
             queryClient.setQueryData(key, (old: any) => {
                 if (!old) return old;
@@ -80,7 +82,9 @@ export const usePostMutations = (eventId?: number) => {
                             return {
                                 ...post,
                                 ...savedPost,
+                                optimisticId: post.optimisticId, // Preserve the optimistic ID for stable key
                                 imageUrls: savedPost.imageUrls || post.imageUrls || [],
+                                isOptimistic: false,
                             };
                         }
                         return post;
@@ -89,6 +93,13 @@ export const usePostMutations = (eventId?: number) => {
 
                 return { ...old, pages: newPages };
             });
+            
+            // Invalidate an event query to refresh gallery images
+            const targetEventId = variables.eventId || eventId;
+            if (targetEventId && savedPost.imageUrls && savedPost.imageUrls.length > 0) {
+                queryClient.invalidateQueries({ queryKey: [EVENTS_QUERY_KEY, targetEventId] });
+            }
+            
             toast.success("Post created!");
         },
         onError: (_err, _variables, context: any) => {
@@ -98,7 +109,6 @@ export const usePostMutations = (eventId?: number) => {
             toast.error("Failed to create post");
         },
         onSettled: (_data, _error, _variables, context: any) => {
-            // Cleanup optimistic blob URLs
             if (context?.optimisticPost?.imageUrls) {
                 context.optimisticPost.imageUrls.forEach((url: string) => {
                     URL.revokeObjectURL(url);

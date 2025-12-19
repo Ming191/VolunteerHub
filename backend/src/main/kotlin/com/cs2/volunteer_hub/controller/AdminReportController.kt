@@ -19,55 +19,59 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/admin/reports")
-@PreAuthorize("hasAuthority('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin - Reports", description = "Admin endpoints for managing reports")
 @SecurityRequirement(name = "bearerAuth")
 class AdminReportController(private val reportService: ReportService) {
 
     @Operation(
-        summary = "Get all reports",
-        description = "Retrieve all reports with optional status filter and pagination"
+            summary = "Get all reports",
+            description = "Retrieve all reports with optional status filter and pagination"
     )
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAllReports(
-        @RequestParam(required = false) status: ReportStatus?,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
+            @RequestParam(required = false) status: ReportStatus?,
+            @RequestParam(defaultValue = "0") page: Int,
+            @RequestParam(defaultValue = "20") size: Int
     ): ResponseEntity<List<ReportResponse>> {
         val reports = reportService.getAllReports(status, page, size)
         return ResponseEntity.ok(reports)
     }
 
     @Operation(
-        summary = "Get reports for specific target",
-        description = "Retrieve all reports for a specific post or comment"
+            summary = "Get reports for specific target",
+            description = "Retrieve all reports for a specific post or comment"
     )
     @GetMapping(path = ["/target"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getReportsForTarget(
-        @RequestParam type: ReportType,
-        @RequestParam targetId: Long
+            @RequestParam type: ReportType,
+            @RequestParam targetId: Long
     ): ResponseEntity<List<ReportResponse>> {
         val reports = reportService.getReportsForTarget(type, targetId)
         return ResponseEntity.ok(reports)
     }
 
     @Operation(
-        summary = "Review a report",
-        description = "Update the status of a report and add review notes"
+            summary = "Review a report",
+            description = "Update the status of a report and add review notes"
     )
-    @PutMapping(path = ["/{reportId}/review"], consumes = [MediaType.APPLICATION_JSON_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping(
+            path = ["/{reportId}/review"],
+            consumes = [MediaType.APPLICATION_JSON_VALUE],
+            produces = [MediaType.APPLICATION_JSON_VALUE]
+    )
     fun reviewReport(
-        @PathVariable reportId: Long,
-        @Valid @RequestBody reviewRequest: ReviewReportRequest,
-        @AuthenticationPrincipal currentUser: UserDetails
+            @PathVariable reportId: Long,
+            @Valid @RequestBody reviewRequest: ReviewReportRequest,
+            @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<ReportResponse> {
         val report = reportService.reviewReport(reportId, reviewRequest, currentUser.username)
         return ResponseEntity.ok(report)
     }
 
     @Operation(
-        summary = "Get report statistics",
-        description = "Retrieve statistics about all reports"
+            summary = "Get report statistics",
+            description = "Retrieve statistics about all reports"
     )
     @GetMapping(path = ["/stats"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getReportStats(): ResponseEntity<ReportStatsResponse> {
@@ -75,4 +79,3 @@ class AdminReportController(private val reportService: ReportService) {
         return ResponseEntity.ok(stats)
     }
 }
-

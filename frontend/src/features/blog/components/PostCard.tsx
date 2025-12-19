@@ -66,12 +66,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
     );
 
     const handleExpandComments = () => setShowComments(prev => !prev);
-
-    /* 
-     * TODO: Robustly check if current user is author. 
-     * Currently PostResponse's author only has name/avatar, no unique ID exposed in this interface. 
-     * For now, we allow reporting on all posts (including own, though UI might look weird).
-     */
     const isAuthor = user?.userId === post.author.id;
 
     const handleDelete = async () => {
@@ -141,7 +135,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
     };
 
     return (
-        <Card className="w-full mb-4 animate-in fade-in zoom-in-95 duration-300">
+        <Card className="w-full mb-4">
             <CardHeader className="flex flex-row items-center gap-4 p-4">
                 <Avatar>
                     <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
