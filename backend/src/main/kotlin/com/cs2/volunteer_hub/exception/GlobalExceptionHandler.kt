@@ -162,8 +162,7 @@ class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
             mapOf(
-                "error" to "An unexpected error occurred. Please try again later.",
-                "message" to (ex.message ?: "Unknown error")
+                "error" to "An unexpected error occurred. Please try again later."
             )
         )
     }

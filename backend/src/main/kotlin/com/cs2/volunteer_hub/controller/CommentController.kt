@@ -67,16 +67,16 @@ class CommentController(private val commentService: CommentService) {
     }
 
     @Operation(
-            summary = "Get replies for a comment",
-            description = "Retrieve all replies for a specific comment"
+        summary = "Get replies for a comment",
+        description = "Retrieve all replies for a specific comment"
     )
     @GetMapping(path = ["/{commentId}/replies"], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getRepliesForComment(
-            @PathVariable postId: Long,
-            @PathVariable commentId: Long,
-            @AuthenticationPrincipal currentUser: UserDetails?
+        @PathVariable postId: Long,
+        @PathVariable commentId: Long,
+        @AuthenticationPrincipal currentUser: UserDetails?
     ): ResponseEntity<List<CommentResponse>> {
-        val replies = commentService.getRepliesForComment(commentId, currentUser?.username)
+        val replies = commentService.getRepliesForComment(postId, commentId, currentUser?.username)
         return ResponseEntity.ok(replies)
     }
 

@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.*
+import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.mapper.CommentMapper
 import com.cs2.volunteer_hub.model.Comment
 import com.cs2.volunteer_hub.repository.CommentRepository
@@ -121,13 +122,23 @@ class CommentService(
 
     /** Get replies for a specific comment */
     @Transactional(readOnly = true)
-    fun getRepliesForComment(commentId: Long, userEmail: String?): List<CommentResponse> {
+    fun getRepliesForComment(postId: Long, commentId: Long, userEmail: String?): List<CommentResponse> {
         val user = userEmail?.let { userRepository.findByEmailOrThrow(it) }
-        val comment = commentRepository.findByIdOrThrow(commentId)
+        val post = postRepository.findByIdOrThrow(postId)
 
-        authorizationService.requireEventReadPermission(comment.post.event.id, user?.id)
+        authorizationService.requireEventReadPermission(post.event.id, user?.id)
 
-        return comment.replies.sortedBy { it.createdAt }.map(commentMapper::toCommentResponse)
+        val comment =
+                commentRepository.findById(commentId).orElseThrow {
+                    ResourceNotFoundException("Comment", "id", commentId)
+                }
+
+        if (comment.post.id != postId) {
+            throw ResourceNotFoundException("Comment", "postId", postId)
+        }
+
+        val replies = commentRepository.findAllByParentCommentIdOrderByCreatedAtAsc(commentId)
+        return replies.map(commentMapper::toCommentResponse)
     }
 
     @Transactional
