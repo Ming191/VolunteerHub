@@ -95,7 +95,7 @@ export const usePostMutations = (eventId?: number) => {
             });
             
             // Invalidate an event query to refresh gallery images
-            const targetEventId = variables.eventId || eventId;
+            const targetEventId = variables?.eventId ?? eventId;
             if (targetEventId && savedPost.imageUrls && savedPost.imageUrls.length > 0) {
                 queryClient.invalidateQueries({ queryKey: [EVENTS_QUERY_KEY, targetEventId] });
             }
