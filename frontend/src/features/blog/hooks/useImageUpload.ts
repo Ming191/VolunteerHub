@@ -13,14 +13,12 @@ export const useImageUpload = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imagesRef = useRef<ImagePreview[]>(selectedImages);
 
-    // Keep ref in sync with state for cleanup
     useEffect(() => {
         imagesRef.current = selectedImages;
     }, [selectedImages]);
 
     useEffect(() => {
         return () => {
-            // Use ref to access latest images on unmount without capturing outdated state
             imagesRef.current.forEach(img => URL.revokeObjectURL(img.url));
         };
     }, []);
