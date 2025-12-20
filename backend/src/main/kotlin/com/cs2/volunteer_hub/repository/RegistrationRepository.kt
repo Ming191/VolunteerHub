@@ -149,8 +149,8 @@ interface RegistrationRepository : JpaRepository<Registration, Long>, JpaSpecifi
         @Param("eventId") eventId: Long,
         @Param("status") status: RegistrationStatus?,
         @Param("searchText") searchText: String?,
-        @Param("registeredAfter") registeredAfter: java.time.LocalDateTime?,
-        @Param("registeredBefore") registeredBefore: java.time.LocalDateTime?,
+        @Param("registeredAfter") registeredAfter: LocalDateTime?,
+        @Param("registeredBefore") registeredBefore: LocalDateTime?,
         pageable: org.springframework.data.domain.Pageable
     ): List<Long>
 
