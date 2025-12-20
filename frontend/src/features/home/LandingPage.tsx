@@ -7,14 +7,66 @@ import {
   ArrowRight,
   CheckCircle2,
   Target,
-  Globe,
   Award,
-  Shield,
-  Zap,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { useState } from "react";
 import LogoImg from "@/assets/logo.svg";
+import Img1 from "@/assets/img1.jpg";
+import Img2 from "@/assets/img2.jpg";
+import Img3 from "@/assets/img3.jpg";
+import Img4 from "@/assets/img4.jpg";
+import Logo1 from "@/assets/logo1.webp";
+import Logo2 from "@/assets/logo2.png";
+import Logo3 from "@/assets/logo3.png";
+import Logo4 from "@/assets/logo4.png";
+import Logo5 from "@/assets/logo5.jpg";
+import Logo6 from "@/assets/logo6.svg";
+import Logo7 from "@/assets/logo7.png";
+import Logo8 from "@/assets/logo8.jpg";
 
 export const LandingPage = () => {
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+
+  const testimonials = [
+    {
+      text: "VolunteerHub has transformed how we connect with volunteers. The platform is intuitive, powerful, and has helped us make a real impact in our community.",
+      author: "Sarah Johnson",
+      role: "Community Organizer, Hope Foundation",
+    },
+    {
+      text: "I've found the most meaningful volunteer opportunities through VolunteerHub. The matching system really understands what I'm passionate about.",
+      author: "Michael Chen",
+      role: "Volunteer, Environmental Alliance",
+    },
+    {
+      text: "As an event organizer, this platform has streamlined everything. From registration to check-ins, it's all seamless. Highly recommend!",
+      author: "Emily Rodriguez",
+      role: "Event Coordinator, City Youth Program",
+    },
+    {
+      text: "The impact tracking feature is incredible. I can see exactly how my volunteer hours are making a difference. Very motivating!",
+      author: "David Thompson",
+      role: "Regular Volunteer, Food Bank Network",
+    },
+    {
+      text: "VolunteerHub connected me with a community I never knew existed. The people I've met and the causes I've supported have changed my life.",
+      author: "Lisa Patel",
+      role: "Volunteer Coordinator, Animal Rescue",
+    },
+  ];
+
+  const nextTestimonial = () => {
+    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const prevTestimonial = () => {
+    setCurrentTestimonial(
+      (prev) => (prev - 1 + testimonials.length) % testimonials.length
+    );
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar */}
@@ -98,7 +150,7 @@ export const LandingPage = () => {
               <Link to="/signup">
                 <Button
                   size="lg"
-                  className="bg-green-600 hover:bg-green-700 text-white text-base px-8 h-14 shadow-lg"
+                  className="bg-green-600 hover:bg-green-700 text-white text-base px-8 h-14 shadow-lg font-semibold"
                 >
                   Start Volunteering
                   <Heart className="ml-2 h-5 w-5" />
@@ -108,7 +160,7 @@ export const LandingPage = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-gray-300 hover:border-green-600 hover:bg-green-50 text-base px-8 h-14"
+                  className="border-2 border-green-600 text-green-600 hover:border-green-700 hover:bg-green-50 text-base px-8 h-14 font-semibold shadow-md"
                 >
                   Browse Events
                   <Calendar className="ml-2 h-5 w-5" />
@@ -171,14 +223,13 @@ export const LandingPage = () => {
               </div>
             </div>
 
-            {/* Right: Image Placeholder */}
-            <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl aspect-square lg:aspect-auto lg:h-[500px] flex items-center justify-center shadow-xl">
-              <div className="text-center p-8">
-                <Heart className="h-32 w-32 text-green-600 mx-auto mb-4" />
-                <p className="text-2xl font-bold text-green-800">
-                  Making a Difference Together
-                </p>
-              </div>
+            {/* Right: Image */}
+            <div className="rounded-2xl overflow-hidden shadow-xl">
+              <img
+                src={Img1}
+                alt="Making a Difference Together"
+                className="w-full h-full object-cover aspect-square lg:h-[500px]"
+              />
             </div>
           </div>
         </div>
@@ -258,7 +309,7 @@ export const LandingPage = () => {
       </section>
 
       {/* Testimonial Section */}
-      <section id="testimonials" className="py-20 bg-green-600">
+      <section id="testimonials" className="py-20 bg-green-600 relative">
         <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
           <div className="mb-8">
             <div className="flex justify-center mb-4">
@@ -273,16 +324,48 @@ export const LandingPage = () => {
               ))}
             </div>
           </div>
-          <blockquote className="text-2xl lg:text-3xl font-semibold text-white mb-6 leading-relaxed">
-            "VolunteerHub has transformed how we connect with volunteers. The
-            platform is intuitive, powerful, and has helped us make a real
-            impact in our community."
+          <blockquote className="text-2xl lg:text-3xl font-semibold text-white mb-6 leading-relaxed min-h-[120px] flex items-center justify-center">
+            "{testimonials[currentTestimonial].text}"
           </blockquote>
           <div className="text-white/90">
-            <p className="font-semibold text-lg">Sarah Johnson</p>
-            <p className="text-white/75">
-              Community Organizer, Hope Foundation
+            <p className="font-semibold text-lg">
+              {testimonials[currentTestimonial].author}
             </p>
+            <p className="text-white/75">
+              {testimonials[currentTestimonial].role}
+            </p>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              onClick={prevTestimonial}
+              className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-colors"
+              aria-label="Previous testimonial"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            <div className="flex gap-2">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentTestimonial(index)}
+                  className={`h-2 rounded-full transition-all ${
+                    index === currentTestimonial
+                      ? "w-8 bg-white"
+                      : "w-2 bg-white/50 hover:bg-white/70"
+                  }`}
+                  aria-label={`Go to testimonial ${index + 1}`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={nextTestimonial}
+              className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-colors"
+              aria-label="Next testimonial"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
           </div>
         </div>
       </section>
@@ -301,13 +384,12 @@ export const LandingPage = () => {
 
           {/* Step 1 */}
           <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
-            <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl aspect-video lg:aspect-square flex items-center justify-center shadow-lg">
-              <div className="text-center p-8">
-                <Shield className="h-24 w-24 text-green-600 mx-auto mb-4" />
-                <p className="text-xl font-bold text-green-800">
-                  Create Your Profile
-                </p>
-              </div>
+            <div className="rounded-2xl overflow-hidden shadow-lg">
+              <img
+                src={Img2}
+                alt="Create Your Profile"
+                className="w-full h-full object-cover aspect-video lg:aspect-square"
+              />
             </div>
             <div>
               <div className="bg-green-100 text-green-600 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl mb-4">
@@ -351,25 +433,23 @@ export const LandingPage = () => {
                 </Button>
               </Link>
             </div>
-            <div className="order-1 lg:order-2 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl aspect-video lg:aspect-square flex items-center justify-center shadow-lg">
-              <div className="text-center p-8">
-                <Globe className="h-24 w-24 text-blue-600 mx-auto mb-4" />
-                <p className="text-xl font-bold text-blue-800">
-                  Find Your Cause
-                </p>
-              </div>
+            <div className="order-1 lg:order-2 rounded-2xl overflow-hidden shadow-lg">
+              <img
+                src={Img3}
+                alt="Find Your Cause"
+                className="w-full h-full object-cover aspect-video lg:aspect-square"
+              />
             </div>
           </div>
 
           {/* Step 3 */}
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl aspect-video lg:aspect-square flex items-center justify-center shadow-lg">
-              <div className="text-center p-8">
-                <Zap className="h-24 w-24 text-purple-600 mx-auto mb-4" />
-                <p className="text-xl font-bold text-purple-800">
-                  Make an Impact
-                </p>
-              </div>
+            <div className="rounded-2xl overflow-hidden shadow-lg">
+              <img
+                src={Img4}
+                alt="Make an Impact"
+                className="w-full h-full object-cover aspect-video lg:aspect-square"
+              />
             </div>
             <div>
               <div className="bg-green-100 text-green-600 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl mb-4">
@@ -400,17 +480,63 @@ export const LandingPage = () => {
           <p className="text-center text-sm font-semibold text-gray-500 uppercase tracking-wide mb-8">
             Trusted by organizations worldwide
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-50">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="bg-gray-300 h-12 rounded-lg flex items-center justify-center"
-              >
-                <span className="text-gray-600 font-bold">
-                  Organization {i}
-                </span>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-8 items-center">
+            <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src={Logo1}
+                alt="Partner organization"
+                className="h-20 w-auto object-contain transition-transform hover:scale-105"
+              />
+            </div>
+            <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src={Logo2}
+                alt="Partner organization"
+                className="h-20 w-auto object-contain transition-transform hover:scale-105"
+              />
+            </div>
+            <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src={Logo3}
+                alt="Partner organization"
+                className="h-20 w-auto object-contain transition-transform hover:scale-105"
+              />
+            </div>
+            <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src={Logo4}
+                alt="Partner organization"
+                className="h-20 w-auto object-contain transition-transform hover:scale-105"
+              />
+            </div>
+            <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src={Logo5}
+                alt="Partner organization"
+                className="h-20 w-auto object-contain transition-transform hover:scale-105"
+              />
+            </div>
+            <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src={Logo6}
+                alt="Partner organization"
+                className="h-20 w-auto object-contain transition-transform hover:scale-105"
+              />
+            </div>
+            <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src={Logo7}
+                alt="Partner organization"
+                className="h-20 w-auto object-contain transition-transform hover:scale-105"
+              />
+            </div>
+            <div className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src={Logo8}
+                alt="Partner organization"
+                className="h-20 w-auto object-contain transition-transform hover:scale-105"
+              />
+            </div>
           </div>
         </div>
       </section>
