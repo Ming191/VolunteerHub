@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { EventListSkeleton } from "@/components/ui/loaders";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ApiErrorState } from "@/components/ui/api-error-state";
 import {
@@ -21,6 +20,9 @@ import type { UiEvent } from "@/types/ui-models";
 import type { EventResponse } from "@/api-client";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
+import {EventCardSkeleton} from "@/components/ui/loaders.tsx";
+import {SmartPagination} from "@/components/common/SmartPagination.tsx";
+import {EventDetailSheet} from "@/features/events/components/EventDetailSheet.tsx";
 
 export const EventListScreen = () => {
   const {

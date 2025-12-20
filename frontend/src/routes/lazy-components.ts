@@ -91,9 +91,3 @@ export const SettingsPage = lazy(() =>
     default: m.SettingsPage,
   }))
 );
-
-export const BlogPage = lazy(() =>
-  import("@/features/blog/pages/BlogPage.tsx").then((m) => ({
-    default: m.default,
-  }))
-);

@@ -29,22 +29,15 @@ const getPageTitle = (pathname: string): string => {
     admin: "Admin Panel",
   };
 
-<<<<<<< HEAD
-  return (
-    titleMap[pathSegments[0]] ||
-    pathSegments[0].charAt(0).toUpperCase() + pathSegments[0].slice(1)
-  );
-=======
-    if (titleMap[pathSegments[0]]) {
-        return titleMap[pathSegments[0]];
-    }
+  if (titleMap[pathSegments[0]]) {
+    return titleMap[pathSegments[0]];
+  }
 
-    // Generic formatter: replace dashes with spaces and Capitalize Each Word
-    return pathSegments[0]
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
->>>>>>> origin
+  // Generic formatter: replace dashes with spaces and Capitalize Each Word
+  return pathSegments[0]
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 };
 
 const Navbar = () => {

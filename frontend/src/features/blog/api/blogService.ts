@@ -19,7 +19,6 @@ export const blogService = {
       `api/events/${eventId}/posts`,
       { params: { page, size } }
     );
-    // @ts-ignore - Manual cast because generated client typing might mismatch locally updated DTO
     return response.data;
   },
 
