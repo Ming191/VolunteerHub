@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun, Laptop } from "lucide-react"
 import { flushSync } from "react-dom"
 
 import { cn } from "@/lib/utils"
@@ -7,19 +7,22 @@ import { cn } from "@/lib/utils"
 interface AnimatedThemeTogglerProps
   extends React.ComponentPropsWithoutRef<"button"> {
   duration?: number
+  onThemeChange?: (theme: 'light' | 'dark' | 'system') => void
 }
 
 export const AnimatedThemeToggler = ({
   className,
   duration = 400,
+  onThemeChange,
   ...props
 }: AnimatedThemeTogglerProps) => {
-  const [isDark, setIsDark] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const updateTheme = () => {
-      setIsDark(document.documentElement.classList.contains("dark"))
+      const storedTheme = localStorage.getItem("theme") as 'light' | 'dark' | 'system' | null
+      setTheme(storedTheme || 'system')
     }
 
     updateTheme()
@@ -33,15 +36,29 @@ export const AnimatedThemeToggler = ({
     return () => observer.disconnect()
   }, [])
 
-  const toggleTheme = useCallback(async () => {
+  const cycleTheme = useCallback(async () => {
     if (!buttonRef.current) return
+
+    // Cycle: light -> dark -> system -> light
+    const nextTheme: 'light' | 'dark' | 'system' = 
+      theme === 'light' ? 'dark' : 
+      theme === 'dark' ? 'system' : 
+      'light'
 
     await document.startViewTransition(() => {
       flushSync(() => {
-        const newTheme = !isDark
-        setIsDark(newTheme)
-        document.documentElement.classList.toggle("dark")
-        localStorage.setItem("theme", newTheme ? "dark" : "light")
+        setTheme(nextTheme)
+        localStorage.setItem("theme", nextTheme)
+        
+        // Apply theme to DOM
+        if (nextTheme === 'system') {
+          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          document.documentElement.classList.toggle('dark', systemPrefersDark)
+        } else {
+          document.documentElement.classList.toggle('dark', nextTheme === 'dark')
+        }
+        
+        onThemeChange?.(nextTheme)
       })
     }).ready
 
@@ -67,17 +84,24 @@ export const AnimatedThemeToggler = ({
         pseudoElement: "::view-transition-new(root)",
       }
     )
-  }, [isDark, duration])
+  }, [theme, duration, onThemeChange])
+
+  const getIcon = () => {
+    if (theme === 'light') return <Sun className="h-4 w-4" />
+    if (theme === 'dark') return <Moon className="h-4 w-4" />
+    return <Laptop className="h-4 w-4" />
+  }
 
   return (
     <button
       ref={buttonRef}
-      onClick={toggleTheme}
-      className={cn(className)}
+      onClick={cycleTheme}
+      className={cn("inline-flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors", className)}
       {...props}
     >
-      {isDark ? <Sun /> : <Moon />}
-      <span className="sr-only">Toggle theme</span>
+      {getIcon()}
+      <span className="text-sm font-medium capitalize">{theme}</span>
+      <span className="sr-only">Cycle theme</span>
     </button>
   )
 }

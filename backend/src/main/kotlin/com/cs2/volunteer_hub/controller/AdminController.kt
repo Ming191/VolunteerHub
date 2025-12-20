@@ -2,6 +2,9 @@ package com.cs2.volunteer_hub.controller
 
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.service.AdminService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -34,8 +37,12 @@ class AdminController(private val adminService: AdminService) {
      * Uses Specification Pattern for flexible querying
      */
     @GetMapping("/events/pending")
-    fun getPendingEvents(): ResponseEntity<List<EventResponse>> {
-        val pendingEvents = adminService.getPendingEvents()
+    fun getPendingEvents(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<EventResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        val pendingEvents = adminService.getPendingEvents(pageable)
         return ResponseEntity.ok(pendingEvents)
     }
 
@@ -44,7 +51,11 @@ class AdminController(private val adminService: AdminService) {
      * Example: GET /api/admin/events/search?q=volunteer
      */
     @GetMapping("/events/search")
-    fun searchAllEvents(@RequestParam q: String): ResponseEntity<List<EventResponse>> {
+    fun searchAllEvents(
+        @RequestParam q: String,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<EventResponse>> {
         val trimmed = q.trim()
         if (trimmed.isEmpty()) {
             return ResponseEntity.badRequest().build()
@@ -52,7 +63,8 @@ class AdminController(private val adminService: AdminService) {
         if (trimmed.length > 100) {
             return ResponseEntity.badRequest().build()
         }
-        val events = adminService.searchAllEvents(trimmed)
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+        val events = adminService.searchAllEvents(trimmed, pageable)
         return ResponseEntity.ok(events)
     }
 
@@ -61,8 +73,12 @@ class AdminController(private val adminService: AdminService) {
      * Example: GET /api/admin/events/past
      */
     @GetMapping("/events/past")
-    fun getPastEvents(): ResponseEntity<List<EventResponse>> {
-        val events = adminService.getPastEvents()
+    fun getPastEvents(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<EventResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "eventDateTime"))
+        val events = adminService.getPastEvents(pageable)
         return ResponseEntity.ok(events)
     }
 
@@ -71,8 +87,12 @@ class AdminController(private val adminService: AdminService) {
      * Example: GET /api/admin/events/upcoming
      */
     @GetMapping("/events/upcoming")
-    fun getUpcomingEvents(): ResponseEntity<List<EventResponse>> {
-        val events = adminService.getUpcomingEvents()
+    fun getUpcomingEvents(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<EventResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+        val events = adminService.getUpcomingEvents(pageable)
         return ResponseEntity.ok(events)
     }
 
@@ -81,8 +101,12 @@ class AdminController(private val adminService: AdminService) {
      * Example: GET /api/admin/events/in-progress
      */
     @GetMapping("/events/in-progress")
-    fun getInProgressEvents(): ResponseEntity<List<EventResponse>> {
-        val events = adminService.getInProgressEvents()
+    fun getInProgressEvents(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<EventResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+        val events = adminService.getInProgressEvents(pageable)
         return ResponseEntity.ok(events)
     }
 
@@ -91,8 +115,12 @@ class AdminController(private val adminService: AdminService) {
      * Example: GET /api/admin/events/accepting-registrations
      */
     @GetMapping("/events/accepting-registrations")
-    fun getEventsAcceptingRegistrations(): ResponseEntity<List<EventResponse>> {
-        val events = adminService.getEventsAcceptingRegistrations()
+    fun getEventsAcceptingRegistrations(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<EventResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "eventDateTime"))
+        val events = adminService.getEventsAcceptingRegistrations(pageable)
         return ResponseEntity.ok(events)
     }
 
@@ -102,8 +130,13 @@ class AdminController(private val adminService: AdminService) {
      * Example: GET /api/admin/users/123/events
      */
     @GetMapping("/users/{userId}/events")
-    fun getActiveEventsByCreator(@PathVariable userId: Long): ResponseEntity<List<EventResponse>> {
-        val events = adminService.getActiveEventsByCreator(userId)
+    fun getActiveEventsByCreator(
+        @PathVariable userId: Long,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<EventResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        val events = adminService.getActiveEventsByCreator(userId, pageable)
         return ResponseEntity.ok(events)
     }
 }

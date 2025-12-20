@@ -114,6 +114,22 @@ const registerDeviceForNotifications = async (): Promise<boolean> => {
 };
 
 /**
+ * Unregister device from push notifications
+ * Removes FCM token from localStorage and backend
+ * @returns True if successful, false otherwise
+ */
+const unregisterDevice = async (): Promise<boolean> => {
+    try {
+        await userProfileApi.deleteFcmTokens();
+        localStorage.removeItem('fcmToken');
+        return true;
+    } catch (error) {
+        console.error('Error unregistering device:', error);
+        return false;
+    }
+};
+
+/**
  * Setup foreground message listener
  * Call this once in App.tsx or main.tsx
  * @param callback - Function to handle incoming messages
@@ -138,5 +154,6 @@ export const fcmService = {
     getFcmToken,
     registerFcmToken,
     registerDeviceForNotifications,
+    unregisterDevice,
     setupForegroundMessageListener,
 };

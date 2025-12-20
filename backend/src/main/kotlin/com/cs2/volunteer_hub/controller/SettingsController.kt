@@ -39,7 +39,7 @@ class SettingsController(private val settingsService: SettingsService) {
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
     fun updateUserSettings(
-        @Valid @RequestBody request: UpdateUserSettingsRequest,
+        @RequestBody request: UpdateUserSettingsRequest,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<UserSettingsResponse> {
         val settings = settingsService.updateUserSettings(currentUser.username, request)

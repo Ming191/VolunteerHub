@@ -15,6 +15,8 @@ import com.google.firebase.messaging.FirebaseMessagingException
 import com.google.firebase.messaging.Message
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -125,6 +127,7 @@ class NotificationService(
     /**
      * Save notification to database
      */
+    @CacheEvict(value = ["notificationCounts"], key = "#result.recipient.email")
     @Transactional
     fun saveNotification(userId: Long, content: String, link: String?): Notification {
         val user = userRepository.findById(userId)
@@ -263,6 +266,7 @@ class NotificationService(
     /**
      * Mark notification as read
      */
+    @CacheEvict(value = ["notificationCounts"], key = "#userEmail")
     @Transactional
     fun markNotificationAsRead(notificationId: Long, userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
@@ -281,6 +285,7 @@ class NotificationService(
     /**
      * Mark all notifications as read for a user
      */
+    @CacheEvict(value = ["notificationCounts"], key = "#userEmail")
     @Transactional
     fun markAllNotificationsAsRead(userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
@@ -311,6 +316,7 @@ class NotificationService(
     /**
      * Get unread notification count for a user
      */
+    @Cacheable(value = ["notificationCounts"], key = "#userEmail")
     @Transactional(readOnly = true)
     fun getUnreadNotificationCount(userEmail: String): Long {
         val user = userRepository.findByEmailOrThrow(userEmail)

@@ -34,7 +34,8 @@ class MeService(
     private val rabbitTemplate: RabbitTemplate,
     private val tempFileService: TemporaryFileStorageService,
     private val fileValidationService: FileValidationService,
-    private val userMapper: UserMapper
+    private val userMapper: UserMapper,
+    private val cacheEvictionService: CacheEvictionService
 ) {
     private val logger = LoggerFactory.getLogger(MeService::class.java)
 
@@ -80,6 +81,13 @@ class MeService(
         }
     }
 
+    @Transactional
+    fun deleteFcmTokensForUser(userEmail: String) {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        fcmTokenRepository.deleteAllByUserId(user.id)
+        logger.info("Deleted all FCM tokens for user: ${user.id}")
+    }
+
     fun getMyProfile(userEmail: String): UserResponse {
         val user = userRepository.findByEmailOrThrow(userEmail)
         return userMapper.toUserResponse(user)
@@ -105,6 +113,9 @@ class MeService(
         }
 
         val updatedUser = userRepository.save(user)
+
+        // Evict public profile cache using user ID
+        cacheEvictionService.evictPublicUserProfile(updatedUser.id)
 
         return userMapper.toUserResponse(updatedUser)
     }
