@@ -8,15 +8,14 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from '@/components/animate-ui/components/radix/dialog';
-import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
 import { type UserResponse } from '@/api-client';
 import { useEditProfile } from '../hooks/useEditProfile';
 import { SKILLS, INTERESTS } from '../schemas/profileSchema';
@@ -55,9 +54,7 @@ export const EditProfileModal = ({
     } = useEditProfile({ currentProfile, open, onOpenChange });
 
     return (
-        <Dialog open={open} onOpenChange={(val) => {
-            if (!isCropping) onOpenChange(val);
-        }}>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Edit Profile</DialogTitle>
@@ -272,15 +269,15 @@ export const EditProfileModal = ({
                             />
 
                             <DialogFooter className="gap-2">
-                                <RippleButton
+                                <Button
                                     type="button"
                                     variant="outline"
                                     onClick={() => onOpenChange(false)}
                                     disabled={isSubmitting}
                                 >
                                     Cancel
-                                </RippleButton>
-                                <RippleButton type="submit" disabled={isSubmitting}>
+                                </Button>
+                                <Button type="submit" disabled={isSubmitting}>
                                     {isSubmitting ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -289,7 +286,7 @@ export const EditProfileModal = ({
                                     ) : (
                                         'Save Changes'
                                     )}
-                                </RippleButton>
+                                </Button>
                             </DialogFooter>
                         </form>
                     </Form>
