@@ -210,7 +210,7 @@ export const ModernSignUpScreen = () => {
                           <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors group-focus-within:text-green-600" />
                           <Input
                             placeholder="John Doe"
-                            className="pl-10 h-11 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200"
+                            className="pl-10 h-11 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200 text-gray-900 bg-white"
                             {...field}
                           />
                         </div>
@@ -234,7 +234,7 @@ export const ModernSignUpScreen = () => {
                           <Input
                             placeholder="name@example.com"
                             type="email"
-                            className="pl-10 h-11 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200"
+                            className="pl-10 h-11 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200 text-gray-900 bg-white"
                             {...field}
                           />
                         </div>
@@ -320,7 +320,7 @@ export const ModernSignUpScreen = () => {
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
-                            className="pl-10 pr-10 h-11 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200"
+                            className="pl-10 pr-10 h-11 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200 text-gray-900 bg-white"
                             {...field}
                           />
                           <button
@@ -355,7 +355,7 @@ export const ModernSignUpScreen = () => {
                           <Input
                             type={showConfirmPassword ? "text" : "password"}
                             placeholder="••••••••"
-                            className="pl-10 pr-10 h-11 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200"
+                            className="pl-10 pr-10 h-11 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200 text-gray-900 bg-white"
                             {...field}
                           />
                           <button

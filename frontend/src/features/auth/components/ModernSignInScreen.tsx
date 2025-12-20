@@ -196,7 +196,7 @@ export const ModernSignInScreen = () => {
                           <Input
                             placeholder="name@example.com"
                             type="email"
-                            className="pl-10 h-12 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200"
+                            className="pl-10 h-12 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200 text-gray-900 bg-white"
                             {...field}
                           />
                         </div>
@@ -220,7 +220,7 @@ export const ModernSignInScreen = () => {
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
-                            className="pl-10 pr-10 h-12 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200"
+                            className="pl-10 pr-10 h-12 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200 text-gray-900 bg-white"
                             {...field}
                           />
                           <button
@@ -291,7 +291,7 @@ export const ModernSignInScreen = () => {
             <Link to="/signup" className="block">
               <Button
                 variant="outline"
-                className="w-full h-12 text-base font-semibold border-2 border-gray-200 hover:border-green-600 hover:bg-green-50 text-gray-700 transition-all duration-200"
+                className="w-full h-12 text-base font-semibold border-2 border-gray-200 hover:border-green-600 hover:bg-green-50 text-gray-700 hover:text-gray-900 transition-all duration-200"
               >
                 Create an account
               </Button>
