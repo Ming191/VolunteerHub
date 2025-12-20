@@ -26,15 +26,19 @@ type RippleButtonProps = RippleButtonPrimitiveProps &
 
 function RippleButton({
   className,
-  variant,
+  variant = 'default',
   size,
   ...props
 }: RippleButtonProps) {
+  const rippleColorClass = variant && variant in rippleButtonVariants
+    ? rippleButtonVariants[variant as keyof typeof rippleButtonVariants]
+    : rippleButtonVariants.default;
+
   return (
     <RippleButtonPrimitive
       className={cn(
         buttonVariants({ variant, size, className }),
-        rippleButtonVariants[variant as keyof typeof rippleButtonVariants],
+        rippleColorClass,
       )}
       {...props}
     />

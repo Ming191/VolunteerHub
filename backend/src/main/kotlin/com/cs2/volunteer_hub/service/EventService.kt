@@ -4,13 +4,18 @@ import com.cs2.volunteer_hub.config.RabbitMQConfig
 import com.cs2.volunteer_hub.dto.CreateEventRequest
 import com.cs2.volunteer_hub.dto.EventCreationMessage
 import com.cs2.volunteer_hub.dto.EventResponse
+import com.cs2.volunteer_hub.dto.PublicAttendeeResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
 import com.cs2.volunteer_hub.mapper.EventMapper
+import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.EventStatus
+import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
+import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.findByEmailOrThrow
+import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.EventSpecifications
 import com.cs2.volunteer_hub.validation.EventCoordinateValidator
 import com.cs2.volunteer_hub.validation.EventDateValidator
@@ -24,6 +29,7 @@ import org.springframework.cache.annotation.Caching
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
@@ -43,6 +49,8 @@ class EventService(
         private val eventLifecycleValidator: EventLifecycleValidator,
         private val eventQueueService: EventQueueService,
         private val eventCoordinateValidator: EventCoordinateValidator,
+        private val registrationRepository: RegistrationRepository,
+        private val registrationMapper: RegistrationMapper,
         @field:Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
         private val logger = LoggerFactory.getLogger(EventService::class.java)
@@ -144,6 +152,50 @@ class EventService(
         fun getEventById(id: Long): EventResponse {
                 val event = eventRepository.findById(id).orElseThrow()
                 return eventMapper.toEventResponse(event)
+        }
+
+        @Transactional(readOnly = true)
+        fun getPublicAttendees(
+                eventId: Long,
+                currentUserEmail: String
+        ): List<PublicAttendeeResponse> {
+                val user = userRepository.findByEmailOrThrow(currentUserEmail)
+                val event = eventRepository.findByIdOrThrow(eventId)
+
+                // 1. Get all approved registrations
+                val approvedRegistrations =
+                        registrationRepository.findAllByEventIdAndStatusWithAssociations(
+                                eventId,
+                                RegistrationStatus.APPROVED
+                        )
+
+                // 2. Security Check: Current user must be Organizer or an Approved Participant
+                val isOrganizer =
+                        event.creator.id == user.id ||
+                                user.role ==
+                                        com.cs2.volunteer_hub.model.Role
+                                                .EVENT_ORGANIZER // Simplified check, ideally strict
+                // owner check
+                // Strict owner check from auth service:
+                // val isOwner = event.creator.id == user.id
+
+                // To be safe and allow any organizer to view (if that's the rule) or just owner.
+                // The requirement said "Event Organizer". usually means the creator.
+                // Let's stick to: Creator OR Approved Participant.
+
+                val isCreator = event.creator.id == user.id
+                val isApprovedParticipant = approvedRegistrations.any { it.user.id == user.id }
+
+                if (!isCreator && !isApprovedParticipant) {
+                        // Check if user is an admin? Maybe. But for now strict.
+                        if (user.role != com.cs2.volunteer_hub.model.Role.ADMIN) {
+                                throw AccessDeniedException(
+                                        "Only approved participants or the organizer can view the attendee list."
+                                )
+                        }
+                }
+
+                return approvedRegistrations.map { registrationMapper.toPublicAttendeeResponse(it) }
         }
 
         @Caching(

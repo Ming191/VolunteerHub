@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.AdminDashboardResponse
+import com.cs2.volunteer_hub.dto.OrganizerAnalyticsResponse
 import com.cs2.volunteer_hub.dto.OrganizerDashboardResponse
 import com.cs2.volunteer_hub.dto.VolunteerDashboardResponse
 import com.cs2.volunteer_hub.mapper.DashboardMapper
@@ -112,10 +113,14 @@ class DashboardService(
                 EventSpecifications.hasCreator(user.id).and(EventSpecifications.isNotApproved())
         val eventsPendingAdminApprovalCount = eventRepository.count(eventsPendingApprovalSpec)
 
+        val totalEventsSpec = EventSpecifications.hasCreator(user.id)
+        val totalEventsCount = eventRepository.count(totalEventsSpec)
+
         val stats =
                 mapOf(
                         "pendingRegistrations" to pendingRegistrationsCount,
-                        "eventsPendingAdminApproval" to eventsPendingAdminApprovalCount
+                        "eventsPendingAdminApproval" to eventsPendingAdminApprovalCount,
+                        "totalEvents" to totalEventsCount
                 )
 
         val eventsPendingAdminApproval =
@@ -173,6 +178,55 @@ class DashboardService(
                         ),
                 userRoleCounts = userRoleCounts,
                 eventsToApprove = eventsToApprove
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun getOrganizerAnalytics(userEmail: String): OrganizerAnalyticsResponse {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+
+        // Count all events created by this organizer
+        val totalEvents = eventRepository.count(EventSpecifications.hasCreator(user.id))
+
+        // Count all registrations for events created by this organizer
+        val totalRegistrations = 
+                registrationRepository.count(RegistrationSpecifications.forEventsCreatedBy(user.id))
+
+        // Count active events (approved and event date is in the future)
+        val now = LocalDateTime.now()
+        val activeEventsSpec = 
+                EventSpecifications.hasCreator(user.id)
+                        .and(EventSpecifications.isApproved())
+                        .and(EventSpecifications.happeningAfter(now))
+        val activeEvents = eventRepository.count(activeEventsSpec)
+
+        // Calculate average registration rate
+        val avgRegistrationRate = if (totalEvents > 0) {
+            (totalRegistrations.toDouble() / totalEvents.toDouble()) * 100
+        } else {
+            0.0
+        }
+
+        // Get top 5 events by registration count
+        val topEvents = eventRepository.findTop3EventsByRegistrations(user.id, PageRequest.of(0, 5))
+                .let { dashboardMapper.toDashboardTopEventItemList(it) }
+
+        // Get registration breakdown by status
+        val registrationsByStatus = RegistrationStatus.values().associate { status ->
+            val count = registrationRepository.count(
+                    RegistrationSpecifications.forEventsCreatedBy(user.id)
+                            .and(RegistrationSpecifications.hasStatus(status))
+            )
+            status.name to count
+        }
+
+        return OrganizerAnalyticsResponse(
+                totalEvents = totalEvents,
+                totalRegistrations = totalRegistrations,
+                activeEvents = activeEvents,
+                avgRegistrationRate = avgRegistrationRate,
+                topEvents = topEvents,
+                registrationsByStatus = registrationsByStatus
         )
     }
 }

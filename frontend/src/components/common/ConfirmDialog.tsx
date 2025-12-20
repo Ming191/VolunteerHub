@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import type {ReactNode} from "react";
+import type { ReactNode } from "react";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -25,15 +25,15 @@ interface ConfirmDialogProps {
 }
 
 export function ConfirmDialog({
-                                open,
-                                onOpenChange,
-                                title,
-                                description,
-                                confirmText = "Confirm",
-                                confirmVariant = "default",
-                                isLoading = false,
-                                onConfirm,
-                              }: ConfirmDialogProps) {
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmText = "Confirm",
+  confirmVariant = "default",
+  isLoading = false,
+  onConfirm,
+}: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>

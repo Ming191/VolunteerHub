@@ -7,6 +7,7 @@ import { SuspenseFallback } from '@/components/common/SuspenseFallback';
 import {
     AdminDashboard,
     OrganizerDashboard,
+    OrganizerAnalytics,
     VolunteerDashboard
 } from './lazy-components';
 
@@ -68,4 +69,14 @@ export const indexRoute = createRoute({
     beforeLoad: () => {
         throw redirect({ to: '/dashboard' });
     }
+});
+
+export const organizerAnalyticsRoute = createRoute({
+    getParentRoute: () => authenticatedLayoutRoute,
+    path: '/organizer/analytics',
+    component: () => (
+        <Suspense fallback={<SuspenseFallback />}>
+            <OrganizerAnalytics />
+        </Suspense>
+    ),
 });

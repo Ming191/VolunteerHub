@@ -22,3 +22,4 @@ export const EventAttendeesRoute = lazy(() => import('../features/events/pages/E
 export const EventGalleryRoute = lazy(() => import('../features/events/pages/EventTabRoutes').then(m => ({ default: m.EventGalleryRoute })));
 export const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 export const AdminReportsPage = lazy(() => import('@/features/admin/pages/AdminReportsPage').then(m => ({ default: m.AdminReportsPage })));
+export const OrganizerAnalytics = lazy(() => import('@/features/organizer/pages/OrganizerAnalytics').then(m => ({ default: m.OrganizerAnalytics })));
