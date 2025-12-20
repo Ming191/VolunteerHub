@@ -4,6 +4,7 @@ import {
   signinRoute,
   signupRoute,
   forgotPasswordRoute,
+  resetPasswordRoute,
   verifyEmailRoute,
   testRoute,
 } from "./routes/auth.routes";
@@ -34,6 +35,7 @@ const routeTree = rootRoute.addChildren([
   signinRoute,
   signupRoute,
   forgotPasswordRoute,
+  resetPasswordRoute,
   verifyEmailRoute,
   testRoute,
   authenticatedLayoutRoute.addChildren([
