@@ -14,6 +14,12 @@ export const profileRoute = createRoute({
     component: () => <Suspense fallback={<SuspenseFallback />}><ProfilePage /></Suspense>,
 });
 
+export const profileByIdRoute = createRoute({
+    getParentRoute: () => authenticatedLayoutRoute,
+    path: '/profile/$userId',
+    component: () => <Suspense fallback={<SuspenseFallback />}><ProfilePage /></Suspense>,
+});
+
 export const notificationsRoute = createRoute({
     getParentRoute: () => authenticatedLayoutRoute,
     path: '/notifications',

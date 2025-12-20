@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import axiosInstance from '@/utils/axiosInstance';
 import { useDebounce } from '@/hooks/useDebounce';
 import { type UserResponse } from '@/api-client';
+import {useNavigate} from "@tanstack/react-router";
 
 interface PageUserResponse {
     content: UserResponse[];
@@ -13,6 +14,7 @@ interface PageUserResponse {
 
 export const useAdminUsers = () => {
     const [searchQuery, setSearchQuery] = useState('');
+    const navigate = useNavigate();
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
     const queryClient = useQueryClient();
     const [page, setPage] = useState(0);
@@ -70,6 +72,10 @@ export const useAdminUsers = () => {
         toggleLockMutation.mutate({ userId, isLocked });
     };
 
+    const handleViewUserProfile = (userId: number) => {
+      navigate({ to: `/profile/${userId}` });
+    }
+
     const handleExportUsers = async () => {
         try {
             const response = await axiosInstance.get('/api/admin/export/users.csv', {
@@ -115,6 +121,7 @@ export const useAdminUsers = () => {
         searchQuery,
         setSearchQuery,
         handleToggleLock,
+        handleViewUserProfile,
         handleExportUsers,
         page,
         setPage,

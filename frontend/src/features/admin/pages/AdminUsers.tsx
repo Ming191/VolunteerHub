@@ -36,6 +36,7 @@ export const AdminUsers = ({ isTabbed = false }: AdminUsersProps) => {
         searchQuery,
         setSearchQuery,
         handleToggleLock,
+        handleViewUserProfile,
         page,
         setPage,
         totalPages,
@@ -92,12 +93,19 @@ export const AdminUsers = ({ isTabbed = false }: AdminUsersProps) => {
                                 key={user.id}
                                 className="p-3 rounded-lg hover:bg-muted/50 transition-colors flex items-center gap-4 group"
                             >
-                                <Avatar className="h-9 w-9 border">
-                                    <AvatarImage src={user.profilePictureUrl} />
-                                    <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                                </Avatar>
+                              <Avatar
+                                className="h-9 w-9 border cursor-pointer transition-transform transition-shadow
+                                 hover:scale-105 hover:shadow-md"
+                                onClick={() => handleViewUserProfile(user.id)}
+                              >
+                                <AvatarImage src={user.profilePictureUrl} />
+                                <AvatarFallback>
+                                  {user.name.substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
 
-                                <div className="flex-1 min-w-0">
+
+                              <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <h4 className="font-medium text-sm truncate">{user.name}</h4>
                                         <Badge variant={getRoleBadgeVariant(user.role)} className="text-[10px] px-1.5 py-0 h-5 font-normal">

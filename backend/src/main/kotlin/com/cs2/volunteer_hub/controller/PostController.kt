@@ -102,6 +102,25 @@ class PostController(private val postService: PostService) {
     }
 
     @Operation(
+            summary = "Get posts by user ID",
+            description = "Get all posts created by a specific user with pagination and sorting"
+    )
+    @GetMapping("/user/{userId}")
+    fun getPostsByUserId(
+            @PathVariable userId: Long,
+            @RequestParam(defaultValue = "0") page: Int,
+            @RequestParam(defaultValue = "20") size: Int,
+            @RequestParam(defaultValue = "createdAt") sort: String,
+            @RequestParam(defaultValue = "desc") direction: String,
+            @AuthenticationPrincipal currentUser: UserDetails?
+    ): ResponseEntity<PagePostResponse> {
+        val pageable =
+                PageRequest.of(page, size, Sort.Direction.fromString(direction.uppercase()), sort)
+        val posts = postService.getPostsByUserId(userId, currentUser?.username, pageable)
+        return ResponseEntity.ok(PagePostResponse.from(posts))
+    }
+
+    @Operation(
             summary = "Update post",
             description =
                     "Update the content of an existing post. Only the author can update their own posts."
