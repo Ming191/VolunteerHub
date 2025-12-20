@@ -24,6 +24,7 @@ export const usePostMutations = (eventId?: number) => {
         author: {
             id: user?.userId || 0,
             name: user?.name || 'You',
+            profilePictureUrl: user?.profilePictureUrl || undefined,
         },
         totalLikes: 0,
         totalComments: 0,
@@ -83,7 +84,9 @@ export const usePostMutations = (eventId?: number) => {
                                 ...post,
                                 ...savedPost,
                                 optimisticId: post.optimisticId, // Preserve the optimistic ID for stable key
-                                imageUrls: savedPost.imageUrls || post.imageUrls || [],
+                                imageUrls: (savedPost.imageUrls && savedPost.imageUrls.length > 0)
+                                    ? savedPost.imageUrls
+                                    : post.imageUrls,
                                 isOptimistic: false,
                             };
                         }

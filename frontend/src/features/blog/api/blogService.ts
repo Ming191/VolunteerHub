@@ -15,12 +15,23 @@ const commentApi = new CommentsApi(config, undefined, axiosInstance);
 
 export const blogService = {
   getPostsForEvent: async (eventId: number, page = 0, size = 20) => {
-    const response = await postsApi.getPostsForEvent({ eventId, page, size });
+    const response = await axiosInstance.get<PostResponse>(
+      `api/events/${eventId}/posts`,
+      { params: { page, size } }
+    );
+    // @ts-ignore - Manual cast because generated client typing might mismatch locally updated DTO
     return response.data;
   },
 
   getRecentPostsFeed: async (days = 7, page = 0, size = 20) => {
     const response = await postsApi.getRecentPostsFeed({ days, page, size });
+    return response.data;
+  },
+
+  getPost: async (eventId: number, postId: number) => {
+    const response = await axiosInstance.get<PostResponse>(
+      `api/events/${eventId}/posts/${postId}`
+    );
     return response.data;
   },
 
@@ -37,7 +48,7 @@ export const blogService = {
     }
 
     const response = await axiosInstance.post<PostResponse>(
-      `api/posts/event/${eventId}`,
+      `api/events/${eventId}/posts`,
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
@@ -67,15 +78,15 @@ export const blogService = {
     return response.data;
   },
 
-  deletePost: async (postId: number) => {
-    await postsApi.deletePost({ postId });
+  deletePost: async (eventId: number, postId: number) => {
+    await axiosInstance.delete(`api/events/${eventId}/posts/${postId}`);
   },
 
-  updatePost: async (postId: number, content: string) => {
-    const response = await postsApi.updatePost({
-      postId,
-      postRequest: { content }
-    });
+  updatePost: async (eventId: number, postId: number, content: string) => {
+    const response = await axiosInstance.put(
+      `api/events/${eventId}/posts/${postId}`,
+      { content }
+    );
     return response.data;
   },
 

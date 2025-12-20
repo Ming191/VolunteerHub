@@ -16,7 +16,11 @@ import {
     myEventsRoute,
     myRegistrationsRoute,
     eventDetailsRoute,
-    eventRegistrationRoute
+    eventAboutRoute,
+    eventCommunityRoute,
+    eventAttendeesRoute,
+    eventGalleryRoute,
+    postDetailsRoute
 } from './routes/events.routes';
 import {
     profileRoute,
@@ -50,8 +54,12 @@ const routeTree = rootRoute.addChildren([
         adminUsersRoute,
         myRegistrationsRoute,
         eventDetailsRoute.addChildren([
-            eventRegistrationRoute,
+            eventAboutRoute,
+            eventCommunityRoute,
+            eventAttendeesRoute,
+            eventGalleryRoute,
         ]),
+        postDetailsRoute,
         adminReportsRoute,
         adminSettingsRoute,
     ]),
