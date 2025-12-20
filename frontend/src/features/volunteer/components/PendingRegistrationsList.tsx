@@ -25,11 +25,11 @@ export const PendingRegistrationsList = ({
   onEventClick,
 }: PendingRegistrationsListProps) => {
   return (
-    <Card className="border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="bg-gradient-to-br from-orange-50 to-amber-50 border-b-2 border-gray-200">
+    <Card className="border-2 border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+      <CardHeader className="border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-orange-500">
-            <Clock className="h-5 w-5 text-white" />
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-100 to-orange-200 shadow-sm">
+            <Clock className="h-5 w-5 text-orange-600" />
           </div>
           <div>
             <CardTitle className="text-lg font-bold text-gray-900">
@@ -79,17 +79,19 @@ export const PendingRegistrationsList = ({
           ))}
           {registrations.length === 0 && (
             <motion.div
-              className="text-center py-12"
+              className="text-center py-16"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
             >
-              <div className="inline-flex p-4 rounded-full bg-green-100 mb-4">
-                <CheckCircle2 className="h-10 w-10 text-green-600" />
+              <div className="inline-flex p-5 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 mb-4">
+                <CheckCircle2 className="h-12 w-12 text-orange-600" />
               </div>
-              <p className="text-sm font-semibold text-gray-900 mb-1">
+              <p className="text-base font-bold text-gray-900 mb-2">
                 All caught up!
               </p>
-              <p className="text-xs text-gray-500">No pending registrations</p>
+              <p className="text-sm text-gray-600">
+                You have no pending registrations at the moment
+              </p>
             </motion.div>
           )}
         </div>

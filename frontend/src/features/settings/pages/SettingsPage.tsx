@@ -3,15 +3,7 @@ import { Button } from "@/components/ui/button";
 import { SkeletonTransition } from "@/components/common/SkeletonTransition";
 import { SettingsPageSkeleton } from "../components/SettingsPageSkeleton";
 import { useSettings } from "../hooks/useSettings";
-import { useSessions } from "../hooks/useSessions";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import {
-  NotificationsSection,
-  AppearanceSection,
-  PrivacySection,
-  SessionsSection,
-  DangerZoneSection,
-} from "../components";
+import { NotificationsSection, PrivacySection } from "../components";
 import { ChangePasswordCard } from "../components/ChangePasswordCard";
 
 export const SettingsPage = () => {
@@ -24,14 +16,6 @@ export const SettingsPage = () => {
     hasChanges,
     isSaving,
   } = useSettings();
-  const {
-    sessions,
-    isLoading: sessionsLoading,
-    revokeSession,
-    revokeAllOtherSessions,
-    isRevoking,
-  } = useSessions();
-  const { logout } = useAuth();
 
   return (
     <SkeletonTransition
@@ -68,11 +52,12 @@ export const SettingsPage = () => {
           disabled={isSaving}
         />
 
-        <AppearanceSection
+        {/* Theme switching temporarily disabled - light theme only */}
+        {/* <AppearanceSection
           settings={settings}
           updateSettings={updateSettings}
           disabled={isSaving}
-        />
+        /> */}
 
         <PrivacySection
           settings={settings}
@@ -81,16 +66,6 @@ export const SettingsPage = () => {
         />
 
         <ChangePasswordCard />
-
-        <SessionsSection
-          sessions={sessions}
-          isLoading={sessionsLoading}
-          isRevoking={isRevoking}
-          revokeSession={revokeSession}
-          revokeAllOtherSessions={revokeAllOtherSessions}
-        />
-
-        <DangerZoneSection onAccountDeleted={logout} />
       </div>
     </SkeletonTransition>
   );
