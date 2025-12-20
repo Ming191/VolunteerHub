@@ -1,22 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import axiosInstance from '@/utils/axiosInstance';
 import { useDebounce } from '@/hooks/useDebounce';
-import { type UserResponse } from '@/api-client';
-import {useNavigate} from "@tanstack/react-router";
+import { type EventResponse } from '@/api-client';
 
-interface PageUserResponse {
-    content: UserResponse[];
+interface PageEventResponse {
+    content: EventResponse[];
     totalElements: number;
     totalPages: number;
 }
 
-export const useAdminUsers = () => {
+export const useAdminEvents = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const navigate = useNavigate();
+
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
-    const queryClient = useQueryClient();
+
     const [page, setPage] = useState(0);
     const pageSize = 20;
 
@@ -25,18 +24,18 @@ export const useAdminUsers = () => {
         setPage(0);
     }, [debouncedSearchQuery]);
 
-    // Fetch users
+    // Fetch events
     const {
-        data: usersPage,
+        data: eventsPage,
         isLoading,
         isFetching,
         isError,
         error,
         refetch
-    } = useQuery<PageUserResponse, Error>({
-        queryKey: ['adminUsers', debouncedSearchQuery, page],
+    } = useQuery<PageEventResponse, Error>({
+        queryKey: ['adminEvents', debouncedSearchQuery, page],
         queryFn: async () => {
-            const endpoint = debouncedSearchQuery ? '/api/admin/users/search' : '/api/admin/users';
+            const endpoint = debouncedSearchQuery ? '/api/events/search' : '/api/events';
             const response = await axiosInstance.get(endpoint, {
                 params: {
                     q: debouncedSearchQuery || undefined,
@@ -49,43 +48,20 @@ export const useAdminUsers = () => {
         placeholderData: keepPreviousData,
     });
 
-    const users = usersPage?.content || [];
-    const totalPages = usersPage?.totalPages || 0;
-    const totalElements = usersPage?.totalElements || 0;
+    const events = eventsPage?.content || [];
+    const totalPages = eventsPage?.totalPages || 0;
+    const totalElements = eventsPage?.totalElements || 0;
 
-    // Mutation for locking/unlocking users
-    const toggleLockMutation = useMutation<void, Error, { userId: number; isLocked: boolean }>({
-        mutationFn: async ({ userId, isLocked }) => {
-            const endpoint = isLocked ? `/api/admin/users/${userId}/unlock` : `/api/admin/users/${userId}/lock`;
-            await axiosInstance.patch(endpoint);
-        },
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-            toast.success(`User ${variables.isLocked ? 'unlocked' : 'locked'} successfully.`);
-        },
-        onError: (err) => {
-            toast.error(`Failed to toggle lock status: ${err.message}`);
-        },
-    });
-
-    const handleToggleLock = (userId: number, isLocked: boolean) => {
-        toggleLockMutation.mutate({ userId, isLocked });
-    };
-
-    const handleViewUserProfile = (userId: number) => {
-      navigate({ to: `/profile/${userId}` });
-    }
-
-    const handleExportUsers = async () => {
+    const handleExportEvents = async () => {
         try {
-            const response = await axiosInstance.get('/api/admin/export/users.csv', {
+            const response = await axiosInstance.get('/api/admin/export/events.csv', {
                 responseType: 'blob',
             });
             const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
             const link = document.createElement('a');
             link.href = url;
             const contentDisposition = response.headers['content-disposition'];
-            let fileName = 'users.csv';
+            let fileName = 'events.csv';
             if (contentDisposition) {
                 const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
                 if (fileNameMatch && fileNameMatch[1]) {
@@ -100,19 +76,19 @@ export const useAdminUsers = () => {
             document.body.appendChild(link);
             try {
                 link.click();
-                toast.success('Users exported successfully');
+                toast.success('Events exported successfully');
             } finally {
                 link.parentNode?.removeChild(link);
                 window.URL.revokeObjectURL(url); // Cleanup
             }
         } catch (error) {
-            console.error('Failed to export users:', error);
-            toast.error('Failed to export users');
+            console.error('Failed to export events:', error);
+            toast.error('Failed to export events');
         }
     };
 
     return {
-        users,
+        events,
         isLoading,
         isFetching,
         isError,
@@ -120,9 +96,7 @@ export const useAdminUsers = () => {
         refetch,
         searchQuery,
         setSearchQuery,
-        handleToggleLock,
-        handleViewUserProfile,
-        handleExportUsers,
+        handleExportEvents,
         page,
         setPage,
         totalPages,

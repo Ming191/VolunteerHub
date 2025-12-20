@@ -48,7 +48,8 @@ class EventMapper(
                                 ),
                         isFull = event.maxParticipants?.let { approvedCount >= it } ?: false,
                         isInProgress = event.isInProgress(),
-                        tags = event.tags.toSet()
+                        tags = event.tags.toSet(),
+                        status = event.status
                 )
         }
 
@@ -71,7 +72,7 @@ class EventMapper(
                                         )
 
                         val galleryImages = buildGalleryImages(event.id)
-                        
+
                         EventResponse(
                                 id = event.id,
                                 title = event.title,
@@ -97,18 +98,19 @@ class EventMapper(
                                 isFull = event.maxParticipants?.let { stats.approvedCount >= it }
                                                 ?: false,
                                 isInProgress = event.isInProgress(),
-                                tags = event.tags.toSet()
+                                tags = event.tags.toSet(),
+                                status = event.status
                         )
                 }
         }
-        
+
         /**
          * Build gallery images list including images from both the event and its posts.
          * Returns images ordered by upload date (newest first) with attribution metadata.
          */
         private fun buildGalleryImages(eventId: Long): List<GalleryImageResponse> {
                 val allImages = imageRepository.findAllByEventIncludingPosts(eventId, ImageStatus.UPLOADED)
-                
+
                 return allImages.mapNotNull { image ->
                         image.url?.let { url ->
                                 when {

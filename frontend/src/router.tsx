@@ -24,6 +24,7 @@ import {
 } from './routes/events.routes';
 import {
     profileRoute,
+    profileByIdRoute,
     notificationsRoute,
     settingsRoute
 } from './routes/user.routes';
@@ -45,6 +46,7 @@ const routeTree = rootRoute.addChildren([
         dashboardRoute,
         eventsRoute,
         profileRoute,
+        profileByIdRoute,
         notificationsRoute,
         settingsRoute,
         myEventsRoute,

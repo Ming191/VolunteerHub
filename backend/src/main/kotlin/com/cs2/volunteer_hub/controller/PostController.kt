@@ -138,34 +138,52 @@ class PostController(private val postService: PostService) {
                         postService.updatePost(eventId, postId, postRequest, currentUser.username)
                 return ResponseEntity.ok(updatedPost)
         }
+    @Operation(
+            summary = "Get posts by user ID",
+            description = "Get all posts created by a specific user with pagination and sorting"
+    )
+    @GetMapping("posts/user/{userId}")
+    fun getPostsByUserId(
+            @PathVariable userId: Long,
+            @RequestParam(defaultValue = "0") page: Int,
+            @RequestParam(defaultValue = "20") size: Int,
+            @RequestParam(defaultValue = "createdAt") sort: String,
+            @RequestParam(defaultValue = "desc") direction: String,
+            @AuthenticationPrincipal currentUser: UserDetails?
+    ): ResponseEntity<PagePostResponse> {
+        val pageable =
+                PageRequest.of(page, size, Sort.Direction.fromString(direction.uppercase()), sort)
+        val posts = postService.getPostsByUserId(userId, currentUser?.username, pageable)
+        return ResponseEntity.ok(PagePostResponse.from(posts))
+    }
 
-        @Operation(
-                summary = "Get post details",
-                description = "Get details of a specific post in an event."
-        )
-        @PreAuthorize("isAuthenticated()")
-        @GetMapping("/events/{eventId}/posts/{postId}")
-        fun getPost(
-                @PathVariable eventId: Long,
-                @PathVariable postId: Long,
-                @AuthenticationPrincipal currentUser: UserDetails
-        ): ResponseEntity<PostResponse> {
-                val post = postService.getPost(eventId, postId, currentUser.username)
-                return ResponseEntity.ok(post)
-        }
+    @Operation(
+            summary = "Get post details",
+            description = "Get details of a specific post in an event."
+    )
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/events/{eventId}/posts/{postId}")
+    fun getPost(
+            @PathVariable eventId: Long,
+            @PathVariable postId: Long,
+            @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<PostResponse> {
+            val post = postService.getPost(eventId, postId, currentUser.username)
+            return ResponseEntity.ok(post)
+    }
 
-        @Operation(
-                summary = "Delete post",
-                description = "Delete a post. Only the author can delete their own posts."
-        )
-        @PreAuthorize("isAuthenticated()")
-        @DeleteMapping("/events/{eventId}/posts/{postId}")
-        fun deletePost(
-                @PathVariable eventId: Long,
-                @PathVariable postId: Long,
-                @AuthenticationPrincipal currentUser: UserDetails
-        ): ResponseEntity<Unit> {
-                postService.deletePost(eventId, postId, currentUser.username)
-                return ResponseEntity.noContent().build()
-        }
+    @Operation(
+            summary = "Delete post",
+            description = "Delete a post. Only the author can delete their own posts."
+    )
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/events/{eventId}/posts/{postId}")
+    fun deletePost(
+            @PathVariable eventId: Long,
+            @PathVariable postId: Long,
+            @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<Unit> {
+            postService.deletePost(eventId, postId, currentUser.username)
+            return ResponseEntity.noContent().build()
+    }
 }
