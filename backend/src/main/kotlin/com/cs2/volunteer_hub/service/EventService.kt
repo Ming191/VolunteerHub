@@ -10,8 +10,10 @@ import com.cs2.volunteer_hub.mapper.EventMapper
 import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.EventStatus
+import com.cs2.volunteer_hub.model.ImageStatus
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
+import com.cs2.volunteer_hub.repository.ImageRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.findByEmailOrThrow
@@ -40,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile
 class EventService(
         private val eventRepository: EventRepository,
         private val userRepository: UserRepository,
+        private val imageRepository: ImageRepository,
         private val rabbitTemplate: RabbitTemplate,
         private val fileValidationService: FileValidationService,
         private val eventMapper: EventMapper,
@@ -349,5 +352,35 @@ class EventService(
                         "Cancelled event ID: $id by user: $currentUserEmail with reason: $reason"
                 )
                 return eventMapper.toEventResponse(savedEvent)
+        }
+
+        @Transactional(readOnly = true)
+        fun getEventGallery(
+                eventId: Long,
+                pageable: Pageable
+        ): com.cs2.volunteer_hub.dto.PageGalleryImageResponse {
+                // Ensure event exists
+                eventRepository.findByIdOrThrow(eventId)
+
+                val imagePage =
+                        imageRepository.findAllByEventIncludingPosts(
+                                eventId,
+                                ImageStatus.UPLOADED,
+                                pageable
+                        )
+
+                val galleryImages =
+                        imagePage.content.mapNotNull { image ->
+                                eventMapper.toGalleryImageResponse(image, eventId)
+                        }
+
+                // Create a generic Page for the response content
+                // Note: The total validation is slightly approximate because mapNotNull might
+                // filter out some images
+                // but our query logic in Repository guarantees they match so mapNotNull shouldn't
+                // filter valid ones.
+                val resultPage = PageImpl(galleryImages, pageable, imagePage.totalElements)
+
+                return com.cs2.volunteer_hub.dto.PageGalleryImageResponse.from(resultPage)
         }
 }
