@@ -1,10 +1,16 @@
-import { Bell, Check, Loader2, Trash2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger, TabsContents } from '@/components/animate-ui/components/animate/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useNotifications } from '../hooks/useNotifications';
+import { Bell, Check, Loader2, Trash2 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  TabsContents,
+} from "@/components/animate-ui/components/animate/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useNotifications } from "../hooks/useNotifications";
 
 export const NotificationsPage = () => {
   const {
@@ -21,11 +27,12 @@ export const NotificationsPage = () => {
     markAllAsReadMutation,
     deleteNotificationMutation,
     handleNotificationClick,
-    handleDelete
+    handleDelete,
   } = useNotifications();
 
-  const displayNotifications = activeTab === 'all' ? allNotifications : unreadNotifications;
-  const isLoading = activeTab === 'all' ? isLoadingAll : isLoadingUnread;
+  const displayNotifications =
+    activeTab === "all" ? allNotifications : unreadNotifications;
+  const isLoading = activeTab === "all" ? isLoadingAll : isLoadingUnread;
   const unreadCount = countData?.count || 0;
 
   return (
@@ -41,7 +48,8 @@ export const NotificationsPage = () => {
                 <CardTitle className="text-2xl">Notifications</CardTitle>
                 {unreadCount > 0 && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    You have {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+                    You have {unreadCount} unread notification
+                    {unreadCount !== 1 ? "s" : ""}
                   </p>
                 )}
               </div>
@@ -61,11 +69,12 @@ export const NotificationsPage = () => {
         </CardHeader>
 
         <CardContent>
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'all' | 'unread')}>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as "all" | "unread")}
+          >
             <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="all">
-                All Notifications
-              </TabsTrigger>
+              <TabsTrigger value="all">All Notifications</TabsTrigger>
               <TabsTrigger value="unread">
                 Unread {unreadCount > 0 && `(${unreadCount})`}
               </TabsTrigger>
@@ -92,8 +101,11 @@ export const NotificationsPage = () => {
                     {displayNotifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group ${!notification.isRead ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900' : ''
-                          }`}
+                        className={`p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group ${
+                          !notification.isRead
+                            ? "bg-blue-50 border-blue-200"
+                            : ""
+                        }`}
                         onClick={() => handleNotificationClick(notification)}
                       >
                         <div className="flex items-start gap-3">
@@ -105,9 +117,12 @@ export const NotificationsPage = () => {
                               {notification.content}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              {formatDistanceToNow(new Date(notification.createdAt), {
-                                addSuffix: true,
-                              })}
+                              {formatDistanceToNow(
+                                new Date(notification.createdAt),
+                                {
+                                  addSuffix: true,
+                                }
+                              )}
                             </p>
                           </div>
                           <Button
@@ -124,8 +139,11 @@ export const NotificationsPage = () => {
                     ))}
 
                     {/* Infinite scroll trigger */}
-                    {activeTab === 'all' && hasMore && (
-                      <div ref={observerTarget} className="py-4 flex justify-center">
+                    {activeTab === "all" && hasMore && (
+                      <div
+                        ref={observerTarget}
+                        className="py-4 flex justify-center"
+                      >
                         {isLoadingAll && daysToLoad > 30 && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -147,7 +165,9 @@ export const NotificationsPage = () => {
                     <div className="rounded-full bg-muted p-4 mb-4">
                       <Bell className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">No notifications yet</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      No notifications yet
+                    </h3>
                     <p className="text-muted-foreground max-w-md">
                       When you receive notifications, they'll appear here.
                     </p>
@@ -174,7 +194,7 @@ export const NotificationsPage = () => {
                   displayNotifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900"
+                      className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group bg-blue-50 border-blue-200"
                       onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="flex items-start gap-3">
@@ -184,9 +204,12 @@ export const NotificationsPage = () => {
                             {notification.content}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {formatDistanceToNow(new Date(notification.createdAt), {
-                              addSuffix: true,
-                            })}
+                            {formatDistanceToNow(
+                              new Date(notification.createdAt),
+                              {
+                                addSuffix: true,
+                              }
+                            )}
                           </p>
                         </div>
                         <Button
@@ -206,7 +229,9 @@ export const NotificationsPage = () => {
                     <div className="rounded-full bg-muted p-4 mb-4">
                       <Check className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">All caught up!</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      All caught up!
+                    </h3>
                     <p className="text-muted-foreground max-w-md">
                       You have no unread notifications.
                     </p>
@@ -219,4 +244,4 @@ export const NotificationsPage = () => {
       </Card>
     </div>
   );
-}
+};

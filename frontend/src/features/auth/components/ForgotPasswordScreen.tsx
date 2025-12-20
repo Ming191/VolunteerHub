@@ -236,7 +236,7 @@ export const ForgotPasswordScreen = () => {
             <Link to="/signin" className="block">
               <Button
                 variant="ghost"
-                className="w-full text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                className="w-full text-gray-600 hover:text-green-600"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to sign in
@@ -246,7 +246,7 @@ export const ForgotPasswordScreen = () => {
 
           {/* Help Text */}
           <div className="pt-4 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500">
               Remember your password?{" "}
               <Link
                 to="/signin"

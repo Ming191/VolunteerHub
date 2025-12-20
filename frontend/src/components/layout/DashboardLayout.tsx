@@ -45,21 +45,19 @@ const DashboardLayout = () => {
   const dockItems = [
     {
       title: "Dashboard",
-      icon: (
-        <LayoutDashboard className="h-full w-full text-volunteer-500 dark:text-volunteer-400" />
-      ),
+      icon: <LayoutDashboard className="h-full w-full text-green-600" />,
       href: "/dashboard",
     },
     {
       title: "Browse Events",
-      icon: <CalendarDays className="h-full w-full text-accent-orange" />,
+      icon: <CalendarDays className="h-full w-full text-green-600" />,
       href: "/events",
     },
     ...(user?.role === "EVENT_ORGANIZER"
       ? [
           {
             title: "My Events",
-            icon: <UserCog className="h-full w-full text-accent-purple" />,
+            icon: <UserCog className="h-full w-full text-green-600" />,
             href: "/my-events",
           },
         ]
@@ -68,12 +66,12 @@ const DashboardLayout = () => {
       ? [
           {
             title: "Admin Panel",
-            icon: <ShieldCheck className="h-full w-full text-accent-blue" />,
+            icon: <ShieldCheck className="h-full w-full text-green-600" />,
             href: "/admin/pending-events",
           },
           {
             title: "Users",
-            icon: <Users className="h-full w-full text-accent-yellow" />,
+            icon: <Users className="h-full w-full text-green-600" />,
             href: "/admin/users",
           },
         ]
@@ -81,7 +79,7 @@ const DashboardLayout = () => {
   ];
 
   return (
-    <div className="flex flex-col h-screen w-full bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-screen w-full bg-gradient-to-br from-gray-50 via-white to-green-50">
       {/* Navbar Component */}
       <Navbar />
       <ThemeListener />

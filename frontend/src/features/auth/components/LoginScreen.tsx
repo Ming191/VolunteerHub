@@ -29,7 +29,7 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
   const { form, onSubmit, isSubmitting } = useLoginForm();
 
   const cardContent = (
-    <Card className="w-full max-w-md shadow-2xl border-2 border-green-100 dark:border-green-900/30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl">
+    <Card className="w-full max-w-md shadow-2xl border-2 border-gray-200 bg-white/95 backdrop-blur-xl">
       <CardHeader className="space-y-4 pb-6">
         {/* Logo/Icon with animation */}
         <motion.div
@@ -49,7 +49,7 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
           <CardTitle className="text-4xl text-center bg-gradient-to-r from-green-600 via-green-500 to-emerald-600 bg-clip-text text-transparent font-extrabold tracking-tight">
             Welcome Back!
           </CardTitle>
-          <CardDescription className="text-center text-base text-gray-600 dark:text-gray-400 font-medium">
+          <CardDescription className="text-center text-base text-gray-600 font-medium">
             Sign in to continue making a difference in your community
           </CardDescription>
         </div>
@@ -58,7 +58,7 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
         {!isTabbed && (
           <div className="flex justify-center gap-6 pt-2">
             <motion.div
-              className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"
+              className="flex items-center gap-1.5 text-xs text-gray-500"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -67,7 +67,7 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
               <span>Secure</span>
             </motion.div>
             <motion.div
-              className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"
+              className="flex items-center gap-1.5 text-xs text-gray-500"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -76,7 +76,7 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
               <span>10K+ Volunteers</span>
             </motion.div>
             <motion.div
-              className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"
+              className="flex items-center gap-1.5 text-xs text-gray-500"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
@@ -95,7 +95,7 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold text-gray-700 dark:text-gray-300">
+                  <FormLabel className="text-base font-semibold text-gray-700">
                     Email Address
                   </FormLabel>
                   <FormControl>
@@ -104,7 +104,7 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
                       <Input
                         placeholder="name@example.com"
                         type="email"
-                        className="pl-11 h-12 border-2 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 bg-white dark:bg-gray-800"
+                        className="pl-11 h-12 border-2 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 bg-white"
                         aria-label="Email address"
                         {...field}
                       />
@@ -120,13 +120,13 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel className="text-base font-semibold text-gray-700 dark:text-gray-300">
+                    <FormLabel className="text-base font-semibold text-gray-700">
                       Password
                     </FormLabel>
                     {!isTabbed && (
                       <Link
                         to="/signin"
-                        className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-colors"
+                        className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors"
                       >
                         Forgot?
                       </Link>
@@ -138,7 +138,7 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
                       <Input
                         type="password"
                         placeholder="••••••••"
-                        className="pl-11 h-12 border-2 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 bg-white dark:bg-gray-800"
+                        className="pl-11 h-12 border-2 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 bg-white"
                         aria-label="Password"
                         {...field}
                       />
@@ -172,10 +172,10 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
           <div className="mt-8 text-center space-y-4">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+                <span className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white dark:bg-gray-900 px-2 text-gray-500">
+                <span className="bg-white px-2 text-gray-500">
                   New to VolunteerHub?
                 </span>
               </div>
@@ -183,7 +183,7 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
             <Link to="/signup" className="block w-full">
               <Button
                 variant="outline"
-                className="w-full h-11 font-semibold border-2 border-green-200 hover:border-green-500 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-900/20 text-green-700 dark:text-green-400 transition-all duration-300"
+                className="w-full h-11 font-semibold border-2 border-green-200 hover:border-green-500 hover:bg-green-50 text-green-700 transition-all duration-300"
               >
                 Create Account
               </Button>
@@ -197,12 +197,12 @@ export const LoginScreen = ({ isTabbed = false }: LoginScreenProps) => {
   return isTabbed ? (
     cardContent
   ) : (
-    <AnimatedPage className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden">
+    <AnimatedPage className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 dark:bg-green-900/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-200/30 dark:bg-emerald-900/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-green-100/20 dark:bg-green-900/5 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl" />
       </div>
 
       {/* Content */}

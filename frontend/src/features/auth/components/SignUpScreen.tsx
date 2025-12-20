@@ -36,7 +36,7 @@ export const SignUpScreen = ({ isTabbed = false }: SignUpScreenProps) => {
   const { form, onSubmit, isSubmitting } = useSignUpForm();
 
   const cardContent = (
-    <Card className="w-full max-w-md shadow-2xl border-2 border-green-100 dark:border-green-900/30 bg-white/95 dark:bg-gray-900/95 backdrop-blur">
+    <Card className="w-full max-w-md shadow-2xl border-2 border-gray-200 bg-white/95 backdrop-blur">
       <CardHeader className="space-y-3">
         {/* Logo/Icon */}
         {!isTabbed && (
@@ -51,7 +51,7 @@ export const SignUpScreen = ({ isTabbed = false }: SignUpScreenProps) => {
         <CardTitle className="text-3xl text-center bg-gradient-to-r from-green-600 to-orange-500 bg-clip-text text-transparent font-bold">
           Create an Account
         </CardTitle>
-        <CardDescription className="text-center text-base text-gray-600 dark:text-gray-400">
+        <CardDescription className="text-center text-base text-gray-600">
           Join VolunteerHub to find or create events
         </CardDescription>
       </CardHeader>
@@ -179,7 +179,7 @@ export const SignUpScreen = ({ isTabbed = false }: SignUpScreenProps) => {
         </Form>
         {!isTabbed && (
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600">
               Already have an account?{" "}
               <Link
                 to="/signin"
@@ -197,7 +197,7 @@ export const SignUpScreen = ({ isTabbed = false }: SignUpScreenProps) => {
   return isTabbed ? (
     cardContent
   ) : (
-    <AnimatedPage className="flex items-center justify-center min-h-screen py-12 bg-gradient-to-br from-green-50 via-white to-orange-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <AnimatedPage className="flex items-center justify-center min-h-screen py-12 bg-gradient-to-br from-green-50 via-white to-orange-50">
       {cardContent}
     </AnimatedPage>
   );

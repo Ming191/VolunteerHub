@@ -1,4 +1,5 @@
-import { Search, Heart } from "lucide-react";
+import { Search } from "lucide-react";
+import LogoImg from "@/assets/logo.svg";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { NotificationList } from "@/components/animate-ui/components/community/notification-list";
@@ -48,23 +49,23 @@ const Navbar = () => {
   const pageTitle = getPageTitle(location.pathname);
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-40 shadow-sm">
+    <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
         {/* Left side: Logo and Page Title */}
         <div className="flex items-center gap-6">
           <button
-            className="flex items-center gap-2 text-xl font-bold text-volunteer-600 dark:text-volunteer-400 cursor-pointer hover:text-volunteer-700 dark:hover:text-volunteer-300 transition-colors bg-transparent border-0 p-0"
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity bg-transparent border-0 p-0"
             onClick={() => navigate({ to: "/dashboard" })}
             aria-label="Navigate to dashboard"
           >
-            <Heart className="h-6 w-6 fill-volunteer-600 dark:fill-volunteer-400" />
-            <span>VolunteerHub</span>
-          </button>
-          <div className="hidden md:flex text-sm font-medium text-gray-500 dark:text-gray-400 items-center gap-2">
-            <span>/</span>
-            <span className="text-gray-700 dark:text-gray-300">
-              {pageTitle}
+            <img src={LogoImg} alt="VolunteerHub" className="h-10 w-10" />
+            <span className="text-2xl font-bold text-gray-900">
+              VolunteerHub
             </span>
+          </button>
+          <div className="hidden md:flex text-sm font-medium text-gray-500 items-center gap-2">
+            <span>/</span>
+            <span className="text-gray-900 font-semibold">{pageTitle}</span>
           </div>
         </div>
 
@@ -75,7 +76,7 @@ const Navbar = () => {
             <Input
               type="search"
               placeholder="Search events..."
-              className="pl-9 w-48 lg:w-64 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+              className="pl-9 w-48 lg:w-64 text-gray-900 bg-white border-gray-300 focus:border-green-600 focus:ring-green-600"
             />
           </div>
 
@@ -87,9 +88,9 @@ const Navbar = () => {
                 variant="ghost"
                 className="relative h-10 w-10 rounded-full"
               >
-                <Avatar className="ring-2 ring-volunteer-500 dark:ring-volunteer-400">
+                <Avatar className="ring-2 ring-green-600">
                   <AvatarImage src={undefined} alt={user?.name} />
-                  <AvatarFallback className="bg-volunteer-500 text-white font-semibold">
+                  <AvatarFallback className="bg-green-600 text-white font-semibold">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -97,28 +98,28 @@ const Navbar = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
-                <div className="font-semibold">{user?.name}</div>
-                <div className="font-normal text-sm text-muted-foreground">
+                <div className="font-semibold text-gray-900">{user?.name}</div>
+                <div className="font-normal text-sm text-gray-600">
                   {user?.email}
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => navigate({ to: "/profile" })}
-                className="cursor-pointer"
+                className="cursor-pointer hover:bg-green-50 hover:text-gray-900"
               >
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => navigate({ to: "/settings" })}
-                className="cursor-pointer"
+                className="cursor-pointer hover:bg-green-50 hover:text-gray-900"
               >
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={logout}
-                className="text-red-600 cursor-pointer"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
               >
                 Log Out
               </DropdownMenuItem>

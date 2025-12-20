@@ -60,7 +60,7 @@ export const EventListScreen = () => {
             <Button
               onClick={() => setIsAddEventModalOpen(true)}
               size="lg"
-              className="bg-volunteer-600 hover:bg-volunteer-700 text-white"
+              className="bg-green-600 hover:bg-green-700 text-white"
             >
               <Plus className="mr-2 h-5 w-5" />
               Create Event
@@ -68,7 +68,7 @@ export const EventListScreen = () => {
             <Button
               variant="outline"
               size="lg"
-              className="border-2 hover:bg-volunteer-50 dark:hover:bg-volunteer-900/20"
+              className="border-2 hover:bg-green-50 hover:border-green-600 text-gray-700"
             >
               <Search className="mr-2 h-5 w-5" />
               Advanced Search
