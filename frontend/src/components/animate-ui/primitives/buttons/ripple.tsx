@@ -20,12 +20,15 @@ type RippleButtonContextType = {
 const [RippleButtonProvider, useRippleButton] =
   getStrictContext<RippleButtonContextType>('RippleButtonContext');
 
-type RippleButtonProps = WithAsChild<
-  HTMLMotionProps<'button'> & {
-    hoverScale?: number;
-    tapScale?: number;
-  }
->;
+type RippleButtonBaseProps = Omit<HTMLMotionProps<'button'>, 'children'> & {
+  hoverScale?: number;
+  tapScale?: number;
+  children?: React.ReactNode;
+};
+
+type RippleButtonProps =
+  | (RippleButtonBaseProps & { asChild: true; children: React.ReactElement })
+  | (RippleButtonBaseProps & { asChild?: false });
 
 function RippleButton({
   ref,
@@ -114,26 +117,30 @@ function RippleButtonRipples({
 
   const Component = asChild ? Slot : motion.span;
 
-  return ripples.map((ripple) => (
-    <Component
-      key={ripple.id}
-      initial={{ scale: 0, opacity: 0.5 }}
-      animate={{ scale, opacity: 0 }}
-      transition={transition}
-      style={{
-        position: 'absolute',
-        borderRadius: '50%',
-        pointerEvents: 'none',
-        width: '20px',
-        height: '20px',
-        backgroundColor: color,
-        top: ripple.y - 10,
-        left: ripple.x - 10,
-        ...style,
-      }}
-      {...props}
-    />
-  ));
+  return (
+    <>
+      {ripples.map((ripple) => (
+        <Component
+          key={ripple.id}
+          initial={{ scale: 0, opacity: 0.5 }}
+          animate={{ scale, opacity: 0 }}
+          transition={transition}
+          style={{
+            position: 'absolute',
+            borderRadius: '50%',
+            pointerEvents: 'none',
+            width: '20px',
+            height: '20px',
+            backgroundColor: color,
+            top: ripple.y - 10,
+            left: ripple.x - 10,
+            ...style,
+          }}
+          {...props}
+        />
+      ))}
+    </>
+  );
 }
 
 export {

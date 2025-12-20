@@ -1,13 +1,13 @@
 import React, { useState, useCallback } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
-import { Button } from '@/components/ui/button.tsx';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { AnimatePresence } from 'framer-motion';
 import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 import type { CommentResponse } from "@/api-client";
 import { CommentReplyForm } from './CommentReplyForm';
 import { MAX_COMMENT_DEPTH } from './constants';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { MoreHorizontal, Edit2, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Edit2, Trash2, Flag } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -25,6 +25,7 @@ import {
     AlertDialogTitle,
 } from '@/components/animate-ui/components/base/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { ReportDialog } from '@/features/report/components/ReportDialog';
 
 interface CommentItemProps {
     comment: CommentResponse;
@@ -52,6 +53,7 @@ export const CommentItem = React.memo(({
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(comment.content);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
     const canReply = depth < maxDepth;
     const hasReplies = comment.replies && comment.replies.length > 0;
     const isAuthor = user?.userId === comment.author.id;
@@ -93,7 +95,7 @@ export const CommentItem = React.memo(({
                                 <span className="text-xs text-muted-foreground whitespace-nowrap">
                                     {formatDistanceToNowUTC(comment.createdAt, { addSuffix: true })}
                                 </span>
-                                {isAuthor && !isEditing && (
+                                {user && !isEditing && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -101,17 +103,29 @@ export const CommentItem = React.memo(({
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                                                <Edit2 className="mr-2 h-4 w-4" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                className="text-red-600 focus:text-red-600"
-                                                onClick={() => setIsDeleteDialogOpen(true)}
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete
-                                            </DropdownMenuItem>
+                                            {isAuthor ? (
+                                                <>
+                                                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                                                        <Edit2 className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="text-red-600 focus:text-red-600"
+                                                        onClick={() => setIsDeleteDialogOpen(true)}
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </>
+                                            ) : (
+                                                <DropdownMenuItem
+                                                    onClick={() => setIsReportDialogOpen(true)}
+                                                    className="text-red-600 focus:text-red-600"
+                                                >
+                                                    <Flag className="mr-2 h-4 w-4" />
+                                                    Report
+                                                </DropdownMenuItem>
+                                            )}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 )}
@@ -211,6 +225,13 @@ export const CommentItem = React.memo(({
                     </AlertDialogFooter>
                 </AlertDialogPopup>
             </AlertDialog>
+
+            <ReportDialog
+                open={isReportDialogOpen}
+                onClose={() => setIsReportDialogOpen(false)}
+                targetId={comment.id}
+                targetType="COMMENT"
+            />
         </div>
     );
 });
