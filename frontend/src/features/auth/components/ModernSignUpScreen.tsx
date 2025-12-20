@@ -31,6 +31,7 @@ import {
 import { useSignUpForm } from "../hooks/useSignUpForm";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import LogoImg from "@/assets/logo.svg";
 
 export const ModernSignUpScreen = () => {
   const { form, onSubmit, isSubmitting } = useSignUpForm();
@@ -68,9 +69,11 @@ export const ModernSignUpScreen = () => {
             transition={{ delay: 0.2 }}
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                <Heart className="h-8 w-8 fill-white" />
-              </div>
+              <img
+                src={LogoImg}
+                alt="VolunteerHub"
+                className="h-10 w-10 object-contain"
+              />
               <span className="text-3xl font-bold">VolunteerHub</span>
             </div>
           </motion.div>
@@ -152,7 +155,7 @@ export const ModernSignUpScreen = () => {
 
       {/* Right Side - Sign Up Form */}
       <motion.div
-        className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-8 bg-white dark:bg-gray-950 overflow-y-auto"
+        className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-8 bg-white overflow-y-auto"
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -161,9 +164,11 @@ export const ModernSignUpScreen = () => {
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl">
-                <Heart className="h-8 w-8 fill-white text-white" />
-              </div>
+              <img
+                src={LogoImg}
+                alt="VolunteerHub"
+                className="h-10 w-10 object-contain"
+              />
               <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                 VolunteerHub
               </span>
@@ -177,10 +182,10 @@ export const ModernSignUpScreen = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-3xl font-bold text-gray-900">
               Create your account
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600">
               Join thousands of volunteers making a difference
             </p>
           </motion.div>
@@ -198,7 +203,7 @@ export const ModernSignUpScreen = () => {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <FormLabel className="text-sm font-semibold text-gray-700">
                         Full name
                       </FormLabel>
                       <FormControl>
@@ -221,7 +226,7 @@ export const ModernSignUpScreen = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <FormLabel className="text-sm font-semibold text-gray-700">
                         Email address
                       </FormLabel>
                       <FormControl>
@@ -246,7 +251,7 @@ export const ModernSignUpScreen = () => {
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <FormLabel className="text-sm font-semibold text-gray-700">
                           Gender
                         </FormLabel>
                         <Select
@@ -277,7 +282,7 @@ export const ModernSignUpScreen = () => {
                     name="role"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <FormLabel className="text-sm font-semibold text-gray-700">
                           I am a...
                         </FormLabel>
                         <Select
@@ -307,7 +312,7 @@ export const ModernSignUpScreen = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <FormLabel className="text-sm font-semibold text-gray-700">
                         Password
                       </FormLabel>
                       <FormControl>
@@ -342,7 +347,7 @@ export const ModernSignUpScreen = () => {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <FormLabel className="text-sm font-semibold text-gray-700">
                         Confirm password
                       </FormLabel>
                       <FormControl>

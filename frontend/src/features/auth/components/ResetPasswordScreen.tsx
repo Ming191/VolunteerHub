@@ -17,6 +17,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useState } from "react";
 import axios from "axios";
+import LogoImg from "@/assets/logo.svg";
 
 const resetPasswordSchema = z
   .object({
@@ -83,11 +84,11 @@ export const ResetPasswordScreen = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 relative overflow-hidden p-4">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 dark:bg-green-900/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-200/30 dark:bg-emerald-900/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl" />
       </div>
 
       {/* Content */}
@@ -97,22 +98,22 @@ export const ResetPasswordScreen = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 p-8 space-y-6">
+        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-8 space-y-6">
           {/* Logo */}
           <div className="flex justify-center">
-            <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl">
-              <Heart className="h-10 w-10 fill-white text-white" />
-            </div>
+            <img
+              src={LogoImg}
+              alt="VolunteerHub"
+              className="h-12 w-12 object-contain"
+            />
           </div>
 
           {/* Header */}
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-3xl font-bold text-gray-900">
               Reset your password
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Enter your new password below
-            </p>
+            <p className="text-gray-600">Enter your new password below</p>
           </div>
 
           {/* Form */}
@@ -123,7 +124,7 @@ export const ResetPasswordScreen = () => {
                 name="token"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <FormLabel className="text-sm font-semibold text-gray-700">
                       Reset Token
                     </FormLabel>
                     <FormControl>
@@ -143,7 +144,7 @@ export const ResetPasswordScreen = () => {
                 name="newPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <FormLabel className="text-sm font-semibold text-gray-700">
                       New Password
                     </FormLabel>
                     <FormControl>
@@ -178,7 +179,7 @@ export const ResetPasswordScreen = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <FormLabel className="text-sm font-semibold text-gray-700">
                       Confirm Password
                     </FormLabel>
                     <FormControl>
