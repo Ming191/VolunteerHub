@@ -326,6 +326,7 @@ export const ModernSignUpScreen = () => {
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
+                            tabIndex={-1}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                           >
                             {showPassword ? (
@@ -363,6 +364,7 @@ export const ModernSignUpScreen = () => {
                             onClick={() =>
                               setShowConfirmPassword(!showConfirmPassword)
                             }
+                            tabIndex={-1}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                           >
                             {showConfirmPassword ? (
@@ -393,41 +395,42 @@ export const ModernSignUpScreen = () => {
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-center text-gray-500">
                   By signing up, you agree to our{" "}
-                  <span className="text-green-600">Terms of Service</span> and{" "}
-                  <span className="text-green-600">Privacy Policy</span>
+                  <Link
+                    to="/terms-of-service"
+                    className="text-green-600 font-medium hover:text-green-700 hover:underline underline-offset-4"
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    to="/privacy-policy"
+                    className="text-green-600 font-medium hover:text-green-700 hover:underline underline-offset-4"
+                  >
+                    Privacy Policy
+                  </Link>
                 </p>
               </form>
             </Form>
           </motion.div>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-200 dark:border-gray-800" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white dark:bg-gray-950 text-gray-500">
-                Already have an account?
-              </span>
-            </div>
-          </div>
-
           {/* Sign in link */}
           <motion.div
+            className="text-center"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            <Link to="/signin" className="block">
-              <Button
-                variant="outline"
-                className="w-full h-12 text-base font-semibold border-2 border-gray-200 hover:border-green-600 hover:bg-green-50 dark:border-gray-800 dark:hover:bg-green-950 dark:hover:border-green-600 text-gray-700 dark:text-gray-300 transition-all duration-200"
+            <p className="text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link
+                to="/signin"
+                className="font-semibold text-green-600 hover:text-green-700 transition-colors underline-offset-4 hover:underline"
               >
                 Sign in instead
-              </Button>
-            </Link>
+              </Link>
+            </p>
           </motion.div>
         </div>
       </motion.div>

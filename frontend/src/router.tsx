@@ -26,12 +26,19 @@ import {
   adminSettingsRoute,
 } from "./routes/admin.routes";
 import { blogRoute } from "./routes/blog.routes";
-import { landingRoute, publicEventsRoute } from "./routes/public.routes";
+import {
+  landingRoute,
+  publicEventsRoute,
+  termsRoute,
+  privacyRoute,
+} from "./routes/public.routes";
 
 // 6. Create Router
 const routeTree = rootRoute.addChildren([
   landingRoute,
   publicEventsRoute,
+  termsRoute,
+  privacyRoute,
   signinRoute,
   signupRoute,
   forgotPasswordRoute,

@@ -226,6 +226,7 @@ export const ModernSignInScreen = () => {
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
+                            tabIndex={-1}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                           >
                             {showPassword ? (
@@ -243,7 +244,7 @@ export const ModernSignInScreen = () => {
                           onClick={() =>
                             (window.location.href = "/forgot-password")
                           }
-                          className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors"
+                          className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors underline-offset-4 hover:underline"
                         >
                           Forgot password?
                         </button>
