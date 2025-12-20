@@ -13,6 +13,8 @@ import com.cs2.volunteer_hub.repository.UserSettingsRepository
 import com.cs2.volunteer_hub.repository.findByEmailOrThrow
 import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -28,6 +30,7 @@ class SettingsService(
     private val logger = LoggerFactory.getLogger(SettingsService::class.java)
 
     /** Get user settings - settings must already exist (created at registration) */
+    @Cacheable(value = ["userSettings"], key = "#userEmail")
     @Transactional(readOnly = true)
     fun getUserSettings(userEmail: String): UserSettingsResponse {
         val user = userRepository.findByEmailOrThrow(userEmail)
@@ -38,6 +41,7 @@ class SettingsService(
     }
 
     /** Update user settings - operates on managed entity within transaction */
+    @CacheEvict(value = ["userSettings"], key = "#userEmail")
     @Transactional
     fun updateUserSettings(
             userEmail: String,

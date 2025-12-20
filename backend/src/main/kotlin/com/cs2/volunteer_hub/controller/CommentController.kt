@@ -7,6 +7,9 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -47,9 +50,12 @@ class CommentController(private val commentService: CommentService) {
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getCommentsForPost(
             @PathVariable postId: Long,
-            @AuthenticationPrincipal currentUser: UserDetails?
-    ): ResponseEntity<List<CommentResponse>> {
-        val comments = commentService.getCommentsForPost(postId, currentUser?.username)
+            @AuthenticationPrincipal currentUser: UserDetails?,
+            @RequestParam(defaultValue = "0") page: Int,
+            @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<CommentResponse>> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt"))
+        val comments = commentService.getCommentsForPost(postId, currentUser?.username, pageable)
         return ResponseEntity.ok(comments)
     }
 

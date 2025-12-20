@@ -17,6 +17,8 @@ interface ReportRepository : JpaRepository<Report, Long>, JpaSpecificationExecut
 
     fun findByTypeAndTargetId(type: ReportType, targetId: Long): List<Report>
 
+    fun countByStatus(status: ReportStatus): Long
+
     @Query("""
         SELECT COUNT(r) > 0 FROM Report r 
         WHERE r.reporter.id = :reporterId 

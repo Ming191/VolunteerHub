@@ -177,9 +177,10 @@ export const EventGallery = ({ event }: { event: EventResponse }) => {
             <CardContent className="pt-6">
                 <h3 className="text-xl font-semibold mb-4">Event Gallery</h3>
                 <EventImages
+                    eventId={event.id}
                     imageUrls={event.imageUrls}
-                    galleryImageUrls={event.galleryImageUrls}
                     title={event.title}
+                    showGallery={true}
                 />
             </CardContent>
         </Card>
@@ -219,11 +220,7 @@ export const EventTabsNavigation = ({ event, activeTab }: { event: EventResponse
                 {(isOrganizer || isApprovedMember) && (
                     <TabsTrigger value="attendees">Attendees</TabsTrigger>
                 )}
-                {/* Show gallery tab if there are any gallery images or regular event images */}
-                {((event.galleryImageUrls && event.galleryImageUrls.length > 0) ||
-                    (event.imageUrls && event.imageUrls.length > 0)) && (
-                        <TabsTrigger value="gallery">Gallery</TabsTrigger>
-                    )}
+                <TabsTrigger value="gallery">Gallery</TabsTrigger>
             </TabsList>
         </Tabs>
     );

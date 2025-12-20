@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.service
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.model.Event
+import com.cs2.volunteer_hub.model.User
 import java.io.Writer
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVPrinter
@@ -72,7 +73,7 @@ class ExportService(
 
             var pageNumber = 0
             val pageSize = 500
-            var page: Page<com.cs2.volunteer_hub.model.User>
+            var page: Page<User>
 
             do {
                 page = userRepository.findAll(PageRequest.of(pageNumber, pageSize))

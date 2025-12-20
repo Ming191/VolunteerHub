@@ -11,7 +11,7 @@ import java.util.UUID
 @Service
 class TemporaryFileStorageService {
 
-    private val uploadDir: Path = Paths.get("temp-uploads")
+    private val uploadDir: Path = Paths.get("/tmp/temp-uploads")
 
     init {
         try {

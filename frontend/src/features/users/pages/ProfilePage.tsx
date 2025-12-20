@@ -22,7 +22,7 @@ const formatDate = (dateString: string) => {
 };
 
 export const ProfilePage = () => {
-    const params = useParams({  from: '/_auth/profile/$userId', shouldThrow: false, } );
+    const params = useParams({ from: '/_auth/profile/$userId', shouldThrow: false, });
     const userId = params?.userId ? Number(params.userId) : undefined;
     const { profile, posts, loading, refetch } = useProfileData(userId);
     const { user } = useAuth();
@@ -56,7 +56,7 @@ export const ProfilePage = () => {
             skeleton={<ProfilePageSkeleton />}
         >
             {profile && (
-                <div className="container mx-auto p-6 space-y-6">
+                <div className="container mx-auto p-6 space-y-6 max-w-4xl">
                     {/* Hero Section */}
                     <Card>
                         <CardContent className="p-8">

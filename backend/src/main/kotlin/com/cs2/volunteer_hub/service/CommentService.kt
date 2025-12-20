@@ -11,6 +11,8 @@ import com.cs2.volunteer_hub.repository.findByEmailOrThrow
 import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import org.slf4j.LoggerFactory
 import org.springframework.cache.CacheManager
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -97,14 +99,14 @@ class CommentService(
     // Removed Cacheable to prevent unauthenticated users from bypassing permission checks for
     // unapproved events via cache hits
     @Transactional(readOnly = true)
-    fun getCommentsForPost(postId: Long, userEmail: String?): List<CommentResponse> {
+    fun getCommentsForPost(postId: Long, userEmail: String?, pageable: Pageable): Page<CommentResponse> {
         val user = userEmail?.let { userRepository.findByEmailOrThrow(it) }
         val post = postRepository.findByIdOrThrow(postId)
 
         authorizationService.requireEventReadPermission(post.event.id, user?.id)
 
         return commentRepository
-                .findAllByPostIdOrderByCreatedAtAsc(postId)
+                .findAllByPostIdWithAssociations(postId, pageable)
                 .map(commentMapper::toCommentResponse)
     }
 
@@ -141,7 +143,7 @@ class CommentService(
             throw ResourceNotFoundException("Comment", "postId", postId)
         }
 
-        val replies = commentRepository.findAllByParentCommentIdOrderByCreatedAtAsc(commentId)
+        val replies = commentRepository.findAllByParentCommentIdWithAssociations(commentId)
         return replies.map(commentMapper::toCommentResponse)
     }
 

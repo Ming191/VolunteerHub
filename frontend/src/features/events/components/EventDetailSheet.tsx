@@ -20,20 +20,20 @@ import { EventParticipation } from './sheet/EventParticipation';
 import { EventDescription } from './sheet/EventDescription';
 import { EventTags } from './sheet/EventTags';
 import { EventSheetFooter } from './sheet/EventSheetFooter';
-import {EditEventModal} from "./EditEventModal.tsx";
+import { EditEventModal } from "./EditEventModal.tsx";
 import { useDeleteEvent } from "../hooks/useMyEvents.ts";
-import {EventRegistrationsModal} from "@/features/events/components/EventRegistrationsModal.tsx";
-import {useEventPermissions} from "@/features/events/hooks/useEventPermissions.ts";
-import {useRegisterForEvent} from "@/features/volunteer/hooks/useRegistration.ts";
-import {ConfirmDialog} from "@/components/common/ConfirmDialog.tsx";
+import { EventRegistrationsModal } from "@/features/events/components/EventRegistrationsModal.tsx";
+import { useEventPermissions } from "@/features/events/hooks/useEventPermissions.ts";
+import { useRegisterForEvent } from "@/features/volunteer/hooks/useRegistration.ts";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog.tsx";
 
 interface EventDetailSheetProps {
-  event: EventResponse | null;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onEventUpdateStart?: (eventId: number) => void;
-  onEventUpdateEnd?: () => void;
-  onImageProcessingStart?: (eventId: number) => void;
+    event: EventResponse | null;
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    onEventUpdateStart?: (eventId: number) => void;
+    onEventUpdateEnd?: () => void;
+    onImageProcessingStart?: (eventId: number) => void;
 }
 
 type SheetView = 'event-details' | 'registrations';
@@ -48,7 +48,7 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange, onEventUpdateSta
     // Use custom hook for permissions
     const { canRegister } = useEventPermissions(event);
 
-  if (!event) return null;
+    if (!event) return null;
 
     const handleRegister = () => {
         if (!event) return;
@@ -65,16 +65,16 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange, onEventUpdateSta
     }
 
     const handleDeleteEvent = () => {
-      setDeleteDialogOpen(true);
+        setDeleteDialogOpen(true);
     }
 
     const confirmDeleteEvent = () => {
-      deleteEventMutation.mutate(event.id, {
-        onSuccess: () => {
-          setDeleteDialogOpen(false);
-          onOpenChange(false);
-        },
-      });
+        deleteEventMutation.mutate(event.id, {
+            onSuccess: () => {
+                setDeleteDialogOpen(false);
+                onOpenChange(false);
+            },
+        });
     };
 
 
@@ -96,8 +96,10 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange, onEventUpdateSta
 
                         <div className="space-y-6 pb-20">
                             <EventImages
+                                eventId={event.id}
                                 imageUrls={event.imageUrls}
                                 title={event.title}
+                                showGallery={false}
                             />
                             <EventBadges event={event} />
                             <EventDateInfo event={event} />
@@ -156,20 +158,20 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange, onEventUpdateSta
             />
 
             <ConfirmDialog
-              open={deleteDialogOpen}
-              onOpenChange={setDeleteDialogOpen}
-              title="Delete Event"
-              description={
-                <>
-                  Are you sure you want to delete the event{" "}
-                  <strong>{event.title}</strong>?
-                  This action cannot be undone.
-                </>
-              }
-              confirmText="Delete Event"
-              confirmVariant="destructive"
-              isLoading={deleteEventMutation.isPending}
-              onConfirm={confirmDeleteEvent}
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                title="Delete Event"
+                description={
+                    <>
+                        Are you sure you want to delete the event{" "}
+                        <strong>{event.title}</strong>?
+                        This action cannot be undone.
+                    </>
+                }
+                confirmText="Delete Event"
+                confirmVariant="destructive"
+                isLoading={deleteEventMutation.isPending}
+                onConfirm={confirmDeleteEvent}
             />
 
         </Sheet>
