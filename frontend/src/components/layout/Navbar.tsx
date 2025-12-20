@@ -1,11 +1,9 @@
-import { Search } from "lucide-react";
 import LogoImg from "@/assets/logo.svg";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useNavigate } from "@tanstack/react-router";
 import { NotificationList } from "@/components/animate-ui/components/community/notification-list";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -44,17 +42,8 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Right side: Search, Notifications, and User Menu */}
+        {/* Right side: Notifications and User Menu */}
         <div className="flex items-center gap-4">
-          <div className="relative hidden sm:block">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search events..."
-              className="pl-9 w-48 lg:w-64 text-gray-900 bg-white border-gray-300 focus:border-green-600 focus:ring-green-600"
-            />
-          </div>
-
           <NotificationList />
 
           <DropdownMenu>
