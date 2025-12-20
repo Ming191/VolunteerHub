@@ -54,10 +54,10 @@ export const VolunteerDashboard = () => {
         ) : (
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Welcome Section with Quick Actions */}
-            <div className="rounded-xl bg-white border border-gray-200 shadow-sm">
+            <div className="rounded-xl bg-gradient-to-br from-white via-green-50/20 to-white border border-green-100 shadow-sm green-glow">
               <div className="p-4 sm:p-5">
                 {/* Compact Greeting */}
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-4">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-700 via-gray-900 to-green-700 bg-clip-text text-transparent mb-4">
                   {getGreeting()}, {user?.name?.split(" ")[0] || "Volunteer"}!
                 </h1>
 
@@ -143,7 +143,7 @@ export const VolunteerDashboard = () => {
                           </svg>
                         </div>
                         <span className="font-semibold text-xs text-gray-700 group-hover:text-green-700 transition-colors">
-                          Alerts
+                          Notifications
                         </span>
                       </div>
                     </button>
