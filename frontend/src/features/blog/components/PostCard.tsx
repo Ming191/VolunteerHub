@@ -40,6 +40,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { blogService } from '@/features/blog/api/blogService';
 import { toast } from 'sonner';
+import { useNavigate } from "@tanstack/react-router";
 
 interface PostCardProps {
     post: PostResponse;
@@ -58,6 +59,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
     const [editedContent, setEditedContent] = useState(post.content);
     const [currentContent, setCurrentContent] = useState(post.content);
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     const { likesCount, isLiked, toggleLike } = useLikeMutation(
         post.id,
@@ -133,11 +135,17 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
             toast.success("Link copied to clipboard");
         }
     };
+    const handleViewAuthorProfile = () => {
+        navigate({ to: `/profile/${post.author.id}` });
+    };
 
     return (
         <Card className="w-full mb-4">
             <CardHeader className="flex flex-row items-center gap-4 p-4">
-                <Avatar>
+                <Avatar
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={handleViewAuthorProfile}
+                >
                     <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
                     <AvatarFallback>{post.author.name[0]}</AvatarFallback>
                 </Avatar>
