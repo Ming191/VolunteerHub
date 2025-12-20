@@ -4,6 +4,7 @@ import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.dto.GalleryImageResponse
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.Image
+import com.cs2.volunteer_hub.model.ImageStatus
 import com.cs2.volunteer_hub.repository.ImageRepository
 import com.cs2.volunteer_hub.service.EventCapacityService
 import org.springframework.stereotype.Component
@@ -49,7 +50,8 @@ class EventMapper(
                         isFull = event.maxParticipants?.let { approvedCount >= it } ?: false,
                         isInProgress = event.isInProgress(),
                         tags = event.tags.toSet(),
-                        status = event.status
+                        status = event.status,
+                        imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD }
                 )
         }
 
@@ -99,7 +101,8 @@ class EventMapper(
                                                 ?: false,
                                 isInProgress = event.isInProgress(),
                                 tags = event.tags.toSet(),
-                                status = event.status
+                                status = event.status,
+                                imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD }
                         )
                 }
         }

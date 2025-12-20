@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostCard } from './PostCard.tsx';
@@ -7,15 +7,23 @@ import { CreatePost } from './CreatePost.tsx';
 import { blogService } from '@/features/blog/api/blogService.ts';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { usePostMutations } from '@/features/blog/hooks/usePostMutations';
+import { PostCardLoading } from './PostCardLoading.tsx';
 
 interface BlogFeedProps {
   eventId?: number;
   canPost?: boolean;
 }
 
+interface PendingPost {
+  content: string;
+  imageUrls: string[];
+  hasImages: boolean;
+}
+
 export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
   const { ref, inView } = useInView();
   const { createPostMutation } = usePostMutations(eventId);
+  const [pendingPost, setPendingPost] = useState<PendingPost | null>(null);
 
   const fetchPosts = async ({ pageParam = 0 }): Promise<PagePostResponse> => {
     if (eventId) {
@@ -48,7 +56,31 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
   }, [inView, hasNextPage, fetchNextPage]);
 
   const handleNewPost = (content: string, files: File[] | null) => {
-    createPostMutation.mutate({ content, files, eventId });
+    // Create preview URLs for images
+    const imageUrls = files ? files.map(f => URL.createObjectURL(f)) : [];
+
+    // Set pending post to show loading card
+    setPendingPost({
+      content,
+      imageUrls,
+      hasImages: files !== null && files.length > 0,
+    });
+
+    createPostMutation.mutate(
+      { content, files, eventId },
+      {
+        onSuccess: () => {
+          // Clean up object URLs
+          imageUrls.forEach(url => URL.revokeObjectURL(url));
+          setPendingPost(null);
+        },
+        onError: () => {
+          // Clean up object URLs
+          imageUrls.forEach(url => URL.revokeObjectURL(url));
+          setPendingPost(null);
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -72,14 +104,22 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
       )}
 
       <div className="space-y-4">
+        {/* Show loading card when post is being created */}
+        {pendingPost && (
+          <PostCardLoading
+            content={pendingPost.content}
+            imageUrls={pendingPost.imageUrls}
+            hasImages={pendingPost.hasImages}
+          />
+        )}
+
         {data?.pages.map((page, i) => (
           <React.Fragment key={i}>
-            {Array.isArray(page.content) ? page.content.map((post: PostResponse & { optimisticId?: number; isOptimistic?: boolean }) => (
+            {Array.isArray(page.content) ? page.content.map((post: PostResponse) => (
               <PostCard
-                key={post.optimisticId || post.id}
+                key={post.id}
                 post={post}
                 commentsDisabled={!canPost}
-                isUploading={post.isOptimistic}
               />
             )) : null}
           </React.Fragment>

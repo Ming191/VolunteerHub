@@ -61,7 +61,8 @@ data class EventResponse(
         val isFull: Boolean,
         val status: EventStatus,
         val isInProgress: Boolean,
-        val tags: Set<EventTag>
+        val tags: Set<EventTag>,
+        val imagesProcessing: Boolean
 )
 
 data class GalleryImageResponse(
