@@ -64,13 +64,12 @@ class DashboardService(
                         PageRequest.of(0, 5)
                 )
 
-        // OPTIMIZED: Use projection query to get only event IDs without loading full entities
+        // OPTIMIZED: Derive event IDs directly from approved registrations to avoid extra query
         val approvedRegistrations = registrationRepository.findAll(approvedSpec)
-        val approvedEventIds = if (approvedRegistrations.isNotEmpty()) {
-            registrationRepository.getEventIdsFromRegistrations(approvedRegistrations)
-        } else {
-            emptyList()
-        }
+        val approvedEventIds =
+                approvedRegistrations
+                        .map { it.event.id }
+                        .distinct()
 
         val recentWallPosts =
                 if (approvedEventIds.isNotEmpty()) {
