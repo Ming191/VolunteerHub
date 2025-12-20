@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, MapPin, Edit, Heart, MessageCircle } from 'lucide-react';
+import { Calendar, MapPin, Edit, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { ProfilePageSkeleton } from '@/features/users/components/ProfilePageSkel
 import { EditProfileModal } from '@/features/users/components/EditProfileModal';
 import { ChangePasswordModal } from "@/features/users/components/ChangePasswordModal";
 import { useProfileData } from '../hooks/useProfileData';
+import { PostCard } from '@/features/blog/components/PostCard';
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -16,18 +17,6 @@ const formatDate = (dateString: string) => {
         month: 'long',
         day: 'numeric',
     });
-};
-
-const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return 'just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    return formatDate(dateString);
 };
 
 export const ProfilePage = () => {
@@ -127,51 +116,12 @@ export const ProfilePage = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-6">
-                                    {posts.map((post) => {
-                                        const hasImages = post.imageUrls && post.imageUrls.length > 0;
-
-                                        return (
-                                            <div
-                                                key={post.id}
-                                                className="rounded-lg border p-6 hover:bg-muted/50 transition-colors"
-                                            >
-                                                {/* Post Content */}
-                                                <p className="text-base mb-4 whitespace-pre-wrap">{post.content}</p>
-
-                                                {/* Post Images */}
-                                                {hasImages && (
-                                                    <div className={`grid gap-2 mb-4 ${post.imageUrls.length === 1 ? 'grid-cols-1' :
-                                                        post.imageUrls.length === 2 ? 'grid-cols-2' :
-                                                            'grid-cols-2 md:grid-cols-3'
-                                                        }`}>
-                                                        {post.imageUrls.map((url, index) => (
-                                                            <img
-                                                                key={index}
-                                                                src={url}
-                                                                alt={`Post image ${index + 1}`}
-                                                                className="w-full h-48 object-cover rounded-lg"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                )}
-
-                                                {/* Post Footer */}
-                                                <div className="flex items-center gap-6 text-sm text-muted-foreground pt-4 border-t">
-                                                    <div className="flex items-center gap-2">
-                                                        <Heart className={`h-4 w-4 ${post.isLikedByCurrentUser ? 'fill-red-500 text-red-500' : ''}`} />
-                                                        <span>{post.totalLikes} {post.totalLikes === 1 ? 'like' : 'likes'}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <MessageCircle className="h-4 w-4" />
-                                                        <span>{post.totalComments} {post.totalComments === 1 ? 'comment' : 'comments'}</span>
-                                                    </div>
-                                                    <div className="ml-auto">
-                                                        {formatRelativeTime(post.createdAt)}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                    {posts.map((post) => (
+                                        <PostCard
+                                            key={post.id}
+                                            post={post}
+                                        />
+                                    ))}
                                 </div>
                             )}
                         </CardContent>

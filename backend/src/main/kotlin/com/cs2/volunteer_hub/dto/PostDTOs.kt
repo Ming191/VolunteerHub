@@ -22,7 +22,9 @@ data class PostResponse(
         val totalLikes: Int,
         val totalComments: Int,
         val isLikedByCurrentUser: Boolean,
-        val imageUrls: List<String>
+        val imageUrls: List<String>,
+        val eventId: Long,
+        val eventTitle: String
 )
 
 @Schema(description = "Paginated response for posts with stable JSON structure")
@@ -48,18 +50,18 @@ data class PagePostResponse(
         @Schema(description = "Whether the page is empty", example = "false", required = true)
         val empty: Boolean
 ) {
-    companion object {
-        fun from(page: Page<PostResponse>): PagePostResponse {
-            return PagePostResponse(
-                    content = page.content,
-                    pageNumber = page.number,
-                    pageSize = page.size,
-                    totalElements = page.totalElements,
-                    totalPages = page.totalPages,
-                    last = page.isLast,
-                    first = page.isFirst,
-                    empty = page.isEmpty
-            )
+        companion object {
+                fun from(page: Page<PostResponse>): PagePostResponse {
+                        return PagePostResponse(
+                                content = page.content,
+                                pageNumber = page.number,
+                                pageSize = page.size,
+                                totalElements = page.totalElements,
+                                totalPages = page.totalPages,
+                                last = page.isLast,
+                                first = page.isFirst,
+                                empty = page.isEmpty
+                        )
+                }
         }
-    }
 }
