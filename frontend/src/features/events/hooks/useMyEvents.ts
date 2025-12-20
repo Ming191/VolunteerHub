@@ -9,10 +9,20 @@ export const MY_EVENTS_QUERY_KEY = "my-events";
 export const EVENT_REGISTRATIONS_QUERY_KEY = "event-registrations";
 
 export const useGetMyEvents = (params: MyEventsParams) => {
+    const result = useQuery({
+        queryKey: [MY_EVENTS_QUERY_KEY, params],
+        queryFn: () => eventService.getMyEvents(params),
+        placeholderData: (prev) => prev,
+    });
+
+    // Enable polling if any event is processing images
+    const hasProcessingImages = result.data?.content.some(event => event.imagesProcessing);
+    
     return useQuery({
         queryKey: [MY_EVENTS_QUERY_KEY, params],
         queryFn: () => eventService.getMyEvents(params),
         placeholderData: (prev) => prev,
+        refetchInterval: hasProcessingImages ? 3000 : false, // Poll every 3 seconds if images are processing
     });
 };
 

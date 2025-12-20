@@ -49,10 +49,9 @@ interface PostCardProps {
     onPostDeleted?: (postId: number) => void;
     onPostUpdated?: (postId: number, newContent: string) => void;
     commentsDisabled?: boolean; // If undefined, PostCard will check permissions itself
-    isUploading?: boolean; // Indicates the post is being uploaded (especially with images)
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated, commentsDisabled, isUploading = false }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated, commentsDisabled }) => {
     const { user } = useAuth();
     const isVolunteer = user?.role === 'VOLUNTEER';
 
@@ -159,66 +158,24 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
 
     return (
         <Card className="w-full mb-4 relative overflow-visible">
-            {/* Loading Overlay for uploading posts */}
-            <AnimatePresence mode="wait">
-                {isUploading && (
-                    <motion.div
-                        key="loading-overlay"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="absolute inset-0 z-50 bg-black/70 backdrop-blur-sm rounded-lg flex items-center justify-center"
-                        style={{ pointerEvents: 'all' }}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.8, opacity: 0 }}
-                            transition={{ duration: 0.3, delay: 0.1 }}
-                            className="flex flex-col items-center gap-3 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl border-2 border-primary"
-                        >
-                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                            <div className="text-center">
-                                <p className="text-base font-semibold text-foreground">
-                                    {post.imageUrls && post.imageUrls.length > 0
-                                        ? `Uploading ${post.imageUrls.length} image${post.imageUrls.length > 1 ? 's' : ''}...`
-                                        : 'Creating post...'}
-                                </p>
-                                <p className="text-sm text-muted-foreground mt-2">
-                                    {post.imageUrls && post.imageUrls.length > 0
-                                        ? 'Please wait while we process your images'
-                                        : 'Your post is being submitted'}
-                                </p>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <motion.div
-                animate={{ opacity: isUploading ? 0.5 : 1 }}
-                transition={{ duration: 0.3 }}
-                className={cn(isUploading && "pointer-events-none")}
-            >
-                <CardHeader className="flex flex-row items-center gap-4 p-4">
-                    <Avatar
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={handleViewAuthorProfile}
-                    >
-                        <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
-                        <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col flex-1">
-                        <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm">{post.author.name}</span>
-                            {post.eventTitle && (
-                                <>
-                                    <span className="text-muted-foreground text-xs">in</span>
-                                    <span className="font-medium text-xs text-primary">{post.eventTitle}</span>
-                                </>
-                            )}
-                        </div>
+            <CardHeader className="flex flex-row items-center gap-4 p-4">
+                <Avatar
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={handleViewAuthorProfile}
+                >
+                    <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
+                    <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col flex-1">
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">{post.author.name}</span>
+                        {post.eventTitle && (
+                            <>
+                                <span className="text-muted-foreground text-xs">in</span>
+                                <span className="font-medium text-xs text-primary">{post.eventTitle}</span>
+                            </>
+                        )}
+                    </div>
                         <span className="text-xs text-muted-foreground">
                             {formatDistanceToNowUTC(post.createdAt, { addSuffix: true })}
                         </span>
@@ -308,7 +265,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </motion.div>
 
             <ReportDialog
                 open={isReportDialogOpen}

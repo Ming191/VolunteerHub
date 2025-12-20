@@ -227,6 +227,7 @@ export function EventImages({ eventId, imageUrls, title, showGallery = true }: E
                                                                 <Link
                                                                     to="/events/$eventId"
                                                                     params={{ eventId: String(eventId) }}
+
                                                                     className="font-semibold hover:underline"
                                                                 >
                                                                     {image.authorName}

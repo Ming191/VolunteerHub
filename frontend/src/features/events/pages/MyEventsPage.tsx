@@ -6,13 +6,11 @@ import { EventGrid } from '../components/EventGrid';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { SmartPagination } from '@/components/common/SmartPagination';
 import { useMyEventsPage } from '../hooks/useMyEventsPage';
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
 export const MyEventsScreen = () => {
   const [updatingEventId, setUpdatingEventId] = useState<number | null>(null);
-  const [processingImageEventIds, setProcessingImageEventIds] = useState<Set<number>>(new Set());
-  const timeoutIdsRef = useRef<Map<number, number>>(new Map());
 
   const {
     page,
@@ -32,15 +30,10 @@ export const MyEventsScreen = () => {
     handleFilterChange
   } = useMyEventsPage();
 
-  useEffect(() => {
-    const timeoutIds = timeoutIdsRef.current;
-    return () => {
-      timeoutIds.forEach((timeoutId) => {
-        clearTimeout(timeoutId);
-      });
-      timeoutIds.clear();
-    };
-  }, []);
+  // Derive processing image event IDs from backend data
+  const processingImageEventIds = new Set(
+    eventsData?.content.filter(event => event.imagesProcessing).map(event => event.id) || []
+  );
 
   const handleEventUpdateStart = (eventId: number) => {
     setUpdatingEventId(eventId);
@@ -51,25 +44,9 @@ export const MyEventsScreen = () => {
   };
 
   const handleImageProcessingStart = (eventId: number) => {
-    // Clear existing timeout for this event if any
-    const existingTimeoutId = timeoutIdsRef.current.get(eventId);
-    if (existingTimeoutId !== undefined) {
-      clearTimeout(existingTimeoutId);
-    }
-
-    setProcessingImageEventIds(prev => new Set(prev).add(eventId));
-
-    // Automatically remove after 30 seconds as fallback
-    const timeoutId = setTimeout(() => {
-      setProcessingImageEventIds(prev => {
-        const next = new Set(prev);
-        next.delete(eventId);
-        return next;
-      });
-      timeoutIdsRef.current.delete(eventId);
-    }, 30000);
-
-    timeoutIdsRef.current.set(eventId, timeoutId as unknown as number);
+    // No longer need manual tracking - backend will provide imagesProcessing status
+    // Just trigger a refetch to get updated status
+    console.log('Image processing started for event', eventId);
   };
 
   return (
@@ -154,6 +131,7 @@ export const MyEventsScreen = () => {
           emptyStateDescription="Created events will appear here."
           updatingEventId={updatingEventId}
           processingImageEventIds={processingImageEventIds}
+          showStatus={true}
         />
 
         {/* Pagination */}
