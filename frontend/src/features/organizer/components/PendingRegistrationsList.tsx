@@ -2,17 +2,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Clock, Users } from 'lucide-react';
 import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 
-// Based on usage in OrganizerDashboard.tsx
 interface PendingRegistration {
-    id: number;
-    primaryText: string;
-    secondaryText: string;
-    timestamp: string; // or Date
+    eventId: number;
+    eventTitle: string;
+    registeredAt: string;
 }
 
 interface PendingRegistrationsListProps {
     registrations: PendingRegistration[];
-    onRegistrationClick: () => void;
+    onRegistrationClick: (eventId: number) => void;
 }
 
 export const PendingRegistrationsList = ({ registrations, onRegistrationClick }: PendingRegistrationsListProps) => {
@@ -26,22 +24,22 @@ export const PendingRegistrationsList = ({ registrations, onRegistrationClick }:
                 <div className="space-y-3 max-h-[300px] overflow-y-auto">
                     {registrations.map((registration) => (
                         <div
-                            key={registration.id}
+                            key={`${registration.eventId}-${registration.registeredAt}`}
                             className="p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                            onClick={onRegistrationClick}
+                            onClick={() => onRegistrationClick(registration.eventId)}
                         >
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="font-medium text-sm">{registration.primaryText}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">{registration.secondaryText}</p>
+                                    <p className="font-medium text-sm">{registration.eventTitle}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">New registration</p>
                                 </div>
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <Clock className="h-3 w-3" />
                                     {(() => {
                                         try {
-                                            const date = registration.timestamp ? new Date(registration.timestamp) : new Date();
+                                            const date = registration.registeredAt ? new Date(registration.registeredAt) : new Date();
                                             if (isNaN(date.getTime())) return 'Recently';
-                                            return formatDistanceToNowUTC(registration.timestamp, { addSuffix: true });
+                                            return formatDistanceToNowUTC(registration.registeredAt, { addSuffix: true });
                                         } catch (e) {
                                             return 'Recently';
                                         }
