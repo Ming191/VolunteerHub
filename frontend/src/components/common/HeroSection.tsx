@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Heart, Users, Award, HandHeart } from "lucide-react";
+import { Users, Award, HandHeart } from "lucide-react";
 
 interface HeroSectionProps {
   title: string;
