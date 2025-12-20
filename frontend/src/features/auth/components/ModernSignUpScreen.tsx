@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/select";
 import {
   Loader2,
-  Heart,
   Users,
   Calendar,
   Award,

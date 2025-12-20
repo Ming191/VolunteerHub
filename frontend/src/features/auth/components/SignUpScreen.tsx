@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Heart } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import AnimatedPage from "@/components/common/AnimatedPage";
 import { useSignUpForm } from "../hooks/useSignUpForm";
 import LogoImg from "@/assets/logo.svg";

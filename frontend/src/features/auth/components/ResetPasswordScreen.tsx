@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Lock, ArrowLeft, Heart, Eye, EyeOff } from "lucide-react";
+import { Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
