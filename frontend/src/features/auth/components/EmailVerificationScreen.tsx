@@ -51,10 +51,10 @@ export const EmailVerificationScreen = () => {
             exit="out"
             transition={fadeTransition}
           >
-            <div className="rounded-full bg-green-100 dark:bg-green-900/20 p-4">
-              <CheckCircle className="h-16 w-16 text-green-600 dark:text-green-400" />
+            <div className="rounded-full bg-green-100 p-4">
+              <CheckCircle className="h-16 w-16 text-green-600" />
             </div>
-            <h2 className="text-2xl font-semibold text-green-600 dark:text-green-400">
+            <h2 className="text-2xl font-semibold text-green-600">
               Email Verified!
             </h2>
             {userInfo && (
@@ -88,10 +88,10 @@ export const EmailVerificationScreen = () => {
             exit="out"
             transition={fadeTransition}
           >
-            <div className="rounded-full bg-red-100 dark:bg-red-900/20 p-4">
-              <XCircle className="h-16 w-16 text-red-600 dark:text-red-400" />
+            <div className="rounded-full bg-red-100 p-4">
+              <XCircle className="h-16 w-16 text-red-600" />
             </div>
-            <h2 className="text-2xl font-semibold text-red-600 dark:text-red-400">
+            <h2 className="text-2xl font-semibold text-red-600">
               Verification Failed
             </h2>
             <p className="text-muted-foreground text-center max-w-md">
@@ -123,7 +123,7 @@ export const EmailVerificationScreen = () => {
   };
 
   return (
-    <AnimatedPage className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+    <AnimatedPage className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
           <motion.div

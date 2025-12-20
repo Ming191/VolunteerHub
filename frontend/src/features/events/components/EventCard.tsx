@@ -50,7 +50,7 @@ export const EventCard = <T extends UiEvent | EventResponse>({
   ) as string[];
 
   return (
-    <Card className="group flex flex-col h-full overflow-hidden transition-all duration-200 hover:shadow-xl border-2 border-green-100 dark:border-green-900/30 bg-white dark:bg-gray-900">
+    <Card className="group flex flex-col h-full overflow-hidden transition-all duration-200 hover:shadow-xl border-2 border-gray-200 hover:border-green-600 bg-white shadow-sm">
       {/* Image Header */}
       <CardHeader className="p-0 relative">
         {hasImage ? (
@@ -76,11 +76,11 @@ export const EventCard = <T extends UiEvent | EventResponse>({
             )}
           </div>
         ) : (
-          <div className="w-full h-48 bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-800/20 flex flex-col items-center justify-center gap-3">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 shadow-lg">
+          <div className="w-full h-48 bg-gradient-to-br from-green-50 to-emerald-100 flex flex-col items-center justify-center gap-3">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg">
               <Calendar className="h-12 w-12 text-white" />
             </div>
-            <CardTitle className="text-lg font-bold text-center px-4 line-clamp-2 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
+            <CardTitle className="text-lg font-bold text-center px-4 line-clamp-2 text-gray-900">
               {event.title}
             </CardTitle>
           </div>
@@ -91,33 +91,29 @@ export const EventCard = <T extends UiEvent | EventResponse>({
         {/* Event Details */}
         <div className="space-y-2.5">
           <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-volunteer-600 dark:text-volunteer-400 flex-shrink-0" />
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <Calendar className="h-4 w-4 text-green-600 flex-shrink-0" />
+            <span className="font-medium text-gray-900">
               {formatDate(event.eventDateTime)}
             </span>
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-orange-500 flex-shrink-0" />
-            <span className="text-gray-600 dark:text-gray-400">
+            <Clock className="h-4 w-4 text-green-600 flex-shrink-0" />
+            <span className="text-gray-600">
               {formatTime(event.eventDateTime)}
             </span>
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <MapPin className="h-4 w-4 text-blue-500 flex-shrink-0" />
-            <span className="text-gray-600 dark:text-gray-400 truncate">
-              {event.location}
-            </span>
+            <MapPin className="h-4 w-4 text-green-600 flex-shrink-0" />
+            <span className="text-gray-600 truncate">{event.location}</span>
           </div>
 
           <div className="flex items-center gap-2 text-sm">
-            <Users className="h-4 w-4 text-purple-500 flex-shrink-0" />
+            <Users className="h-4 w-4 text-green-600 flex-shrink-0" />
             <span
               className={`font-medium ${
-                event.isFull
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-gray-900 dark:text-gray-100"
+                event.isFull ? "text-red-600" : "text-gray-900"
               }`}
             >
               {event.isFull ? "Event Full" : availableSpotsText}
@@ -132,7 +128,7 @@ export const EventCard = <T extends UiEvent | EventResponse>({
               <Badge
                 key={tag}
                 variant="secondary"
-                className="text-xs bg-volunteer-100 dark:bg-volunteer-900/30 text-volunteer-700 dark:text-volunteer-300"
+                className="text-xs bg-green-100 text-green-700"
               >
                 {tag.replace(/_/g, " ")}
               </Badge>
@@ -148,7 +144,7 @@ export const EventCard = <T extends UiEvent | EventResponse>({
 
       <CardFooter className="p-4 pt-0">
         <Button
-          className="w-full bg-volunteer-500 hover:bg-volunteer-600 text-white"
+          className="w-full bg-green-600 hover:bg-green-700 text-white"
           onClick={() => onViewDetails?.(event)}
         >
           View Details

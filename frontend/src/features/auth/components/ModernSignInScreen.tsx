@@ -292,9 +292,11 @@ export const ModernSignInScreen = () => {
             <Link to="/signup" className="block">
               <Button
                 variant="outline"
-                className="w-full h-12 text-base font-semibold border-2 border-gray-200 hover:border-green-600 hover:bg-green-50 text-gray-700 hover:text-gray-900 transition-all duration-200"
+                className="w-full h-12 text-base font-semibold border-2 border-gray-200 hover:border-green-600 hover:bg-green-50 text-gray-700 transition-all duration-200"
               >
-                Create an account
+                <span className="text-gray-700 group-hover:text-gray-900 hover:text-gray-900 transition-colors">
+                  Create an account
+                </span>
               </Button>
             </Link>
           </motion.div>
