@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { PostCard } from './PostCard.tsx';
-import type { PostResponse } from '@/api-client';
+import type { PostResponse, PagePostResponse } from '@/api-client';
 import { CreatePost } from './CreatePost.tsx';
 import { blogService } from '@/features/blog/api/blogService.ts';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
@@ -17,11 +17,11 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
   const { ref, inView } = useInView();
   const { createPostMutation } = usePostMutations(eventId);
 
-  const fetchPosts = async ({ pageParam = 0 }) => {
+  const fetchPosts = async ({ pageParam = 0 }): Promise<PagePostResponse> => {
     if (eventId) {
-      return blogService.getPostsForEvent(eventId, pageParam, 20);
+      return blogService.getPostsForEvent(eventId, pageParam, 3);
     }
-    return blogService.getRecentPostsFeed(7, pageParam, 20);
+    return blogService.getRecentPostsFeed(7, pageParam, 3);
   };
 
   const {
@@ -34,7 +34,7 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
   } = useInfiniteQuery({
     queryKey: ['posts', eventId ? `event-${eventId}` : 'feed'],
     queryFn: fetchPosts,
-    getNextPageParam: (lastPage: any) => {
+    getNextPageParam: (lastPage: PagePostResponse) => {
       if (lastPage.last) return undefined;
       return lastPage.pageNumber + 1;
     },
@@ -43,7 +43,7 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
 
   useEffect(() => {
     if (inView && hasNextPage) {
-      fetchNextPage();
+      void fetchNextPage();
     }
   }, [inView, hasNextPage, fetchNextPage]);
 

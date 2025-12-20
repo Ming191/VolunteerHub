@@ -4,6 +4,7 @@ import {
   CommentsApi,
   Configuration,
   LikesApi,
+  type PagePostResponse,
   type PostResponse,
   PostsApi
 } from '@/api-client';
@@ -14,16 +15,15 @@ const likeApi = new LikesApi(config, undefined, axiosInstance);
 const commentApi = new CommentsApi(config, undefined, axiosInstance);
 
 export const blogService = {
-  getPostsForEvent: async (eventId: number, page = 0, size = 20) => {
-    const response = await axiosInstance.get<PostResponse>(
+  getPostsForEvent: async (eventId: number, page = 0, size = 20): Promise<PagePostResponse> => {
+    const response = await axiosInstance.get<PagePostResponse>(
       `api/events/${eventId}/posts`,
       { params: { page, size } }
     );
-    // @ts-ignore - Manual cast because generated client typing might mismatch locally updated DTO
     return response.data;
   },
 
-  getRecentPostsFeed: async (days = 7, page = 0, size = 20) => {
+  getRecentPostsFeed: async (days = 7, page = 0, size = 20): Promise<PagePostResponse> => {
     const response = await postsApi.getRecentPostsFeed({ days, page, size });
     return response.data;
   },

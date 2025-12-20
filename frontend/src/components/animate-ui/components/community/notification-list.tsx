@@ -99,12 +99,17 @@ function NotificationList() {
         onClick={() => setIsOpen(!isOpen)}
       >
         <Bell className="h-5 w-5" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
+
       </Button>
+
+      {unreadCount > 0 && (
+        <span
+          className="absolute -top-1 -right-1 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium cursor-pointer z-10"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {unreadCount > 9 ? '9+' : unreadCount}
+        </span>
+      )}
 
       {/* Dropdown panel */}
       <AnimatePresence>
