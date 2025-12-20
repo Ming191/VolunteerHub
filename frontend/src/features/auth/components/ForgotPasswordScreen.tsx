@@ -211,7 +211,7 @@ export const ForgotPasswordScreen = () => {
                         <Input
                           placeholder="name@example.com"
                           type="email"
-                          className="pl-10 h-12 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200"
+                          className="pl-10 h-12 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200 text-gray-900 bg-white"
                           {...field}
                         />
                       </div>
