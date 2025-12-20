@@ -99,6 +99,7 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange, onEventUpdateSta
                                 eventId={event.id}
                                 imageUrls={event.imageUrls}
                                 title={event.title}
+                                showGallery={false}
                             />
                             <EventBadges event={event} />
                             <EventDateInfo event={event} />

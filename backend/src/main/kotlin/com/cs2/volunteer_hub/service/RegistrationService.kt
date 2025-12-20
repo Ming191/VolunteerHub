@@ -32,7 +32,7 @@ class RegistrationService(
 ) {
     private val logger = LoggerFactory.getLogger(RegistrationService::class.java)
 
-    @CacheEvict(value = ["userRegistrations"], key = "#userEmail")
+    @CacheEvict(value = ["userRegistrations", "volunteerDashboard", "organizerDashboard", "organizerAnalytics"], key = "#userEmail")
     @Transactional
     fun registerForEvent(eventId: Long, userEmail: String): RegistrationResultResponse {
         val user = userRepository.findByEmailOrThrow(userEmail)
@@ -107,7 +107,7 @@ class RegistrationService(
         return registrationMapper.toRegistrationStatusResponse(registration)
     }
 
-    @CacheEvict(value = ["userRegistrations"], key = "#userEmail")
+    @CacheEvict(value = ["userRegistrations", "volunteerDashboard", "organizerDashboard", "organizerAnalytics"], key = "#userEmail")
     @Transactional
     fun cancelRegistration(eventId: Long, userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)

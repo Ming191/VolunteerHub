@@ -5,6 +5,7 @@ import { useOrganizerAnalytics } from '../hooks/useOrganizerAnalytics';
 import { SkeletonTransition } from '@/components/common/SkeletonTransition';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import type { DashboardTopEventItem } from '@/api-client';
+import { useMemo } from 'react';
 
 const AnalyticsSkeleton = () => (
   <div className="max-w-6xl mx-auto p-6 space-y-6 animate-pulse">
@@ -25,14 +26,14 @@ const AnalyticsSkeleton = () => (
 export const OrganizerAnalytics = () => {
   const { analyticsData, isLoading, isError, error, refetch } = useOrganizerAnalytics();
 
-  const stats = analyticsData || {
+  const stats = useMemo(() => analyticsData || {
     totalEvents: 0,
     totalRegistrations: 0,
     activeEvents: 0,
     avgRegistrationRate: 0,
     topEvents: [],
     registrationsByStatus: {}
-  };
+  }, [analyticsData]);
 
   return (
     <AnimatedPage>

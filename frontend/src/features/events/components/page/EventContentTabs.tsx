@@ -180,6 +180,7 @@ export const EventGallery = ({ event }: { event: EventResponse }) => {
                     eventId={event.id}
                     imageUrls={event.imageUrls}
                     title={event.title}
+                    showGallery={true}
                 />
             </CardContent>
         </Card>

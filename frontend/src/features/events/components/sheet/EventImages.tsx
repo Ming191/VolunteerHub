@@ -20,6 +20,7 @@ interface EventImagesProps {
     eventId: number;
     imageUrls?: string[];
     title: string;
+    showGallery?: boolean;
 }
 
 const EventImageItem = ({
@@ -60,7 +61,7 @@ const EventImageItem = ({
     );
 };
 
-export function EventImages({ eventId, imageUrls, title }: EventImagesProps) {
+export function EventImages({ eventId, imageUrls, title, showGallery = true }: EventImagesProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
     const [emblaRef, emblaApi] = useEmblaCarousel({ startIndex: selectedImageIndex ?? 0, loop: true });
     const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -78,6 +79,7 @@ export function EventImages({ eventId, imageUrls, title }: EventImagesProps) {
         queryFn: ({ pageParam = 0 }) => eventService.getEventGallery(eventId, pageParam, 20),
         initialPageParam: 0,
         getNextPageParam: (lastPage) => lastPage.last ? undefined : lastPage.pageNumber + 1,
+        enabled: showGallery,
     });
 
     // Combine main event images with paginated gallery images
@@ -94,7 +96,7 @@ export function EventImages({ eventId, imageUrls, title }: EventImagesProps) {
         ) || [];
 
         return [...mainImages, ...galleryImages];
-    }, [imageUrls, data]);
+    }, [imageUrls, data, showGallery]);
 
     const onSelect = useCallback((api: EmblaCarouselType) => {
         setCurrentIndex(api.selectedScrollSnap());
