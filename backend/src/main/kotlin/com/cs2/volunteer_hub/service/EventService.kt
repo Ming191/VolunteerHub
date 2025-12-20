@@ -58,7 +58,7 @@ class EventService(
 ) {
         private val logger = LoggerFactory.getLogger(EventService::class.java)
 
-        @CacheEvict(value = ["events"], allEntries = true)
+        @CacheEvict(value = ["events", "organizerDashboard", "organizerAnalytics", "adminDashboard"], allEntries = true)
         @Transactional
         fun createEvent(
                 request: CreateEventRequest,
@@ -173,18 +173,6 @@ class EventService(
                         )
 
                 // 2. Security Check: Current user must be Organizer or an Approved Participant
-                val isOrganizer =
-                        event.creator.id == user.id ||
-                                user.role ==
-                                        com.cs2.volunteer_hub.model.Role
-                                                .EVENT_ORGANIZER // Simplified check, ideally strict
-                // owner check
-                // Strict owner check from auth service:
-                // val isOwner = event.creator.id == user.id
-
-                // To be safe and allow any organizer to view (if that's the rule) or just owner.
-                // The requirement said "Event Organizer". usually means the creator.
-                // Let's stick to: Creator OR Approved Participant.
 
                 val isCreator = event.creator.id == user.id
                 val isApprovedParticipant = approvedRegistrations.any { it.user.id == user.id }
@@ -255,8 +243,6 @@ class EventService(
                         event.tags.addAll(it)
                 }
 
-                // Handle image removals: If existingImageUrls provided, remove any images not in
-                // this list
                 request.existingImageUrls?.let { keepUrls ->
                         event.images.removeIf { image ->
                                 image.url != null && !keepUrls.contains(image.url)
@@ -276,7 +262,6 @@ class EventService(
                 val updatedEvent = eventRepository.save(event)
                 logger.info("Updated event ID: $id by user: $currentUserEmail")
 
-                // Trigger async image upload if there are pending images
                 val hasPendingImages =
                         updatedEvent.images.any {
                                 it.status == com.cs2.volunteer_hub.model.ImageStatus.PENDING_UPLOAD
@@ -373,14 +358,7 @@ class EventService(
                         imagePage.content.mapNotNull { image ->
                                 eventMapper.toGalleryImageResponse(image, eventId)
                         }
-
-                // Create a generic Page for the response content
-                // Note: The total validation is slightly approximate because mapNotNull might
-                // filter out some images
-                // but our query logic in Repository guarantees they match so mapNotNull shouldn't
-                // filter valid ones.
                 val resultPage = PageImpl(galleryImages, pageable, imagePage.totalElements)
-
                 return com.cs2.volunteer_hub.dto.PageGalleryImageResponse.from(resultPage)
         }
 }

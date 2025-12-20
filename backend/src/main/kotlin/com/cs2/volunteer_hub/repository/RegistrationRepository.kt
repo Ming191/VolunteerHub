@@ -107,4 +107,23 @@ interface RegistrationRepository : JpaRepository<Registration, Long>, JpaSpecifi
         ORDER BY r.waitlistPosition ASC
     """)
     fun findWaitlistedRegistrationsByEventIdWithAssociations(@Param("eventId") eventId: Long): List<Registration>
+
+    /**
+     * Get registration counts grouped by status for events created by a specific organizer
+     * Optimized single query to replace multiple count queries
+     */
+    @Query("""
+        SELECT r.status as status, COUNT(r.id) as count
+        FROM Registration r
+        JOIN r.event e
+        WHERE e.creator.id = :creatorId
+        GROUP BY r.status
+    """)
+    fun countRegistrationsByStatusForCreator(@Param("creatorId") creatorId: Long): List<Map<String, Any>>
+
+    /**
+     * Get event IDs only for approved registrations - optimized projection query
+     */
+    @Query("SELECT r.event.id FROM Registration r WHERE r IN :registrations")
+    fun getEventIdsFromRegistrations(@Param("registrations") registrations: List<Registration>): List<Long>
 }
