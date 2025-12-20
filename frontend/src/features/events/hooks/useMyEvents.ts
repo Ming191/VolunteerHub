@@ -1,7 +1,6 @@
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventService, type MyEventsParams } from "@/features/events/api/eventService";
-import type { UpdateStatusRequestStatusEnum, UpdateEventRequest } from "@/api-client";
+import type {UpdateEventRequest, UpdateStatusRequestStatusEnum} from "@/api-client";
 import { toast } from "sonner";
 import { EVENTS_QUERY_KEY } from "@/features/events/hooks/useEvents";
 
@@ -43,9 +42,27 @@ export const useUpdateRegistrationStatus = (eventId: number) => {
             queryClient.invalidateQueries({
                 queryKey: [EVENT_REGISTRATIONS_QUERY_KEY, eventId],
             });
+
+          // 2️⃣ Refresh event detail (counts pending / approved)
+          queryClient.invalidateQueries({
+            queryKey: [EVENTS_QUERY_KEY, eventId],
+          });
         },
     });
 };
+
+export const useMarkRegistrationCompleted = (eventId: number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (registrationId: number) => eventService.markRegistrationCompleted(registrationId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [EVENT_REGISTRATIONS_QUERY_KEY, eventId],
+      });
+    }
+  });
+}
 
 export function useUpdateEvent() {
     const queryClient = useQueryClient();

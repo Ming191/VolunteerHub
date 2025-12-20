@@ -7,6 +7,7 @@ import AnimatedPage from '@/components/common/AnimatedPage';
 import { SmartPagination } from '@/components/common/SmartPagination';
 import { useMyEventsPage } from '../hooks/useMyEventsPage';
 import { useState, useRef, useEffect } from 'react';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 
 export const MyEventsScreen = () => {
   const [updatingEventId, setUpdatingEventId] = useState<number | null>(null);
@@ -81,15 +82,52 @@ export const MyEventsScreen = () => {
 
           <div className="flex gap-2">
             {/* Sort (Optional) */}
-            <select
-              className="border rounded-lg px-3 py-2"
-              value={filters.sort || ''}
-              onChange={(e) => handleFilterChange({ sort: e.target.value || undefined })}
+            <Select
+              value={
+                filters.sort
+                  ? `${filters.sort}_${filters.direction}`
+                  : 'DEFAULT'
+              }
+              onValueChange={(value) => {
+                if (value === 'DEFAULT') {
+                  handleFilterChange({
+                    sort: undefined,
+                    direction: 'DESC',
+                  });
+                  return;
+                }
+
+                const [sort, direction] = value.split('_');
+
+                handleFilterChange({
+                  sort,
+                  direction: direction as 'ASC' | 'DESC',
+                });
+              }}
             >
-              <option value="">Sort by</option>
-              <option value="eventDateTime">Start Date</option>
-              <option value="createdAt">Created At</option>
-            </select>
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue placeholder="Sort events" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="DEFAULT">Default</SelectItem>
+
+                <SelectItem value="eventDateTime_DESC">
+                  🔽 Start Date (Newest)
+                </SelectItem>
+                <SelectItem value="eventDateTime_ASC">
+                  🔼 Start Date (Oldest)
+                </SelectItem>
+
+                <SelectItem value="createdAt_DESC">
+                  🔽 Created At (Newest)
+                </SelectItem>
+                <SelectItem value="createdAt_ASC">
+                  🔼 Created At (Oldest)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
 
             <Button onClick={() => setIsCreateModalOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
