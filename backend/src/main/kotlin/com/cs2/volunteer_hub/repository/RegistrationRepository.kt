@@ -1,11 +1,14 @@
 package com.cs2.volunteer_hub.repository
 
 import com.cs2.volunteer_hub.model.Registration
+import com.cs2.volunteer_hub.model.RegistrationStatus
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 interface RegistrationRepository : JpaRepository<Registration, Long>, JpaSpecificationExecutor<Registration> {
@@ -126,4 +129,39 @@ interface RegistrationRepository : JpaRepository<Registration, Long>, JpaSpecifi
      */
     @Query("SELECT r.event.id FROM Registration r WHERE r IN :registrations")
     fun getEventIdsFromRegistrations(@Param("registrations") registrations: List<Registration>): List<Long>
+
+    /**
+     * Find registration IDs matching criteria (for pagination with eager loading)
+     */
+    @Query("""
+        SELECT r.id FROM Registration r
+        JOIN r.event e
+        JOIN r.user u
+        WHERE e.id = :eventId
+        AND (:status IS NULL OR r.status = :status)
+        AND (:searchText IS NULL OR LOWER(u.name) LIKE LOWER(CONCAT('%', :searchText, '%'))
+            OR LOWER(u.email) LIKE LOWER(CONCAT('%', :searchText, '%')))
+        AND (:registeredAfter IS NULL OR r.registeredAt >= :registeredAfter)
+        AND (:registeredBefore IS NULL OR r.registeredAt <= :registeredBefore)
+        ORDER BY r.registeredAt DESC
+    """)
+    fun findRegistrationIdsByFilters(
+        @Param("eventId") eventId: Long,
+        @Param("status") status: RegistrationStatus?,
+        @Param("searchText") searchText: String?,
+        @Param("registeredAfter") registeredAfter: java.time.LocalDateTime?,
+        @Param("registeredBefore") registeredBefore: java.time.LocalDateTime?,
+        pageable: org.springframework.data.domain.Pageable
+    ): List<Long>
+
+    /**
+     * Load registrations by IDs with all associations
+     */
+    @Query("""
+        SELECT DISTINCT r FROM Registration r
+        JOIN FETCH r.user
+        JOIN FETCH r.event
+        WHERE r.id IN :ids
+    """)
+    fun findByIdsWithAssociations(@Param("ids") ids: List<Long>): List<Registration>
 }

@@ -14,6 +14,7 @@ import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import java.time.LocalDateTime
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
@@ -49,35 +50,50 @@ class EventManagerService(
     ): Page<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
-        var spec: Specification<Registration> = RegistrationSpecifications.forEvent(eventId)
+        logger.info(
+                "Searching registrations for event $eventId with filters - text: $searchText, status: $status, after: $registeredAfter, before: $registeredBefore"
+        )
 
+        // OPTIMIZED: First get registration IDs with filters, then fetch with associations
+        val registrationIds = registrationRepository.findRegistrationIdsByFilters(
+            eventId = eventId,
+            status = status,
+            searchText = searchText?.trim(),
+            registeredAfter = registeredAfter,
+            registeredBefore = registeredBefore,
+            pageable = pageable
+        )
+
+        if (registrationIds.isEmpty()) {
+            return Page.empty(pageable)
+        }
+
+        // Load registrations with all associations in single query
+        val registrationsWithAssociations = registrationRepository.findByIdsWithAssociations(registrationIds)
+        
+        // Maintain original order from query
+        val registrationMap = registrationsWithAssociations.associateBy { it.id }
+        val orderedRegistrations = registrationIds.mapNotNull { registrationMap[it] }
+
+        val registrationResponses = orderedRegistrations.map(registrationMapper::toRegistrationResponse)
+
+        // Get total count for pagination
+        var spec: Specification<Registration> = RegistrationSpecifications.forEvent(eventId)
         if (!searchText.isNullOrBlank()) {
             spec = spec.and(RegistrationSpecifications.userSearchText(searchText.trim()))
         }
-
         if (status != null) {
             spec = spec.and(RegistrationSpecifications.hasStatus(status))
         }
-
         if (registeredAfter != null) {
             spec = spec.and(RegistrationSpecifications.registeredAfter(registeredAfter))
         }
         if (registeredBefore != null) {
             spec = spec.and(RegistrationSpecifications.registeredBefore(registeredBefore))
         }
+        val totalCount = registrationRepository.count(spec)
 
-        logger.info(
-                "Searching registrations for event $eventId with filters - text: $searchText, status: $status, after: $registeredAfter, before: $registeredBefore"
-        )
-
-        val page = registrationRepository.findAll(spec, pageable)
-
-        page.content.forEach { registration ->
-            registration.user.name
-            registration.event.title
-        }
-
-        return page.map(registrationMapper::toRegistrationResponse)
+        return org.springframework.data.domain.PageImpl(registrationResponses, pageable, totalCount)
     }
 
     @Transactional
@@ -158,7 +174,7 @@ class EventManagerService(
         return registrationMapper.toRegistrationResponse(promoted)
     }
 
-    // @Cacheable(value = ["eventRegistrations"], key = "#eventId")
+    @Cacheable(value = ["eventRegistrations"], key = "#eventId")
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)

@@ -17,14 +17,19 @@ RUN sh ./gradlew dependencies --no-daemon || return 0
 # Copy source code
 COPY src src
 
-# Build application
-RUN sh ./gradlew bootJar -x test --no-daemon
+# Build application with build cache enabled
+RUN --mount=type=cache,target=/root/.gradle \
+    sh ./gradlew bootJar -x test --no-daemon --build-cache --parallel
 
 # Production stage with optimized JRE
 FROM eclipse-temurin:23-jre-alpine
 
 # Add non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
+
+# Create temp upload directory with proper permissions
+RUN mkdir -p /tmp/temp-uploads && chown spring:spring /tmp/temp-uploads
+
 USER spring:spring
 
 VOLUME /tmp

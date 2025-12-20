@@ -102,6 +102,7 @@ class PostService(
         val user = userEmail?.let { userRepository.findByEmailOrThrow(it) }
         authorizationService.requireEventReadPermission(eventId, user?.id)
 
+        // OPTIMIZED: First get post IDs with pagination, then fetch with associations
         val spec = PostSpecifications.forEvent(eventId)
         val postPage = postRepository.findAll(spec, pageable)
 
@@ -109,10 +110,16 @@ class PostService(
             return Page.empty(pageable)
         }
 
+        // Load posts with all associations in single query
         val postIds = postPage.content.map { it.id }
-        val likedPostIds = user?.let { getLikedPostIdsByUser(it.id, postIds) } ?: emptySet()
+        val postsWithAssociations = postRepository.findByIdsWithAssociations(postIds)
+        
+        // Maintain original order from pagination
+        val postMap = postsWithAssociations.associateBy { it.id }
+        val orderedPosts = postIds.mapNotNull { postMap[it] }
 
-        val postResponses = postMapper.toPostResponseList(postPage.content, likedPostIds)
+        val likedPostIds = user?.let { getLikedPostIdsByUser(it.id, postIds) } ?: emptySet()
+        val postResponses = postMapper.toPostResponseList(orderedPosts, likedPostIds)
 
         return PageImpl(postResponses, pageable, postPage.totalElements)
     }

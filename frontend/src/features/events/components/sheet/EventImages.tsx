@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import { Image as ImageIcon, X, User, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AlertDialog, AlertDialogPopup } from '@/components/animate-ui/components/base/alert-dialog';
 import { Link } from '@tanstack/react-router';
@@ -23,7 +23,7 @@ interface EventImagesProps {
     showGallery?: boolean;
 }
 
-const EventImageItem = ({
+const EventImageItem = memo(({
     url,
     title,
     index,
@@ -59,7 +59,9 @@ const EventImageItem = ({
             )}
         </div>
     );
-};
+});
+
+EventImageItem.displayName = 'EventImageItem';
 
 export function EventImages({ eventId, imageUrls, title, showGallery = true }: EventImagesProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
@@ -84,7 +86,22 @@ export function EventImages({ eventId, imageUrls, title, showGallery = true }: E
 
     // Combine main event images with paginated gallery images
     const imagesToDisplay = useMemo(() => {
-        const mainImages = imageUrls?.map(url => ({ url, source: 'event' as const, authorName: undefined, postId: undefined as number | undefined })) || [];
+        if (!showGallery && imageUrls) {
+            // If gallery is disabled, only show main images
+            return imageUrls.map(url => ({ 
+                url, 
+                source: 'event' as const, 
+                authorName: undefined, 
+                postId: undefined as number | undefined 
+            }));
+        }
+
+        const mainImages = imageUrls?.map(url => ({ 
+            url, 
+            source: 'event' as const, 
+            authorName: undefined, 
+            postId: undefined as number | undefined 
+        })) || [];
 
         const galleryImages = data?.pages.flatMap(page =>
             page.content.map(img => ({
