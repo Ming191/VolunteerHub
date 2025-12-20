@@ -52,7 +52,7 @@ class CommentController(private val commentService: CommentService) {
             @PathVariable postId: Long,
             @AuthenticationPrincipal currentUser: UserDetails?,
             @RequestParam(defaultValue = "0") page: Int,
-            @RequestParam(defaultValue = "50") size: Int
+            @RequestParam(defaultValue = "20") size: Int
     ): ResponseEntity<Page<CommentResponse>> {
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt"))
         val comments = commentService.getCommentsForPost(postId, currentUser?.username, pageable)
