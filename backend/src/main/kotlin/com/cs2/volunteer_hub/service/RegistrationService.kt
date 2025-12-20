@@ -28,11 +28,11 @@ class RegistrationService(
     private val notificationService: NotificationService,
     private val waitlistService: WaitlistService,
     private val registrationMapper: RegistrationMapper,
-    private val eventCapacityService: EventCapacityService
+    private val eventCapacityService: EventCapacityService,
+    private val cacheEvictionService: CacheEvictionService
 ) {
     private val logger = LoggerFactory.getLogger(RegistrationService::class.java)
 
-    @CacheEvict(value = ["userRegistrations", "volunteerDashboard", "organizerDashboard", "organizerAnalytics"], key = "#userEmail")
     @Transactional
     fun registerForEvent(eventId: Long, userEmail: String): RegistrationResultResponse {
         val user = userRepository.findByEmailOrThrow(userEmail)
@@ -88,6 +88,11 @@ class RegistrationService(
             saved
         }
 
+        // Evict caches for both volunteer and organizer
+        cacheEvictionService.evictUserRegistrations(userEmail)
+        cacheEvictionService.evictDashboardCaches(userEmail)
+        cacheEvictionService.evictDashboardCaches(event.creator.email)
+
         return registrationMapper.toRegistrationResultResponse(savedRegistration)
     }
 
@@ -107,7 +112,6 @@ class RegistrationService(
         return registrationMapper.toRegistrationStatusResponse(registration)
     }
 
-    @CacheEvict(value = ["userRegistrations", "volunteerDashboard", "organizerDashboard", "organizerAnalytics"], key = "#userEmail")
     @Transactional
     fun cancelRegistration(eventId: Long, userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
@@ -129,8 +133,15 @@ class RegistrationService(
             waitlistService.removeFromWaitlist(registration)
         }
 
+        val organizerEmail = registration.event.creator.email
+        
         registrationRepository.delete(registration)
         logger.info("User ${user.id} cancelled registration for event $eventId")
+
+        // Evict caches for both volunteer and organizer
+        cacheEvictionService.evictUserRegistrations(userEmail)
+        cacheEvictionService.evictDashboardCaches(userEmail)
+        cacheEvictionService.evictDashboardCaches(organizerEmail)
 
         if (wasApproved) {
             val promoted = waitlistService.promoteFromWaitlist(eventId)
