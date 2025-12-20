@@ -80,39 +80,40 @@
   --sidebar-ring: 34 197 94;
 }
 
+/* Dark mode disabled - Light theme only */
 .dark {
-  /* Dark theme - Cozy and warm for volunteers */
-  --background: 17 24 39; /* Deep dark blue */
-  --foreground: 249 250 251;
-  --card: 31 41 55; /* Slightly lighter card */
-  --card-foreground: 249 250 251;
-  --popover: 31 41 55;
-  --popover-foreground: 249 250 251;
-  --primary: 74 222 128; /* Bright green for dark mode */
-  --primary-foreground: 17 24 39;
-  --secondary: 251 146 60; /* Warm orange */
+  /* Fallback to light theme if dark class is accidentally applied */
+  --background: 249 250 251;
+  --foreground: 17 24 39;
+  --card: 255 255 255;
+  --card-foreground: 17 24 39;
+  --popover: 255 255 255;
+  --popover-foreground: 17 24 39;
+  --primary: 34 197 94;
+  --primary-foreground: 255 255 255;
+  --secondary: 251 146 60;
   --secondary-foreground: 255 255 255;
-  --muted: 55 65 81;
-  --muted-foreground: 156 163 175;
-  --accent: 167 139 250; /* Purple accent */
+  --muted: 243 244 246;
+  --muted-foreground: 107 114 128;
+  --accent: 167 139 250;
   --accent-foreground: 255 255 255;
   --destructive: 239 68 68;
-  --border: 55 65 81;
-  --input: 55 65 81;
-  --ring: 74 222 128;
-  --chart-1: 74 222 128;
+  --border: 229 231 235;
+  --input: 229 231 235;
+  --ring: 34 197 94;
+  --chart-1: 34 197 94;
   --chart-2: 251 146 60;
   --chart-3: 167 139 250;
   --chart-4: 96 165 250;
   --chart-5: 251 191 36;
-  --sidebar: 31 41 55;
-  --sidebar-foreground: 249 250 251;
-  --sidebar-primary: 74 222 128;
-  --sidebar-primary-foreground: 17 24 39;
-  --sidebar-accent: 55 65 81;
-  --sidebar-accent-foreground: 249 250 251;
-  --sidebar-border: 55 65 81;
-  --sidebar-ring: 74 222 128;
+  --sidebar: 255 255 255;
+  --sidebar-foreground: 17 24 39;
+  --sidebar-primary: 34 197 94;
+  --sidebar-primary-foreground: 255 255 255;
+  --sidebar-accent: 243 244 246;
+  --sidebar-accent-foreground: 17 24 39;
+  --sidebar-border: 229 231 235;
+  --sidebar-ring: 34 197 94;
 }
 
 /* Custom scrollbar styles for modern look */
@@ -160,7 +161,11 @@ html {
 }
 
 /* Smooth transitions for all interactive elements */
-button, a, input, textarea, select {
+button,
+a,
+input,
+textarea,
+select {
   transition: all 0.2s ease-in-out;
 }
 

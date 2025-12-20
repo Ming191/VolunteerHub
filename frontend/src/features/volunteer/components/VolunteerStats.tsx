@@ -1,4 +1,4 @@
-import { Calendar, Clock, TrendingUp } from "lucide-react";
+import { Calendar, Clock, Sparkles } from "lucide-react";
 import { StatsCard } from "@/components/common/StatsCard";
 import { motion } from "framer-motion";
 
@@ -39,7 +39,7 @@ export const VolunteerStats = ({ stats }: VolunteerStatsProps) => {
           value={stats.upcomingCount}
           description="Events you're registered for"
           icon={Calendar}
-          variant="volunteer"
+          variant="default"
         />
       </motion.div>
       <motion.div variants={itemVariants}>
@@ -56,7 +56,7 @@ export const VolunteerStats = ({ stats }: VolunteerStatsProps) => {
           title="New Opportunities"
           value={stats.newCount}
           description="Recently published events"
-          icon={TrendingUp}
+          icon={Sparkles}
           variant="purple"
         />
       </motion.div>

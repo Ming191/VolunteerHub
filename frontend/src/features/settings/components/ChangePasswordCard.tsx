@@ -131,6 +131,7 @@ export const ChangePasswordCard = () => {
                       />
                       <button
                         type="button"
+                        tabIndex={-1}
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
@@ -166,6 +167,7 @@ export const ChangePasswordCard = () => {
                       />
                       <button
                         type="button"
+                        tabIndex={-1}
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       >
@@ -203,6 +205,7 @@ export const ChangePasswordCard = () => {
                       />
                       <button
                         type="button"
+                        tabIndex={-1}
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }

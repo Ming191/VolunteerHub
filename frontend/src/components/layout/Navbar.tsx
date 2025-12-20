@@ -96,30 +96,30 @@ const Navbar = () => {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-56 bg-white z-50">
+              <DropdownMenuLabel className="bg-white">
                 <div className="font-semibold text-gray-900">{user?.name}</div>
                 <div className="font-normal text-sm text-gray-600">
                   {user?.email}
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-gray-200" />
               <DropdownMenuItem
                 onClick={() => navigate({ to: "/profile" })}
-                className="cursor-pointer hover:bg-green-50 hover:text-gray-900"
+                className="cursor-pointer text-gray-900 hover:bg-green-50 hover:text-green-700 focus:bg-green-50 focus:text-green-700"
               >
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => navigate({ to: "/settings" })}
-                className="cursor-pointer hover:bg-green-50 hover:text-gray-900"
+                className="cursor-pointer text-gray-900 hover:bg-green-50 hover:text-green-700 focus:bg-green-50 focus:text-green-700"
               >
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-gray-200" />
               <DropdownMenuItem
                 onClick={logout}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 focus:bg-red-50 focus:text-red-700 cursor-pointer"
               >
                 Log Out
               </DropdownMenuItem>

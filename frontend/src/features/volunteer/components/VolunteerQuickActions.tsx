@@ -26,27 +26,29 @@ export const VolunteerQuickActions = ({
       icon: Users,
       label: "Registrations",
       onClick: onRegistrations,
-      color: "from-blue-600 to-blue-700",
+      color: "from-green-600 to-emerald-600",
     },
     {
       icon: Bell,
       label: "Notifications",
       onClick: onNotifications,
-      color: "from-orange-500 to-orange-600",
+      color: "from-green-600 to-emerald-600",
     },
     {
       icon: UserCircle,
       label: "Profile",
       onClick: onProfile,
-      color: "from-purple-600 to-purple-700",
+      color: "from-green-600 to-emerald-600",
     },
   ];
 
   return (
-    <Card className="h-full border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-gray-50 to-white">
-      <CardHeader className="pb-3">
+    <Card className="h-full border-2 border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+      <CardHeader className="pb-3 border-b border-gray-100">
         <CardTitle className="text-base font-bold flex items-center gap-2 text-gray-900">
-          <div className="h-2 w-2 rounded-full bg-green-600 animate-pulse" />
+          <div className="p-2 rounded-lg bg-gradient-to-br from-green-100 to-green-200">
+            <div className="h-2 w-2 rounded-full bg-green-600" />
+          </div>
           Quick Actions
         </CardTitle>
       </CardHeader>

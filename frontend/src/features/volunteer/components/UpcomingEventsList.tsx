@@ -20,12 +20,12 @@ export const UpcomingEventsList = ({
   onEventClick,
 }: UpcomingEventsListProps) => {
   return (
-    <Card className="lg:col-span-2 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="bg-gradient-to-br from-green-50 to-emerald-50 border-b-2 border-gray-200">
+    <Card className="lg:col-span-2 border-2 border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+      <CardHeader className="border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500">
-              <Calendar className="h-5 w-5 text-white" />
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-green-100 to-green-200 shadow-sm">
+              <Calendar className="h-5 w-5 text-green-600" />
             </div>
             <div>
               <CardTitle className="text-lg font-bold text-gray-900">
@@ -82,19 +82,22 @@ export const UpcomingEventsList = ({
           ))}
           {events.length === 0 && (
             <motion.div
-              className="text-center py-12"
+              className="text-center py-16"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
             >
-              <div className="inline-flex p-4 rounded-full bg-gray-100 mb-4">
-                <Calendar className="h-10 w-10 text-gray-400" />
+              <div className="inline-flex p-5 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 mb-4">
+                <Calendar className="h-12 w-12 text-green-600" />
               </div>
-              <p className="text-sm font-semibold text-gray-900 mb-1">
-                No upcoming events
+              <p className="text-base font-bold text-gray-900 mb-2">
+                No upcoming events yet
               </p>
-              <p className="text-xs text-gray-500">
-                Browse events to find opportunities
+              <p className="text-sm text-gray-600 mb-6">
+                Discover amazing volunteer opportunities waiting for you
               </p>
+              <button className="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold text-sm shadow-sm hover:shadow-md transition-all duration-200">
+                Browse Events
+              </button>
             </motion.div>
           )}
         </div>
