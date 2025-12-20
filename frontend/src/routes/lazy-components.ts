@@ -91,3 +91,51 @@ export const SettingsPage = lazy(() =>
     default: m.SettingsPage,
   }))
 );
+
+export const EventDetailsPage = lazy(() =>
+  import("@/features/events/pages/EventDetailsPage").then((m) => ({
+    default: m.EventDetailsPage,
+  }))
+);
+
+export const PostDetailsPage = lazy(() =>
+  import("@/features/blog/pages/PostDetailsPage").then((m) => ({
+    default: m.PostDetailsPage,
+  }))
+);
+
+export const EventAboutRoute = lazy(() =>
+  import("@/features/events/pages/EventTabRoutes").then((m) => ({
+    default: m.EventAboutRoute,
+  }))
+);
+
+export const EventCommunityRoute = lazy(() =>
+  import("@/features/events/pages/EventTabRoutes").then((m) => ({
+    default: m.EventCommunityRoute,
+  }))
+);
+
+export const EventAttendeesRoute = lazy(() =>
+  import("@/features/events/pages/EventTabRoutes").then((m) => ({
+    default: m.EventAttendeesRoute,
+  }))
+);
+
+export const EventGalleryRoute = lazy(() =>
+  import("@/features/events/pages/EventTabRoutes").then((m) => ({
+    default: m.EventGalleryRoute,
+  }))
+);
+
+export const AdminManagementPage = lazy(() =>
+  import("@/features/admin/pages/AdminManagementPage").then((m) => ({
+    default: m.AdminManagementPage,
+  }))
+);
+
+export const AdminReportsPage = lazy(() =>
+  import("@/features/admin/pages/AdminReportsPage").then((m) => ({
+    default: m.AdminReportsPage,
+  }))
+);
