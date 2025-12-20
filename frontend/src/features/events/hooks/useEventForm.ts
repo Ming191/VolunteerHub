@@ -12,7 +12,7 @@ interface UseEventFormProps {
     isSubmitting?: boolean;
 }
 
-export const  useEventForm = ({
+export const useEventForm = ({
     defaultValues,
     initialImages,
     onSubmit,
@@ -52,7 +52,7 @@ export const  useEventForm = ({
         if (initialImages) {
             setExistingImages(initialImages);
         }
-    }, [defaultValues, initialImages, ]);
+    }, [defaultValues, initialImages,]);
 
     const validateFile = (file: File): boolean => {
         if (!file.type.startsWith('image/')) {
@@ -66,10 +66,35 @@ export const  useEventForm = ({
         return true;
     };
 
-    const handleFileChange = (newFiles: File[]): void => {
-        const validFiles = newFiles.filter(validateFile);
-        const combinedFiles = [...files, ...validFiles].slice(0, MAX_IMAGES - existingImages.length);
-        setFiles(combinedFiles);
+    const handleFileChange = (updatedFiles: File[]): void => {
+        const allowedSlots = MAX_IMAGES - existingImages.length;
+
+        if (updatedFiles.length > files.length) {
+            const newFilesStartIndex = files.length;
+            const addedFiles = updatedFiles.slice(newFilesStartIndex);
+
+            const validAddedFiles = addedFiles.filter(validateFile);
+
+            if (validAddedFiles.length !== addedFiles.length) {
+                const validFiles = [...files, ...validAddedFiles];
+                if (validFiles.length > allowedSlots) {
+                    toast.error(`Maximum ${MAX_IMAGES} images allowed`, {
+                        description: `Only ${allowedSlots} more image(s) could be added. Extra files were discarded.`
+                    });
+                }
+                const finalFiles = validFiles.slice(0, allowedSlots);
+                setFiles(finalFiles);
+                return;
+            }
+        }
+
+        if (updatedFiles.length > allowedSlots) {
+            toast.error(`Maximum ${MAX_IMAGES} images allowed`, {
+                description: `Only ${allowedSlots} more image(s) could be added. Extra files were discarded.`
+            });
+        }
+        const finalFiles = updatedFiles.slice(0, allowedSlots);
+        setFiles(finalFiles);
     };
 
     const validateUserPermissions = (): { isValid: boolean; userRole?: string } => {
@@ -99,12 +124,6 @@ export const  useEventForm = ({
             return;
         }
 
-        if (userRole !== 'EVENT_ORGANIZER' && userRole !== 'ADMIN') {
-            toast.error('Permission denied', {
-                description: `Only Event Organizers and Admins can manage events. Your role: ${userRole}`,
-            });
-            return;
-        }
 
         await onSubmit(values, files, existingImages);
     };

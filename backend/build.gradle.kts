@@ -86,6 +86,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     // https://mvnrepository.com/artifact/io.mailtrap/mailtrap-java
     implementation("io.mailtrap:mailtrap-java:1.1.0")
+
+    // https://mvnrepository.com/artifact/com.google.guava/guava
+    implementation("com.google.guava:guava:33.0.0-jre")
 }
 
 kotlin {

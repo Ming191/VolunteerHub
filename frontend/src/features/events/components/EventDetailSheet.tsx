@@ -25,18 +25,23 @@ import { useDeleteEvent } from "../hooks/useMyEvents.ts";
 import {EventRegistrationsModal} from "@/features/events/components/EventRegistrationsModal.tsx";
 import {useEventPermissions} from "@/features/events/hooks/useEventPermissions.ts";
 import {useRegisterForEvent} from "@/features/volunteer/hooks/useRegistration.ts";
+import {ConfirmDialog} from "@/components/common/ConfirmDialog.tsx";
 
 interface EventDetailSheetProps {
   event: EventResponse | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onEventUpdateStart?: (eventId: number) => void;
+  onEventUpdateEnd?: () => void;
+  onImageProcessingStart?: (eventId: number) => void;
 }
 
 type SheetView = 'event-details' | 'registrations';
 
-export const EventDetailSheet = ({ event, isOpen, onOpenChange }: EventDetailSheetProps) => {
+export const EventDetailSheet = ({ event, isOpen, onOpenChange, onEventUpdateStart, onEventUpdateEnd, onImageProcessingStart }: EventDetailSheetProps) => {
     const [isEditEventModalOpen, setEditEventModalOpen] = useState(false);
     const registerMutation = useRegisterForEvent();
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const deleteEventMutation = useDeleteEvent();
     const [currentView, setCurrentView] = useState<SheetView>('event-details');
 
@@ -60,8 +65,18 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange }: EventDetailShe
     }
 
     const handleDeleteEvent = () => {
-        deleteEventMutation.mutate(event.id);
+      setDeleteDialogOpen(true);
     }
+
+    const confirmDeleteEvent = () => {
+      deleteEventMutation.mutate(event.id, {
+        onSuccess: () => {
+          setDeleteDialogOpen(false);
+          onOpenChange(false);
+        },
+      });
+    };
+
 
     const handleEditEvent = () => {
         setEditEventModalOpen(true);
@@ -135,7 +150,28 @@ export const EventDetailSheet = ({ event, isOpen, onOpenChange }: EventDetailShe
                 onSuccess={() => {
                     // reload data or callback
                 }}
+                onUpdateStart={onEventUpdateStart}
+                onUpdateEnd={onEventUpdateEnd}
+                onImageProcessingStart={onImageProcessingStart}
             />
+
+            <ConfirmDialog
+              open={deleteDialogOpen}
+              onOpenChange={setDeleteDialogOpen}
+              title="Delete Event"
+              description={
+                <>
+                  Are you sure you want to delete the event{" "}
+                  <strong>{event.title}</strong>?
+                  This action cannot be undone.
+                </>
+              }
+              confirmText="Delete Event"
+              confirmVariant="destructive"
+              isLoading={deleteEventMutation.isPending}
+              onConfirm={confirmDeleteEvent}
+            />
+
         </Sheet>
     );
 }

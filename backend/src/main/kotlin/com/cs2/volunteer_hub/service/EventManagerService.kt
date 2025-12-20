@@ -12,42 +12,40 @@ import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.findByEmailOrThrow
 import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
+import java.time.LocalDateTime
 import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 
 @Service
 class EventManagerService(
-    private val registrationRepository: RegistrationRepository,
-    private val userRepository: UserRepository,
-    private val rabbitTemplate: RabbitTemplate,
-    private val registrationMapper: RegistrationMapper,
-    private val waitlistService: WaitlistService,
-    private val authorizationService: AuthorizationService,
-    private val cacheEvictionService: CacheEvictionService,
-    private val emailQueueService: EmailQueueService
+        private val registrationRepository: RegistrationRepository,
+        private val userRepository: UserRepository,
+        private val rabbitTemplate: RabbitTemplate,
+        private val registrationMapper: RegistrationMapper,
+        private val waitlistService: WaitlistService,
+        private val authorizationService: AuthorizationService,
+        private val cacheEvictionService: CacheEvictionService,
+        private val emailQueueService: EmailQueueService
 ) {
     private val logger = org.slf4j.LoggerFactory.getLogger(EventManagerService::class.java)
 
     /**
-     * Search and filter registrations for a specific event
-     * Supports multiple filters: text search, status, date range
-     * Returns paginated results
+     * Search and filter registrations for a specific event Supports multiple filters: text search,
+     * status, date range Returns paginated results
      */
     @Transactional(readOnly = true)
     fun searchEventRegistrations(
-        eventId: Long,
-        searchText: String?,
-        status: RegistrationStatus?,
-        registeredAfter: LocalDateTime?,
-        registeredBefore: LocalDateTime?,
-        pageable: Pageable,
-        managerEmail: String
+            eventId: Long,
+            searchText: String?,
+            status: RegistrationStatus?,
+            registeredAfter: LocalDateTime?,
+            registeredBefore: LocalDateTime?,
+            pageable: Pageable,
+            managerEmail: String
     ): Page<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
@@ -68,7 +66,9 @@ class EventManagerService(
             spec = spec.and(RegistrationSpecifications.registeredBefore(registeredBefore))
         }
 
-        logger.info("Searching registrations for event $eventId with filters - text: $searchText, status: $status, after: $registeredAfter, before: $registeredBefore")
+        logger.info(
+                "Searching registrations for event $eventId with filters - text: $searchText, status: $status, after: $registeredAfter, before: $registeredBefore"
+        )
 
         val page = registrationRepository.findAll(spec, pageable)
 
@@ -81,7 +81,10 @@ class EventManagerService(
     }
 
     @Transactional
-    fun markRegistrationAsCompleted(registrationId: Long, managerEmail: String): RegistrationResponse {
+    fun markRegistrationAsCompleted(
+            registrationId: Long,
+            managerEmail: String
+    ): RegistrationResponse {
         val registration = registrationRepository.findByIdOrThrow(registrationId)
 
         authorizationService.requireEventOwnership(registration.event.id, managerEmail)
@@ -90,7 +93,9 @@ class EventManagerService(
             throw BadRequestException("Only approved registrations can be marked as completed.")
         }
         if (!registration.event.isPast()) {
-            throw BadRequestException("Cannot mark as completed for events that have not ended yet.")
+            throw BadRequestException(
+                    "Cannot mark as completed for events that have not ended yet."
+            )
         }
 
         cacheEvictionService.evictRelatedCaches(registration)
@@ -98,22 +103,22 @@ class EventManagerService(
         registration.status = RegistrationStatus.COMPLETED
         val savedRegistration = registrationRepository.save(registration)
 
-        queueRegistrationStatusUpdate(registrationId)
+        queueRegistrationStatusUpdate(registrationId, RegistrationStatus.COMPLETED)
 
         return registrationMapper.toRegistrationResponse(savedRegistration)
     }
 
     /**
-     * Bulk mark all approved registrations for past events as completed
-     * Uses forPastEvents() specification to find eligible registrations
-     * Useful for scheduled jobs or bulk operations
+     * Bulk mark all approved registrations for past events as completed Uses forPastEvents()
+     * specification to find eligible registrations Useful for scheduled jobs or bulk operations
      */
     @Transactional
     fun bulkCompleteRegistrationsForPastEvents(managerEmail: String): Int {
         val manager = userRepository.findByEmailOrThrow(managerEmail)
-        val spec = RegistrationSpecifications.forEventsCreatedBy(manager.id)
-            .and(RegistrationSpecifications.hasStatus(RegistrationStatus.APPROVED))
-            .and(RegistrationSpecifications.forPastEvents())
+        val spec =
+                RegistrationSpecifications.forEventsCreatedBy(manager.id)
+                        .and(RegistrationSpecifications.hasStatus(RegistrationStatus.APPROVED))
+                        .and(RegistrationSpecifications.forPastEvents())
         val registrationsToComplete = registrationRepository.findAll(spec)
         if (registrationsToComplete.isEmpty()) {
             return 0
@@ -124,37 +129,36 @@ class EventManagerService(
         registrationRepository.saveAll(registrationsToComplete)
         registrationsToComplete.forEach { registration ->
             cacheEvictionService.evictRelatedCaches(registration)
-            queueRegistrationStatusUpdate(registration.id)
+            queueRegistrationStatusUpdate(registration.id, RegistrationStatus.COMPLETED)
         }
 
-        logger.info("Bulk completed ${registrationsToComplete.size} registrations for past events by manager ${manager.id}")
+        logger.info(
+                "Bulk completed ${registrationsToComplete.size} registrations for past events by manager ${manager.id}"
+        )
         return registrationsToComplete.size
     }
 
-    /**
-     * Get waitlist for a specific event
-     */
+    /** Get waitlist for a specific event */
     @Transactional(readOnly = true)
     fun getEventWaitlist(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
         return waitlistService.getWaitlistResponsesForEvent(eventId)
     }
 
-    /**
-     * Manually promote someone from waitlist
-     */
+    /** Manually promote someone from waitlist */
     @Transactional
     fun promoteFromWaitlist(eventId: Long, managerEmail: String): RegistrationResponse {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
-        val promoted = waitlistService.promoteFromWaitlist(eventId)
-            ?: throw BadRequestException("No one on waitlist or event is full")
+        val promoted =
+                waitlistService.promoteFromWaitlist(eventId)
+                        ?: throw BadRequestException("No one on waitlist or event is full")
 
         cacheEvictionService.evictRelatedCaches(promoted)
         return registrationMapper.toRegistrationResponse(promoted)
     }
 
-    //@Cacheable(value = ["eventRegistrations"], key = "#eventId")
+    // @Cacheable(value = ["eventRegistrations"], key = "#eventId")
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
@@ -164,124 +168,127 @@ class EventManagerService(
 
         // Sort in memory since we're using custom query
         return registrations
-            .sortedByDescending { it.registeredAt }
-            .map(registrationMapper::toRegistrationResponse)
+                .sortedByDescending { it.registeredAt }
+                .map(registrationMapper::toRegistrationResponse)
     }
 
     /**
-     * Get registrations by status for an event using NEW Composite Specification
-     * Uses approvedForEvent(), pendingForEvent(), or waitlistedForEvent()
+     * Get registrations by status for an event using NEW Composite Specification Uses
+     * approvedForEvent(), pendingForEvent(), or waitlistedForEvent()
      */
     @Transactional(readOnly = true)
     fun getRegistrationsByStatus(
-        eventId: Long,
-        status: RegistrationStatus,
-        managerEmail: String
+            eventId: Long,
+            status: RegistrationStatus,
+            managerEmail: String
     ): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
         // Use JOIN FETCH query to eagerly load associations in single query
-        val registrations = registrationRepository.findAllByEventIdAndStatusWithAssociations(eventId, status)
+        val registrations =
+                registrationRepository.findAllByEventIdAndStatusWithAssociations(eventId, status)
 
         return registrations
-            .sortedByDescending { it.registeredAt }
-            .map(registrationMapper::toRegistrationResponse)
+                .sortedByDescending { it.registeredAt }
+                .map(registrationMapper::toRegistrationResponse)
     }
 
     /**
-     * Get all pending registrations for events created by this manager
-     * Uses NEW composite specifications for cleaner code
+     * Get all pending registrations for events created by this manager Uses NEW composite
+     * specifications for cleaner code
      */
     @Transactional(readOnly = true)
     fun getAllPendingRegistrations(managerEmail: String): List<RegistrationResponse> {
         val manager = userRepository.findByEmailOrThrow(managerEmail)
 
         // Use JOIN FETCH query to eagerly load associations
-        val registrations = registrationRepository.findAllByEventCreatorIdAndStatusWithAssociations(
-            manager.id,
-            RegistrationStatus.PENDING
-        )
+        val registrations =
+                registrationRepository.findAllByEventCreatorIdAndStatusWithAssociations(
+                        manager.id,
+                        RegistrationStatus.PENDING
+                )
 
         return registrations
-            .sortedByDescending { it.registeredAt }
-            .map(registrationMapper::toRegistrationResponse)
+                .sortedByDescending { it.registeredAt }
+                .map(registrationMapper::toRegistrationResponse)
     }
 
     /**
-     * Get all approved registrations for manager's events
-     * Uses NEW composite specification isApproved()
+     * Get all approved registrations for manager's events Uses NEW composite specification
+     * isApproved()
      */
     @Transactional(readOnly = true)
     fun getAllApprovedRegistrations(managerEmail: String): List<RegistrationResponse> {
         val manager = userRepository.findByEmailOrThrow(managerEmail)
 
         // Use JOIN FETCH query to eagerly load associations
-        val registrations = registrationRepository.findAllByEventCreatorIdAndStatusWithAssociations(
-            manager.id,
-            RegistrationStatus.APPROVED
-        )
+        val registrations =
+                registrationRepository.findAllByEventCreatorIdAndStatusWithAssociations(
+                        manager.id,
+                        RegistrationStatus.APPROVED
+                )
 
         return registrations
-            .sortedByDescending { it.registeredAt }
-            .map(registrationMapper::toRegistrationResponse)
+                .sortedByDescending { it.registeredAt }
+                .map(registrationMapper::toRegistrationResponse)
     }
 
     /**
-     * Get all active registrations (approved + waitlisted) for an event
-     * Uses NEW composite specification activeForEvent()
+     * Get all active registrations (approved + waitlisted) for an event Uses NEW composite
+     * specification activeForEvent()
      */
     @Transactional(readOnly = true)
     fun getActiveRegistrations(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
         // Use JOIN FETCH query to eagerly load associations
-        val registrations = registrationRepository.findActiveRegistrationsByEventIdWithAssociations(eventId)
+        val registrations =
+                registrationRepository.findActiveRegistrationsByEventIdWithAssociations(eventId)
 
         return registrations
-            .sortedByDescending { it.registeredAt }
-            .map(registrationMapper::toRegistrationResponse)
+                .sortedByDescending { it.registeredAt }
+                .map(registrationMapper::toRegistrationResponse)
     }
 
-    /**
-     * Get all completed registrations for an event
-     * Uses NEW specification isCompleted()
-     */
+    /** Get all completed registrations for an event Uses NEW specification isCompleted() */
     @Transactional(readOnly = true)
     fun getCompletedRegistrations(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
         // Use JOIN FETCH query to eagerly load associations
-        val registrations = registrationRepository.findCompletedRegistrationsByEventIdWithAssociations(eventId)
+        val registrations =
+                registrationRepository.findCompletedRegistrationsByEventIdWithAssociations(eventId)
 
         return registrations
-            .sortedByDescending { it.registeredAt }
-            .map(registrationMapper::toRegistrationResponse)
+                .sortedByDescending { it.registeredAt }
+                .map(registrationMapper::toRegistrationResponse)
     }
 
     /**
-     * Get all completed registrations across all manager's events
-     * Useful for analytics and reporting
+     * Get all completed registrations across all manager's events Useful for analytics and
+     * reporting
      */
     @Transactional(readOnly = true)
     fun getAllCompletedRegistrationsForManager(managerEmail: String): List<RegistrationResponse> {
         val manager = userRepository.findByEmailOrThrow(managerEmail)
 
         // Use JOIN FETCH query to eagerly load associations
-        val registrations = registrationRepository.findCompletedRegistrationsByCreatorIdWithAssociations(manager.id)
+        val registrations =
+                registrationRepository.findCompletedRegistrationsByCreatorIdWithAssociations(
+                        manager.id
+                )
 
         return registrations
-            .sortedByDescending { it.registeredAt }
-            .map(registrationMapper::toRegistrationResponse)
+                .sortedByDescending { it.registeredAt }
+                .map(registrationMapper::toRegistrationResponse)
     }
 
-    /**
-     * Update registration status (approve/reject) and handle waitlist promotion
-     */
+    /** Update registration status (approve/reject) and handle waitlist promotion */
     @Transactional
     fun updateRegistrationStatus(
-        registrationId: Long,
-        newStatus: RegistrationStatus,
-        managerEmail: String
+            registrationId: Long,
+            newStatus: RegistrationStatus,
+            managerEmail: String
     ): RegistrationResponse {
         val registration = registrationRepository.findByIdOrThrow(registrationId)
 
@@ -299,15 +306,15 @@ class EventManagerService(
         val savedRegistration = registrationRepository.save(registration)
 
         // Queue notification for status update
-        queueRegistrationStatusUpdate(registrationId)
+        queueRegistrationStatusUpdate(registrationId, newStatus)
 
-        // Send email notification
-        emailQueueService.queueRegistrationStatusEmail(
-            email = savedRegistration.user.email,
-            name = savedRegistration.user.name,
-            eventTitle = savedRegistration.event.title,
-            status = newStatus.name
-        )
+        // Send email notification - COMMENTED OUT FOR DEBUGGING
+        // emailQueueService.queueRegistrationStatusEmail(
+        //    email = savedRegistration.user.email,
+        //    name = savedRegistration.user.name,
+        //    eventTitle = savedRegistration.event.title,
+        //    status = newStatus.name
+        // )
 
         // If rejecting or cancelling an approved registration, promote from waitlist
         if (oldStatus == RegistrationStatus.APPROVED && newStatus == RegistrationStatus.REJECTED) {
@@ -317,16 +324,23 @@ class EventManagerService(
         return registrationMapper.toRegistrationResponse(savedRegistration)
     }
 
-    private fun queueRegistrationStatusUpdate(registrationId: Long) {
+    private fun queueRegistrationStatusUpdate(registrationId: Long, status: RegistrationStatus) {
         try {
-            val message = RegistrationStatusUpdateMessage(registrationId = registrationId)
+            val message =
+                    RegistrationStatusUpdateMessage(
+                            registrationId = registrationId,
+                            status = status
+                    )
             rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.REGISTRATION_STATUS_UPDATED_ROUTING_KEY,
-                message
+                    RabbitMQConfig.EXCHANGE_NAME,
+                    RabbitMQConfig.REGISTRATION_STATUS_UPDATED_ROUTING_KEY,
+                    message
             )
         } catch (e: Exception) {
-            logger.error("Failed to send registration status update message to RabbitMQ for registrationId: $registrationId", e)
+            logger.error(
+                    "Failed to send registration status update message to RabbitMQ for registrationId: $registrationId",
+                    e
+            )
         }
     }
 }

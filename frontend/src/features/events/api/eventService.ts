@@ -135,10 +135,36 @@ const updateRegistrationStatus = async (
     return response.data;
 };
 
-const updateEvent = async (eventId: number, data: UpdateEventRequest): Promise<EventResponse> => {
-    const response = await eventsApi.updateEvent({
-        id: eventId,
-        updateEventRequest: data,
+const markRegistrationCompleted = async (registrationId: number) => {
+    const response = await eventManagerApi.markRegistrationAsCompleted({registrationId});
+    return response.data;
+};
+
+const updateEvent = async (eventId: number, data: UpdateEventRequest, files?: File[], remainingImages?: string[]): Promise<EventResponse> => {
+    const formData = new FormData();
+
+    const requestData = {
+        ...data,
+        existingImageUrls: remainingImages
+    };
+
+    // Add request JSON
+    const jsonBlob = new Blob([JSON.stringify(requestData)], {
+        type: 'application/json'
+    });
+    formData.append('request', jsonBlob);
+
+    // Add files if present
+    if (files) {
+        files.forEach((file) => {
+            formData.append('files', file);
+        });
+    }
+
+    const response = await axiosInstance.put<EventResponse>(`/api/events/${eventId}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
     });
     return response.data;
 }
@@ -157,6 +183,7 @@ export const eventService = {
     getMyEvents,
     getEventRegistrations,
     updateRegistrationStatus,
+    markRegistrationCompleted,
     updateEvent,
     deleteEvent,
 };

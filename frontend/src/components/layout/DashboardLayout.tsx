@@ -78,25 +78,25 @@ const DashboardLayout = () => {
       : []),
   ];
 
-  return (
-    <div className="flex flex-col h-screen w-full bg-gradient-to-br from-gray-50 via-white to-green-50">
-      {/* Navbar Component */}
-      <Navbar />
-      <ThemeListener />
+    return (
+        <div className="flex flex-col h-screen w-full">
+            {/* Navbar Component */}
+            <Navbar />
+            <ThemeListener />
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 pb-24 sm:pb-16">
-        <div className="max-w-7xl mx-auto">
-          <Outlet />
+            {/* Main Content Area */}
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 pb-24 sm:pb-16">
+                {/* Outlet renders the active child route */}
+                <Outlet />
+                {/* Spacer for Floating Dock removed; use padding instead */}
+            </main>
+
+            {/* Floating Dock at the bottom */}
+            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+                <FloatingDock items={dockItems} />
+            </div>
         </div>
-      </main>
-
-      {/* Floating Dock at the bottom */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-        <FloatingDock items={dockItems} />
-      </div>
-    </div>
-  );
+    );
 };
 
 export default DashboardLayout;

@@ -6,7 +6,13 @@ import { authenticatedLayoutRoute } from './dashboard.routes';
 import {
     EventListPage,
     MyEventsPage,
-    MyRegistrationsScreen
+    MyRegistrationsScreen,
+    EventDetailsPage,
+    PostDetailsPage,
+    EventAboutRoute,
+    EventCommunityRoute,
+    EventAttendeesRoute,
+    EventGalleryRoute
 } from './lazy-components';
 
 export const eventsRoute = createRoute({
@@ -22,6 +28,42 @@ export const eventsRoute = createRoute({
         size: z.number().optional(),
     }),
     component: () => <Suspense fallback={<SuspenseFallback />}><EventListPage /></Suspense>,
+});
+
+export const eventDetailsRoute = createRoute({
+    getParentRoute: () => authenticatedLayoutRoute,
+    path: '/events/$eventId',
+    component: () => <Suspense fallback={<SuspenseFallback />}><EventDetailsPage /></Suspense>,
+});
+
+export const eventAboutRoute = createRoute({
+    getParentRoute: () => eventDetailsRoute,
+    path: '/',
+    component: () => <Suspense fallback={<SuspenseFallback />}><EventAboutRoute /></Suspense>,
+});
+
+export const eventCommunityRoute = createRoute({
+    getParentRoute: () => eventDetailsRoute,
+    path: 'posts',
+    component: () => <Suspense fallback={<SuspenseFallback />}><EventCommunityRoute /></Suspense>,
+});
+
+export const eventAttendeesRoute = createRoute({
+    getParentRoute: () => eventDetailsRoute,
+    path: 'attendees',
+    component: () => <Suspense fallback={<SuspenseFallback />}><EventAttendeesRoute /></Suspense>,
+});
+
+export const eventGalleryRoute = createRoute({
+    getParentRoute: () => eventDetailsRoute,
+    path: 'gallery',
+    component: () => <Suspense fallback={<SuspenseFallback />}><EventGalleryRoute /></Suspense>,
+});
+
+export const postDetailsRoute = createRoute({
+    getParentRoute: () => authenticatedLayoutRoute,
+    path: 'events/$eventId/posts/$postId',
+    component: () => <Suspense fallback={<SuspenseFallback />}><PostDetailsPage /></Suspense>,
 });
 
 export const myEventsRoute = createRoute({

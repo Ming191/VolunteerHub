@@ -18,7 +18,7 @@ export const useVolunteerDashboard = () => {
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
-    const handleNavigateToEvent = useCallback(() => navigate({ to: '/events' }), [navigate]);
+    const handleNavigateToEvent = useCallback((eventId: number) => navigate({ to: '/events/$eventId', params: { eventId: eventId.toString() } }), [navigate]);
     const handleNavigateToEvents = useCallback(() => navigate({ to: '/events' }), [navigate]);
     const handleNavigateToRegisteredEvents = useCallback(() => navigate({ to: '/my-registrations' }), [navigate]);
     const handleNavigateToNotifications = useCallback(() => navigate({ to: '/notifications' }), [navigate]);
