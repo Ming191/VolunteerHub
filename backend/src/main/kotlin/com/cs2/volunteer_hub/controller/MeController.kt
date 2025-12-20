@@ -81,6 +81,15 @@ class MeController(
         return ResponseEntity.ok().build()
     }
 
+    @Operation(summary = "Delete FCM tokens", description = "Delete all FCM tokens for the current user")
+    @DeleteMapping("/fcm-tokens", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun deleteFcmTokens(
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<Unit> {
+        meService.deleteFcmTokensForUser(currentUser.username)
+        return ResponseEntity.ok().build()
+    }
+
     @Operation(summary = "Upload profile picture", description = "Upload a new profile picture for the current user")
     @PostMapping("/profile-picture", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun uploadProfilePicture(

@@ -211,51 +211,44 @@ class AdminService(
     }
 
     @Transactional(readOnly = true)
-    fun getPendingEvents(): List<EventResponse> {
+    fun getPendingEvents(pageable: Pageable): Page<EventResponse> {
         val spec = EventSpecifications.isNotApproved()
-        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
-        return eventMapper.toEventResponseList(events)
+        return eventRepository.findAll(spec, pageable).map(eventMapper::toEventResponse)
     }
 
     @Transactional(readOnly = true)
-    fun searchAllEvents(searchTerm: String): List<EventResponse> {
+    fun searchAllEvents(searchTerm: String, pageable: Pageable): Page<EventResponse> {
         val spec = EventSpecifications.searchText(searchTerm)
-        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
-        return eventMapper.toEventResponseList(events)
+        return eventRepository.findAll(spec, pageable).map(eventMapper::toEventResponse)
     }
 
     @Transactional(readOnly = true)
-    fun getPastEvents(): List<EventResponse> {
+    fun getPastEvents(pageable: Pageable): Page<EventResponse> {
         val spec = EventSpecifications.pastPublishedEvents()
-        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "eventDateTime"))
-        return eventMapper.toEventResponseList(events)
+        return eventRepository.findAll(spec, pageable).map(eventMapper::toEventResponse)
     }
 
     @Transactional(readOnly = true)
-    fun getUpcomingEvents(): List<EventResponse> {
+    fun getUpcomingEvents(pageable: Pageable): Page<EventResponse> {
         val spec = EventSpecifications.upcomingPublishedEvents()
-        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
-        return eventMapper.toEventResponseList(events)
+        return eventRepository.findAll(spec, pageable).map(eventMapper::toEventResponse)
     }
 
     @Transactional(readOnly = true)
-    fun getInProgressEvents(): List<EventResponse> {
+    fun getInProgressEvents(pageable: Pageable): Page<EventResponse> {
         val spec = EventSpecifications.isInProgress()
-        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
-        return eventMapper.toEventResponseList(events)
+        return eventRepository.findAll(spec, pageable).map(eventMapper::toEventResponse)
     }
 
     @Transactional(readOnly = true)
-    fun getEventsAcceptingRegistrations(): List<EventResponse> {
+    fun getEventsAcceptingRegistrations(pageable: Pageable): Page<EventResponse> {
         val spec = EventSpecifications.registrationOpen()
-        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "eventDateTime"))
-        return eventMapper.toEventResponseList(events)
+        return eventRepository.findAll(spec, pageable).map(eventMapper::toEventResponse)
     }
 
     @Transactional(readOnly = true)
-    fun getActiveEventsByCreator(creatorId: Long): List<EventResponse> {
+    fun getActiveEventsByCreator(creatorId: Long, pageable: Pageable): Page<EventResponse> {
         val spec = EventSpecifications.activeEventsByCreator(creatorId)
-        val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
-        return eventMapper.toEventResponseList(events)
+        return eventRepository.findAll(spec, pageable).map(eventMapper::toEventResponse)
     }
 }

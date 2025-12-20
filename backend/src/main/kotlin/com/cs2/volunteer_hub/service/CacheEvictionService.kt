@@ -67,5 +67,12 @@ class CacheEvictionService(
         evictEventRegistrations(eventId)
         evictPosts(eventId)
     }
+
+    /**
+     * Evict public user profile cache
+     */
+    fun evictPublicUserProfile(userId: Long) {
+        cacheManager.getCache("publicUserProfiles")?.evict(userId)
+    }
 }
 
