@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.config.RabbitMQConfig
 import com.cs2.volunteer_hub.dto.ChangePasswordRequest
+import com.cs2.volunteer_hub.dto.CompletedEventResponse
 import com.cs2.volunteer_hub.dto.ProfilePictureUploadMessage
 import com.cs2.volunteer_hub.dto.RegistrationResponse
 import com.cs2.volunteer_hub.dto.UpdateProfileRequest
@@ -9,10 +10,12 @@ import com.cs2.volunteer_hub.dto.UserResponse
 import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import com.cs2.volunteer_hub.mapper.UserMapper
 import com.cs2.volunteer_hub.model.FcmToken
+import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.FcmTokenRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.findByEmailOrThrow
+import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.annotation.CacheEvict
@@ -44,7 +47,7 @@ class MeService(
     fun getMyRegistrations(userEmail: String, pageable: Pageable): Page<RegistrationResponse> {
         // Get registration IDs first for pagination
         val user = userRepository.findByEmailOrThrow(userEmail)
-        val spec = com.cs2.volunteer_hub.specification.RegistrationSpecifications.byUser(user.id)
+        val spec = RegistrationSpecifications.byUser(user.id)
         val page = registrationRepository.findAll(spec, pageable)
         
         if (page.isEmpty) {
@@ -64,6 +67,30 @@ class MeService(
             pageable,
             page.totalElements
         )
+    }
+
+    @Cacheable(value = ["userCompletedEvents"], key = "#userEmail")
+    @Transactional(readOnly = true)
+    fun getMyCompletedEvents(userEmail: String): List<CompletedEventResponse> {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val spec = RegistrationSpecifications.byUser(user.id)
+            .and(RegistrationSpecifications.isCompleted())
+        
+        val completedRegistrations = registrationRepository.findAll(spec)
+        
+        return completedRegistrations
+            .sortedByDescending { it.event.eventDateTime }
+            .take(20) // Limit to most recent 20 completed events
+            .map { registration ->
+                CompletedEventResponse(
+                    eventId = registration.event.id,
+                    eventTitle = registration.event.title,
+                    eventDateTime = registration.event.eventDateTime,
+                    location = registration.event.location,
+                    imageUrl = registration.event.images.firstOrNull()?.url,
+                    tags = registration.event.tags.map { it.name }.toSet()
+                )
+            }
     }
 
     @Transactional

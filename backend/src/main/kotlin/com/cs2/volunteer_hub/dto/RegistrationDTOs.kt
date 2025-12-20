@@ -46,6 +46,16 @@ data class RegistrationStatusResponse(
         val registeredAt: LocalDateTime?
 )
 
+/** Completed event summary for user profile */
+data class CompletedEventResponse(
+        val eventId: Long,
+        val eventTitle: String,
+        val eventDateTime: LocalDateTime,
+        val location: String,
+        val imageUrl: String?,
+        val tags: Set<String>
+)
+
 @Schema(description = "Paginated response for registrations with stable JSON structure")
 data class PageRegistrationResponse(
         @Schema(description = "List of registrations in the current page", required = true)
