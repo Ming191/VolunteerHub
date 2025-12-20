@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -22,14 +25,15 @@ class NotificationController(private val notificationService: NotificationServic
 
     @Operation(
         summary = "Get my notifications",
-        description = "Retrieve all notifications for the current user",
+        description = "Retrieve all notifications for the current user with pagination",
         security = [SecurityRequirement(name = "bearerAuth")]
     )
     @GetMapping
     fun getMyNotifications(
-        @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<List<NotificationResponse>> {
-        val notifications = notificationService.getNotificationsForUser(currentUser.username)
+        @AuthenticationPrincipal currentUser: UserDetails,
+        @PageableDefault(size = 20, sort = ["createdAt"], direction = org.springframework.data.domain.Sort.Direction.DESC) pageable: Pageable
+    ): ResponseEntity<Page<NotificationResponse>> {
+        val notifications = notificationService.getNotificationsForUser(currentUser.username, pageable)
         return ResponseEntity.ok(notifications)
     }
 
@@ -39,14 +43,15 @@ class NotificationController(private val notificationService: NotificationServic
      */
     @Operation(
         summary = "Get unread notifications",
-        description = "Retrieve only unread notifications for the current user",
+        description = "Retrieve only unread notifications for the current user with pagination",
         security = [SecurityRequirement(name = "bearerAuth")]
     )
     @GetMapping("/unread")
     fun getUnreadNotifications(
-        @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<List<NotificationResponse>> {
-        val notifications = notificationService.getUnreadNotificationsForUser(currentUser.username)
+        @AuthenticationPrincipal currentUser: UserDetails,
+        @PageableDefault(size = 20, sort = ["createdAt"], direction = org.springframework.data.domain.Sort.Direction.DESC) pageable: Pageable
+    ): ResponseEntity<Page<NotificationResponse>> {
+        val notifications = notificationService.getUnreadNotificationsForUser(currentUser.username, pageable)
         return ResponseEntity.ok(notifications)
     }
 
@@ -56,16 +61,17 @@ class NotificationController(private val notificationService: NotificationServic
      */
     @Operation(
         summary = "Get recent notifications",
-        description = "Retrieve notifications from the last N days (default 7 days)",
+        description = "Retrieve notifications from the last N days (default 7 days) with pagination",
         security = [SecurityRequirement(name = "bearerAuth")]
     )
     @GetMapping("/recent")
     fun getRecentNotifications(
         @Parameter(description = "Number of days to look back")
         @RequestParam(defaultValue = "7") days: Int,
-        @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<List<NotificationResponse>> {
-        val notifications = notificationService.getRecentNotifications(currentUser.username, days)
+        @AuthenticationPrincipal currentUser: UserDetails,
+        @PageableDefault(size = 20, sort = ["createdAt"], direction = org.springframework.data.domain.Sort.Direction.DESC) pageable: Pageable
+    ): ResponseEntity<Page<NotificationResponse>> {
+        val notifications = notificationService.getRecentNotifications(currentUser.username, days, pageable)
         return ResponseEntity.ok(notifications)
     }
 
@@ -75,16 +81,17 @@ class NotificationController(private val notificationService: NotificationServic
      */
     @Operation(
         summary = "Search notifications",
-        description = "Search notifications by content text",
+        description = "Search notifications by content text with pagination",
         security = [SecurityRequirement(name = "bearerAuth")]
     )
     @GetMapping("/search")
     fun searchNotifications(
         @Parameter(description = "Search text")
         @RequestParam q: String,
-        @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<List<NotificationResponse>> {
-        val notifications = notificationService.searchNotifications(currentUser.username, q)
+        @AuthenticationPrincipal currentUser: UserDetails,
+        @PageableDefault(size = 20, sort = ["createdAt"], direction = org.springframework.data.domain.Sort.Direction.DESC) pageable: Pageable
+    ): ResponseEntity<Page<NotificationResponse>> {
+        val notifications = notificationService.searchNotifications(currentUser.username, q, pageable)
         return ResponseEntity.ok(notifications)
     }
 
@@ -94,7 +101,7 @@ class NotificationController(private val notificationService: NotificationServic
      */
     @Operation(
         summary = "Get notifications by date range",
-        description = "Retrieve notifications within a specific date range",
+        description = "Retrieve notifications within a specific date range with pagination",
         security = [SecurityRequirement(name = "bearerAuth")]
     )
     @GetMapping("/date-range")
@@ -103,9 +110,10 @@ class NotificationController(private val notificationService: NotificationServic
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) from: LocalDateTime,
         @Parameter(description = "End date (ISO format: yyyy-MM-dd'T'HH:mm:ss)")
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) to: LocalDateTime,
-        @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<List<NotificationResponse>> {
-        val notifications = notificationService.getNotificationsByDateRange(currentUser.username, from, to)
+        @AuthenticationPrincipal currentUser: UserDetails,
+        @PageableDefault(size = 20, sort = ["createdAt"], direction = org.springframework.data.domain.Sort.Direction.DESC) pageable: Pageable
+    ): ResponseEntity<Page<NotificationResponse>> {
+        val notifications = notificationService.getNotificationsByDateRange(currentUser.username, from, to, pageable)
         return ResponseEntity.ok(notifications)
     }
 

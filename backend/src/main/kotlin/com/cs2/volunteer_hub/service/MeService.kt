@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -36,10 +38,31 @@ class MeService(
 ) {
     private val logger = LoggerFactory.getLogger(MeService::class.java)
 
-    //@Cacheable(value = ["userRegistrations"], key = "#userEmail")
-    fun getMyRegistrations(userEmail: String): List<RegistrationResponse> {
-        return registrationRepository.findAllByUserEmailOrderByEventEventDateTimeDesc(userEmail)
-            .map(registrationMapper::toRegistrationResponse)
+    @Cacheable(value = ["userRegistrations"], key = "#userEmail")
+    @Transactional(readOnly = true)
+    fun getMyRegistrations(userEmail: String, pageable: Pageable): Page<RegistrationResponse> {
+        // Get registration IDs first for pagination
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val spec = com.cs2.volunteer_hub.specification.RegistrationSpecifications.byUser(user.id)
+        val page = registrationRepository.findAll(spec, pageable)
+        
+        if (page.isEmpty) {
+            return Page.empty(pageable)
+        }
+        
+        // Load with associations
+        val registrationIds = page.content.map { it.id }
+        val registrationsWithAssociations = registrationRepository.findByIdsWithAssociations(registrationIds)
+        
+        // Maintain order
+        val registrationMap = registrationsWithAssociations.associateBy { it.id }
+        val orderedRegistrations = registrationIds.mapNotNull { registrationMap[it] }
+        
+        return org.springframework.data.domain.PageImpl(
+            orderedRegistrations.map(registrationMapper::toRegistrationResponse),
+            pageable,
+            page.totalElements
+        )
     }
 
     @Transactional
