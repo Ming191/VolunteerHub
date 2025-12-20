@@ -1,22 +1,31 @@
 package com.cs2.volunteer_hub.mapper
 
 import com.cs2.volunteer_hub.dto.EventResponse
+import com.cs2.volunteer_hub.dto.GalleryImageResponse
 import com.cs2.volunteer_hub.model.Event
+import com.cs2.volunteer_hub.model.Image
+import com.cs2.volunteer_hub.model.ImageStatus
+import com.cs2.volunteer_hub.repository.ImageRepository
 import com.cs2.volunteer_hub.service.EventCapacityService
 import org.springframework.stereotype.Component
 
 @Component
-class EventMapper(private val eventCapacityService: EventCapacityService) {
+class EventMapper(
+    private val eventCapacityService: EventCapacityService,
+    private val imageRepository: ImageRepository
+) {
         /** Map Event entity to EventResponse DTO */
         fun toEventResponse(event: Event): EventResponse {
                 val approvedCount = eventCapacityService.getApprovedCount(event.id)
                 val waitlistCount = eventCapacityService.getWaitlistCount(event.id)
                 val pendingCount = eventCapacityService.getPendingCount(event.id)
+                val galleryImages = buildGalleryImages(event.id)
 
                 return EventResponse(
                         id = event.id,
                         title = event.title,
                         imageUrls = event.images.mapNotNull { it.url },
+                        galleryImageUrls = galleryImages,
                         description = event.description,
                         location = event.location,
                         latitude = event.latitude,
@@ -62,10 +71,13 @@ class EventMapper(private val eventCapacityService: EventCapacityService) {
                                                 "Missing capacity stats for event ${event.id}"
                                         )
 
+                        val galleryImages = buildGalleryImages(event.id)
+
                         EventResponse(
                                 id = event.id,
                                 title = event.title,
                                 imageUrls = event.images.mapNotNull { it.url },
+                                galleryImageUrls = galleryImages,
                                 description = event.description,
                                 location = event.location,
                                 latitude = event.latitude,
@@ -89,6 +101,42 @@ class EventMapper(private val eventCapacityService: EventCapacityService) {
                                 tags = event.tags.toSet(),
                                 status = event.status
                         )
+                }
+        }
+
+        /**
+         * Build gallery images list including images from both the event and its posts.
+         * Returns images ordered by upload date (newest first) with attribution metadata.
+         */
+        private fun buildGalleryImages(eventId: Long): List<GalleryImageResponse> {
+                val allImages = imageRepository.findAllByEventIncludingPosts(eventId, ImageStatus.UPLOADED)
+
+                return allImages.mapNotNull { image ->
+                        image.url?.let { url ->
+                                when {
+                                        image.event?.id == eventId -> {
+                                                // Image belongs directly to the event
+                                                GalleryImageResponse(
+                                                        url = url,
+                                                        source = "event",
+                                                        authorName = null,
+                                                        authorId = null,
+                                                        postId = null
+                                                )
+                                        }
+                                        image.post?.event?.id == eventId -> {
+                                                // Image belongs to a post associated with the event
+                                                GalleryImageResponse(
+                                                        url = url,
+                                                        source = "post",
+                                                        authorName = image.post?.author?.name,
+                                                        authorId = image.post?.author?.id,
+                                                        postId = image.post?.id
+                                                )
+                                        }
+                                        else -> null
+                                }
+                        }
                 }
         }
 }

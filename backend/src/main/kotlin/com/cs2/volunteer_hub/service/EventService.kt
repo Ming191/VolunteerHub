@@ -12,6 +12,7 @@ import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.findByEmailOrThrow
 import com.cs2.volunteer_hub.specification.EventSpecifications
+import com.cs2.volunteer_hub.validation.EventCoordinateValidator
 import com.cs2.volunteer_hub.validation.EventDateValidator
 import com.cs2.volunteer_hub.validation.EventLifecycleValidator
 import org.slf4j.LoggerFactory
@@ -41,6 +42,7 @@ class EventService(
         private val eventDateValidator: EventDateValidator,
         private val eventLifecycleValidator: EventLifecycleValidator,
         private val eventQueueService: EventQueueService,
+        private val eventCoordinateValidator: EventCoordinateValidator,
         @field:Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
         private val logger = LoggerFactory.getLogger(EventService::class.java)
@@ -61,6 +63,8 @@ class EventService(
                         request.endDateTime,
                         request.registrationDeadline
                 )
+
+                eventCoordinateValidator.validateCoordinates(request.latitude, request.longitude)
 
                 val newEvent =
                         Event(
@@ -173,6 +177,12 @@ class EventService(
                         event.endDateTime,
                         request.registrationDeadline,
                         event.registrationDeadline
+                )
+                eventCoordinateValidator.validateCoordinatesForUpdate(
+                        request.latitude,
+                        event.latitude,
+                        request.longitude,
+                        event.longitude
                 )
 
                 request.title?.let { event.title = it }

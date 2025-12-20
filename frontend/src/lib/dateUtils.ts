@@ -9,8 +9,13 @@ export const parseAsUTC = (dateString: string | undefined | null): Date => {
         throw new Error('parseAsUTC called with falsy value. Use wrappers like formatDistanceToNowUTC to safely handle optional dates.');
     }
 
+    // If string already has Z or timezone offset, use as-is
+    // Regex checks for 'Z' or timezone offset (e.g., +05:00, -03:00, +0530) at the end
+    const hasTimezone = /Z$|[+-]\d{2}:?\d{2}$/.test(dateString);
+
     let dateToParse = dateString;
-    if (dateToParse.includes('T') && !dateToParse.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(dateToParse)) {
+    // If it's an ISO format (has 'T') without timezone info, append 'Z' to parse as UTC
+    if (dateString.includes('T') && !hasTimezone) {
         dateToParse += 'Z';
     }
 
@@ -28,3 +33,22 @@ export const formatDate = (date: string | Date | undefined, formatStr: string = 
     const dateObj = typeof date === 'string' ? parseAsUTC(date) : date;
     return format(dateObj, formatStr);
 };
+
+/**
+ * Checks if an event has ended based on its end date/time
+ */
+export const isEventEnded = (endDateTime: string | undefined): boolean => {
+    if (!endDateTime) return false;
+    const endDate = parseAsUTC(endDateTime);
+    return endDate.getTime() < Date.now();
+};
+
+/**
+ * Checks if registration is closed based on the registration deadline
+ */
+export const isRegistrationClosed = (registrationDeadline: string | undefined): boolean => {
+    if (!registrationDeadline) return false;
+    const deadline = parseAsUTC(registrationDeadline);
+    return deadline.getTime() <= Date.now();
+};
+

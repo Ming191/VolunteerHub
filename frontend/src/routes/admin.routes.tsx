@@ -4,8 +4,8 @@ import { SuspenseFallback } from '@/components/common/SuspenseFallback';
 import { authenticatedLayoutRoute } from './dashboard.routes';
 import {
     AdminPendingEvents,
-    AdminUsers,
-    AdminReport
+    AdminManagementPage,
+    AdminReportsPage
 } from './lazy-components';
 
 export const adminPendingEventsRoute = createRoute({
@@ -16,14 +16,14 @@ export const adminPendingEventsRoute = createRoute({
 
 export const adminUsersRoute = createRoute({
     getParentRoute: () => authenticatedLayoutRoute,
-    path: '/admin/users',
-    component: () => <Suspense fallback={<SuspenseFallback />}><AdminUsers /></Suspense>,
+    path: '/admin/management',
+    component: () => <Suspense fallback={<SuspenseFallback />}><AdminManagementPage /></Suspense>,
 });
 
 export const adminReportsRoute = createRoute({
     getParentRoute: () => authenticatedLayoutRoute,
     path: '/admin/reports',
-    component: () => <Suspense fallback={<SuspenseFallback />}><AdminReport /></Suspense>,
+    component: () => <Suspense fallback={<SuspenseFallback />}><AdminReportsPage /></Suspense>,
 });
 
 export const adminSettingsRoute = createRoute({

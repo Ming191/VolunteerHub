@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { blogService } from '@/features/blog/api/blogService.ts';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { EVENTS_QUERY_KEY } from '@/features/events/hooks/useEvents';
 
 interface CreatePostParams {
     content: string;
@@ -16,6 +17,7 @@ export const usePostMutations = (eventId?: number) => {
 
     const createOptimisticPost = (content: string, files: File[] | null) => ({
         id: Date.now(),
+        optimisticId: `optimistic-${Date.now()}`,
         content,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -38,13 +40,16 @@ export const usePostMutations = (eventId?: number) => {
             }
             return blogService.createPost(targetEventId, content, files || undefined);
         },
-        onMutate: async ({ content, files }) => {
-            await queryClient.cancelQueries({ queryKey: ['posts'] });
+        onMutate: async ({ content, files, eventId: mutationEventId }) => {
+            const targetEventId = mutationEventId || eventId;
+            const targetQueryKey = ['posts', targetEventId ? `event-${targetEventId}` : 'feed'];
 
-            const previousPosts = queryClient.getQueryData(queryKey);
+            await queryClient.cancelQueries({ queryKey: targetQueryKey });
+
+            const previousPosts = queryClient.getQueryData(targetQueryKey);
             const optimisticPost = createOptimisticPost(content, files);
 
-            queryClient.setQueryData(queryKey, (old: any) => {
+            queryClient.setQueryData(targetQueryKey, (old: any) => {
                 if (!old) {
                     return {
                         pages: [{ content: [optimisticPost], pageNumber: 0, last: true, totalElements: 1 }],
@@ -63,18 +68,24 @@ export const usePostMutations = (eventId?: number) => {
                 return { ...old, pages: newPages };
             });
 
-            return { previousPosts, optimisticPost };
+            return { previousPosts, optimisticPost, targetQueryKey };
         },
-        onSuccess: (savedPost) => {
-            queryClient.setQueryData(queryKey, (old: any) => {
+        onSuccess: (savedPost, variables, context: any) => {
+            const key = context?.targetQueryKey || queryKey;
+            queryClient.setQueryData(key, (old: any) => {
                 if (!old) return old;
 
                 const newPages = old.pages.map((page: any) => ({
                     ...page,
                     content: page.content.map((post: any) => {
-                        if (post.isOptimistic) {
-                            // Use server URLs only; blob URLs won't work after refresh
-                            return { ...savedPost, imageUrls: savedPost.imageUrls || [] };
+                        if (post.isOptimistic && post.id === context.optimisticPost.id) {
+                            return {
+                                ...post,
+                                ...savedPost,
+                                optimisticId: post.optimisticId, // Preserve the optimistic ID for stable key
+                                imageUrls: savedPost.imageUrls || post.imageUrls || [],
+                                isOptimistic: false,
+                            };
                         }
                         return post;
                     })
@@ -82,16 +93,22 @@ export const usePostMutations = (eventId?: number) => {
 
                 return { ...old, pages: newPages };
             });
+
+            // Invalidate an event query to refresh gallery images
+            const targetEventId = variables?.eventId ?? eventId;
+            if (targetEventId && savedPost.imageUrls && savedPost.imageUrls.length > 0) {
+                queryClient.invalidateQueries({ queryKey: [EVENTS_QUERY_KEY, targetEventId] });
+            }
+
             toast.success("Post created!");
         },
         onError: (_err, _variables, context: any) => {
             if (context?.previousPosts) {
-                queryClient.setQueryData(queryKey, context.previousPosts);
+                queryClient.setQueryData(context.targetQueryKey || queryKey, context.previousPosts);
             }
             toast.error("Failed to create post");
         },
         onSettled: (_data, _error, _variables, context: any) => {
-            // Cleanup optimistic blob URLs
             if (context?.optimisticPost?.imageUrls) {
                 context.optimisticPost.imageUrls.forEach((url: string) => {
                     URL.revokeObjectURL(url);
@@ -99,7 +116,7 @@ export const usePostMutations = (eventId?: number) => {
             }
 
             setTimeout(() => {
-                queryClient.invalidateQueries({ queryKey: ['posts'] });
+                queryClient.invalidateQueries({ queryKey: context?.targetQueryKey || queryKey });
             }, 5000);
         }
     });

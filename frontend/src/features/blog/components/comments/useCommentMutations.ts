@@ -102,9 +102,34 @@ export const useCommentMutations = (postId: number) => {
         }
     });
 
+    const updateCommentMutation = useMutation({
+        mutationFn: ({ commentId, content }: { commentId: number; content: string }) =>
+            blogService.updateComment(postId, commentId, content),
+        onSuccess: () => {
+            toast.success("Comment updated successfully");
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEY_PREFIX, postId] });
+        },
+        onError: () => {
+            toast.error("Failed to update comment");
+        }
+    });
+
+    const deleteCommentMutation = useMutation({
+        mutationFn: (commentId: number) => blogService.deleteComment(postId, commentId),
+        onSuccess: () => {
+            toast.success("Comment deleted successfully");
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEY_PREFIX, postId] });
+        },
+        onError: () => {
+            toast.error("Failed to delete comment");
+        }
+    });
+
     return {
         addCommentMutation,
         addReplyMutation,
+        updateCommentMutation,
+        deleteCommentMutation,
     };
 };
 

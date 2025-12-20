@@ -1,6 +1,7 @@
 
-import { useParams, useNavigate } from '@tanstack/react-router';
+import { useParams, useNavigate, useLocation } from '@tanstack/react-router';
 import { useGetEvent } from '../hooks/useEvents';
+import { useRegisterForEvent, useCancelRegistration } from '@/features/volunteer/hooks/useRegistration';
 import { SkeletonTransition } from '@/components/common/SkeletonTransition';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { ApiErrorState } from '@/components/ui/api-error-state';
@@ -14,16 +15,44 @@ import {
 } from '../components/page';
 
 export const EventDetailsPage = () => {
-    const { eventId } = useParams({ from: '/_auth/events/$eventId' });
-    const id = parseInt(eventId);
+    const { eventId } = useParams({ strict: false });
     const navigate = useNavigate();
+    const location = useLocation();
+    const id = parseInt(eventId ?? '0', 10);
+
+    const isRegistrationPage = location.pathname.endsWith('/registration');
+    const defaultTab = isRegistrationPage ? 'attendees' : 'about';
 
     const { data: event, isLoading, isError, error, refetch } = useGetEvent(id);
-    const { isOrganizer,isRejected, isRegistered } = useEventPermissions(event || null);
+    const { isOrganizer, isRegistered } = useEventPermissions(event || null);
+
+    const registerMutation = useRegisterForEvent();
+    const cancelMutation = useCancelRegistration();
+
+    if (isNaN(id)) {
+        return (
+            <AnimatedPage>
+                <div className="container mx-auto py-8">
+                    <ApiErrorState
+                        error={new Error('Invalid event ID')}
+                        onRetry={() => navigate({ to: '/events' })}
+                    />
+                </div>
+            </AnimatedPage>
+        );
+    }
+
 
     const handleRegister = () => {
-        // Implement registration logic later, possibly opening a modal
-        console.log("Register clicked");
+        if (!event) return;
+
+        if (isRegistered) {
+            if (confirm('Are you sure you want to cancel your registration?')) {
+                cancelMutation.mutate(id);
+            }
+        } else {
+            registerMutation.mutate(id);
+        }
     };
 
     const handleBack = () => {
@@ -54,15 +83,19 @@ export const EventDetailsPage = () => {
                             </Button>
                         </div>
 
-                        <EventHero event={event} isOrganizer={isOrganizer} isRejected={isRejected} isRegistered={isRegistered} />
+                        <EventHero
+                            event={event}
+                            isOrganizer={isOrganizer}
+                            onRegister={handleRegister}
+                        />
 
                         <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 px-6">
                             <div className="lg:col-span-2 space-y-8">
-                                <EventContentTabs event={event} />
+                                <EventContentTabs event={event} defaultTab={defaultTab} />
                             </div>
 
                             <div className="lg:col-span-1">
-                                <EventInfoSidebar event={event} onRegister={handleRegister} isOrganizer={isOrganizer} isRegistered={isRegistered}/>
+                                <EventInfoSidebar event={event} onRegister={handleRegister} isOrganizer={isOrganizer} />
                             </div>
                         </div>
                     </div>

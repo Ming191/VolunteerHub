@@ -136,9 +136,9 @@ const updateRegistrationStatus = async (
 };
 
 const markRegistrationCompleted = async (registrationId: number) => {
-  const response = await eventManagerApi.markRegistrationAsCompleted({registrationId});
-  return response.data;
-}
+    const response = await eventManagerApi.markRegistrationAsCompleted({registrationId});
+    return response.data;
+};
 
 const updateEvent = async (eventId: number, data: UpdateEventRequest, files?: File[], remainingImages?: string[]): Promise<EventResponse> => {
     const formData = new FormData();

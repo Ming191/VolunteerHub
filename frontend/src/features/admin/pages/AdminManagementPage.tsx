@@ -4,14 +4,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContents, TabsContent } from '@/compon
 import { AdminUsers } from './AdminUsers';
 import { AdminEvents } from './AdminEvents';
 
-export const AdminReport = () => {
+export const AdminManagementPage = () => {
     const [activeTab, setActiveTab] = useState('users');
 
     return (
         <AnimatedPage>
             <div className="max-w-6xl mx-auto p-6 space-y-6">
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-3xl font-bold tracking-tight">Admin Report</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Admin Management</h1>
                     <p className="text-muted-foreground">Manage users and events.</p>
                 </div>
 

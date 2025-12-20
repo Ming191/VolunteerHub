@@ -62,6 +62,8 @@ export const AddEventModal = ({ open, onOpenChange, onSuccess }: AddEventModalPr
                 title: values.title,
                 description: values.description,
                 location: values.location,
+                latitude: values.latitude,
+                longitude: values.longitude,
                 eventDateTime: formatDateForBackend(values.eventDateTime),
                 endDateTime: formatDateForBackend(values.endDateTime),
                 registrationDeadline: values.registrationDeadline

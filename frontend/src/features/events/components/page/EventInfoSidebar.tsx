@@ -5,15 +5,58 @@ import type { EventResponse } from '@/api-client';
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { EventMap } from './EventMap';
+import { useEventPermissions } from '../../hooks/useEventPermissions';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface EventInfoSidebarProps {
     event: EventResponse;
     onRegister: () => void;
     isOrganizer?: boolean;
-    isRegistered?: boolean;
 }
 
-export const EventInfoSidebar = ({ event, onRegister, isOrganizer, isRegistered }: EventInfoSidebarProps) => {
+export const EventInfoSidebar = ({ event, onRegister, isOrganizer }: EventInfoSidebarProps) => {
+    const { user } = useAuth();
+    const { canRegister, isVolunteer, isRegistered, isEventEnded: eventEnded, isRegistrationClosed: registrationClosedByDeadline } = useEventPermissions(event);
+
+    // Determine registration status
+    const getRegistrationStatus = () => {
+        if (isRegistered) {
+            return { label: 'Registered', color: 'text-green-600' };
+        }
+        if (eventEnded) {
+            return { label: 'Ended', color: 'text-muted-foreground' };
+        }
+        if (registrationClosedByDeadline) {
+            return { label: 'Closed', color: 'text-destructive' };
+        }
+        if (event.isFull) {
+            return { label: 'Full', color: 'text-destructive' };
+        }
+        return { label: 'Open', color: 'text-green-600' };
+    };
+
+    const getButtonConfig = (): { text: string; disabled: boolean; variant?: 'destructive' } => {
+        if (isRegistered) {
+            return { text: 'Unregister', disabled: false, variant: 'destructive' };
+        }
+        if (eventEnded) {
+            return { text: 'Event Ended', disabled: true };
+        }
+        if (registrationClosedByDeadline) {
+            return { text: 'Registration Closed', disabled: true };
+        }
+        if (event.isFull) {
+            return { text: event.waitlistEnabled ? 'Join Waitlist' : 'Event Full', disabled: !event.waitlistEnabled };
+        }
+        return { text: 'Register Now', disabled: false };
+    };
+
+    const status = getRegistrationStatus();
+    const buttonConfig = getButtonConfig();
+
+    // Only show registration section to volunteers
+    const showRegistrationSection = !isOrganizer && user && isVolunteer;
+
     return (
         <Card className="sticky top-6">
             <CardHeader>
@@ -68,26 +111,29 @@ export const EventInfoSidebar = ({ event, onRegister, isOrganizer, isRegistered 
                     </div>
                 </div>
 
-                {!isOrganizer && (
+                {showRegistrationSection && (
                     <>
                         <Separator />
 
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <span className="font-medium">Registration</span>
-                                {event.isFull ? (
-                                    <span className="text-destructive text-sm font-medium">Full</span>
-                                ) : (
-                                    <span className="text-green-600 text-sm font-medium">Open</span>
-                                )}
+                                <span className={`text-sm font-medium ${status.color}`}>
+                                    {status.label}
+                                </span>
                             </div>
 
-                            <Button className="w-full" size="lg" onClick={onRegister} disabled={event.isFull}>
-                                <Ticket className="mr-2 h-4 w-4" />
-                                {event.isFull ? 'Join Waitlist' :
-                                  isRegistered ? 'Registered':
-                                  'Register Now'}
-                            </Button>
+                            {canRegister && (
+                                <Button
+                                    className={`w-full ${buttonConfig.variant === 'destructive' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
+                                    size="lg"
+                                    onClick={onRegister}
+                                    disabled={buttonConfig.disabled}
+                                >
+                                    <Ticket className="mr-2 h-4 w-4" />
+                                    {buttonConfig.text}
+                                </Button>
+                            )}
                         </div>
                     </>
                 )}

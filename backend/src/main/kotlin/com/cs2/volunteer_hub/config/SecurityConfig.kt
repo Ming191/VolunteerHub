@@ -53,8 +53,10 @@ class SecurityConfig {
             jwtAuthenticationFilter: JwtAuthenticationFilter
     ): SecurityFilterChain {
         http
-                // CSRF protection is disabled because this application uses stateless JWT authentication for all endpoints.
-                // Since JWTs are sent in the Authorization header and not as cookies, CSRF attacks are not a concern.
+                // CSRF protection is disabled because this application uses stateless JWT
+                // authentication for all endpoints.
+                // Since JWTs are sent in the Authorization header and not as cookies, CSRF attacks
+                // are not a concern.
                 .csrf { it.disable() }
                 .cors { cors ->
                     cors.configurationSource(corsConfigurationSource())
@@ -66,6 +68,12 @@ class SecurityConfig {
                     auth.requestMatchers("/api/auth/**")
                             .permitAll()
                             .requestMatchers("/api/events/*")
+                            .permitAll()
+                            .requestMatchers(
+                                    "/api/posts/event/**",
+                                    "/api/posts/*/comments",
+                                    "/api/posts/*/comments/**"
+                            )
                             .permitAll()
                             .requestMatchers("/api/enums/**")
                             .permitAll()

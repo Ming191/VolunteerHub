@@ -70,4 +70,24 @@ export const blogService = {
   deletePost: async (postId: number) => {
     await postsApi.deletePost({ postId });
   },
+
+  updatePost: async (postId: number, content: string) => {
+    const response = await postsApi.updatePost({
+      postId,
+      postRequest: { content }
+    });
+    return response.data;
+  },
+
+  updateComment: async (postId: number, commentId: number, content: string) => {
+    const response = await axiosInstance.put(
+      `api/posts/${postId}/comments/${commentId}`,
+      { content }
+    );
+    return response.data;
+  },
+
+  deleteComment: async (postId: number, commentId: number) => {
+    await axiosInstance.delete(`api/posts/${postId}/comments/${commentId}`);
+  },
 };

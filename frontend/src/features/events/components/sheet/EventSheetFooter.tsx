@@ -13,8 +13,27 @@ interface EventSheetFooterProps {
 
 export function EventSheetFooter({ event, onViewRegistrations, onRegister }: EventSheetFooterProps) {
     const { user } = useAuth();
-    const { isOrganizer, isRejected,  isOwner, isAdmin, canRegister, isRegistered } = useEventPermissions(event);
+    const { isOrganizer, isOwner, isAdmin, canRegister, isRegistered, isVolunteer, isEventEnded, isRegistrationClosed } = useEventPermissions(event);
     const navigate = useNavigate();
+
+    // Determine button text and state
+    const getRegistrationButtonConfig = () => {
+        if (isEventEnded) {
+            return { text: 'Event Ended', disabled: true };
+        }
+        if (isRegistrationClosed) {
+            return { text: 'Registration Closed', disabled: true };
+        }
+        if (event.isFull) {
+            return { text: event.waitlistEnabled ? 'Join Waitlist' : 'Event Full', disabled: !event.waitlistEnabled };
+        }
+        if (!event.isApproved) {
+            return { text: 'Awaiting Approval', disabled: true };
+        }
+        return { text: 'Register for Event', disabled: false };
+    };
+
+    const buttonConfig = getRegistrationButtonConfig();
 
     return (
         <SheetFooter className="sticky bottom-0 bg-background pt-4 pb-4 border-t mt-6 flex flex-col gap-3 sm:flex-row sm:justify-between">
@@ -46,7 +65,7 @@ export function EventSheetFooter({ event, onViewRegistrations, onRegister }: Eve
                     >
                         Admin view only
                     </Button>
-                ) : isRegistered ? (
+                ) : isVolunteer && isRegistered ? (
                     <Button
                         className="w-full"
                         size="lg"
@@ -54,24 +73,16 @@ export function EventSheetFooter({ event, onViewRegistrations, onRegister }: Eve
                     >
                         Registered
                     </Button>
-                ) : isRejected ? (
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    disabled
-                  >
-                    Rejected
-                  </Button>
-                ) : (
+                ) : isVolunteer && canRegister ? (
                     <Button
                         className="w-full"
                         size="lg"
-                        disabled={!canRegister}
+                        disabled={buttonConfig.disabled}
                         onClick={onRegister}
                     >
-                        {event.isFull ? 'Event Full' : event.isApproved ? 'Register for Event' : 'Awaiting Approval'}
+                        {buttonConfig.text}
                     </Button>
-                )}
+                ) : null}
             </div>
         </SheetFooter>
     );
