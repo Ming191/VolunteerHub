@@ -230,10 +230,15 @@ export const ChangePasswordCard = () => {
                 variant="outline"
                 onClick={() => form.reset()}
                 disabled={isSubmitting}
+                className="border-2"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="border-2 border-green-600 bg-green-600 hover:bg-green-700"
+              >
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}

@@ -27,7 +27,7 @@ import { useNavigate } from "@tanstack/react-router";
 import LogoImg from "@/assets/logo.svg";
 
 export const ModernSignInScreen = () => {
-  const { form, onSubmit, isSubmitting } = useLoginForm();
+  const { form, onSubmit, isSubmitting, loginError } = useLoginForm();
   const [showPassword, setShowPassword] = useState(false);
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -196,7 +196,7 @@ export const ModernSignInScreen = () => {
                           <Input
                             placeholder="name@example.com"
                             type="email"
-                            className="pl-10 h-12 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200 text-gray-900 bg-white"
+                            className="pl-10 h-12 focus-visible:border-green-500 focus-visible:ring-0 transition-all duration-200 text-gray-900 bg-white"
                             {...field}
                           />
                         </div>
@@ -220,7 +220,7 @@ export const ModernSignInScreen = () => {
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
-                            className="pl-10 pr-10 h-12 border-2 border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all duration-200 text-gray-900 bg-white"
+                            className="pl-10 pr-10 h-12 focus-visible:border-green-500 focus-visible:ring-0 transition-all duration-200 text-gray-900 bg-white"
                             {...field}
                           />
                           <button
@@ -241,6 +241,12 @@ export const ModernSignInScreen = () => {
                     </FormItem>
                   )}
                 />
+
+                {loginError && (
+                  <div className="p-3 bg-red-50 border-2 border-red-200 rounded-lg text-sm text-red-600">
+                    {loginError}
+                  </div>
+                )}
 
                 <Button
                   type="submit"
