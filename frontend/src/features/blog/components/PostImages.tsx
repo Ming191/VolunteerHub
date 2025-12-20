@@ -1,8 +1,10 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { cn } from '@/lib/utils.ts';
-import { AlertDialog, AlertDialogPopup } from '@/components/animate-ui/components/base/alert-dialog';
+import React, { useState, useEffect, useCallback } from 'react';
+import { cn } from '@/lib/utils';
+import {
+    AlertDialog,
+    AlertDialogPopup,
+} from '@/components/animate-ui/components/base/alert-dialog';
 import { motion, type Transition } from 'motion/react';
-import { type EmblaCarouselType } from 'embla-carousel';
 import useEmblaCarousel from 'embla-carousel-react';
 import { Button } from '@/components/animate-ui/components/buttons/button';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
@@ -11,7 +13,6 @@ const transition: Transition = {
     type: 'spring',
     stiffness: 240,
     damping: 24,
-    mass: 1,
 };
 
 interface PostImagesProps {
@@ -19,165 +20,222 @@ interface PostImagesProps {
 }
 
 export const PostImages: React.FC<PostImagesProps> = ({ images }) => {
-    const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
-    const [emblaRef, emblaApi] = useEmblaCarousel({ startIndex: 0, loop: true });
-    const [canScrollPrev, setCanScrollPrev] = useState(false);
-    const [canScrollNext, setCanScrollNext] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    const onSelect = useCallback((api: EmblaCarouselType) => {
-        setCurrentIndex(api.selectedScrollSnap());
-        setCanScrollPrev(api.canScrollPrev());
-        setCanScrollNext(api.canScrollNext());
-    }, []);
+    const [emblaRef, emblaApi] = useEmblaCarousel({
+        loop: true,
+        align: 'center',
+    });
+
+    /* ---------------- Embla sync ---------------- */
+    const onSelect = useCallback(() => {
+        if (!emblaApi) return;
+        setCurrentIndex(emblaApi.selectedScrollSnap());
+    }, [emblaApi]);
 
     useEffect(() => {
         if (!emblaApi) return;
-        
-        onSelect(emblaApi);
+        onSelect();
         emblaApi.on('select', onSelect);
-        
-        return () => {
-            emblaApi.off('select', onSelect);
-        };
+        return () => emblaApi.off('select', onSelect);
     }, [emblaApi, onSelect]);
 
     useEffect(() => {
-        if (emblaApi && selectedImageIndex !== null) {
-            emblaApi.scrollTo(selectedImageIndex);
-        }
-    }, [emblaApi, selectedImageIndex]);
+        if (!emblaApi || selectedIndex === null) return;
+        emblaApi.scrollTo(selectedIndex, true);
+        emblaApi.reInit();
+    }, [emblaApi, selectedIndex]);
 
-    const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-    const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+    if (!images?.length) return null;
 
-    if (!images || images.length === 0) return null;
-
-    const gridClass = cn(
-        "grid gap-1 rounded-md overflow-hidden mb-3",
-        images.length === 1 ? "grid-cols-1" :
-        images.length === 2 ? "grid-cols-2" :
-        images.length === 3 ? "grid-cols-2" :
-        "grid-cols-2"
-    );
-
+    /* ---------------- Render ---------------- */
     return (
         <>
-            {/* Grid Display */}
-            <div className={gridClass}>
-                {images.slice(0, 4).map((image, index) => (
-                    <div
-                        key={index}
-                        className={cn(
-                            "relative cursor-pointer hover:opacity-90 transition-opacity",
-                            images.length === 3 && index === 0 ? "col-span-2" : ""
-                        )}
-                        onClick={() => setSelectedImageIndex(index)}
-                    >
-                        <img
-                            src={image}
-                            alt={`Image ${index + 1}`}
-                            className="w-full h-48 object-cover"
-                        />
-                        {/* Show overlay on last visible image if there are more */}
-                        {index === 3 && images.length > 4 && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                <span className="text-white text-3xl font-bold">
-                                    +{images.length - 4}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                ))}
+            {/* ================= GRID ================= */}
+            <div
+                className={cn(
+                    'grid gap-1 rounded-md overflow-hidden mb-3',
+                    images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+                )}
+            >
+                {images.slice(0, 4).map((image, index) => {
+                    const isLarge = images.length === 3 && index === 0;
+
+                    return (
+                        <motion.div
+                            key={image}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setSelectedIndex(index)}
+                            className={cn(
+                                'relative overflow-hidden rounded-lg cursor-pointer',
+                                isLarge && 'col-span-2'
+                            )}
+                            whileHover={{ scale: 1.02 }}
+                            transition={transition}
+                        >
+                            {/* Background Logic:
+                                - Single Image: Permanent blurred background
+                                - Multiple Images: Hover-only blurred background
+                            */}
+                            {images.length === 1 ? (
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center scale-110 opacity-60 blur-[100px]"
+                                    style={{ backgroundImage: `url(${image})` }}
+                                />
+                            ) : (
+                                <motion.div
+                                    className="absolute inset-0 bg-cover bg-center scale-110"
+                                    style={{ backgroundImage: `url(${image})` }}
+                                    initial={{ opacity: 0, filter: 'blur(0px)' }}
+                                    whileHover={{
+                                        opacity: 0.6,
+                                        filter: 'blur(16px)',
+                                    }}
+                                    transition={{ duration: 0.3 }}
+                                />
+                            )}
+
+                            {/* Main image */}
+                            <motion.img
+                                src={image}
+                                alt=""
+                                className={cn(
+                                    'relative z-10 w-full rounded-lg',
+                                    images.length === 1
+                                        ? 'h-[500px] object-contain' // Removed bg-black/5 as we have the blur
+                                        : 'aspect-[4/3] object-cover'
+                                )}
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ duration: 0.3 }}
+                            />
+
+                            {/* +N overlay */}
+                            {index === 3 && images.length > 4 && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
+                                    <span className="text-white text-3xl font-bold">
+                                        +{images.length - 4}
+                                    </span>
+                                </div>
+                            )}
+                        </motion.div>
+                    );
+                })}
             </div>
 
-            {/* Carousel Modal */}
-            <AlertDialog open={selectedImageIndex !== null} onOpenChange={(open) => !open && setSelectedImageIndex(null)}>
-                <AlertDialogPopup className="max-w-[95vw] md:max-w-7xl lg:max-w-[90vw] w-full p-0 bg-black/95 border-none">
+            {/* ================= MODAL ================= */}
+            <AlertDialog
+                open={selectedIndex !== null}
+                onOpenChange={(open) => !open && setSelectedIndex(null)}
+            >
+                <AlertDialogPopup
+                    className="
+                        w-full max-w-[95vw] md:max-w-7xl
+                        bg-black/70 backdrop-blur-xl
+                        border-none p-0
+                    "
+                >
                     <div className="relative">
-                        {/* Close button */}
+                        {/* Close */}
                         <button
-                            onClick={() => setSelectedImageIndex(null)}
-                            className="absolute top-4 right-4 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
-                            aria-label="Close"
+                            onClick={() => setSelectedIndex(null)}
+                            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center"
                         >
-                            <X className="h-5 w-5" />
+                            <X className="w-5 h-5" />
                         </button>
 
                         {/* Carousel */}
-                        <div className="overflow-hidden" ref={emblaRef}>
+                        <div ref={emblaRef} className="overflow-hidden">
                             <div className="flex">
                                 {images.map((image, index) => (
-                                    <div key={index} className="flex-[0_0_100%] min-w-0">
+                                    <div
+                                        key={image}
+                                        className="flex-[0_0_100%] min-w-0"
+                                    >
                                         <motion.div
-                                            className="flex flex-col"
-                                            initial={false}
+                                            className="relative h-[70vh] md:h-[60vh] lg:h-[75vh] flex items-center justify-center overflow-hidden"
                                             animate={{
-                                                scale: index === currentIndex ? 1 : 0.95,
+                                                scale:
+                                                    index === currentIndex
+                                                        ? 1
+                                                        : 0.95,
                                             }}
                                             transition={transition}
                                         >
-                                            <div className="relative overflow-hidden flex items-center justify-center h-[70vh] md:h-[60vh] lg:h-[75vh]">
-                                                {/* Blurred background */}
-                                                <div 
-                                                    className="absolute inset-0 bg-cover bg-center"
-                                                    style={{ 
-                                                        backgroundImage: `url(${image})`,
-                                                        filter: 'blur(40px)',
-                                                        transform: 'scale(1.1)'
-                                                    }}
-                                                />
-                                                {/* Dark overlay */}
-                                                <div className="absolute inset-0 bg-black/40" />
-                                                {/* Main image */}
-                                                <img
-                                                    src={image}
-                                                    alt={`Post image ${index + 1}`}
-                                                    className="relative w-full h-full object-contain z-10"
-                                                />
-                                            </div>
+                                            {/* Blur background */}
+                                            <motion.div
+                                                className="absolute inset-0 bg-cover bg-center scale-110"
+                                                style={{
+                                                    backgroundImage: `url(${image})`,
+                                                }}
+                                                initial={{
+                                                    opacity: 0,
+                                                    filter: 'blur(0px)',
+                                                }}
+                                                animate={{
+                                                    opacity: 1,
+                                                    filter: 'blur(40px)',
+                                                }}
+                                                transition={{ duration: 0.4 }}
+                                            />
+
+                                            {/* Dark overlay */}
+                                            <div className="absolute inset-0 bg-black/40" />
+
+                                            {/* Main image */}
+                                            <motion.img
+                                                src={image}
+                                                alt=""
+                                                className="relative z-10 w-full h-full object-contain"
+                                                initial={{ scale: 0.96 }}
+                                                animate={{ scale: 1 }}
+                                                transition={{
+                                                    duration: 0.35,
+                                                }}
+                                            />
                                         </motion.div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Navigation Controls */}
+                        {/* Navigation */}
                         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none">
                             <Button
                                 size="icon"
-                                onClick={scrollPrev}
-                                disabled={!canScrollPrev}
-                                className="pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-0 disabled:opacity-30"
+                                onClick={() => emblaApi?.scrollPrev()}
+                                className="pointer-events-auto rounded-full bg-black/50 hover:bg-black/70 text-white"
                             >
-                                <ChevronLeft className="h-5 w-5" />
+                                <ChevronLeft />
                             </Button>
                             <Button
                                 size="icon"
-                                onClick={scrollNext}
-                                disabled={!canScrollNext}
-                                className="pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-0 disabled:opacity-30"
+                                onClick={() => emblaApi?.scrollNext()}
+                                className="pointer-events-auto rounded-full bg-black/50 hover:bg-black/70 text-white"
                             >
-                                <ChevronRight className="h-5 w-5" />
+                                <ChevronRight />
                             </Button>
                         </div>
 
-                        {/* Dot indicators */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 pointer-events-none">
+                        {/* Dots */}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                             {images.map((_, index) => (
                                 <motion.button
                                     key={index}
-                                    type="button"
-                                    onClick={() => emblaApi?.scrollTo(index)}
-                                    initial={false}
-                                    className="pointer-events-auto cursor-pointer rounded-full bg-white/50 hover:bg-white/80 transition-colors"
+                                    onClick={() =>
+                                        emblaApi?.scrollTo(index)
+                                    }
+                                    className="h-2 rounded-full bg-white/50"
                                     animate={{
-                                        width: index === currentIndex ? 24 : 8,
-                                        height: 8,
-                                        backgroundColor: index === currentIndex ? 'rgb(255 255 255 / 0.9)' : 'rgb(255 255 255 / 0.5)',
+                                        width:
+                                            index === currentIndex ? 24 : 8,
+                                        backgroundColor:
+                                            index === currentIndex
+                                                ? 'rgb(255 255 255 / 0.9)'
+                                                : 'rgb(255 255 255 / 0.5)',
                                     }}
                                     transition={transition}
-                                    aria-label={`Go to image ${index + 1}`}
                                 />
                             ))}
                         </div>
