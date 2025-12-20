@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Mail, ArrowLeft, Heart, Shield, Lock } from "lucide-react";
+import { Mail, ArrowLeft, Shield, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

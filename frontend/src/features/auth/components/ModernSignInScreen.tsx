@@ -13,7 +13,6 @@ import {
   Loader2,
   Mail,
   Lock,
-  Heart,
   Users,
   Calendar,
   Award,
