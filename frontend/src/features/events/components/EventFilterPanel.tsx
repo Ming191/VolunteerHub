@@ -103,7 +103,11 @@ export const EventFilterPanel = ({ onFilterChange, initialFilters }: EventFilter
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                            <PopoverContent
+                                className="p-0"
+                                align="start"
+                                style={{ width: 'var(--radix-popover-trigger-width)' }}
+                            >
                                 <Command>
                                     <CommandInput placeholder="Search tags..." />
                                     <CommandList>

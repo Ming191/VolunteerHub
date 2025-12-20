@@ -20,6 +20,14 @@ export interface SearchEventsParams {
     size?: number;
 }
 
+export interface PublicAttendeeResponse {
+    volunteerId: number;
+    name: string;
+    profilePictureUrl?: string;
+    bio?: string;
+    joinedAt: string;
+}
+
 /**
  * Searches for events with various filters and pagination.
  * This function is now updated to use the correct search endpoint.
@@ -174,6 +182,16 @@ const deleteEvent = async (id: number): Promise<void> => {
     return response.data;
 }
 
+const getEventAttendees = async (eventId: number): Promise<PublicAttendeeResponse[]> => {
+    try {
+        const response = await axiosInstance.get<PublicAttendeeResponse[]>(`/api/events/${eventId}/attendees`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch event attendees:', error);
+        throw error;
+    }
+}
+
 
 export const eventService = {
     searchEvents,
@@ -186,4 +204,5 @@ export const eventService = {
     markRegistrationCompleted,
     updateEvent,
     deleteEvent,
+    getEventAttendees,
 };

@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.controller
 
 import com.cs2.volunteer_hub.dto.AdminDashboardResponse
+import com.cs2.volunteer_hub.dto.OrganizerAnalyticsResponse
 import com.cs2.volunteer_hub.dto.OrganizerDashboardResponse
 import com.cs2.volunteer_hub.dto.VolunteerDashboardResponse
 import com.cs2.volunteer_hub.service.DashboardService
@@ -36,6 +37,16 @@ class DashboardController(private val dashboardService: DashboardService) {
     ): ResponseEntity<OrganizerDashboardResponse> {
         val dashboardData = dashboardService.getOrganizerDashboard(currentUser.username)
         return ResponseEntity.ok(dashboardData)
+    }
+
+    @Operation(summary = "Get organizer analytics", description = "Retrieve analytics data for event organizers")
+    @GetMapping("/organizer/analytics")
+    @PreAuthorize("hasRole('EVENT_ORGANIZER')")
+    fun getOrganizerAnalytics(
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<OrganizerAnalyticsResponse> {
+        val analyticsData = dashboardService.getOrganizerAnalytics(currentUser.username)
+        return ResponseEntity.ok(analyticsData)
     }
 
     @Operation(summary = "Get admin dashboard", description = "Retrieve dashboard data for administrators")

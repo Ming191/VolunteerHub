@@ -203,8 +203,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
             >
                 <CardHeader className="flex flex-row items-center gap-4 p-4">
                     <Avatar
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={handleViewAuthorProfile}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={handleViewAuthorProfile}
                     >
                         <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
                         <AvatarFallback>{post.author.name[0]}</AvatarFallback>
