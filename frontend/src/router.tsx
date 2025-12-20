@@ -13,7 +13,17 @@ import {
   dashboardRoute,
   indexRoute,
 } from "./routes/dashboard.routes";
-import { myEventsRoute, myRegistrationsRoute } from "./routes/events.routes";
+import {
+  myEventsRoute,
+  myRegistrationsRoute,
+  eventsRoute,
+  eventDetailsRoute,
+  eventAboutRoute,
+  eventCommunityRoute,
+  eventAttendeesRoute,
+  eventGalleryRoute,
+  postDetailsRoute,
+} from "./routes/events.routes";
 import {
   profileRoute,
   notificationsRoute,
@@ -51,9 +61,17 @@ const routeTree = rootRoute.addChildren([
     notificationsRoute,
     settingsRoute,
     myEventsRoute,
+    myRegistrationsRoute,
+    eventsRoute,
+    eventDetailsRoute.addChildren([
+      eventAboutRoute,
+      eventCommunityRoute,
+      eventAttendeesRoute,
+      eventGalleryRoute,
+    ]),
+    postDetailsRoute,
     adminPendingEventsRoute,
     adminUsersRoute,
-    myRegistrationsRoute,
     adminReportsRoute,
     adminSettingsRoute,
   ]),

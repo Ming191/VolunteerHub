@@ -114,9 +114,9 @@ export const AddEventModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-6 py-4 border-b shrink-0">
-          <DialogTitle>Create New Event</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="px-6 py-5 bg-gradient-to-r from-green-50 to-emerald-50 border-b-2 border-green-100 shrink-0">
+          <DialogTitle className="text-2xl font-bold text-gray-900">Create New Event</DialogTitle>
+          <DialogDescription className="text-gray-600">
             Fill in the details below to create a new volunteer event. Events
             require admin approval before being published.
           </DialogDescription>
@@ -133,7 +133,7 @@ export const AddEventModal = ({
           />
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t shrink-0 bg-background">
+        <DialogFooter className="px-6 py-4 border-t-2 border-gray-100 shrink-0 bg-gray-50">
           <RippleButton
             type="button"
             variant="outline"
@@ -146,6 +146,7 @@ export const AddEventModal = ({
             type="submit"
             form="create-event-form"
             disabled={isSubmitting}
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Event

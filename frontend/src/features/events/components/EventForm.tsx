@@ -261,13 +261,16 @@ export const EventForm = (props: EventFormProps) => {
                     name="tags"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Event Tags (Optional)</FormLabel>
+                            <FormLabel className="text-base font-semibold">Event Tags (Optional)</FormLabel>
                             <FormControl>
                                 <div className="space-y-2">
                                     {tagsLoading ? (
-                                        <div className="text-sm text-muted-foreground">Loading tags...</div>
+                                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Loading tags...
+                                        </div>
                                     ) : eventTags && eventTags.length > 0 ? (
-                                        <div className="max-h-48 overflow-y-auto p-2 border rounded-md">
+                                        <div className="max-h-48 overflow-y-auto p-3 border-2 border-gray-200 rounded-lg bg-gray-50">
                                             <ToggleGroup
                                                 type="multiple"
                                                 value={field.value}
@@ -280,7 +283,7 @@ export const EventForm = (props: EventFormProps) => {
                                                         value={tag.value}
                                                         variant="outline"
                                                         size="sm"
-                                                        className="text-xs"
+                                                        className="text-sm data-[state=on]:bg-green-600 data-[state=on]:text-white data-[state=on]:border-green-600 hover:bg-green-50 transition-colors"
                                                     >
                                                         {tag.label}
                                                     </ToggleGroupItem>
@@ -288,11 +291,11 @@ export const EventForm = (props: EventFormProps) => {
                                             </ToggleGroup>
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-muted-foreground">No tags available</div>
+                                        <div className="text-sm text-muted-foreground p-3 bg-gray-50 rounded-lg border border-gray-200">No tags available</div>
                                     )}
                                 </div>
                             </FormControl>
-                            <FormDescription>Select tags that describe your event</FormDescription>
+                            <FormDescription className="text-sm">Select one or more tags that describe your event</FormDescription>
                             <FormMessage />
                         </FormItem>
                     )}

@@ -37,7 +37,7 @@ export const DateTimePicker = ({
                     variant="outline"
                     disabled={disabled}
                     className={cn(
-                        'w-full pl-3 text-left font-normal',
+                        'w-full pl-3 text-left font-normal border-2 hover:border-green-300 focus:border-green-500 transition-colors',
                         !value && 'text-muted-foreground'
                     )}
                 >
@@ -45,7 +45,7 @@ export const DateTimePicker = ({
                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                 </RippleButton>
             </PopoverTrigger>
-            <PopoverContent className="w-full min-w-[320px] p-0" align="start">
+            <PopoverContent className="w-full min-w-[320px] p-0 bg-white shadow-xl border-2" align="start">
                 <Calendar
                     mode="single"
                     selected={value}
