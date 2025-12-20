@@ -52,6 +52,19 @@ export const useUpdateRegistrationStatus = (eventId: number) => {
     });
 };
 
+export const useMarkRegistrationCompleted = (eventId: number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (registrationId: number) => eventService.markRegistrationCompleted(registrationId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [EVENT_REGISTRATIONS_QUERY_KEY, eventId],
+      });
+    }
+  });
+}
+
 export function useUpdateEvent() {
     const queryClient = useQueryClient();
 

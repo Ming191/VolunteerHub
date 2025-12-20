@@ -2,7 +2,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, Download, Calendar, MapPin, Users } from 'lucide-react';
 import { SmartPagination } from '@/components/common/SmartPagination';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -120,11 +119,6 @@ export const AdminEvents = () => {
                                         <div className="flex items-center gap-2 mt-2 pt-2 border-t">
                                             <p className="text-xs text-muted-foreground">Organizer:</p>
                                             <div className="flex items-center gap-2">
-                                                <Avatar className="h-5 w-5">
-                                                    {/* Assuming organizer data is available in event object correctly, adjusting if needed */}
-                                                    <AvatarImage src={event.creatorName?.profilePictureUrl} />
-                                                    <AvatarFallback>{event.organizer?.name?.substring(0, 2).toUpperCase() || 'OR'}</AvatarFallback>
-                                                </Avatar>
                                                 <span className="text-sm font-medium">{event.creatorName || 'Unknown Organizer'}</span>
                                             </div>
                                         </div>

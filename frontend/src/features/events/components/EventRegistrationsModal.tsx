@@ -1,17 +1,16 @@
 import { useState } from "react";
-import { format } from "date-fns";
 import { Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 import {
-  useGetEventRegistrations,
+  useGetEventRegistrations, useMarkRegistrationCompleted,
   useUpdateRegistrationStatus,
 } from "../hooks/useMyEvents";
 
 import type { UpdateStatusRequestStatusEnum } from "@/api-client";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { EventRegistrationCard } from "@/features/events/components/EventRegistrationCard";
 
-type ActionType = "APPROVED" | "REJECTED";
+type ActionType = "APPROVED" | "REJECTED" | "COMPLETED";
 
 interface SelectedRegistration {
   id: number;
@@ -19,11 +18,40 @@ interface SelectedRegistration {
   action: ActionType;
 }
 
+const ACTION_CONFIG: Record<
+  ActionType,
+  {
+    title: string;
+    verb: string;
+    confirmText: string;
+    variant: "default" | "destructive";
+  }
+> = {
+  APPROVED: {
+    title: "Approve Registration",
+    verb: "approve",
+    confirmText: "Confirm Approve",
+    variant: "default",
+  },
+  REJECTED: {
+    title: "Reject Registration",
+    verb: "reject",
+    confirmText: "Confirm Reject",
+    variant: "destructive",
+  },
+  COMPLETED: {
+    title: "Mark Registration as Completed",
+    verb: "mark as completed",
+    confirmText: "Confirm Completion",
+    variant: "default",
+  },
+};
+
 export function EventRegistrationsModal({ eventId }: { eventId: number }) {
-  const { data: registrations, isLoading } =
-    useGetEventRegistrations(eventId);
+  const { data: registrations, isLoading } = useGetEventRegistrations(eventId);
 
   const updateStatusMutation = useUpdateRegistrationStatus(eventId);
+  const markRegistrationCompletedMutation = useMarkRegistrationCompleted(eventId);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedRegistration, setSelectedRegistration] =
@@ -49,11 +77,26 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
   const handleConfirm = () => {
     if (!selectedRegistration) return;
 
+    const { id, action } = selectedRegistration;
+
+    if (action === "COMPLETED") {
+      markRegistrationCompletedMutation.mutate(
+        id,
+        {
+          onSuccess: () => {
+            setConfirmOpen(false);
+            setSelectedRegistration(null);
+          },
+        }
+      );
+      return;
+    }
+
+    // APPROVED / REJECTED
     updateStatusMutation.mutate(
       {
-        registrationId: selectedRegistration.id,
-        status:
-          selectedRegistration.action as UpdateStatusRequestStatusEnum,
+        registrationId: id,
+        status: action as UpdateStatusRequestStatusEnum,
       },
       {
         onSuccess: () => {
@@ -63,6 +106,16 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
       }
     );
   };
+
+
+  const actionConfig = selectedRegistration
+    ? ACTION_CONFIG[selectedRegistration.action]
+    : null;
+
+  const isSubmitting =
+    selectedRegistration?.action === "COMPLETED"
+      ? markRegistrationCompletedMutation.isPending
+      : updateStatusMutation.isPending;
 
   return (
     <div className="space-y-4">
@@ -80,71 +133,11 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
       {registrations && registrations.length > 0 ? (
         <div className="space-y-2">
           {registrations.map((registration) => (
-            <div
+            <EventRegistrationCard
               key={registration.id}
-              className="p-3 border rounded-lg"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-medium">
-                    {registration.volunteerName}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Status: {registration.status}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Registered:{" "}
-                    {format(
-                      new Date(registration.registeredAt),
-                      "PPpp"
-                    )}
-                  </p>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                  {registration.status === "PENDING" && (
-                    <>
-                      <Badge
-                        className="cursor-pointer"
-                        variant="secondary"
-                        onClick={() =>
-                          openConfirmDialog(
-                            registration.id,
-                            registration.volunteerName,
-                            "APPROVED"
-                          )
-                        }
-                      >
-                        APPROVE
-                      </Badge>
-
-                      <Badge
-                        className="cursor-pointer"
-                        variant="destructive"
-                        onClick={() =>
-                          openConfirmDialog(
-                            registration.id,
-                            registration.volunteerName,
-                            "REJECTED"
-                          )
-                        }
-                      >
-                        REJECT
-                      </Badge>
-                    </>
-                  )}
-
-                  {registration.status === "APPROVED" && (
-                    <Badge variant="default">APPROVED</Badge>
-                  )}
-
-                  {registration.status === "REJECTED" && (
-                    <Badge variant="outline">REJECTED</Badge>
-                  )}
-                </div>
-              </div>
-            </div>
+              registration={registration}
+              onAction={openConfirmDialog}
+            />
           ))}
         </div>
       ) : (
@@ -159,43 +152,26 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
         </div>
       )}
 
-      {/* Confirm Dialog (Approve / Reject) */}
-      <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={
-          selectedRegistration?.action === "APPROVED"
-            ? "Approve Registration"
-            : "Reject Registration"
-        }
-        description={
-          <>
-            Are you sure you want to{" "}
-            <strong>
-              {selectedRegistration?.action === "APPROVED"
-                ? "approve"
-                : "reject"}
-            </strong>{" "}
-            the registration of{" "}
-            <strong>
-              {selectedRegistration?.volunteerName}
-            </strong>
-            ? This action cannot be undone.
-          </>
-        }
-        confirmText={
-          selectedRegistration?.action === "APPROVED"
-            ? "Confirm Approve"
-            : "Confirm Reject"
-        }
-        confirmVariant={
-          selectedRegistration?.action === "APPROVED"
-            ? "default"
-            : "destructive"
-        }
-        isLoading={updateStatusMutation.isPending}
-        onConfirm={handleConfirm}
-      />
+      {/* Confirm Dialog */}
+      {actionConfig && (
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={actionConfig.title}
+          description={
+            <>
+              Are you sure you want to{" "}
+              <strong>{actionConfig.verb}</strong> the registration of{" "}
+              <strong>{selectedRegistration?.volunteerName}</strong>?
+              This action cannot be undone.
+            </>
+          }
+          confirmText={actionConfig.confirmText}
+          confirmVariant={actionConfig.variant}
+          isLoading={isSubmitting}
+          onConfirm={handleConfirm}
+        />
+      )}
     </div>
   );
 }
