@@ -126,8 +126,7 @@ class PostService(
 
     @Transactional(readOnly = true)
     internal fun getLikedPostIdsByUser(userId: Long, postIds: List<Long>): Set<Long> {
-        val spec = LikeSpecifications.byUserForPosts(userId, postIds)
-        return likeRepository.findAll(spec).map { it.post.id }.toSet()
+        return likeRepository.findLikedPostIdsByUserAndPosts(userId, postIds)
     }
 
     @Transactional
@@ -178,8 +177,7 @@ class PostService(
 
     @Transactional(readOnly = true)
     internal fun isPostLikedByUser(userId: Long, postId: Long): Boolean {
-        val spec = LikeSpecifications.byUserAndPost(userId, postId)
-        return likeRepository.findAll(spec).isNotEmpty()
+        return likeRepository.existsByUserIdAndPostId(userId, postId)
     }
 
     @Transactional

@@ -3,7 +3,12 @@ package com.cs2.volunteer_hub.model
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "user_settings")
+@Table(
+    name = "user_settings",
+    indexes = [
+        Index(name = "idx_user_settings_user_id", columnList = "user_id")
+    ]
+)
 data class UserSettings(
     @Id val userId: Long = 0,
 
