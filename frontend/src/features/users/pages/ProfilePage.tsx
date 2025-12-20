@@ -8,7 +8,9 @@ import { SkeletonTransition } from '@/components/common/SkeletonTransition';
 import { ProfilePageSkeleton } from '@/features/users/components/ProfilePageSkeleton';
 import { EditProfileModal } from '@/features/users/components/EditProfileModal';
 import { ChangePasswordModal } from "@/features/users/components/ChangePasswordModal";
+import { CompletedEventsSection } from '@/features/users/components/CompletedEventsSection';
 import { useProfileData } from '../hooks/useProfileData';
+import { useCompletedEvents } from '../hooks/useCompletedEvents';
 import { PostCard } from '@/features/blog/components/PostCard';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useParams } from '@tanstack/react-router';
@@ -31,6 +33,9 @@ export const ProfilePage = () => {
 
     // Check if viewing own profile
     const isOwnProfile = !userId || (user && profile && user.userId === profile.id);
+
+    // Fetch completed events only for own profile
+    const { data: completedEvents = [] } = useCompletedEvents(isOwnProfile);
 
     const handleModalClose = (open: boolean) => {
         setIsEditModalOpen(open);
@@ -92,12 +97,11 @@ export const ProfilePage = () => {
                                         </div>
                                     )}
                                     {'skills' in profile && profile.skills && profile.skills.size > 0 && (
-                                        <div className="mt-4 flex flex-wrap gap-2 justify-center md:justify-start">
-                                            {Array.from(profile.skills).map((skill) => (
-                                                <Badge key={skill} variant="outline">
-                                                    {skill}
-                                                </Badge>
-                                            ))}
+                                        <div className="mt-4">
+                                            <p className="text-sm text-muted-foreground mb-2">
+                                                {profile.skills.size} skill{profile.skills.size !== 1 ? 's' : ''} • 
+                                                {profile.interests && ` ${profile.interests.size} interest${profile.interests.size !== 1 ? 's' : ''}`}
+                                            </p>
                                         </div>
                                     )}
                                 </div>
@@ -111,15 +115,23 @@ export const ProfilePage = () => {
                                             <Edit className="mr-2 h-4 w-4" />
                                             Change Password
                                         </Button>
-                                    </div>
-                                )}
-                            </div>
                         </CardContent>
                     </Card>
+
+                    {/* Completed Events Section - Only for own profile */}
+                    {isOwnProfile && (
+                        <CompletedEventsSection 
+                            events={completedEvents} 
+                            isOwnProfile={isOwnProfile}
+                        />
+                    )}
 
                     {/* Posts Section */}
                     <Card>
                         <CardHeader>
+                            <CardTitle>{isOwnProfile ? 'My Posts' : 'Posts'}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
                             <CardTitle>{isOwnProfile ? 'My Posts' : 'Posts'}</CardTitle>
                         </CardHeader>
                         <CardContent>

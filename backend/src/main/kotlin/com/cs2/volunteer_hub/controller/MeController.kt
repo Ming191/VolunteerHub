@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.controller
 
 import com.cs2.volunteer_hub.dto.ChangePasswordRequest
+import com.cs2.volunteer_hub.dto.CompletedEventResponse
 import com.cs2.volunteer_hub.dto.RegistrationResponse
 import com.cs2.volunteer_hub.dto.UpdateProfileRequest
 import com.cs2.volunteer_hub.dto.UserResponse
@@ -68,6 +69,15 @@ class MeController(
     ): ResponseEntity<Page<RegistrationResponse>> {
         val myRegistrations = meService.getMyRegistrations(currentUser.username, pageable)
         return ResponseEntity.ok(myRegistrations)
+    }
+
+    @Operation(summary = "Get my completed events", description = "Get all completed events for the current user")
+    @GetMapping("/completed-events", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getMyCompletedEvents(
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<List<CompletedEventResponse>> {
+        val completedEvents = meService.getMyCompletedEvents(currentUser.username)
+        return ResponseEntity.ok(completedEvents)
     }
 
     @Operation(summary = "Save FCM token", description = "Save Firebase Cloud Messaging token for push notifications")
