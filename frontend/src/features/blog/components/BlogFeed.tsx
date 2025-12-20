@@ -7,7 +7,6 @@ import { CreatePost } from './CreatePost.tsx';
 import { blogService } from '@/features/blog/api/blogService.ts';
 import { Skeleton } from '@/components/ui/skeleton.tsx';
 import { usePostMutations } from '@/features/blog/hooks/usePostMutations';
-import { Loader2 } from 'lucide-react';
 
 interface BlogFeedProps {
   eventId?: number;
