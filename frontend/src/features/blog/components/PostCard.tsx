@@ -75,7 +75,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(post.content);
     const [currentContent, setCurrentContent] = useState(post.content);
-    const { user } = useAuth();
     const navigate = useNavigate();
 
     const { likesCount, isLiked, toggleLike } = useLikeMutation(
@@ -203,7 +202,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
                 className={cn(isUploading && "pointer-events-none")}
             >
                 <CardHeader className="flex flex-row items-center gap-4 p-4">
-                    <Avatar>
+                    <Avatar
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={handleViewAuthorProfile}
+                    >
                         <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
                         <AvatarFallback>{post.author.name[0]}</AvatarFallback>
                     </Avatar>
