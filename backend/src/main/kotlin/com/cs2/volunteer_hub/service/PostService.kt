@@ -4,15 +4,14 @@ import com.cs2.volunteer_hub.config.RabbitMQConfig
 import com.cs2.volunteer_hub.dto.PostCreationMessage
 import com.cs2.volunteer_hub.dto.PostRequest
 import com.cs2.volunteer_hub.dto.PostResponse
+import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.mapper.PostMapper
 import com.cs2.volunteer_hub.model.Post
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.*
-import com.cs2.volunteer_hub.specification.LikeSpecifications
 import com.cs2.volunteer_hub.specification.PostSpecifications
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
-import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
@@ -25,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile
+import java.time.LocalDateTime
 
 @Service
 class PostService(
@@ -53,8 +53,8 @@ class PostService(
         val event = authorizationService.requireEventPostPermission(eventId, author.id)
 
         if (request.content.isBlank() && (files == null || files.isEmpty())) {
-            throw com.cs2.volunteer_hub.exception.BadRequestException(
-                    "Post must contain either text content or an image."
+            throw BadRequestException(
+                "Post must contain either text content or an image."
             )
         }
 
@@ -102,7 +102,6 @@ class PostService(
         val user = userEmail?.let { userRepository.findByEmailOrThrow(it) }
         authorizationService.requireEventReadPermission(eventId, user?.id)
 
-        // OPTIMIZED: First get post IDs with pagination, then fetch with associations
         val spec = PostSpecifications.forEvent(eventId)
         val postPage = postRepository.findAll(spec, pageable)
 
@@ -140,7 +139,7 @@ class PostService(
         val post = postRepository.findByIdOrThrow(postId)
 
         if (post.event.id != eventId) {
-            throw com.cs2.volunteer_hub.exception.BadRequestException(
+            throw BadRequestException(
                     "Post does not belong to the specified event."
             )
         }
@@ -166,7 +165,7 @@ class PostService(
         val post = postRepository.findByIdOrThrow(postId)
 
         if (post.event.id != eventId) {
-            throw com.cs2.volunteer_hub.exception.BadRequestException(
+            throw BadRequestException(
                     "Post does not belong to the specified event."
             )
         }
@@ -186,7 +185,7 @@ class PostService(
         val post = postRepository.findByIdOrThrow(postId)
 
         if (post.event.id != eventId) {
-            throw com.cs2.volunteer_hub.exception.BadRequestException(
+            throw BadRequestException(
                     "Post does not belong to the specified event."
             )
         }
