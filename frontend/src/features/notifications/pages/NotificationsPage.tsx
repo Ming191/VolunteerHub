@@ -37,17 +37,19 @@ export const NotificationsPage = () => {
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
-      <Card>
-        <CardHeader>
+      <Card className="border-2 border-gray-200 shadow-md">
+        <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b-2 border-green-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Bell className="h-6 w-6 text-primary" />
+              <div className="p-3 rounded-lg bg-green-100">
+                <Bell className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <CardTitle className="text-2xl">Notifications</CardTitle>
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  Notifications
+                </CardTitle>
                 {unreadCount > 0 && (
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-gray-600 mt-1">
                     You have {unreadCount} unread notification
                     {unreadCount !== 1 ? "s" : ""}
                   </p>
@@ -60,6 +62,7 @@ export const NotificationsPage = () => {
                 size="sm"
                 onClick={() => markAllAsReadMutation.mutate()}
                 disabled={markAllAsReadMutation.isPending}
+                className="border-green-200 hover:bg-green-50 text-green-700"
               >
                 <Check className="h-4 w-4 mr-2" />
                 Mark all read
@@ -101,16 +104,16 @@ export const NotificationsPage = () => {
                     {displayNotifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group ${
+                        className={`p-4 border-2 rounded-lg hover:shadow-md cursor-pointer transition-all group ${
                           !notification.isRead
-                            ? "bg-blue-50 border-blue-200"
-                            : ""
+                            ? "bg-green-50 border-green-200 hover:bg-green-100"
+                            : "border-gray-200 hover:bg-gray-50"
                         }`}
                         onClick={() => handleNotificationClick(notification)}
                       >
                         <div className="flex items-start gap-3">
                           {!notification.isRead && (
-                            <div className="size-2 rounded-full bg-blue-500 flex-shrink-0 mt-2" />
+                            <div className="size-2 rounded-full bg-green-500 flex-shrink-0 mt-2" />
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">

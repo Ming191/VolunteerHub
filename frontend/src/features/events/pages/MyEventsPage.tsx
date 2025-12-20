@@ -1,17 +1,25 @@
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { AddEventModal } from '../components/AddEventModal';
-import { EventDetailSheet } from '../components/EventDetailSheet';
-import { EventGrid } from '../components/EventGrid';
-import AnimatedPage from '@/components/common/AnimatedPage';
-import { SmartPagination } from '@/components/common/SmartPagination';
-import { useMyEventsPage } from '../hooks/useMyEventsPage';
-import { useState, useRef, useEffect } from 'react';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AddEventModal } from "../components/AddEventModal";
+import { EventDetailSheet } from "../components/EventDetailSheet";
+import { EventGrid } from "../components/EventGrid";
+import AnimatedPage from "@/components/common/AnimatedPage";
+import { SmartPagination } from "@/components/common/SmartPagination";
+import { useMyEventsPage } from "../hooks/useMyEventsPage";
+import { useState, useRef, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const MyEventsScreen = () => {
   const [updatingEventId, setUpdatingEventId] = useState<number | null>(null);
-  const [processingImageEventIds, setProcessingImageEventIds] = useState<Set<number>>(new Set());
+  const [processingImageEventIds, setProcessingImageEventIds] = useState<
+    Set<number>
+  >(new Set());
   const timeoutIdsRef = useRef<Map<number, number>>(new Map());
 
   const {
@@ -29,7 +37,7 @@ export const MyEventsScreen = () => {
     setIsCreateModalOpen,
     handleViewDetails,
     handleCreateSuccess,
-    handleFilterChange
+    handleFilterChange,
   } = useMyEventsPage();
 
   useEffect(() => {
@@ -57,11 +65,11 @@ export const MyEventsScreen = () => {
       clearTimeout(existingTimeoutId);
     }
 
-    setProcessingImageEventIds(prev => new Set(prev).add(eventId));
+    setProcessingImageEventIds((prev) => new Set(prev).add(eventId));
 
     // Automatically remove after 30 seconds as fallback
     const timeoutId = setTimeout(() => {
-      setProcessingImageEventIds(prev => {
+      setProcessingImageEventIds((prev) => {
         const next = new Set(prev);
         next.delete(eventId);
         return next;
@@ -75,7 +83,6 @@ export const MyEventsScreen = () => {
   return (
     <AnimatedPage>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-
         {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-4xl font-bold tracking-tight">My Events</h1>
@@ -86,22 +93,22 @@ export const MyEventsScreen = () => {
               value={
                 filters.sort
                   ? `${filters.sort}_${filters.direction}`
-                  : 'DEFAULT'
+                  : "DEFAULT"
               }
               onValueChange={(value) => {
-                if (value === 'DEFAULT') {
+                if (value === "DEFAULT") {
                   handleFilterChange({
                     sort: undefined,
-                    direction: 'DESC',
+                    direction: "DESC",
                   });
                   return;
                 }
 
-                const [sort, direction] = value.split('_');
+                const [sort, direction] = value.split("_");
 
                 handleFilterChange({
                   sort,
-                  direction: direction as 'ASC' | 'DESC',
+                  direction: direction as "ASC" | "DESC",
                 });
               }}
             >
@@ -128,8 +135,10 @@ export const MyEventsScreen = () => {
               </SelectContent>
             </Select>
 
-
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="border-2 border-green-600 bg-green-600 hover:bg-green-700 hover:border-green-700 text-white"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Create Event
             </Button>
@@ -139,7 +148,8 @@ export const MyEventsScreen = () => {
         {/* Count */}
         {!isLoading && eventsData && eventsData.totalElements > 0 && (
           <div className="mb-6 text-sm text-muted-foreground">
-            Showing {eventsData.content.length} of {eventsData.totalElements} events
+            Showing {eventsData.content.length} of {eventsData.totalElements}{" "}
+            events
           </div>
         )}
 

@@ -73,24 +73,24 @@ export const AddEventModal = ({
     toast.error("Failed to create event", { description: errorMessage });
   };
 
-    const handleCreateEvent = async (values: EventFormValues, files: File[]) => {
-        setIsSubmitting(true);
-        try {
-            const eventData = {
-                title: values.title,
-                description: values.description,
-                location: values.location,
-                latitude: values.latitude,
-                longitude: values.longitude,
-                eventDateTime: formatDateForBackend(values.eventDateTime),
-                endDateTime: formatDateForBackend(values.endDateTime),
-                registrationDeadline: values.registrationDeadline
-                    ? formatDateForBackend(values.registrationDeadline)
-                    : undefined,
-                maxParticipants: values.maxParticipants,
-                waitlistEnabled: values.waitlistEnabled,
-                tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
-            };
+  const handleCreateEvent = async (values: EventFormValues, files: File[]) => {
+    setIsSubmitting(true);
+    try {
+      const eventData = {
+        title: values.title,
+        description: values.description,
+        location: values.location,
+        latitude: values.latitude,
+        longitude: values.longitude,
+        eventDateTime: formatDateForBackend(values.eventDateTime),
+        endDateTime: formatDateForBackend(values.endDateTime),
+        registrationDeadline: values.registrationDeadline
+          ? formatDateForBackend(values.registrationDeadline)
+          : undefined,
+        maxParticipants: values.maxParticipants,
+        waitlistEnabled: values.waitlistEnabled,
+        tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
+      };
 
       await eventService.createEvent(eventData as CreateEventRequest, files);
 
@@ -115,7 +115,9 @@ export const AddEventModal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 py-5 bg-gradient-to-r from-green-50 to-emerald-50 border-b-2 border-green-100 shrink-0">
-          <DialogTitle className="text-2xl font-bold text-gray-900">Create New Event</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-gray-900">
+            Create New Event
+          </DialogTitle>
           <DialogDescription className="text-gray-600">
             Fill in the details below to create a new volunteer event. Events
             require admin approval before being published.

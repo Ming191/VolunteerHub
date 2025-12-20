@@ -19,12 +19,14 @@ import { useEventSearch } from "../hooks/useEventSearch";
 import type { UiEvent } from "@/types/ui-models";
 import type { EventResponse } from "@/api-client";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
-import {EventCardSkeleton} from "@/components/ui/loaders.tsx";
-import {SmartPagination} from "@/components/common/SmartPagination.tsx";
-import {EventDetailSheet} from "@/features/events/components/EventDetailSheet.tsx";
+import { Plus } from "lucide-react";
+import { EventCardSkeleton } from "@/components/ui/loaders.tsx";
+import { SmartPagination } from "@/components/common/SmartPagination.tsx";
+import { EventDetailSheet } from "@/features/events/components/EventDetailSheet.tsx";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export const EventListScreen = () => {
+  const { user } = useAuth();
   const {
     events: data,
     isLoading,
@@ -38,7 +40,9 @@ export const EventListScreen = () => {
     handleClearFilters,
   } = useEventSearch();
 
-  const [selectedEvent, setSelectedEvent] = useState<EventResponse | UiEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<
+    EventResponse | UiEvent | null
+  >(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
 
@@ -62,24 +66,18 @@ export const EventListScreen = () => {
           subtitle="Join events that match your passion and make a meaningful impact in your community."
           variant="default"
         >
-          <div className="flex flex-wrap gap-4">
-            <Button
-              onClick={() => setIsAddEventModalOpen(true)}
-              size="lg"
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Plus className="mr-2 h-5 w-5" />
-              Create Event
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-2 hover:bg-green-50 hover:border-green-600 text-gray-700"
-            >
-              <Search className="mr-2 h-5 w-5" />
-              Advanced Search
-            </Button>
-          </div>
+          {user?.role !== "VOLUNTEER" && (
+            <div className="flex flex-wrap gap-4">
+              <Button
+                onClick={() => setIsAddEventModalOpen(true)}
+                size="lg"
+                className="border-2 border-green-600 bg-green-600 hover:bg-green-700 hover:border-green-700 text-white shadow-md hover:shadow-lg transition-all"
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                Create Event
+              </Button>
+            </div>
+          )}
         </HeroSection>
 
         {/* Filter Panel */}
@@ -272,4 +270,4 @@ export const EventListScreen = () => {
       </div>
     </AnimatedPage>
   );
-}
+};
