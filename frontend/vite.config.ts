@@ -21,11 +21,16 @@ export default defineConfig({
                     'ui-vendor': ['framer-motion', 'lucide-react'],
                     'form-vendor': ['react-hook-form', 'zod'],
                     'date-vendor': ['date-fns'],
+                    // Lazy-loaded heavy libraries
+                    'charts': ['recharts'],
+                    'maps': ['leaflet', 'react-leaflet', 'leaflet-defaulticon-compatibility'],
+                    'editor': ['react-easy-crop'],
                 },
             },
         },
-        chunkSizeWarningLimit: 1000,
+        chunkSizeWarningLimit: 600,
         sourcemap: false,
+        minify: 'esbuild',
     },
     optimizeDeps: {
         include: [

@@ -1,7 +1,7 @@
 import {
     Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse,
     type CreateEventRequest, EventManagerApi, type RegistrationResponse, type UpdateStatusRequestStatusEnum,
-    type UpdateEventRequest
+    type UpdateEventRequest, type PageGalleryImageResponse
 } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
 
@@ -144,7 +144,7 @@ const updateRegistrationStatus = async (
 };
 
 const markRegistrationCompleted = async (registrationId: number) => {
-    const response = await eventManagerApi.markRegistrationAsCompleted({registrationId});
+    const response = await eventManagerApi.markRegistrationAsCompleted({ registrationId });
     return response.data;
 };
 
@@ -192,6 +192,16 @@ const getEventAttendees = async (eventId: number): Promise<PublicAttendeeRespons
     }
 }
 
+const getEventGallery = async (eventId: number, page: number = 0, size: number = 20): Promise<PageGalleryImageResponse> => {
+    try {
+        const response = await eventsApi.getEventGallery({ id: eventId, page, size });
+        return response.data;
+    } catch (error) {
+        console.error(`Failed to fetch gallery for event ${eventId}:`, error);
+        throw error;
+    }
+}
+
 
 export const eventService = {
     searchEvents,
@@ -205,4 +215,5 @@ export const eventService = {
     updateEvent,
     deleteEvent,
     getEventAttendees,
+    getEventGallery,
 };

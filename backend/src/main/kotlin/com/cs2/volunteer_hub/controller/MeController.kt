@@ -10,6 +10,9 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -57,10 +60,13 @@ class MeController(
         }
     }
 
-    @Operation(summary = "Get my registrations", description = "Get all event registrations for the current user")
+    @Operation(summary = "Get my registrations", description = "Get all event registrations for the current user with pagination")
     @GetMapping("/registrations", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getMyRegistrations(@AuthenticationPrincipal currentUser: UserDetails): ResponseEntity<List<RegistrationResponse>> {
-        val myRegistrations = meService.getMyRegistrations(currentUser.username)
+    fun getMyRegistrations(
+        @AuthenticationPrincipal currentUser: UserDetails,
+        @PageableDefault(size = 20, sort = ["event.eventDateTime"], direction = org.springframework.data.domain.Sort.Direction.DESC) pageable: Pageable
+    ): ResponseEntity<Page<RegistrationResponse>> {
+        val myRegistrations = meService.getMyRegistrations(currentUser.username, pageable)
         return ResponseEntity.ok(myRegistrations)
     }
 
@@ -72,6 +78,15 @@ class MeController(
     ): ResponseEntity<Unit> {
         val token = tokenRequest["token"] ?: throw BadRequestException("Token is required.")
         meService.saveFcmToken(token, currentUser.username)
+        return ResponseEntity.ok().build()
+    }
+
+    @Operation(summary = "Delete FCM tokens", description = "Delete all FCM tokens for the current user")
+    @DeleteMapping("/fcm-tokens", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun deleteFcmTokens(
+        @AuthenticationPrincipal currentUser: UserDetails
+    ): ResponseEntity<Unit> {
+        meService.deleteFcmTokensForUser(currentUser.username)
         return ResponseEntity.ok().build()
     }
 

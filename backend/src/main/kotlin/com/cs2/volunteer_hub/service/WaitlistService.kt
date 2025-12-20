@@ -121,18 +121,37 @@ class WaitlistService(
     @Transactional
     fun reorderWaitlist(eventId: Long) {
         val waitlist = getWaitlistForEvent(eventId)
+        
+        val updatedRegistrations = mutableListOf<Registration>()
+        val notifications = mutableListOf<Triple<Long, String, String>>()
 
         waitlist.forEachIndexed { index, registration ->
             val newPosition = index + 1
             if (registration.waitlistPosition != newPosition) {
                 registration.waitlistPosition = newPosition
-                registrationRepository.save(registration)
+                updatedRegistrations.add(registration)
 
-                // Notify about position change
+                // Queue notification about position change
+                notifications.add(
+                    Triple(
+                        registration.user.id,
+                        "Waitlist Position Updated",
+                        "You moved up! You're now #${newPosition} on the waitlist for '${registration.event.title}'."
+                    )
+                )
+            }
+        }
+
+        // Batch save all updated registrations
+        if (updatedRegistrations.isNotEmpty()) {
+            registrationRepository.saveAll(updatedRegistrations)
+            
+            // Send all notifications after successful save
+            notifications.forEach { (userId, title, body) ->
                 notificationService.queuePushNotificationToUser(
-                    userId = registration.user.id,
-                    title = "Waitlist Position Updated",
-                    body = "You moved up! You're now #${newPosition} on the waitlist for '${registration.event.title}'.",
+                    userId = userId,
+                    title = title,
+                    body = body,
                     link = "/events/${eventId}"
                 )
             }
