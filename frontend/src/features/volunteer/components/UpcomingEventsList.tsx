@@ -3,10 +3,10 @@ import { Calendar, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/dateUtils';
 // import type { EventResponse } from '@/api-client';
 
-import type { EventResponse } from '@/api-client';
+import type {DashboardEventItem} from '@/api-client';
 
 interface UpcomingEventsListProps {
-    events: EventResponse[];
+    events: DashboardEventItem[];
     onEventClick: (id: number) => void;
 }
 
