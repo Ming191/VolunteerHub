@@ -1,7 +1,6 @@
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventService, type MyEventsParams } from "@/features/events/api/eventService";
-import type { UpdateStatusRequestStatusEnum, UpdateEventRequest } from "@/api-client";
+import type {UpdateEventRequest, UpdateStatusRequestStatusEnum} from "@/api-client";
 import { toast } from "sonner";
 import { EVENTS_QUERY_KEY } from "@/features/events/hooks/useEvents";
 

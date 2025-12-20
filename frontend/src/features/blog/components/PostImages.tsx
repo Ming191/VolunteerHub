@@ -1,137 +1,189 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog.tsx';
-import { Button } from '@/components/ui/button.tsx';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils.ts';
+import { AlertDialog, AlertDialogPopup } from '@/components/animate-ui/components/base/alert-dialog';
+import { motion, type Transition } from 'motion/react';
+import { type EmblaCarouselType } from 'embla-carousel';
+import useEmblaCarousel from 'embla-carousel-react';
+import { Button } from '@/components/animate-ui/components/buttons/button';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+
+const transition: Transition = {
+    type: 'spring',
+    stiffness: 240,
+    damping: 24,
+    mass: 1,
+};
 
 interface PostImagesProps {
     images: string[];
 }
 
 export const PostImages: React.FC<PostImagesProps> = ({ images }) => {
-    const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
+    const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+    const [emblaRef, emblaApi] = useEmblaCarousel({ startIndex: 0, loop: true });
+    const [canScrollPrev, setCanScrollPrev] = useState(false);
+    const [canScrollNext, setCanScrollNext] = useState(false);
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    const onSelect = useCallback((api: EmblaCarouselType) => {
+        setCurrentIndex(api.selectedScrollSnap());
+        setCanScrollPrev(api.canScrollPrev());
+        setCanScrollNext(api.canScrollNext());
+    }, []);
+
+    useEffect(() => {
+        if (!emblaApi) return;
+
+        onSelect(emblaApi);
+        emblaApi.on('select', onSelect);
+
+        return () => {
+            emblaApi.off('select', onSelect);
+        };
+    }, [emblaApi, onSelect]);
+
+    useEffect(() => {
+        if (emblaApi && selectedImageIndex !== null) {
+            emblaApi.scrollTo(selectedImageIndex);
+        }
+    }, [emblaApi, selectedImageIndex]);
+
+    const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+    const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
     if (!images || images.length === 0) return null;
 
-    const openImagePreview = (index: number) => {
-        setPreviewImageIndex(index);
-    };
-
-    const nextImage = () => {
-        if (previewImageIndex !== null && previewImageIndex < images.length - 1) {
-            setPreviewImageIndex(previewImageIndex + 1);
-        }
-    };
-
-    const prevImage = () => {
-        if (previewImageIndex !== null && previewImageIndex > 0) {
-            setPreviewImageIndex(previewImageIndex - 1);
-        }
-    };
+    const gridClass = cn(
+        "grid gap-1 rounded-md overflow-hidden mb-3",
+        images.length === 1 ? "grid-cols-1" :
+        images.length === 2 ? "grid-cols-2" :
+        images.length === 3 ? "grid-cols-2" :
+        "grid-cols-2"
+    );
 
     return (
         <>
-            {/* --- GRID DISPLAY --- */}
-            <div className={cn(
-                "grid gap-1 rounded-md overflow-hidden mb-3",
-                images.length === 1 ? "grid-cols-1" : "grid-cols-2"
-            )}>
-                {/* First Image */}
-                <div
-                    className="relative cursor-pointer hover:opacity-95 transition-opacity"
-                    onClick={() => openImagePreview(0)}
-                >
-                    <img
-                        src={images[0]}
-                        alt="View 1"
-                        className="w-full h-64 object-cover"
-                    />
-                </div>
-
-                {/* Second Image or Overlay */}
-                {images.length > 1 && (
+            {/* Grid Display */}
+            <div className={gridClass}>
+                {images.slice(0, 4).map((image, index) => (
                     <div
-                        className="relative cursor-pointer hover:opacity-95 transition-opacity"
-                        onClick={() => openImagePreview(1)}
+                        key={index}
+                        className={cn(
+                            "relative cursor-pointer hover:opacity-90 transition-opacity",
+                            images.length === 3 && index === 0 ? "col-span-2" : ""
+                        )}
+                        onClick={() => setSelectedImageIndex(index)}
                     >
                         <img
-                            src={images[1]}
-                            alt="View 2"
-                            className="w-full h-64 object-cover"
+                            src={image}
+                            alt={`Image ${index + 1}`}
+                            className="w-full h-48 object-cover"
                         />
-                        {/* Overlay if more than 2 images */}
-                        {images.length > 2 && (
-                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                <span className="text-white text-2xl font-bold">
-                                    +{images.length - 2}
+                        {/* Show overlay on last visible image if there are more */}
+                        {index === 3 && images.length > 4 && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <span className="text-white text-3xl font-bold">
+                                    +{images.length - 4}
                                 </span>
                             </div>
                         )}
                     </div>
-                )}
+                ))}
             </div>
 
-            {/* --- FULL SCREEN PREVIEW DIALOG --- */}
-            <Dialog
-                open={previewImageIndex !== null}
-                onOpenChange={(open) => !open && setPreviewImageIndex(null)}
-            >
-                <DialogContent
-                    showCloseButton={false}
-                    className="w-[95vw] h-[80vh] sm:w-[80vw] sm:h-[80vh] max-w-none sm:max-w-none m-0 p-0 rounded-lg bg-black/95 border-none text-white overflow-hidden flex flex-col items-center justify-center shadow-none data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 duration-200"
-                >
-                    {/* Close Button */}
-                    <div className="absolute top-4 right-4 z-50">
-                        <Button
-                            variant="ghost" size="icon"
-                            className="text-white hover:bg-white/20 rounded-full"
-                            onClick={() => setPreviewImageIndex(null)}
+            {/* Carousel Modal */}
+            <AlertDialog open={selectedImageIndex !== null} onOpenChange={(open) => !open && setSelectedImageIndex(null)}>
+                <AlertDialogPopup className="max-w-[95vw] md:max-w-7xl lg:max-w-[90vw] w-full p-0 bg-black/95 border-none">
+                    <div className="relative">
+                        {/* Close button */}
+                        <button
+                            onClick={() => setSelectedImageIndex(null)}
+                            className="absolute top-4 right-4 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                            aria-label="Close"
                         >
-                            <X className="h-6 w-6" />
-                        </Button>
-                    </div>
+                            <X className="h-5 w-5" />
+                        </button>
 
-                    {previewImageIndex !== null && images.length > 0 && (
-                        <div className="relative w-full h-full flex items-center justify-center">
-                            {/* Prev Button */}
-                            {previewImageIndex > 0 && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute left-4 z-10 text-white hover:bg-white/20 rounded-full h-12 w-12"
-                                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                                >
-                                    <ChevronLeft className="h-8 w-8" />
-                                </Button>
-                            )}
-
-                            {/* Main Image */}
-                            <img
-                                src={images[previewImageIndex]}
-                                alt={`Preview ${previewImageIndex}`}
-                                className="max-h-full max-w-full object-contain"
-                            />
-
-                            {/* Next Button */}
-                            {previewImageIndex < images.length - 1 && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute right-4 z-10 text-white hover:bg-white/20 rounded-full h-12 w-12"
-                                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                                >
-                                    <ChevronRight className="h-8 w-8" />
-                                </Button>
-                            )}
-
-                            {/* Indicator */}
-                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-sm">
-                                {previewImageIndex + 1} / {images.length}
+                        {/* Carousel */}
+                        <div className="overflow-hidden" ref={emblaRef}>
+                            <div className="flex">
+                                {images.map((image, index) => (
+                                    <div key={index} className="flex-[0_0_100%] min-w-0">
+                                        <motion.div
+                                            className="flex flex-col"
+                                            initial={false}
+                                            animate={{
+                                                scale: index === currentIndex ? 1 : 0.95,
+                                            }}
+                                            transition={transition}
+                                        >
+                                            <div className="relative overflow-hidden flex items-center justify-center h-[70vh] md:h-[60vh] lg:h-[75vh]">
+                                                {/* Blurred background */}
+                                                <div
+                                                    className="absolute inset-0 bg-cover bg-center"
+                                                    style={{
+                                                        backgroundImage: `url(${image})`,
+                                                        filter: 'blur(40px)',
+                                                        transform: 'scale(1.1)'
+                                                    }}
+                                                />
+                                                {/* Dark overlay */}
+                                                <div className="absolute inset-0 bg-black/40" />
+                                                {/* Main image */}
+                                                <img
+                                                    src={image}
+                                                    alt={`Post image ${index + 1}`}
+                                                    className="relative w-full h-full object-contain z-10"
+                                                />
+                                            </div>
+                                        </motion.div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+
+                        {/* Navigation Controls */}
+                        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none">
+                            <Button
+                                size="icon"
+                                onClick={scrollPrev}
+                                disabled={!canScrollPrev}
+                                className="pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-0 disabled:opacity-30"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </Button>
+                            <Button
+                                size="icon"
+                                onClick={scrollNext}
+                                disabled={!canScrollNext}
+                                className="pointer-events-auto w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white border-0 disabled:opacity-30"
+                            >
+                                <ChevronRight className="h-5 w-5" />
+                            </Button>
+                        </div>
+
+                        {/* Dot indicators */}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 pointer-events-none">
+                            {images.map((_, index) => (
+                                <motion.button
+                                    key={index}
+                                    type="button"
+                                    onClick={() => emblaApi?.scrollTo(index)}
+                                    initial={false}
+                                    className="pointer-events-auto cursor-pointer rounded-full bg-white/50 hover:bg-white/80 transition-colors"
+                                    animate={{
+                                        width: index === currentIndex ? 24 : 8,
+                                        height: 8,
+                                        backgroundColor: index === currentIndex ? 'rgb(255 255 255 / 0.9)' : 'rgb(255 255 255 / 0.5)',
+                                    }}
+                                    transition={transition}
+                                    aria-label={`Go to image ${index + 1}`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </AlertDialogPopup>
+            </AlertDialog>
         </>
     );
 };

@@ -1,6 +1,7 @@
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { EventResponse } from '@/api-client';
 import { useGetRegistrationStatus } from "@/features/volunteer/hooks/useRegistration.ts";
+import { isEventEnded, isRegistrationClosed } from '@/lib/dateUtils';
 
 export function useEventPermissions(event: EventResponse | null) {
     const { user } = useAuth();
@@ -15,16 +16,20 @@ export function useEventPermissions(event: EventResponse | null) {
             isOwner: false,
             canRegister: false,
             canPost: false,
+            isEventEnded: false,
+            isRegistrationClosed: false,
         };
     }
 
     const isAdmin = user.role === 'ADMIN';
     const isOrganizer = user.role === 'EVENT_ORGANIZER';
     const isOwner = user.userId === event.creatorId;
-    const isRegistered = isVolunteer && (data?.status === 'APPROVED' || data?.status === 'PENDING');
+    const isRegistered = isVolunteer && data?.registered;
     const isApprovedMember = isVolunteer && data?.status === 'APPROVED';
-    const isRejected = isVolunteer && data?.status === 'REJECTED';
-    const canRegister = isVolunteer && !event.isFull && event.isApproved;    // Backend strictly requires approved registration to post
+    const eventEnded = isEventEnded(event.endDateTime);
+    const registrationClosed = isRegistrationClosed(event.registrationDeadline);
+    const canRegister = isVolunteer && !event.isFull && event.isApproved && !eventEnded && !registrationClosed;
+    // Backend strictly requires approved registration to post
     const canPost = isApprovedMember || isOwner;
 
     return {
@@ -34,8 +39,9 @@ export function useEventPermissions(event: EventResponse | null) {
         isOwner,
         isRegistered,
         isApprovedMember,
-        isRejected,
         canRegister,
         canPost,
+        isEventEnded: eventEnded,
+        isRegistrationClosed: registrationClosed,
     };
 }

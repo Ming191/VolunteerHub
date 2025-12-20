@@ -51,6 +51,7 @@ data class EventResponse(
     val creatorName: String,
     val creatorId: Long,
     val imageUrls: List<String>,
+    val galleryImageUrls: List<GalleryImageResponse>,
     val maxParticipants: Int?,
     val waitlistEnabled: Boolean,
     val approvedCount: Int,
@@ -61,6 +62,14 @@ data class EventResponse(
     val status: EventStatus,
     val isInProgress: Boolean,
     val tags: Set<EventTag>
+)
+
+data class GalleryImageResponse(
+    val url: String,
+    val source: String,  // "event" or "post"
+    val authorName: String? = null,  // Only for post images
+    val authorId: Long? = null,  // Only for post images
+    val postId: Long? = null  // Only for post images
 )
 
 data class UpdateEventRequest(
