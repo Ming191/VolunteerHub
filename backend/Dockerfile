@@ -12,7 +12,7 @@ RUN sed -i 's/\r$//' gradlew && \
     chmod +x gradlew
 
 # Download dependencies (this layer will be cached unless build.gradle.kts changes)
-RUN sh ./gradlew dependencies --no-daemon || return 0
+RUN sh ./gradlew dependencies --no-daemon
 
 # Copy source code
 COPY src src
