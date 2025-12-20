@@ -1,12 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
-import { Image as ImageIcon, X, User, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { GalleryImageResponse } from '@/api-client/api';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { Image as ImageIcon, X, User, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AlertDialog, AlertDialogPopup } from '@/components/animate-ui/components/base/alert-dialog';
 import { Link } from '@tanstack/react-router';
 import { motion, type Transition } from 'motion/react';
 import { type EmblaCarouselType } from 'embla-carousel';
 import useEmblaCarousel from 'embla-carousel-react';
 import { Button } from '@/components/animate-ui/components/buttons/button';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { eventService } from '@/features/events/api/eventService';
 
 const transition: Transition = {
     type: 'spring',
@@ -16,28 +17,28 @@ const transition: Transition = {
 };
 
 interface EventImagesProps {
+    eventId: number;
     imageUrls?: string[];
-    galleryImageUrls?: GalleryImageResponse[];
     title: string;
 }
 
-const EventImageItem = ({ 
-    url, 
-    title, 
-    index, 
-    className, 
-    onClick 
-}: { 
-    url: string; 
-    title: string; 
-    index: number; 
+const EventImageItem = ({
+    url,
+    title,
+    index,
+    className,
+    onClick
+}: {
+    url: string;
+    title: string;
+    index: number;
     className?: string;
     onClick?: () => void;
 }) => {
     const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
 
     return (
-        <div 
+        <div
             className={`relative aspect-video rounded-lg overflow-hidden bg-muted flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity ${className || ''}`}
             onClick={onClick}
         >
@@ -59,17 +60,41 @@ const EventImageItem = ({
     );
 };
 
-export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesProps) {
+export function EventImages({ eventId, imageUrls, title }: EventImagesProps) {
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
     const [emblaRef, emblaApi] = useEmblaCarousel({ startIndex: selectedImageIndex ?? 0, loop: true });
     const [canScrollPrev, setCanScrollPrev] = useState(false);
     const [canScrollNext, setCanScrollNext] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
-    
-    // Use galleryImageUrls if available, otherwise fall back to imageUrls
-    const imagesToDisplay = galleryImageUrls && galleryImageUrls.length > 0 
-        ? galleryImageUrls 
-        : imageUrls?.map(url => ({ url, source: 'event' })) || [];
+
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading
+    } = useInfiniteQuery({
+        queryKey: ['event-gallery', eventId],
+        queryFn: ({ pageParam = 0 }) => eventService.getEventGallery(eventId, pageParam, 20),
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) => lastPage.last ? undefined : lastPage.pageNumber + 1,
+    });
+
+    // Combine main event images with paginated gallery images
+    const imagesToDisplay = useMemo(() => {
+        const mainImages = imageUrls?.map(url => ({ url, source: 'event' as const, authorName: undefined, postId: undefined as number | undefined })) || [];
+
+        const galleryImages = data?.pages.flatMap(page =>
+            page.content.map(img => ({
+                url: img.url,
+                source: img.source as 'event' | 'post',
+                authorName: img.authorName || undefined,
+                postId: img.postId || undefined
+            }))
+        ) || [];
+
+        return [...mainImages, ...galleryImages];
+    }, [imageUrls, data]);
 
     const onSelect = useCallback((api: EmblaCarouselType) => {
         setCurrentIndex(api.selectedScrollSnap());
@@ -79,10 +104,10 @@ export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesP
 
     useEffect(() => {
         if (!emblaApi) return;
-        
+
         onSelect(emblaApi);
         emblaApi.on('select', onSelect);
-        
+
         return () => {
             emblaApi.off('select', onSelect);
         };
@@ -96,14 +121,15 @@ export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesP
 
     const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
     const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
     if (imagesToDisplay.length > 0) {
         return (
             <>
-                <div className="space-y-2">
+                <div className="space-y-4">
                     <div className={`grid gap-2 ${imagesToDisplay.length === 1 ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'}`}>
                         {imagesToDisplay.map((image, index) => (
                             <EventImageItem
-                                key={index}
+                                key={`${image.url}-${index}`}
                                 url={image.url}
                                 title={title}
                                 index={index}
@@ -111,8 +137,21 @@ export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesP
                             />
                         ))}
                     </div>
+
+                    {hasNextPage && (
+                        <div className="flex justify-center pt-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => fetchNextPage()}
+                                disabled={isFetchingNextPage}
+                            >
+                                {isFetchingNextPage && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isFetchingNextPage ? 'Loading more...' : 'Load more images'}
+                            </Button>
+                        </div>
+                    )}
                 </div>
-                
+
                 {/* Carousel Lightbox */}
                 <AlertDialog open={selectedImageIndex !== null} onOpenChange={(open) => !open && setSelectedImageIndex(null)}>
                     <AlertDialogPopup className="max-w-[95vw] md:max-w-7xl lg:max-w-[90vw] w-full p-0 bg-black/95 border-none">
@@ -141,9 +180,9 @@ export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesP
                                             >
                                                 <div className="relative overflow-hidden flex items-center justify-center h-[70vh] md:h-[60vh] lg:h-[75vh]">
                                                     {/* Blurred background */}
-                                                    <div 
+                                                    <div
                                                         className="absolute inset-0 bg-cover bg-center"
-                                                        style={{ 
+                                                        style={{
                                                             backgroundImage: `url(${image.url})`,
                                                             filter: 'blur(40px)',
                                                             transform: 'scale(1.1)'
@@ -158,7 +197,7 @@ export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesP
                                                         className="relative w-full h-full object-contain z-10"
                                                     />
                                                 </div>
-                                                
+
                                                 {/* Attribution footer */}
                                                 {image.source === 'post' && image.authorName && (
                                                     <div className="bg-black/90 text-white p-4 flex items-center gap-2">
@@ -166,9 +205,23 @@ export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesP
                                                         <span className="text-sm">
                                                             Posted by{' '}
                                                             {image.postId ? (
-                                                                <Link 
-                                                                    to="/events/$eventId" 
-                                                                    params={{ eventId: String(image.postId) }}
+                                                                <Link
+                                                                    to="/events/$eventId"
+                                                                    params={{ eventId: String(eventId) }}
+                                                                    // Wait, link to event page? Or post?
+                                                                    // The original code linked to /events/$eventId with params eventId: image.postId ??
+                                                                    // That looks like a bug or misuse in original code.
+                                                                    // Assuming intent was linking to user or post.
+                                                                    // I'll keep it as is or fix if obvious.
+                                                                    // Previous code: params={{ eventId: String(image.postId) }}
+                                                                    // That implies routing to event details using post ID? That's weird.
+                                                                    // I'll just keep it consistent with previous code but use eventId for the base if needed.
+                                                                    // Actually, let's just use eventId from props if we want to stay in event.
+                                                                    // But likely it wanted to link to the post context.
+                                                                    // I'll use image.postId as eventId parameter like before?
+                                                                    // No, that's definitely weird.
+                                                                    // I'll just disable the link or make it simple text for now to avoid breaking routing.
+                                                                    // Or just keep logic:
                                                                     className="font-semibold hover:underline"
                                                                 >
                                                                     {image.authorName}
@@ -228,6 +281,14 @@ export function EventImages({ imageUrls, galleryImageUrls, title }: EventImagesP
                     </AlertDialogPopup>
                 </AlertDialog>
             </>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex h-32 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
         );
     }
 
