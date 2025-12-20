@@ -24,7 +24,7 @@ class CacheEvictionService(
      * Evict a specific event from cache
      */
     fun evictEvent(eventId: Long) {
-        cacheManager.getCache("event")?.evict(eventId)
+        cacheManager.getCache("events")?.evict(eventId)
     }
 
     /**
@@ -73,6 +73,22 @@ class CacheEvictionService(
      */
     fun evictPublicUserProfile(userId: Long) {
         cacheManager.getCache("publicUserProfiles")?.evict(userId)
+    }
+
+    /**
+     * Evict dashboard caches for a user (volunteer and organizer dashboards + analytics)
+     */
+    fun evictDashboardCaches(userEmail: String) {
+        cacheManager.getCache("volunteerDashboard")?.evict(userEmail)
+        cacheManager.getCache("organizerDashboard")?.evict(userEmail)
+        cacheManager.getCache("organizerAnalytics")?.evict(userEmail)
+    }
+
+    /**
+     * Evict admin dashboard cache
+     */
+    fun evictAdminDashboard() {
+        cacheManager.getCache("adminDashboard")?.clear()
     }
 }
 

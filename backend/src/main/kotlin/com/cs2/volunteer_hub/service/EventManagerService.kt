@@ -115,6 +115,9 @@ class EventManagerService(
         }
 
         cacheEvictionService.evictRelatedCaches(registration)
+        cacheEvictionService.evictEventRegistrations(registration.event.id)
+        cacheEvictionService.evictDashboardCaches(registration.user.email)
+        cacheEvictionService.evictDashboardCaches(registration.event.creator.email)
 
         registration.status = RegistrationStatus.COMPLETED
         val savedRegistration = registrationRepository.save(registration)
@@ -143,6 +146,20 @@ class EventManagerService(
             registration.status = RegistrationStatus.COMPLETED
         }
         registrationRepository.saveAll(registrationsToComplete)
+        
+        // Collect unique event IDs and user emails for efficient cache eviction
+        val eventIds = registrationsToComplete.map { it.event.id }.toSet()
+        val userEmails = registrationsToComplete.map { it.user.email }.toSet()
+        
+        // Evict caches in bulk
+        eventIds.forEach { eventId ->
+            cacheEvictionService.evictEventRegistrations(eventId)
+        }
+        userEmails.forEach { userEmail ->
+            cacheEvictionService.evictDashboardCaches(userEmail)
+        }
+        cacheEvictionService.evictDashboardCaches(manager.email)
+        
         registrationsToComplete.forEach { registration ->
             cacheEvictionService.evictRelatedCaches(registration)
             queueRegistrationStatusUpdate(registration.id, RegistrationStatus.COMPLETED)
@@ -317,6 +334,9 @@ class EventManagerService(
         val oldStatus = registration.status
 
         cacheEvictionService.evictRelatedCaches(registration)
+        cacheEvictionService.evictEventRegistrations(registration.event.id)
+        cacheEvictionService.evictDashboardCaches(registration.user.email)
+        cacheEvictionService.evictDashboardCaches(registration.event.creator.email)
 
         registration.status = newStatus
         val savedRegistration = registrationRepository.save(registration)
