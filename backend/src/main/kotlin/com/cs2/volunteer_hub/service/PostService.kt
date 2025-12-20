@@ -38,7 +38,7 @@ class PostService(
         private val authorizationService: AuthorizationService,
         private val cacheEvictionService: CacheEvictionService,
         private val imageUploadService: ImageUploadService,
-        @Value("\${upload.max-files-per-post:5}") private val maxFilesPerPost: Int = 5
+        @Value("\${upload.max-files-per-post:5}") private val maxFilesPerPost: Int
 ) {
     private val logger = LoggerFactory.getLogger(PostService::class.java)
 
