@@ -37,58 +37,59 @@ class PostService(
         private val postMapper: PostMapper,
         private val authorizationService: AuthorizationService,
         private val cacheEvictionService: CacheEvictionService,
-        @field:Value($$"${upload.max-files-per-post:5}") private val maxFilesPerPost: Int = 5
+        private val imageUploadService: ImageUploadService,
+        @Value("\${upload.max-files-per-post:5}") private val maxFilesPerPost: Int
 ) {
     private val logger = LoggerFactory.getLogger(PostService::class.java)
+
+    fun generateSignedUrl(contentType: String, fileName: String): Pair<String, String> {
+        return imageUploadService.generateSignedUrl(contentType, fileName)
+    }
 
     @CacheEvict(value = ["posts"], key = "#eventId")
     @Transactional
     fun createPost(
             eventId: Long,
             request: PostRequest,
-            files: List<MultipartFile>?,
             userEmail: String
     ): PostResponse {
         val author = userRepository.findByEmailOrThrow(userEmail)
         val event = authorizationService.requireEventPostPermission(eventId, author.id)
 
-        if (request.content.isBlank() && (files == null || files.isEmpty())) {
+        if (request.content.isBlank() && request.imageUrls.isNullOrEmpty()) {
             throw BadRequestException(
                 "Post must contain either text content or an image."
             )
         }
 
-        files?.let { fileValidationService.validateFiles(it, maxFilesPerPost) }
+        request.imageUrls?.let {
+            if (it.size > maxFilesPerPost) {
+                 throw BadRequestException("Cannot upload more than $maxFilesPerPost images.")
+            }
+        }
 
         val post = Post(content = request.content, author = author, event = event)
 
-        if (!files.isNullOrEmpty()) {
-            fileValidationService.processFilesForPost(files, post)
-        }
-
         val savedPost = postRepository.save(post)
-        logger.info(
-                "Created post ID: ${savedPost.id} with ${savedPost.images.size} images pending upload"
-        )
-
-        if (savedPost.images.isNotEmpty()) {
-            val message = PostCreationMessage(postId = savedPost.id)
-
-            TransactionSynchronizationManager.registerSynchronization(
-                    object : TransactionSynchronization {
-                        override fun afterCommit() {
-                            rabbitTemplate.convertAndSend(
-                                    RabbitMQConfig.EXCHANGE_NAME,
-                                    RabbitMQConfig.POST_CREATION_PENDING_ROUTING_KEY,
-                                    message
-                            )
-                            logger.info(
-                                    "Sent post creation message to queue for Post ID: ${savedPost.id}"
-                            )
-                        }
-                    }
-            )
+        
+        // Handle pre-uploaded images
+        if (!request.imageUrls.isNullOrEmpty()) {
+             request.imageUrls.forEachIndexed { index, url ->
+                 val image = com.cs2.volunteer_hub.model.Image(
+                     url = url,
+                     post = savedPost,
+                     originalFileName = "direct-upload-$index.jpg",
+                     contentType = "image/jpeg",
+                     status = com.cs2.volunteer_hub.model.ImageStatus.UPLOADED
+                 )
+                 savedPost.images.add(image)
+             }
+             postRepository.save(savedPost)
         }
+        
+        logger.info(
+                "Created post ID: ${savedPost.id} with ${savedPost.images.size} images (pre-uploaded)"
+        )
 
         return postMapper.toPostResponse(savedPost, false)
     }

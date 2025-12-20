@@ -29,13 +29,11 @@ export const ProfilePage = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 
-    // Check if viewing own profile
     const isOwnProfile = !userId || (user && profile && user.userId === profile.id);
 
     const handleModalClose = (open: boolean) => {
         setIsEditModalOpen(open);
         if (!open) {
-            // Refetch profile data in background when modal closes
             refetch(false);
         }
     };
@@ -56,93 +54,156 @@ export const ProfilePage = () => {
             skeleton={<ProfilePageSkeleton />}
         >
             {profile && (
-                <div className="container mx-auto p-6 space-y-6 max-w-4xl">
+                <div className="container mx-auto p-6 space-y-8 max-w-5xl">
                     {/* Hero Section */}
-                    <Card>
+                    <Card className="border-0 shadow-lg">
                         <CardContent className="p-8">
-                            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                                <Avatar className="h-32 w-32">
-                                    <AvatarImage src={profile.profilePictureUrl} alt={profile.name} />
-                                    <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 text-center md:text-left">
-                                    <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                                        <h1 className="text-3xl font-bold">{profile.name}</h1>
-                                        {'role' in profile && (
-                                            <Badge variant="secondary" className="w-fit mx-auto md:mx-0">
-                                                {profile.role.replace(/_/g, ' ')}
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    <p className="text-muted-foreground mb-4">
-                                        {profile.bio || 'No bio added yet'}
-                                    </p>
-                                    {'createdAt' in profile && (
-                                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground justify-center md:justify-start">
-                                            <div className="flex items-center gap-1">
-                                                <Calendar className="h-4 w-4" />
-                                                <span>Joined {formatDate(profile.createdAt)}</span>
+                            <div className="flex flex-col md:flex-row gap-6">
+                                {/* Avatar */}
+                                <div className="shrink-0">
+                                    <Avatar className="h-32 w-32 border-4 border-muted/30 shadow-lg">
+                                        <AvatarImage src={profile.profilePictureUrl} alt={profile.name} />
+                                        <AvatarFallback className="text-3xl bg-primary/10">
+                                            {initials}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </div>
+
+                                {/* Profile Info */}
+                                <div className="flex-1">
+                                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h1 className="text-3xl font-bold tracking-tight">
+                                                    {profile.name}
+                                                </h1>
+                                                {'role' in profile && (
+                                                    <Badge variant="secondary" className="text-xs uppercase tracking-wider">
+                                                        {profile.role.replace(/_/g, ' ')}
+                                                    </Badge>
+                                                )}
                                             </div>
-                                            {profile.location && (
-                                                <div className="flex items-center gap-1">
-                                                    <MapPin className="h-4 w-4" />
-                                                    <span>{profile.location}</span>
+                                            
+                                            <p className="text-muted-foreground text-base mb-3 max-w-2xl leading-relaxed">
+                                                {profile.bio || 'No bio added yet'}
+                                            </p>
+
+                                            {'createdAt' in profile && (
+                                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Calendar className="h-4 w-4" />
+                                                        <span>Joined {formatDate(profile.createdAt)}</span>
+                                                    </div>
+                                                    {profile.location && (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <MapPin className="h-4 w-4" />
+                                                            <span>{profile.location}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
-                                    )}
+
+                                        {/* Action Buttons - Desktop */}
+                                        {isOwnProfile && (
+                                            <div className="hidden md:flex gap-2 shrink-0">
+                                                <Button 
+                                                    variant="outline"
+                                                    onClick={() => setIsEditModalOpen(true)}
+                                                    className="hover:bg-muted"
+                                                >
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Edit Profile
+                                                </Button>
+                                                <Button 
+                                                    variant="outline"
+                                                    onClick={() => setIsChangePasswordModalOpen(true)}
+                                                    className="hover:bg-muted"
+                                                >
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Change Password
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Skills */}
                                     {'skills' in profile && profile.skills && profile.skills.size > 0 && (
-                                        <div className="mt-4 flex flex-wrap gap-2 justify-center md:justify-start">
+                                        <div className="mt-4 flex flex-wrap gap-2">
                                             {Array.from(profile.skills).map((skill) => (
-                                                <Badge key={skill} variant="outline">
+                                                <Badge 
+                                                    key={skill} 
+                                                    variant="outline" 
+                                                    className="bg-muted/50 hover:bg-muted border-border/50"
+                                                >
                                                     {skill}
                                                 </Badge>
                                             ))}
                                         </div>
                                     )}
+
+                                    {/* Action Buttons - Mobile */}
+                                    {isOwnProfile && (
+                                        <div className="flex md:hidden gap-2 mt-6">
+                                            <Button 
+                                                variant="outline"
+                                                onClick={() => setIsEditModalOpen(true)}
+                                                className="flex-1"
+                                            >
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                Edit Profile
+                                            </Button>
+                                            <Button 
+                                                variant="outline"
+                                                onClick={() => setIsChangePasswordModalOpen(true)}
+                                                className="flex-1"
+                                            >
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                Change Password
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
-                                {isOwnProfile && (
-                                    <div className="space-y-4">
-                                        <Button onClick={() => setIsEditModalOpen(true)}>
-                                            <Edit className="mr-2 h-4 w-4" />
-                                            Edit Profile
-                                        </Button>
-                                        <Button variant={'secondary'} onClick={() => setIsChangePasswordModalOpen(true)}>
-                                            <Edit className="mr-2 h-4 w-4" />
-                                            Change Password
-                                        </Button>
-                                    </div>
-                                )}
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Posts Section */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>{isOwnProfile ? 'My Posts' : 'Posts'}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {posts.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <MessageCircle className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-                                    <p className="text-muted-foreground">No posts yet</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-6">
-                                    {posts.map((post) => (
-                                        <PostCard
-                                            key={post.id}
-                                            post={post}
-                                        />
-                                    ))}
-                                </div>
+                    <div>
+                        <div className="flex items-center gap-2 mb-4 px-1">
+                            <h2 className="text-2xl font-semibold tracking-tight">
+                                {isOwnProfile ? 'My Posts' : 'Posts'}
+                            </h2>
+                            {posts.length > 0 && (
+                                <span className="text-sm text-muted-foreground">
+                                    ({posts.length})
+                                </span>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                        
+                        {posts.length === 0 ? (
+                            <Card className="border-dashed">
+                                <CardContent className="text-center py-16">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                                        <MessageCircle className="h-8 w-8 text-muted-foreground/50" />
+                                    </div>
+                                    <p className="text-muted-foreground font-medium mb-1">No posts yet</p>
+                                    <p className="text-sm text-muted-foreground/60">
+                                        {isOwnProfile ? "Share your thoughts with your first post" : "This user hasn't posted anything yet"}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="space-y-4">
+                                {posts.map((post) => (
+                                    <PostCard key={post.id} post={post} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
-                    {/* Edit Profile Modal */}
-                    {isOwnProfile && profile && 'email' in profile && (
+                    {/* Modals */}
+                    {isOwnProfile && profile && (
                         <EditProfileModal
                             open={isEditModalOpen}
                             onOpenChange={handleModalClose}

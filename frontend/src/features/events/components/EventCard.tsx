@@ -20,13 +20,32 @@ interface EventCardProps<T extends UiEvent | EventResponse> {
     onViewDetails?: (event: T) => void;
     isUpdating?: boolean;
     isProcessingImages?: boolean;
+    showStatus?: boolean;
 }
+
+const getStatusConfig = (status: string) => {
+    switch (status) {
+        case 'DRAFT':
+            return { variant: 'secondary' as const, label: 'Draft' };
+        case 'PENDING':
+            return { variant: 'default' as const, label: 'Pending Approval' };
+        case 'PUBLISHED':
+            return { variant: 'default' as const, label: 'Published', className: 'bg-green-500 hover:bg-green-600' };
+        case 'CANCELLED':
+            return { variant: 'destructive' as const, label: 'Cancelled' };
+        case 'COMPLETED':
+            return { variant: 'outline' as const, label: 'Completed' };
+        default:
+            return { variant: 'secondary' as const, label: status };
+    }
+};
 
 export const EventCard = <T extends UiEvent | EventResponse>({
     event,
     onViewDetails,
     isUpdating = false,
-    isProcessingImages = false
+    isProcessingImages = false,
+    showStatus = false
 }: EventCardProps<T>) => {
     const isUiEvent = (e: UiEvent | EventResponse): e is UiEvent => 'availableSpotsText' in e;
 
@@ -36,6 +55,8 @@ export const EventCard = <T extends UiEvent | EventResponse>({
 
     const hasImage = event.imageUrls && event.imageUrls.length > 0;
     const tags = (Array.isArray(event.tags) ? event.tags : Array.from(event.tags || [])) as string[];
+    const eventStatus = 'status' in event ? event.status : null;
+    const statusConfig = eventStatus ? getStatusConfig(eventStatus) : null;
 
     return (
         <Card className="flex flex-col h-full relative">
@@ -56,14 +77,32 @@ export const EventCard = <T extends UiEvent | EventResponse>({
             )}
             <CardHeader className="p-0">
                 {hasImage ? (
-                    <img
-                        src={event.imageUrls[0]}
-                        alt={event.title}
-                        className="w-full h-48 object-cover rounded-t-lg"
-                    />
+                    <div className="relative">
+                        <img
+                            src={event.imageUrls[0]}
+                            alt={event.title}
+                            className="w-full h-48 object-cover rounded-t-lg"
+                        />
+                        {showStatus && statusConfig && (
+                            <Badge 
+                                variant={statusConfig.variant} 
+                                className={`absolute top-2 right-2 ${statusConfig.className || ''}`}
+                            >
+                                {statusConfig.label}
+                            </Badge>
+                        )}
+                    </div>
                 ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-muted to-muted/50 rounded-t-lg flex items-center justify-center">
+                    <div className="relative w-full h-48 bg-gradient-to-br from-muted to-muted/50 rounded-t-lg flex items-center justify-center">
                         <Calendar className="h-16 w-16 text-muted-foreground/30" />
+                        {showStatus && statusConfig && (
+                            <Badge 
+                                variant={statusConfig.variant}
+                                className={`absolute top-2 right-2 ${statusConfig.className || ''}`}
+                            >
+                                {statusConfig.label}
+                            </Badge>
+                        )}
                     </div>
                 )}
                 <div className="p-4">

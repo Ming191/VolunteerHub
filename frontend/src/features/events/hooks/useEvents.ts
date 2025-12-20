@@ -12,10 +12,15 @@ export const EVENTS_QUERY_KEY = 'events';
 export const useGetEvents = (params: SearchEventsParams) => {
     return useQuery({
         queryKey: [EVENTS_QUERY_KEY, params],
-
         queryFn: () => eventService.searchEvents(params),
-
         placeholderData: (previousData) => previousData,
+        refetchInterval: (query) => {
+            const data = query.state.data;
+            if (data?.content.some((event) => event.imagesProcessing)) {
+                return 3000;
+            }
+            return false;
+        },
     });
 };
 
@@ -24,7 +29,14 @@ export const useGetEvent = (id: number) => {
         queryKey: [EVENTS_QUERY_KEY, id],
         queryFn: () => eventService.getEventById(id),
         enabled: !!id,
-        refetchInterval: 30000, // Refetch every 30 seconds to update gallery images
-        refetchIntervalInBackground: false, // Only refetch when tab is active
+        refetchInterval: (query) => {
+            const data = query.state.data;
+            if (data?.imagesProcessing) {
+                return 3000;
+            }
+            return false;
+        },
+        refetchIntervalInBackground: false,
     });
 };
+
