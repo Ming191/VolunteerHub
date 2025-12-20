@@ -25,7 +25,6 @@ import {
   adminReportsRoute,
   adminSettingsRoute,
 } from "./routes/admin.routes";
-import { blogRoute } from "./routes/blog.routes";
 import {
   landingRoute,
   publicEventsRoute,
@@ -57,7 +56,6 @@ const routeTree = rootRoute.addChildren([
     myRegistrationsRoute,
     adminReportsRoute,
     adminSettingsRoute,
-    blogRoute,
   ]),
 ]);
 

@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
-import { useInView } from 'react-intersection-observer';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { PostCard } from './PostCard.tsx';
-import type { PostResponse } from '@/api-client';
-import { CreatePost } from './CreatePost.tsx';
-import { blogService } from '@/features/blog/api/blogService.ts';
-import { Skeleton } from '@/components/ui/skeleton.tsx';
-import { usePostMutations } from '@/features/blog/hooks/usePostMutations';
+import React, { useEffect } from "react";
+import { useInView } from "react-intersection-observer";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { PostCard } from "./PostCard.tsx";
+import type { PostResponse } from "@/api-client";
+import { CreatePost } from "./CreatePost.tsx";
+import { blogService } from "@/features/blog/api/blogService.ts";
+import { Skeleton } from "@/components/ui/skeleton.tsx";
+import { usePostMutations } from "@/features/blog/hooks/usePostMutations";
 
 interface BlogFeedProps {
   eventId?: number;
@@ -32,9 +32,9 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
     isLoading,
     isError,
   } = useInfiniteQuery({
-    queryKey: ['posts', eventId ? `event-${eventId}` : 'feed'],
+    queryKey: ["posts", eventId ? `event-${eventId}` : "feed"],
     queryFn: fetchPosts,
-    getNextPageParam: (lastPage: any) => {
+    getNextPageParam: (lastPage: { last: boolean; pageNumber: number }) => {
       if (lastPage.last) return undefined;
       return lastPage.pageNumber + 1;
     },
@@ -62,26 +62,42 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
   }
 
   if (isError) {
-    return <div className="text-center text-red-500 py-10">Failed to load posts.</div>;
+    return (
+      <div className="text-center text-red-500 py-10">
+        Failed to load posts.
+      </div>
+    );
   }
 
   return (
     <div className="max-w-2xl mx-auto w-full pb-10 relative">
       {eventId && canPost && (
-        <CreatePost onPost={handleNewPost} disabled={createPostMutation.isPending} />
+        <CreatePost
+          onPost={handleNewPost}
+          disabled={createPostMutation.isPending}
+        />
       )}
 
       <div className="space-y-4">
         {data?.pages.map((page, i) => (
           <React.Fragment key={i}>
-            {Array.isArray(page.content) ? page.content.map((post: PostResponse & { optimisticId?: number; isOptimistic?: boolean }) => (
-              <PostCard
-                key={post.optimisticId || post.id}
-                post={post}
-                commentsDisabled={!canPost}
-                isUploading={post.isOptimistic}
-              />
-            )) : null}
+            {Array.isArray(page.content)
+              ? page.content.map(
+                  (
+                    post: PostResponse & {
+                      optimisticId?: number;
+                      isOptimistic?: boolean;
+                    }
+                  ) => (
+                    <PostCard
+                      key={post.optimisticId || post.id}
+                      post={post}
+                      commentsDisabled={!canPost}
+                      isUploading={post.isOptimistic}
+                    />
+                  )
+                )
+              : null}
           </React.Fragment>
         ))}
 
@@ -92,7 +108,9 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
         )}
 
         <div ref={ref} className="py-4 text-center">
-          {isFetchingNextPage && <Skeleton className="h-[100px] w-full rounded-xl" />}
+          {isFetchingNextPage && (
+            <Skeleton className="h-[100px] w-full rounded-xl" />
+          )}
           {!hasNextPage && data?.pages[0]?.content.length !== 0 && (
             <span className="text-muted-foreground text-sm">No more posts</span>
           )}

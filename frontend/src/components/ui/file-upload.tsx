@@ -5,27 +5,6 @@ import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react";
 
-const mainVariant = {
-  initial: {
-    x: 0,
-    y: 0,
-  },
-  animate: {
-    x: 20,
-    y: -20,
-    opacity: 0.9,
-  },
-};
-
-const secondaryVariant = {
-  initial: {
-    opacity: 0,
-  },
-  animate: {
-    opacity: 1,
-  },
-};
-
 export const FileUpload = ({
   onChange,
   files = [],
@@ -37,14 +16,16 @@ export const FileUpload = ({
   multiple?: boolean;
   accept?: string;
 }) => {
-  const [selectedFileIndex, setSelectedFileIndex] = useState<number | null>(null);
+  const [selectedFileIndex, setSelectedFileIndex] = useState<number | null>(
+    null
+  );
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (selectedFileIndex !== null && files[selectedFileIndex]) {
       const file = files[selectedFileIndex];
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith("image/")) {
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
         return () => URL.revokeObjectURL(url);
@@ -101,9 +82,7 @@ export const FileUpload = ({
           className="hidden"
         />
         <div className="flex flex-col items-center justify-center">
-          <p className="relative z-20 font-bold text-base">
-            Upload file
-          </p>
+          <p className="relative z-20 font-bold text-base">Upload file</p>
           <p className="relative z-20 text-muted-foreground text-base mt-2">
             Drag or drop your files here or click to upload
           </p>
@@ -223,7 +202,7 @@ export const FileUpload = ({
 
             {/* File Preview */}
             <div className="p-6">
-              {files[selectedFileIndex].type.startsWith('image/') ? (
+              {files[selectedFileIndex].type.startsWith("image/") ? (
                 <div className="flex justify-center items-center mb-6 bg-muted rounded-lg p-4">
                   {previewUrl && (
                     <img
@@ -237,7 +216,9 @@ export const FileUpload = ({
                 <div className="flex justify-center items-center mb-6 bg-muted rounded-lg p-12">
                   <div className="text-center">
                     <IconUpload className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Preview not available</p>
+                    <p className="text-muted-foreground">
+                      Preview not available
+                    </p>
                   </div>
                 </div>
               )}
@@ -249,22 +230,32 @@ export const FileUpload = ({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Name</p>
-                      <p className="font-medium break-words">{files[selectedFileIndex].name}</p>
+                      <p className="font-medium break-words">
+                        {files[selectedFileIndex].name}
+                      </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Size</p>
                       <p className="font-medium">
-                        {(files[selectedFileIndex].size / (1024 * 1024)).toFixed(2)} MB
+                        {(
+                          files[selectedFileIndex].size /
+                          (1024 * 1024)
+                        ).toFixed(2)}{" "}
+                        MB
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Type</p>
-                      <p className="font-medium">{files[selectedFileIndex].type || 'Unknown'}</p>
+                      <p className="font-medium">
+                        {files[selectedFileIndex].type || "Unknown"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Last Modified</p>
                       <p className="font-medium">
-                        {new Date(files[selectedFileIndex].lastModified).toLocaleString()}
+                        {new Date(
+                          files[selectedFileIndex].lastModified
+                        ).toLocaleString()}
                       </p>
                     </div>
                   </div>
