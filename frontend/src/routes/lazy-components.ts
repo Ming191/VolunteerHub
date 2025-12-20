@@ -20,6 +20,12 @@ export const ForgotPasswordScreen = lazy(() =>
     default: m.ForgotPasswordScreen,
   }))
 );
+
+export const ResetPasswordScreen = lazy(() =>
+  import("@/features/auth/components/ResetPasswordScreen").then((m) => ({
+    default: m.ResetPasswordScreen,
+  }))
+);
 export const EmailVerificationScreen = lazy(() =>
   import("@/features/auth/components/EmailVerificationScreen").then((m) => ({
     default: m.EmailVerificationScreen,

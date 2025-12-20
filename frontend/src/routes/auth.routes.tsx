@@ -7,6 +7,7 @@ import {
   ModernSignInScreen,
   ModernSignUpScreen,
   ForgotPasswordScreen,
+  ResetPasswordScreen,
   EmailVerificationScreen,
   DateTimePicker,
 } from "./lazy-components";
@@ -37,6 +38,19 @@ export const forgotPasswordRoute = createRoute({
   component: () => (
     <Suspense fallback={<SuspenseFallback />}>
       <ForgotPasswordScreen />
+    </Suspense>
+  ),
+});
+
+export const resetPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/reset-password",
+  validateSearch: z.object({
+    token: z.string().optional(),
+  }),
+  component: () => (
+    <Suspense fallback={<SuspenseFallback />}>
+      <ResetPasswordScreen />
     </Suspense>
   ),
 });

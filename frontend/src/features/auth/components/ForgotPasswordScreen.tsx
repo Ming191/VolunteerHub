@@ -9,12 +9,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Mail, ArrowLeft, Heart } from "lucide-react";
+import { Mail, ArrowLeft, Heart, Shield, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useState } from "react";
+import axios from "axios";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -23,6 +25,8 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export const ForgotPasswordScreen = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
@@ -31,38 +35,152 @@ export const ForgotPasswordScreen = () => {
   });
 
   const onSubmit = async (data: ForgotPasswordFormValues) => {
-    // TODO: Implement forgot password API call
-    console.log("Forgot password for:", data.email);
-    toast.success("Password reset link sent!", {
-      description: "Check your email for instructions to reset your password.",
-    });
+    setIsSubmitting(true);
+    try {
+      // TODO: Replace with actual API endpoint when backend implements it
+      await axios.post("/api/auth/forgot-password", {
+        email: data.email,
+      });
+
+      toast.success("Password reset link sent!", {
+        description:
+          "Check your email for instructions to reset your password.",
+      });
+
+      // Reset form after successful submission
+      form.reset();
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Please check your email address and try again.";
+      toast.error("Failed to send reset link", {
+        description: errorMessage,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden p-4">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 dark:bg-green-900/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-200/30 dark:bg-emerald-900/10 rounded-full blur-3xl" />
-      </div>
-
-      {/* Content */}
+    <div className="min-h-screen flex">
+      {/* Left Side - Visual Panel */}
       <motion.div
-        className="w-full max-w-md relative z-10"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        className="hidden lg:flex lg:w-1/2 xl:w-3/5 bg-gradient-to-br from-green-600 via-green-500 to-emerald-600 relative overflow-hidden"
+        initial={{ x: -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
       >
-        <div className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 p-8 space-y-6">
-          {/* Logo */}
-          <div className="flex justify-center">
-            <div className="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl">
-              <Heart className="h-10 w-10 fill-white text-white" />
+        {/* Decorative Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20 text-white">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
+                <Heart className="h-10 w-10 fill-white text-white" />
+              </div>
+              <span className="text-3xl font-bold">VolunteerHub</span>
+            </div>
+
+            <h1 className="text-5xl font-bold mb-6 leading-tight">
+              Reset Your
+              <br />
+              Password
+            </h1>
+            <p className="text-xl text-green-50 mb-12 leading-relaxed max-w-md">
+              Don't worry! It happens to the best of us. Enter your email and
+              we'll send you instructions to reset your password.
+            </p>
+
+            {/* Security Steps */}
+            <div className="space-y-6">
+              <motion.div
+                className="flex items-start gap-4"
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Mail className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">
+                    Enter Your Email
+                  </h3>
+                  <p className="text-green-50 text-sm">
+                    Provide the email address associated with your account
+                  </p>
+                </div>
+              </motion.div>
+
+              <motion.div
+                className="flex items-start gap-4"
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Shield className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">
+                    Check Your Inbox
+                  </h3>
+                  <p className="text-green-50 text-sm">
+                    We'll send you a secure link to reset your password
+                  </p>
+                </div>
+              </motion.div>
+
+              <motion.div
+                className="flex items-start gap-4"
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Lock className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">
+                    Create New Password
+                  </h3>
+                  <p className="text-green-50 text-sm">
+                    Choose a strong password to secure your account
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Right Side - Form Panel */}
+      <motion.div
+        className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-gray-950"
+        initial={{ x: 100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="w-full max-w-md space-y-8">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex justify-center mb-8">
+            <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl">
+              <Heart className="h-8 w-8 fill-white text-white" />
             </div>
           </div>
 
           {/* Header */}
-          <div className="text-center space-y-2">
+          <div className="space-y-2">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
               Forgot password?
             </h2>
@@ -100,9 +218,10 @@ export const ForgotPasswordScreen = () => {
 
               <Button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full h-12 text-base font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl hover:shadow-green-500/25 transition-all duration-300 hover:-translate-y-0.5"
               >
-                Send reset link
+                {isSubmitting ? "Sending..." : "Send reset link"}
               </Button>
             </form>
           </Form>
@@ -118,6 +237,19 @@ export const ForgotPasswordScreen = () => {
                 Back to sign in
               </Button>
             </Link>
+          </div>
+
+          {/* Help Text */}
+          <div className="pt-4 text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Remember your password?{" "}
+              <Link
+                to="/signin"
+                className="font-semibold text-green-600 hover:text-green-700 transition-colors"
+              >
+                Sign in
+              </Link>
+            </p>
           </div>
         </div>
       </motion.div>
