@@ -2,7 +2,7 @@ import { Outlet, useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import Navbar from './Navbar';
 import { FloatingDock } from '@/components/ui/floating-dock';
-import {LayoutDashboard, CalendarDays, UserCog, ShieldCheck, Users, Clipboard} from 'lucide-react';
+import {LayoutDashboard, CalendarDays, UserCog, ShieldCheck, Clipboard, User} from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { SuspenseFallback } from '@/components/common/SuspenseFallback';
 import { ThemeListener } from '@/features/settings/components/ThemeListener';
@@ -64,6 +64,11 @@ const DashboardLayout = () => {
                 href: '/admin/management',
             }
         ] : []),
+        ...(user?.role === 'VOLUNTEER' ? [{
+            title: 'Registration',
+            icon: <User className="h-full w-full" />,
+            href: '/my-registrations',
+        }]: [])
     ];
 
     return (

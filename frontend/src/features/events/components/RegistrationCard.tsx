@@ -21,7 +21,7 @@ const getStatusConfig = (status: string) => {
     case 'APPROVED':
       return { variant: 'default' as const, className: 'bg-green-600 hover:bg-green-700' };
     case 'PENDING':
-      return { variant: 'secondary' as const, className: 'bg-yellow-500/15 text-yellow-700 hover:bg-yellow-500/25 border-yellow-200' };
+      return { variant: 'secondary' as const, className: 'bg-yellow-500 text-yellow-700 hover:bg-yellow-600 border-yellow-200' };
     case 'COMPLETED':
       return { variant: 'secondary' as const, className: 'bg-blue-600 text-white hover:bg-blue-700' };
     case 'CANCELLED':
@@ -69,7 +69,16 @@ export function RegistrationCard({ registration, onClick }: RegistrationCardProp
   return (
     <>
       <Card
-        className="group hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden border-border/60 flex flex-col h-full"
+        className="
+            flex flex-col h-full relative
+            transition-all duration-300 ease-out
+            hover:-translate-y-2
+            hover:shadow-[0_20px_40px_rgba(0,0,0,0.25)]
+            dark:hover:shadow-[
+              0_8px_30px_rgba(0,0,0,0.9),
+              0_0_60px_rgba(255,255,255,0.15)
+            ]
+        "
         onClick={onClick}
       >
         <div className="relative h-32 bg-muted/30">
