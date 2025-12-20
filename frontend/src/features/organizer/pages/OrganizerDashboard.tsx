@@ -51,7 +51,7 @@ export const OrganizerDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <PendingRegistrationsList
                 registrations={recentPendingRegistrations}
-                onRegistrationClick={handleNavigateToMyEvents}
+                onRegistrationClick={handleNavigateToEvent}
               />
 
               <EventsInReviewList
