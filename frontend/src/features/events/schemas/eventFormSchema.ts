@@ -19,6 +19,8 @@ export const eventFormSchema = z.object({
     location: z.string()
         .min(LOCATION_MIN_LENGTH, `Location must be at least ${LOCATION_MIN_LENGTH} characters`)
         .max(LOCATION_MAX_LENGTH, `Location must be less than ${LOCATION_MAX_LENGTH} characters`),
+    latitude: z.number().optional().nullable(),
+    longitude: z.number().optional().nullable(),
     eventDateTime: z.date({ message: 'Event start date and time is required' }),
     endDateTime: z.date({ message: 'Event end date and time is required' }),
     registrationDeadline: z.date().optional(),

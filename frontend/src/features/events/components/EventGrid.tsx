@@ -13,6 +13,8 @@ interface EventGridProps {
     skeletonsCount?: number;
     emptyStateTitle?: string;
     emptyStateDescription?: string;
+    updatingEventId?: number | null;
+    processingImageEventIds?: Set<number>;
 }
 
 export const EventGrid = ({
@@ -23,7 +25,9 @@ export const EventGrid = ({
     onViewDetails,
     skeletonsCount = 8,
     emptyStateTitle = "No events found",
-    emptyStateDescription = "Try adjusting your filters or search terms."
+    emptyStateDescription = "Try adjusting your filters or search terms.",
+    updatingEventId = null,
+    processingImageEventIds = new Set()
 }: EventGridProps) => {
 
     const skeleton = (
@@ -58,7 +62,13 @@ export const EventGrid = ({
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                     {events.map((event) => (
-                        <EventCard key={event.id} event={event} onViewDetails={onViewDetails} />
+                        <EventCard
+                            key={event.id}
+                            event={event}
+                            onViewDetails={onViewDetails}
+                            isUpdating={updatingEventId === event.id}
+                            isProcessingImages={processingImageEventIds.has(event.id)}
+                        />
                     ))}
                 </div>
             )}

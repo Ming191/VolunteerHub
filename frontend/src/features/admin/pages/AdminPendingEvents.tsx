@@ -2,21 +2,12 @@ import { Calendar, MapPin, Users, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogPopup,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/animate-ui/components/base/alert-dialog';
 import { EventListSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import { useAdminPendingEvents } from '../hooks/useAdminPendingEvents';
+import {ConfirmDialog} from "@/components/common/ConfirmDialog.tsx";
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -119,26 +110,33 @@ export const AdminPendingEvents = () => {
                     </div>
                 )}
 
-                <AlertDialog open={!!action} onOpenChange={closeConfirmDialog}>
-                    <AlertDialogPopup>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>{action === 'approve' ? 'Approve Event' : 'Reject Event'}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                {action === 'approve' ? (
-                                    <>Are you sure you want to approve the event "<strong>{selectedEvent?.title}</strong>"? This will make it visible to all volunteers.</>
-                                ) : (
-                                    <>Are you sure you want to reject and delete the event "<strong>{selectedEvent?.title}</strong>"? This action cannot be undone.</>
-                                )}
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={action === 'approve' ? handleApprove : handleReject}>
-                                {action === 'approve' ? 'Approve' : 'Reject'}
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogPopup>
-                </AlertDialog>
+              <ConfirmDialog
+                open={!!action}
+                onOpenChange={(open) => {
+                  if (!open) closeConfirmDialog();
+                }}
+                title={action === 'approve' ? 'Approve Event' : 'Reject Event'}
+                description={
+                  action === 'approve' ? (
+                    <>
+                      Are you sure you want to approve the event{" "}
+                      <strong>{selectedEvent?.title}</strong>?
+                      This will make it visible to all volunteers.
+                    </>
+                  ) : (
+                    <>
+                      Are you sure you want to reject and delete the event{" "}
+                      <strong>{selectedEvent?.title}</strong>?
+                      This action cannot be undone.
+                    </>
+                  )
+                }
+                confirmText={action === 'approve' ? 'Approve' : 'Reject'}
+                confirmVariant={action === 'approve' ? 'default' : 'destructive'}
+                isLoading={!!processingId}
+                onConfirm={action === 'approve' ? handleApprove : handleReject}
+              />
+
             </div>
         </AnimatedPage>
     );

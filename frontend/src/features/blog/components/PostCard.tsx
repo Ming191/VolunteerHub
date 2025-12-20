@@ -1,313 +1,383 @@
 import React, { useState } from 'react';
-import { blogService } from '@/features/blog/api/blogService.ts';
 import { Card, CardContent, CardHeader } from '@/components/ui/card.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
-import { Textarea } from '@/components/ui/textarea.tsx';
-import { Dialog, DialogContent } from '@/components/ui/dialog.tsx'; // Import Dialog
-import { Heart, MessageCircle, Share2, MoreHorizontal, Send, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Flag, Trash2, Edit2, Loader2 } from 'lucide-react';
+import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils.ts';
-import { useMutation } from '@tanstack/react-query';
+import type { PostResponse } from "@/api-client";
+import { PostImages } from './PostImages';
+import { PostComments } from './comments/PostComments';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useLikeMutation } from '@/features/blog/hooks/useLikeMutation';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ReportDialog } from '@/features/report/components/ReportDialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogPopup,
+    AlertDialogTitle,
+} from '@/components/animate-ui/components/base/alert-dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { blogService } from '@/features/blog/api/blogService';
 import { toast } from 'sonner';
-import type { CommentResponse, PostResponse } from "@/api-client";
+import { useNavigate } from "@tanstack/react-router";
+
+import { useGetRegistrationStatus } from "@/features/volunteer/hooks/useRegistration.ts";
 
 interface PostCardProps {
-  post: PostResponse;
+    post: PostResponse;
+    onPostDeleted?: (postId: number) => void;
+    onPostUpdated?: (postId: number, newContent: string) => void;
+    commentsDisabled?: boolean; // If undefined, PostCard will check permissions itself
+    isUploading?: boolean; // Indicates the post is being uploaded (especially with images)
 }
 
-const CommentItem = ({ comment }: { comment: CommentResponse }) => {
-  return (
-    <div className="flex gap-3">
-      <Avatar className="h-8 w-8">
-        <AvatarImage src={comment.author.profilePictureUrl} />
-        <AvatarFallback>{comment.author.name[0]}</AvatarFallback>
-      </Avatar>
-      <div className="flex-1 bg-muted p-2 rounded-lg rounded-tl-none text-sm">
-        <span className="font-semibold block text-xs mb-1">{comment.author.name}</span>
-        <p>{comment.content}</p>
-      </div>
-    </div>
-  );
-};
+export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated, commentsDisabled, isUploading = false }) => {
+    const { user } = useAuth();
+    const isVolunteer = user?.role === 'VOLUNTEER';
 
-export const PostCard: React.FC<PostCardProps> = ({ post }) => {
-  const [showComments, setShowComments] = useState(false);
-  const [newComment, setNewComment] = useState('');
+    const isAuthor = user?.userId === post.author.id;
 
-  // State quản lý xem ảnh
-  const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
+    const eventId = post.eventId;
+    const shouldCheckPermissions = (commentsDisabled === undefined || isAuthor) && isVolunteer && !!eventId;
+    const { data: registrationData } = useGetRegistrationStatus(eventId, shouldCheckPermissions);
 
-  // Local state for optimistic updates
-  const [likesCount, setLikesCount] = useState(post.totalLikes);
-  const [isLiked, setIsLiked] = useState(post.isLikedByCurrentUser);
-  const [comments, setComments] = useState<CommentResponse[]>([]);
-  const [commentsCount, setCommentsCount] = useState(post.totalComments);
+    const isCommentsDisabled = commentsDisabled !== undefined
+        ? commentsDisabled
+        : (isVolunteer && registrationData?.status !== 'APPROVED');
 
-  // ... (Giữ nguyên các logic likeMutation, commentMutation như cũ)
-  const likeMutation = useMutation({
-    mutationFn: () => blogService.toggleLike(post.id),
-    onMutate: async () => {
-      const previousLiked = isLiked;
-      const previousLikesCount = likesCount;
-      setIsLiked(!previousLiked);
-      setLikesCount(prev => previousLiked ? prev - 1 : prev + 1);
-      return { previousLiked, previousLikesCount };
-    },
-    onError: (err, newTodo, context) => {
-      if (context) {
-        setIsLiked(context.previousLiked);
-        setLikesCount(context.previousLikesCount);
-      }
-      toast.error("Failed to update like");
-    },
-  });
+    const [showComments, setShowComments] = useState(false);
+    const [commentsCount, setCommentsCount] = useState(post.totalComments);
+    const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedContent, setEditedContent] = useState(post.content);
+    const [currentContent, setCurrentContent] = useState(post.content);
+    const navigate = useNavigate();
 
-  const commentMutation = useMutation({
-    mutationFn: (content: string) => blogService.addComment(post.id, content),
-    onSuccess: (newCommentData) => {
-      setComments(prev => [...prev, newCommentData]);
-      setCommentsCount(prev => prev + 1);
-      setNewComment('');
-    },
-    onError: () => {
-      toast.error("Failed to post comment");
-    }
-  });
+    const { likesCount, isLiked, toggleLike } = useLikeMutation(
+        post.id,
+        post.isLikedByCurrentUser,
+        post.totalLikes
+    );
 
-  const handleExpandComments = async () => {
-    if (!showComments && comments.length === 0 && post.totalComments > 0) {
-      try {
-        const fetchedComments = await blogService.getComments(post.id);
-        setComments(fetchedComments);
-        setCommentsCount(fetchedComments.length);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    setShowComments(!showComments);
-  };
+    const handleExpandComments = () => setShowComments(prev => !prev);
+    const isApproved = !isVolunteer || registrationData?.status === 'APPROVED';
+    const canEditOrDelete = isAuthor && isApproved;
 
-  const handleLike = () => likeMutation.mutate();
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    commentMutation.mutate(newComment);
-  };
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await blogService.deletePost(eventId, post.id);
+            toast.success("Post deleted successfully");
+            setIsDeleteDialogOpen(false);
+            onPostDeleted?.(post.id);
+        } catch (error) {
+            console.error("Failed to delete post:", error);
+            toast.error("Failed to delete post");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
-  // --- LOGIC XỬ LÝ ẢNH ---
-  const images = post.imageUrls || [];
+    const handleEdit = () => {
+        setEditedContent(currentContent);
+        setIsEditDialogOpen(true);
+    };
 
-  const openImagePreview = (index: number) => {
-    setPreviewImageIndex(index);
-  };
+    const handleEditSave = async () => {
+        if (!editedContent.trim() || editedContent === currentContent) {
+            setIsEditDialogOpen(false);
+            return;
+        }
 
-  const nextImage = () => {
-    if (previewImageIndex !== null && previewImageIndex < images.length - 1) {
-      setPreviewImageIndex(previewImageIndex + 1);
-    }
-  };
+        setIsEditing(true);
+        try {
+            await blogService.updatePost(eventId, post.id, editedContent);
+            setCurrentContent(editedContent);
+            toast.success("Post updated successfully");
+            setIsEditDialogOpen(false);
+            onPostUpdated?.(post.id, editedContent);
+        } catch (error) {
+            console.error("Failed to update post:", error);
+            toast.error("Failed to update post");
+        } finally {
+            setIsEditing(false);
+        }
+    };
 
-  const prevImage = () => {
-    if (previewImageIndex !== null && previewImageIndex > 0) {
-      setPreviewImageIndex(previewImageIndex - 1);
-    }
-  };
+    const handleShare = async () => {
+        const postUrl = `${window.location.origin}/events/${post.eventId}/posts/${post.id}`;
 
-  return (
-    <>
-      <Card className="w-full mb-4 animate-in fade-in zoom-in-95 duration-300">
-        <CardHeader className="flex flex-row items-center gap-4 p-4">
-          <Avatar>
-            <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
-            <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm">{post.author.name}</span>
-            </div>
-            <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-                        </span>
-          </div>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </CardHeader>
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `Post by ${post.author.name}`,
+                    text: post.content,
+                    url: postUrl,
+                });
+                toast.success("Shared successfully");
+            } catch (error) {
+                if ((error as Error).name !== 'AbortError') {
+                    // Fallback to clipboard
+                    await navigator.clipboard.writeText(postUrl);
+                    toast.success("Link copied to clipboard");
+                }
+            }
+        } else {
+            // Fallback to clipboard
+            await navigator.clipboard.writeText(postUrl);
+            toast.success("Link copied to clipboard");
+        }
+    };
+    const handleViewAuthorProfile = () => {
+        navigate({ to: `/profile/${post.author.id}` });
+    };
 
-        <CardContent className="p-4 pt-0">
-          <p className="text-sm mb-3 whitespace-pre-wrap">{post.content}</p>
 
-          {/* --- HIỂN THỊ GRID ẢNH --- */}
-          {images.length > 0 && (
-            <div className={cn(
-              "grid gap-1 rounded-md overflow-hidden mb-3",
-              images.length === 1 ? "grid-cols-1" : "grid-cols-2"
-            )}>
-              {/* Ảnh đầu tiên luôn hiện */}
-              <div
-                className="relative cursor-pointer hover:opacity-95 transition-opacity"
-                onClick={() => openImagePreview(0)}
-              >
-                <img
-                  src={images[0]}
-                  alt="Post content 1"
-                  className="w-full h-64 object-cover"
-                />
-              </div>
+    return (
+        <Card className="w-full mb-4 relative overflow-visible">
+            {/* Loading Overlay for uploading posts */}
+            <AnimatePresence mode="wait">
+                {isUploading && (
+                    <motion.div
+                        key="loading-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="absolute inset-0 z-50 bg-black/70 backdrop-blur-sm rounded-lg flex items-center justify-center"
+                        style={{ pointerEvents: 'all' }}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                            className="flex flex-col items-center gap-3 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl border-2 border-primary"
+                        >
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                            <div className="text-center">
+                                <p className="text-base font-semibold text-foreground">
+                                    {post.imageUrls && post.imageUrls.length > 0
+                                        ? `Uploading ${post.imageUrls.length} image${post.imageUrls.length > 1 ? 's' : ''}...`
+                                        : 'Creating post...'}
+                                </p>
+                                <p className="text-sm text-muted-foreground mt-2">
+                                    {post.imageUrls && post.imageUrls.length > 0
+                                        ? 'Please wait while we process your images'
+                                        : 'Your post is being submitted'}
+                                </p>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-              {/* Logic hiển thị ảnh thứ 2 hoặc phần còn lại */}
-              {images.length > 1 && (
-                <div
-                  className="relative cursor-pointer hover:opacity-95 transition-opacity"
-                  onClick={() => openImagePreview(1)}
-                >
-                  <img
-                    src={images[1]}
-                    alt="Post content 2"
-                    className="w-full h-64 object-cover"
-                  />
-                  {/* Overlay nếu có nhiều hơn 2 ảnh */}
-                  {images.length > 2 && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                            <span className="text-white text-2xl font-bold">
-                                                +{images.length - 2}
-                                            </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-
-        <Separator />
-
-        {/* Footer Buttons (Like, Comment, Share) - Giữ nguyên */}
-        <div className="flex items-center justify-between px-4 py-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn("flex items-center gap-2", isLiked && "text-red-500 hover:text-red-600")}
-            onClick={handleLike}
-          >
-            <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
-            <span>{likesCount}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={handleExpandComments}
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>{commentsCount} Comments</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="flex items-center gap-2" title="Feature is in developing">
-            <Share2 className="h-4 w-4" />
-            <span>Share</span>
-          </Button>
-        </div>
-
-        {/* Comment Section - Giữ nguyên */}
-        {showComments && (
-          <div className="bg-muted/30 p-4 pt-0 rounded-b-lg">
-            <Separator className="mb-4" />
-            <div className="space-y-4 mb-4">
-              {comments.map((comment) => (
-                <CommentItem key={comment.id} comment={comment} />
-              ))}
-            </div>
-            <div className="flex gap-2 items-center">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>You</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 relative">
-                <Textarea
-                  placeholder="Write a comment..."
-                  className="min-h-[40px] pr-10 py-2 resize-none"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAddComment();
-                    }
-                  }}
-                />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="absolute right-1 top-1 h-8 w-8 text-primary"
-                  onClick={handleAddComment}
-                  disabled={!newComment.trim() || commentMutation.isPending}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* --- DIALOG XEM ẢNH FULL (SLIDER) --- */}
-      <Dialog
-        open={previewImageIndex !== null}
-        onOpenChange={(open) => !open && setPreviewImageIndex(null)}
-      >
-        <DialogContent className="max-w-4xl p-0 bg-black/90 border-none text-white overflow-hidden h-[80vh] flex flex-col items-center justify-center">
-          {/* Nút tắt Dialog custom (nếu muốn) */}
-          <div className="absolute top-4 right-4 z-50">
-            <Button
-              variant="ghost" size="icon"
-              className="text-white hover:bg-white/20 rounded-full"
-              onClick={() => setPreviewImageIndex(null)}
+            <motion.div
+                animate={{ opacity: isUploading ? 0.5 : 1 }}
+                transition={{ duration: 0.3 }}
+                className={cn(isUploading && "pointer-events-none")}
             >
-              <X className="h-6 w-6" />
-            </Button>
-          </div>
+                <CardHeader className="flex flex-row items-center gap-4 p-4">
+                    <Avatar
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={handleViewAuthorProfile}
+                    >
+                        <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
+                        <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col flex-1">
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">{post.author.name}</span>
+                            {post.eventTitle && (
+                                <>
+                                    <span className="text-muted-foreground text-xs">in</span>
+                                    <span className="font-medium text-xs text-primary">{post.eventTitle}</span>
+                                </>
+                            )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNowUTC(post.createdAt, { addSuffix: true })}
+                        </span>
+                    </div>
 
-          {previewImageIndex !== null && images.length > 0 && (
-            <div className="relative w-full h-full flex items-center justify-center">
-              {/* Nút Prev */}
-              {previewImageIndex > 0 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-4 z-10 text-white hover:bg-white/20 rounded-full h-12 w-12"
-                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                >
-                  <ChevronLeft className="h-8 w-8" />
-                </Button>
-              )}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {canEditOrDelete ? (
+                                <>
+                                    <DropdownMenuItem onClick={handleEdit}>
+                                        <Edit2 className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="text-red-600 focus:text-red-600"
+                                        onClick={() => setIsDeleteDialogOpen(true)}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </>
+                            ) : (
+                                <DropdownMenuItem
+                                    className="text-red-600 focus:text-red-600"
+                                    onClick={() => setIsReportDialogOpen(true)}
+                                >
+                                    <Flag className="mr-2 h-4 w-4" />
+                                    Report
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </CardHeader>
 
-              {/* Ảnh Chính */}
-              <img
-                src={images[previewImageIndex]}
-                alt={`View ${previewImageIndex}`}
-                className="max-h-full max-w-full object-contain"
-              />
+                <CardContent className="p-4 pt-0">
+                    <p className="text-sm mb-3 whitespace-pre-wrap break-words">{currentContent}</p>
 
-              {/* Nút Next */}
-              {previewImageIndex < images.length - 1 && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-4 z-10 text-white hover:bg-white/20 rounded-full h-12 w-12"
-                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                >
-                  <ChevronRight className="h-8 w-8" />
-                </Button>
-              )}
+                    <PostImages images={post.imageUrls || []} />
+                </CardContent>
 
-              {/* Indicator số trang */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-sm">
-                {previewImageIndex + 1} / {images.length}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+                <Separator />
+
+                <div className="flex items-center justify-between px-4 py-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn("flex items-center gap-2", isLiked && "text-red-500 hover:text-red-600")}
+                        onClick={toggleLike}
+                    >
+                        <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+                        <span>{likesCount}</span>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={handleExpandComments}
+                    >
+                        <MessageCircle className="h-4 w-4" />
+                        <span>{commentsCount} Comments</span>
+                    </Button>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleShare}>
+                        <Share2 className="h-4 w-4" />
+                        <span>Share</span>
+                    </Button>
+                </div>
+
+                <AnimatePresence>
+                    {showComments && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                        >
+                            <PostComments
+                                postId={post.id}
+                                onCommentAdded={() => setCommentsCount(prev => prev + 1)}
+                                commentsDisabled={isCommentsDisabled}
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
+
+            <ReportDialog
+                open={isReportDialogOpen}
+                onClose={() => setIsReportDialogOpen(false)}
+                targetId={post.id}
+                targetType="POST"
+            />
+
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogPopup>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Post?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your post.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleDelete();
+                            }}
+                            disabled={isDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogPopup>
+            </AlertDialog>
+
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>Edit Post</DialogTitle>
+                        <DialogDescription>
+                            Make changes to your post content. Click save when you're done.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            value={editedContent}
+                            onChange={(e) => setEditedContent(e.target.value)}
+                            placeholder="What's on your mind?"
+                            className="min-h-[150px] resize-none"
+                            autoFocus
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsEditDialogOpen(false)}
+                            disabled={isEditing}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleEditSave}
+                            disabled={isEditing || !editedContent.trim()}
+                        >
+                            {isEditing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </Card>
+    );
 };
+

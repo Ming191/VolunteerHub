@@ -23,6 +23,15 @@ fun UserRepository.findByEmailOrThrow(email: String): User {
 }
 
 /**
+ * Find user by ID or throw ResourceNotFoundException
+ */
+fun UserRepository.findByIdOrThrow(id: Long): User {
+    return findById(id).orElseThrow {
+        ResourceNotFoundException("User", "id", id)
+    }
+}
+
+/**
  * Find event by ID or throw ResourceNotFoundException
  * Eliminates 15+ duplicate patterns across services
  */

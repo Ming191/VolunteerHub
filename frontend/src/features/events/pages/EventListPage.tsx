@@ -36,6 +36,8 @@ export const EventListScreen = () => {
     handleClearFilters,
   } = useEventSearch();
 
+  const [selectedEvent, setSelectedEvent] = useState<EventResponse | UiEvent | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -45,6 +47,8 @@ export const EventListScreen = () => {
       to: "/blog",
       search: { eventId: event.id.toString() },
     });
+    setSelectedEvent(event);
+    setIsDetailOpen(true);
   };
 
   return (
@@ -104,7 +108,13 @@ export const EventListScreen = () => {
         {/* Events Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           {/* Loading State */}
-          {isLoading && <EventListSkeleton count={8} />}
+          {isLoading && (
+            <>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <EventCardSkeleton key={i} />
+              ))}
+            </>
+          )}
 
           {/* Error State */}
           {isError && (
@@ -234,6 +244,13 @@ export const EventListScreen = () => {
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
+            <div className="flex justify-center">
+              <SmartPagination
+                currentPage={page}
+                totalPages={data.totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
           </div>
         )}
 
@@ -243,7 +260,14 @@ export const EventListScreen = () => {
           onOpenChange={setIsAddEventModalOpen}
           onSuccess={() => refetch()}
         />
+
+        {/* Event Detail Sheet */}
+        <EventDetailSheet
+          event={selectedEvent as EventResponse}
+          isOpen={isDetailOpen}
+          onOpenChange={setIsDetailOpen}
+        />
       </div>
     </AnimatedPage>
   );
-};
+}

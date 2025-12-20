@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository
 @Repository
 interface CommentRepository : JpaRepository<Comment, Long>, JpaSpecificationExecutor<Comment> {
     fun findAllByPostIdOrderByCreatedAtAsc(postId: Long): List<Comment>
+    fun findAllByParentCommentIdOrderByCreatedAtAsc(parentCommentId: Long): List<Comment>
 }

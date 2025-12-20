@@ -73,22 +73,24 @@ export const AddEventModal = ({
     toast.error("Failed to create event", { description: errorMessage });
   };
 
-  const handleCreateEvent = async (values: EventFormValues, files: File[]) => {
-    setIsSubmitting(true);
-    try {
-      const eventData = {
-        title: values.title,
-        description: values.description,
-        location: values.location,
-        eventDateTime: formatDateForBackend(values.eventDateTime),
-        endDateTime: formatDateForBackend(values.endDateTime),
-        registrationDeadline: values.registrationDeadline
-          ? formatDateForBackend(values.registrationDeadline)
-          : undefined,
-        maxParticipants: values.maxParticipants,
-        waitlistEnabled: values.waitlistEnabled,
-        tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
-      };
+    const handleCreateEvent = async (values: EventFormValues, files: File[]) => {
+        setIsSubmitting(true);
+        try {
+            const eventData = {
+                title: values.title,
+                description: values.description,
+                location: values.location,
+                latitude: values.latitude,
+                longitude: values.longitude,
+                eventDateTime: formatDateForBackend(values.eventDateTime),
+                endDateTime: formatDateForBackend(values.endDateTime),
+                registrationDeadline: values.registrationDeadline
+                    ? formatDateForBackend(values.registrationDeadline)
+                    : undefined,
+                maxParticipants: values.maxParticipants,
+                waitlistEnabled: values.waitlistEnabled,
+                tags: values.tags && values.tags.length > 0 ? values.tags : undefined,
+            };
 
       await eventService.createEvent(eventData as CreateEventRequest, files);
 

@@ -1,24 +1,125 @@
-import { useGetEventRegistrations, useUpdateRegistrationStatus } from "../hooks/useMyEvents";
-import { format } from "date-fns";
+import { useState } from "react";
 import { Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge.tsx";
-import type { UpdateStatusRequestStatusEnum } from "@/api-client";
 
-// Tách riêng content của registrations
+import {
+  useGetEventRegistrations, useMarkRegistrationCompleted,
+  useUpdateRegistrationStatus,
+} from "../hooks/useMyEvents";
+
+import type { UpdateStatusRequestStatusEnum } from "@/api-client";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { EventRegistrationCard } from "@/features/events/components/EventRegistrationCard";
+
+type ActionType = "APPROVED" | "REJECTED" | "COMPLETED";
+
+interface SelectedRegistration {
+  id: number;
+  volunteerName: string;
+  action: ActionType;
+}
+
+const ACTION_CONFIG: Record<
+  ActionType,
+  {
+    title: string;
+    verb: string;
+    confirmText: string;
+    variant: "default" | "destructive";
+  }
+> = {
+  APPROVED: {
+    title: "Approve Registration",
+    verb: "approve",
+    confirmText: "Confirm Approve",
+    variant: "default",
+  },
+  REJECTED: {
+    title: "Reject Registration",
+    verb: "reject",
+    confirmText: "Confirm Reject",
+    variant: "destructive",
+  },
+  COMPLETED: {
+    title: "Mark Registration as Completed",
+    verb: "mark as completed",
+    confirmText: "Confirm Completion",
+    variant: "default",
+  },
+};
+
 export function EventRegistrationsModal({ eventId }: { eventId: number }) {
   const { data: registrations, isLoading } = useGetEventRegistrations(eventId);
+
   const updateStatusMutation = useUpdateRegistrationStatus(eventId);
+  const markRegistrationCompletedMutation = useMarkRegistrationCompleted(eventId);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedRegistration, setSelectedRegistration] =
+    useState<SelectedRegistration | null>(null);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-32">Loading registrations...</div>;
+    return (
+      <div className="flex items-center justify-center h-32">
+        Loading registrations...
+      </div>
+    );
   }
 
-  const updateStatus = (id: number, status: UpdateStatusRequestStatusEnum) => {
-    updateStatusMutation.mutate({ registrationId: id, status });
+  const openConfirmDialog = (
+    id: number,
+    volunteerName: string,
+    action: ActionType
+  ) => {
+    setSelectedRegistration({ id, volunteerName, action });
+    setConfirmOpen(true);
   };
+
+  const handleConfirm = () => {
+    if (!selectedRegistration) return;
+
+    const { id, action } = selectedRegistration;
+
+    if (action === "COMPLETED") {
+      markRegistrationCompletedMutation.mutate(
+        id,
+        {
+          onSuccess: () => {
+            setConfirmOpen(false);
+            setSelectedRegistration(null);
+          },
+        }
+      );
+      return;
+    }
+
+    // APPROVED / REJECTED
+    updateStatusMutation.mutate(
+      {
+        registrationId: id,
+        status: action as UpdateStatusRequestStatusEnum,
+      },
+      {
+        onSuccess: () => {
+          setConfirmOpen(false);
+          setSelectedRegistration(null);
+        },
+      }
+    );
+  };
+
+
+  const actionConfig = selectedRegistration
+    ? ACTION_CONFIG[selectedRegistration.action]
+    : null;
+
+  const isSubmitting =
+    selectedRegistration?.action === "COMPLETED"
+      ? markRegistrationCompletedMutation.isPending
+      : updateStatusMutation.isPending;
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4" />
@@ -28,39 +129,48 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
         </div>
       </div>
 
+      {/* Registrations list */}
       {registrations && registrations.length > 0 ? (
         <div className="space-y-2">
           {registrations.map((registration) => (
-            <div key={registration.id} className="p-3 border rounded-lg">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-medium">{registration.volunteerName}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Status: {registration.status}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Registered: {format(new Date(registration.registeredAt), 'PPpp')}
-                  </p>
-                </div>
-                <Badge variant={
-                  registration.status === 'APPROVED' ? 'default' :
-                    registration.status === 'PENDING' ? 'secondary' :
-                      'outline'
-                } onClick={() => updateStatus(registration.id, "APPROVED")}>
-                  {registration.status}
-                </Badge>
-              </div>
-            </div>
+            <EventRegistrationCard
+              key={registration.id}
+              registration={registration}
+              onAction={openConfirmDialog}
+            />
           ))}
         </div>
       ) : (
         <div className="text-center py-8">
           <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Registrations</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            No Registrations
+          </h3>
           <p className="text-muted-foreground">
             There are no registrations for this event yet.
           </p>
         </div>
+      )}
+
+      {/* Confirm Dialog */}
+      {actionConfig && (
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={actionConfig.title}
+          description={
+            <>
+              Are you sure you want to{" "}
+              <strong>{actionConfig.verb}</strong> the registration of{" "}
+              <strong>{selectedRegistration?.volunteerName}</strong>?
+              This action cannot be undone.
+            </>
+          }
+          confirmText={actionConfig.confirmText}
+          confirmVariant={actionConfig.variant}
+          isLoading={isSubmitting}
+          onConfirm={handleConfirm}
+        />
       )}
     </div>
   );

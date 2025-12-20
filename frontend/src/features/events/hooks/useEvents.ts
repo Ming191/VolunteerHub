@@ -18,3 +18,13 @@ export const useGetEvents = (params: SearchEventsParams) => {
         placeholderData: (previousData) => previousData,
     });
 };
+
+export const useGetEvent = (id: number) => {
+    return useQuery({
+        queryKey: [EVENTS_QUERY_KEY, id],
+        queryFn: () => eventService.getEventById(id),
+        enabled: !!id,
+        refetchInterval: 30000, // Refetch every 30 seconds to update gallery images
+        refetchIntervalInBackground: false, // Only refetch when tab is active
+    });
+};
