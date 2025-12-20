@@ -249,8 +249,7 @@ class NotificationService(
     fun cleanupStaleTokens() {
         try {
             val cutoffDate = LocalDateTime.now().minusDays(90)
-            val staleTokens = fcmTokenRepository.findAll()
-                .filter { it.createdAt.isBefore(cutoffDate) }
+            val staleTokens = fcmTokenRepository.findStaleTokens(cutoffDate)
 
             if (staleTokens.isNotEmpty()) {
                 fcmTokenRepository.deleteAll(staleTokens)
