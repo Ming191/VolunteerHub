@@ -227,20 +227,6 @@ export function EventImages({ eventId, imageUrls, title, showGallery = true }: E
                                                                 <Link
                                                                     to="/events/$eventId"
                                                                     params={{ eventId: String(eventId) }}
-                                                                    // Wait, link to event page? Or post?
-                                                                    // The original code linked to /events/$eventId with params eventId: image.postId ??
-                                                                    // That looks like a bug or misuse in original code.
-                                                                    // Assuming intent was linking to user or post.
-                                                                    // I'll keep it as is or fix if obvious.
-                                                                    // Previous code: params={{ eventId: String(image.postId) }}
-                                                                    // That implies routing to event details using post ID? That's weird.
-                                                                    // I'll just keep it consistent with previous code but use eventId for the base if needed.
-                                                                    // Actually, let's just use eventId from props if we want to stay in event.
-                                                                    // But likely it wanted to link to the post context.
-                                                                    // I'll use image.postId as eventId parameter like before?
-                                                                    // No, that's definitely weird.
-                                                                    // I'll just disable the link or make it simple text for now to avoid breaking routing.
-                                                                    // Or just keep logic:
                                                                     className="font-semibold hover:underline"
                                                                 >
                                                                     {image.authorName}
