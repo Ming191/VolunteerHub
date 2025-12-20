@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, ArrowUp } from "lucide-react";
 import { motion } from "framer-motion";
@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 
 export const TermsOfServicePage = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,16 +19,25 @@ export const TermsOfServicePage = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleBack = () => {
+    // Check if there's a previous page in history from our app
+    if (
+      document.referrer &&
+      document.referrer.includes(window.location.origin)
+    ) {
+      window.history.back();
+    } else {
+      // Default to signup if no referrer
+      window.location.href = "/signup";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4">
-          <Button
-            variant="ghost"
-            className="gap-2"
-            onClick={() => navigate({ to: -1 as any })}
-          >
+          <Button variant="ghost" className="gap-2" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>

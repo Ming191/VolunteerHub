@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 import LogoImg from "@/assets/logo.svg";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { NotificationList } from "@/components/animate-ui/components/community/notification-list";
 
 import { Button } from "@/components/ui/button";
@@ -16,33 +16,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const getPageTitle = (pathname: string): string => {
-  const pathSegments = pathname.split("/").filter(Boolean);
-
-  if (pathSegments.length === 0 || pathSegments[0] === "dashboard") {
-    return "Dashboard";
-  }
-
-  const titleMap: Record<string, string> = {
-    events: "Events",
-    "my-events": "My Events",
-    admin: "Admin Panel",
-  };
-
-  if (titleMap[pathSegments[0]]) {
-    return titleMap[pathSegments[0]];
-  }
-
-  // Generic formatter: replace dashes with spaces and Capitalize Each Word
-  return pathSegments[0]
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-};
-
 const Navbar = () => {
   const { user, logout } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
 
   const userInitials =
@@ -51,7 +26,6 @@ const Navbar = () => {
       .map((n) => n[0])
       .join("")
       .toUpperCase() || "V";
-  const pageTitle = getPageTitle(location.pathname);
 
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
