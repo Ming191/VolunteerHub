@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Textarea } from '@/components/ui/textarea.tsx';
-import { Image } from 'lucide-react';
+import { Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useImageUpload } from '@/features/blog/hooks/useImageUpload';
@@ -77,11 +77,14 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
               variant="ghost"
               size="sm"
               className="text-muted-foreground hover:text-primary"
-              onClick={openFileDialog}
+              onClick={(e) => {
+                e.preventDefault();
+                openFileDialog();
+              }}
               disabled={disabled || !canAddMore}
               type="button"
             >
-              <Image className="h-4 w-4 mr-2" />
+              <ImageIcon className="h-4 w-4 mr-2" />
               Photo {selectedImages.length > 0 && `(${selectedImages.length}/${maxImages})`}
             </Button>
           </div>
@@ -91,6 +94,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
             className="px-6"
             type="button"
           >
+            {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Post
           </Button>
         </div>

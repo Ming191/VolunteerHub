@@ -15,6 +15,7 @@ interface CommentInputProps {
     isSubmitting?: boolean;
     autoFocus?: boolean;
     size?: 'sm' | 'md';
+    disabled?: boolean;
 }
 
 export const CommentInput: React.FC<CommentInputProps> = ({
@@ -28,6 +29,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     isSubmitting = false,
     autoFocus = false,
     size = 'md',
+    disabled = false,
 }) => {
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -57,7 +59,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
                     onChange={(e) => onChange(e.target.value)}
                     onKeyDown={handleKeyDown}
                     autoFocus={autoFocus}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || disabled}
                     aria-label={placeholder}
                 />
                 <div className="absolute right-1 top-1 flex gap-1">
@@ -78,7 +80,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
                         variant="ghost"
                         className={`${buttonSize} text-primary disabled:opacity-50`}
                         onClick={onSubmit}
-                        disabled={!value.trim() || isSubmitting}
+                        disabled={!value.trim() || isSubmitting || disabled}
                         aria-label="Submit"
                     >
                         {isSubmitting ? (
