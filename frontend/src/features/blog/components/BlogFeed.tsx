@@ -66,7 +66,7 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto w-full pb-10 relative">
+    <div className="w-full pb-10">
       {eventId && canPost && (
         <CreatePost onPost={handleNewPost} disabled={createPostMutation.isPending} />
       )}
@@ -74,12 +74,11 @@ export const BlogFeed = ({ eventId, canPost = false }: BlogFeedProps) => {
       <div className="space-y-4">
         {data?.pages.map((page, i) => (
           <React.Fragment key={i}>
-            {Array.isArray(page.content) ? page.content.map((post: PostResponse & { optimisticId?: number; isOptimistic?: boolean }) => (
+            {Array.isArray(page.content) ? page.content.map((post: PostResponse) => (
               <PostCard
-                key={post.optimisticId || post.id}
+                key={post.id}
                 post={post}
                 commentsDisabled={!canPost}
-                isUploading={post.isOptimistic}
               />
             )) : null}
           </React.Fragment>

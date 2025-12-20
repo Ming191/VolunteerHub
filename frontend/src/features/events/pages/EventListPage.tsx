@@ -85,7 +85,12 @@ export const EventListScreen = () => {
           {!isLoading && !isError && data && data.content.length > 0 && (
             <>
               {data.content.map((event) => (
-                <EventCard key={event.id} event={event} onViewDetails={handleViewDetails} />
+                <EventCard 
+                  key={event.id} 
+                  event={event} 
+                  onViewDetails={handleViewDetails}
+                  isProcessingImages={event.imagesProcessing}
+                />
               ))}
             </>
           )}

@@ -214,7 +214,7 @@ export const EventTabsNavigation = ({ event, activeTab }: { event: EventResponse
 
     return (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="mb-6">
+            <TabsList>
                 <TabsTrigger value="about">About</TabsTrigger>
                 <TabsTrigger value="community">Community</TabsTrigger>
                 {(isOrganizer || isApprovedMember) && (

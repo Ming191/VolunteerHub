@@ -15,6 +15,7 @@ interface EventGridProps {
     emptyStateDescription?: string;
     updatingEventId?: number | null;
     processingImageEventIds?: Set<number>;
+    showStatus?: boolean;
 }
 
 export const EventGrid = ({
@@ -27,7 +28,8 @@ export const EventGrid = ({
     emptyStateTitle = "No events found",
     emptyStateDescription = "Try adjusting your filters or search terms.",
     updatingEventId = null,
-    processingImageEventIds = new Set()
+    processingImageEventIds = new Set(),
+    showStatus = false
 }: EventGridProps) => {
 
     const skeleton = (
@@ -68,6 +70,7 @@ export const EventGrid = ({
                             onViewDetails={onViewDetails}
                             isUpdating={updatingEventId === event.id}
                             isProcessingImages={processingImageEventIds.has(event.id)}
+                            showStatus={showStatus}
                         />
                     ))}
                 </div>
