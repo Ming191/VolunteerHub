@@ -3,7 +3,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/animate-ui/components/animate/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventImages } from "../sheet/EventImages";
 import type { EventResponse } from "@/api-client";
 import { BlogFeed } from "@/features/blog/components/BlogFeed";
@@ -13,9 +13,9 @@ import {
   useUpdateRegistrationStatus,
 } from "@/features/events/hooks/useEventRegistrations";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { Check, X, MapPin, FileText } from "lucide-react";
 import { EventMap } from "./EventMap";
-import {useNavigate} from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 export const EventAttendees = ({ event }: { event: EventResponse }) => {
   const { isOrganizer } = useEventPermissions(event);
@@ -122,28 +122,56 @@ export const EventAttendees = ({ event }: { event: EventResponse }) => {
 
 export const EventAbout = ({ event }: { event: EventResponse }) => {
   return (
-    <Card>
-      <CardContent className="pt-6 space-y-8">
-        <div>
-          <h3 className="text-xl font-semibold mb-4">Description</h3>
-          <div className="prose max-w-none text-muted-foreground whitespace-pre-wrap">
+    <div className="space-y-4">
+      {/* Description Card */}
+      <Card className="border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow">
+        <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-100">
+              <FileText className="h-5 w-5 text-green-600" />
+            </div>
+            <CardTitle className="text-xl font-bold text-gray-900">
+              About This Event
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="prose max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed">
             {event.description}
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="border-t pt-8">
-          <h3 className="text-xl font-semibold mb-4">Event Location</h3>
-          <p className="text-muted-foreground mb-4">{event.location}</p>
+      {/* Location Card */}
+      <Card className="border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow">
+        <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-100">
+              <MapPin className="h-5 w-5 text-green-600" />
+            </div>
+            <CardTitle className="text-xl font-bold text-gray-900">
+              Location
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
+            <MapPin className="h-5 w-5 text-green-600 mt-0.5" />
+            <p className="text-gray-700 font-medium">{event.location}</p>
+          </div>
           {event.latitude != null && event.longitude != null ? (
             <EventMap latitude={event.latitude} longitude={event.longitude} />
           ) : (
-            <div className="h-[300px] w-full bg-muted rounded-lg flex items-center justify-center text-muted-foreground">
-              No map coordinates available for this location.
+            <div className="h-[200px] w-full bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300">
+              <MapPin className="h-12 w-12 text-gray-400 mb-2" />
+              <p className="text-sm text-gray-500 font-medium">
+                No map coordinates available
+              </p>
             </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
