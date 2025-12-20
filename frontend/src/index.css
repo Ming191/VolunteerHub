@@ -198,3 +198,26 @@ select {
   animation: none;
   mix-blend-mode: normal;
 }
+
+/* Green accent utilities for visual interest */
+@layer utilities {
+  .green-accent {
+    @apply border-l-4 border-green-500;
+  }
+
+  .green-hover {
+    @apply hover:bg-green-50 hover:border-green-200 transition-colors;
+  }
+
+  .green-glow {
+    @apply shadow-lg shadow-green-500/10;
+  }
+
+  .green-gradient-subtle {
+    @apply bg-gradient-to-br from-white via-green-50/30 to-white;
+  }
+
+  .section-header-green {
+    @apply border-b-2 border-green-100 pb-2 mb-4;
+  }
+}

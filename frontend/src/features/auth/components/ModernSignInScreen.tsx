@@ -238,17 +238,6 @@ export const ModernSignInScreen = () => {
                         </div>
                       </FormControl>
                       <FormMessage />
-                      <div className="flex justify-end mt-1">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            (window.location.href = "/forgot-password")
-                          }
-                          className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors underline-offset-4 hover:underline"
-                        >
-                          Forgot password?
-                        </button>
-                      </div>
                     </FormItem>
                   )}
                 />
@@ -267,6 +256,17 @@ export const ModernSignInScreen = () => {
                     "Sign in"
                   )}
                 </Button>
+
+                {/* Forgot password link moved below sign in button */}
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => (window.location.href = "/forgot-password")}
+                    className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors underline-offset-4 hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
               </form>
             </Form>
           </motion.div>

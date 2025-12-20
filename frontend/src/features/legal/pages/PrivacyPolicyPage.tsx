@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Shield, ArrowUp } from "lucide-react";
 import { motion } from "framer-motion";
@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 
 export const PrivacyPolicyPage = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,12 +25,14 @@ export const PrivacyPolicyPage = () => {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4">
-          <Link to="/">
-            <Button variant="ghost" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
+          <Button
+            variant="ghost"
+            className="gap-2"
+            onClick={() => navigate({ to: -1 as any })}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
         </div>
       </div>
 
