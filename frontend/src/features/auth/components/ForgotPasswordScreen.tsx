@@ -17,6 +17,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useState } from "react";
 import axios from "axios";
+import LogoImg from "@/assets/logo.svg";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -85,9 +86,11 @@ export const ForgotPasswordScreen = () => {
             transition={{ delay: 0.2, duration: 0.5 }}
           >
             <div className="flex items-center gap-3 mb-8">
-              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                <Heart className="h-10 w-10 fill-white text-white" />
-              </div>
+              <img
+                src={LogoImg}
+                alt="VolunteerHub"
+                className="h-10 w-10 object-contain"
+              />
               <span className="text-3xl font-bold">VolunteerHub</span>
             </div>
 
@@ -166,7 +169,7 @@ export const ForgotPasswordScreen = () => {
 
       {/* Right Side - Form Panel */}
       <motion.div
-        className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-gray-950"
+        className="flex-1 flex items-center justify-center p-8 bg-white"
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -174,17 +177,19 @@ export const ForgotPasswordScreen = () => {
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-8">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl">
-              <Heart className="h-8 w-8 fill-white text-white" />
-            </div>
+            <img
+              src={LogoImg}
+              alt="VolunteerHub"
+              className="h-10 w-10 object-contain"
+            />
           </div>
 
           {/* Header */}
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-3xl font-bold text-gray-900">
               Forgot password?
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600">
               No worries, we'll send you reset instructions
             </p>
           </div>
@@ -197,7 +202,7 @@ export const ForgotPasswordScreen = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <FormLabel className="text-sm font-semibold text-gray-700">
                       Email address
                     </FormLabel>
                     <FormControl>

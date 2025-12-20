@@ -25,6 +25,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useNavigate } from "@tanstack/react-router";
+import LogoImg from "@/assets/logo.svg";
 
 export const ModernSignInScreen = () => {
   const { form, onSubmit, isSubmitting } = useLoginForm();
@@ -70,9 +71,11 @@ export const ModernSignInScreen = () => {
             transition={{ delay: 0.2 }}
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                <Heart className="h-8 w-8 fill-white" />
-              </div>
+              <img
+                src={LogoImg}
+                alt="VolunteerHub"
+                className="h-10 w-10 object-contain"
+              />
               <span className="text-3xl font-bold">VolunteerHub</span>
             </div>
           </motion.div>
@@ -141,7 +144,7 @@ export const ModernSignInScreen = () => {
 
       {/* Right Side - Sign In Form */}
       <motion.div
-        className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-8 bg-white dark:bg-gray-950"
+        className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-8 bg-white"
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -150,9 +153,11 @@ export const ModernSignInScreen = () => {
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl">
-                <Heart className="h-8 w-8 fill-white text-white" />
-              </div>
+              <img
+                src={LogoImg}
+                alt="VolunteerHub"
+                className="h-10 w-10 object-contain"
+              />
               <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                 VolunteerHub
               </span>
@@ -166,12 +171,8 @@ export const ModernSignInScreen = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Welcome back
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Sign in to your account to continue
-            </p>
+            <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
+            <p className="text-gray-600">Sign in to your account to continue</p>
           </motion.div>
 
           {/* Form */}
@@ -187,7 +188,7 @@ export const ModernSignInScreen = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      <FormLabel className="text-sm font-semibold text-gray-700">
                         Email address
                       </FormLabel>
                       <FormControl>
@@ -211,20 +212,9 @@ export const ModernSignInScreen = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex items-center justify-between mb-2">
-                        <FormLabel className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                          Password
-                        </FormLabel>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            (window.location.href = "/forgot-password")
-                          }
-                          className="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-500 dark:hover:text-green-400 transition-colors"
-                        >
-                          Forgot password?
-                        </button>
-                      </div>
+                      <FormLabel className="text-sm font-semibold text-gray-700">
+                        Password
+                      </FormLabel>
                       <FormControl>
                         <div className="relative group">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors group-focus-within:text-green-600" />
@@ -248,6 +238,17 @@ export const ModernSignInScreen = () => {
                         </div>
                       </FormControl>
                       <FormMessage />
+                      <div className="flex justify-end mt-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            (window.location.href = "/forgot-password")
+                          }
+                          className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -273,10 +274,10 @@ export const ModernSignInScreen = () => {
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-200 dark:border-gray-800" />
+              <span className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white dark:bg-gray-950 text-gray-500">
+              <span className="px-4 bg-white text-gray-500">
                 Don't have an account?
               </span>
             </div>
@@ -291,7 +292,7 @@ export const ModernSignInScreen = () => {
             <Link to="/signup" className="block">
               <Button
                 variant="outline"
-                className="w-full h-12 text-base font-semibold border-2 border-gray-200 hover:border-green-600 hover:bg-green-50 dark:border-gray-800 dark:hover:bg-green-950 dark:hover:border-green-600 text-gray-700 dark:text-gray-300 transition-all duration-200"
+                className="w-full h-12 text-base font-semibold border-2 border-gray-200 hover:border-green-600 hover:bg-green-50 text-gray-700 transition-all duration-200"
               >
                 Create an account
               </Button>

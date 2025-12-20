@@ -26,6 +26,7 @@ import {
 import { Loader2, Heart } from "lucide-react";
 import AnimatedPage from "@/components/common/AnimatedPage";
 import { useSignUpForm } from "../hooks/useSignUpForm";
+import LogoImg from "@/assets/logo.svg";
 
 interface SignUpScreenProps {
   isTabbed?: boolean;
@@ -40,9 +41,11 @@ export const SignUpScreen = ({ isTabbed = false }: SignUpScreenProps) => {
         {/* Logo/Icon */}
         {!isTabbed && (
           <div className="flex justify-center mb-2">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 shadow-lg">
-              <Heart className="h-10 w-10 text-white fill-white" />
-            </div>
+            <img
+              src={LogoImg}
+              alt="VolunteerHub"
+              className="h-16 w-16 object-contain"
+            />
           </div>
         )}
         <CardTitle className="text-3xl text-center bg-gradient-to-r from-green-600 to-orange-500 bg-clip-text text-transparent font-bold">
