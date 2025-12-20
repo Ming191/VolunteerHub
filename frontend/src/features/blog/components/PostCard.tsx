@@ -8,7 +8,7 @@ import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils.ts';
 import type { PostResponse } from "@/api-client";
 import { PostImages } from './PostImages';
-import { PostComments } from './PostComments';
+import { PostComments } from './comments/PostComments';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLikeMutation } from '@/features/blog/hooks/useLikeMutation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -42,13 +42,30 @@ import { blogService } from '@/features/blog/api/blogService';
 import { toast } from 'sonner';
 import { useNavigate } from "@tanstack/react-router";
 
+import { useGetRegistrationStatus } from "@/features/volunteer/hooks/useRegistration.ts";
+
 interface PostCardProps {
     post: PostResponse;
     onPostDeleted?: (postId: number) => void;
     onPostUpdated?: (postId: number, newContent: string) => void;
+    commentsDisabled?: boolean; // If undefined, PostCard will check permissions itself
+    isUploading?: boolean; // Indicates the post is being uploaded (especially with images)
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated, commentsDisabled, isUploading = false }) => {
+    const { user } = useAuth();
+    const isVolunteer = user?.role === 'VOLUNTEER';
+
+    const isAuthor = user?.userId === post.author.id;
+
+    const eventId = post.eventId;
+    const shouldCheckPermissions = (commentsDisabled === undefined || isAuthor) && isVolunteer && !!eventId;
+    const { data: registrationData } = useGetRegistrationStatus(eventId, shouldCheckPermissions);
+
+    const isCommentsDisabled = commentsDisabled !== undefined
+        ? commentsDisabled
+        : (isVolunteer && registrationData?.status !== 'APPROVED');
+
     const [showComments, setShowComments] = useState(false);
     const [commentsCount, setCommentsCount] = useState(post.totalComments);
     const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -68,12 +85,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
     );
 
     const handleExpandComments = () => setShowComments(prev => !prev);
-    const isAuthor = user?.userId === post.author.id;
+    const isApproved = !isVolunteer || registrationData?.status === 'APPROVED';
+    const canEditOrDelete = isAuthor && isApproved;
 
     const handleDelete = async () => {
         setIsDeleting(true);
         try {
-            await blogService.deletePost(post.id);
+            await blogService.deletePost(eventId, post.id);
             toast.success("Post deleted successfully");
             setIsDeleteDialogOpen(false);
             onPostDeleted?.(post.id);
@@ -98,7 +116,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
 
         setIsEditing(true);
         try {
-            await blogService.updatePost(post.id, editedContent);
+            await blogService.updatePost(eventId, post.id, editedContent);
             setCurrentContent(editedContent);
             toast.success("Post updated successfully");
             setIsEditDialogOpen(false);
@@ -112,7 +130,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
     };
 
     const handleShare = async () => {
-        const postUrl = `${window.location.origin}/events/${post.id}/posts/${post.id}`;
+        const postUrl = `${window.location.origin}/events/${post.eventId}/posts/${post.id}`;
 
         if (navigator.share) {
             try {
@@ -139,108 +157,156 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
         navigate({ to: `/profile/${post.author.id}` });
     };
 
+
     return (
-        <Card className="w-full mb-4">
-            <CardHeader className="flex flex-row items-center gap-4 p-4">
-                <Avatar
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={handleViewAuthorProfile}
-                >
-                    <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
-                    <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col flex-1">
-                    <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm">{post.author.name}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNowUTC(post.createdAt, { addSuffix: true })}
-                    </span>
-                </div>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {isAuthor ? (
-                            <>
-                                <DropdownMenuItem onClick={handleEdit}>
-                                    <Edit2 className="mr-2 h-4 w-4" />
-                                    Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="text-red-600 focus:text-red-600"
-                                    onClick={() => setIsDeleteDialogOpen(true)}
-                                >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                </DropdownMenuItem>
-                            </>
-                        ) : (
-                            <DropdownMenuItem
-                                className="text-red-600 focus:text-red-600"
-                                onClick={() => setIsReportDialogOpen(true)}
-                            >
-                                <Flag className="mr-2 h-4 w-4" />
-                                Report
-                            </DropdownMenuItem>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </CardHeader>
-
-            <CardContent className="p-4 pt-0">
-                <p className="text-sm mb-3 whitespace-pre-wrap break-words">{currentContent}</p>
-
-                <PostImages images={post.imageUrls || []} />
-            </CardContent>
-
-            <Separator />
-
-            <div className="flex items-center justify-between px-4 py-2">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn("flex items-center gap-2", isLiked && "text-red-500 hover:text-red-600")}
-                    onClick={toggleLike}
-                >
-                    <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
-                    <span>{likesCount}</span>
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={handleExpandComments}
-                >
-                    <MessageCircle className="h-4 w-4" />
-                    <span>{commentsCount} Comments</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleShare}>
-                    <Share2 className="h-4 w-4" />
-                    <span>Share</span>
-                </Button>
-            </div>
-
-            <AnimatePresence>
-                {showComments && (
+        <Card className="w-full mb-4 relative overflow-visible">
+            {/* Loading Overlay for uploading posts */}
+            <AnimatePresence mode="wait">
+                {isUploading && (
                     <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.5, ease: "easeInOut" }}
-                        className="overflow-hidden"
+                        key="loading-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="absolute inset-0 z-50 bg-black/70 backdrop-blur-sm rounded-lg flex items-center justify-center"
+                        style={{ pointerEvents: 'all' }}
                     >
-                        <PostComments
-                            postId={post.id}
-                            onCommentAdded={() => setCommentsCount(prev => prev + 1)}
-                        />
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.8, opacity: 0 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                            className="flex flex-col items-center gap-3 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl border-2 border-primary"
+                        >
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                            <div className="text-center">
+                                <p className="text-base font-semibold text-foreground">
+                                    {post.imageUrls && post.imageUrls.length > 0
+                                        ? `Uploading ${post.imageUrls.length} image${post.imageUrls.length > 1 ? 's' : ''}...`
+                                        : 'Creating post...'}
+                                </p>
+                                <p className="text-sm text-muted-foreground mt-2">
+                                    {post.imageUrls && post.imageUrls.length > 0
+                                        ? 'Please wait while we process your images'
+                                        : 'Your post is being submitted'}
+                                </p>
+                            </div>
+                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <motion.div
+                animate={{ opacity: isUploading ? 0.5 : 1 }}
+                transition={{ duration: 0.3 }}
+                className={cn(isUploading && "pointer-events-none")}
+            >
+                <CardHeader className="flex flex-row items-center gap-4 p-4">
+                    <Avatar>
+                        <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
+                        <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col flex-1">
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm">{post.author.name}</span>
+                            {post.eventTitle && (
+                                <>
+                                    <span className="text-muted-foreground text-xs">in</span>
+                                    <span className="font-medium text-xs text-primary">{post.eventTitle}</span>
+                                </>
+                            )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNowUTC(post.createdAt, { addSuffix: true })}
+                        </span>
+                    </div>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {canEditOrDelete ? (
+                                <>
+                                    <DropdownMenuItem onClick={handleEdit}>
+                                        <Edit2 className="mr-2 h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="text-red-600 focus:text-red-600"
+                                        onClick={() => setIsDeleteDialogOpen(true)}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </>
+                            ) : (
+                                <DropdownMenuItem
+                                    className="text-red-600 focus:text-red-600"
+                                    onClick={() => setIsReportDialogOpen(true)}
+                                >
+                                    <Flag className="mr-2 h-4 w-4" />
+                                    Report
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </CardHeader>
+
+                <CardContent className="p-4 pt-0">
+                    <p className="text-sm mb-3 whitespace-pre-wrap break-words">{currentContent}</p>
+
+                    <PostImages images={post.imageUrls || []} />
+                </CardContent>
+
+                <Separator />
+
+                <div className="flex items-center justify-between px-4 py-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn("flex items-center gap-2", isLiked && "text-red-500 hover:text-red-600")}
+                        onClick={toggleLike}
+                    >
+                        <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+                        <span>{likesCount}</span>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={handleExpandComments}
+                    >
+                        <MessageCircle className="h-4 w-4" />
+                        <span>{commentsCount} Comments</span>
+                    </Button>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={handleShare}>
+                        <Share2 className="h-4 w-4" />
+                        <span>Share</span>
+                    </Button>
+                </div>
+
+                <AnimatePresence>
+                    {showComments && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                        >
+                            <PostComments
+                                postId={post.id}
+                                onCommentAdded={() => setCommentsCount(prev => prev + 1)}
+                                commentsDisabled={isCommentsDisabled}
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
 
             <ReportDialog
                 open={isReportDialogOpen}
