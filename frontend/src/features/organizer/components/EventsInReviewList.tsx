@@ -1,10 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileCheck } from 'lucide-react';
-// import type { EventResponse } from '@/api-client';
+import type { EventResponse } from '@/api-client';
 
 interface EventsInReviewListProps {
-    // events: EventResponse[];
-    events: any[];
+    events: EventResponse[];
     onEventClick: (id: number) => void;
 }
 

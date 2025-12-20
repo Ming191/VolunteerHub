@@ -124,9 +124,20 @@ class PostService(
     }
 
     @Transactional
-    fun updatePost(postId: Long, request: PostRequest, userEmail: String): PostResponse {
+    fun updatePost(
+            eventId: Long,
+            postId: Long,
+            request: PostRequest,
+            userEmail: String
+    ): PostResponse {
         val user = userRepository.findByEmailOrThrow(userEmail)
         val post = postRepository.findByIdOrThrow(postId)
+
+        if (post.event.id != eventId) {
+            throw com.cs2.volunteer_hub.exception.BadRequestException(
+                    "Post does not belong to the specified event."
+            )
+        }
 
         if (post.author.id != user.id) {
             throw UnauthorizedAccessException("You don't have permission to update this post.")
@@ -144,15 +155,36 @@ class PostService(
     }
 
     @Transactional(readOnly = true)
+    fun getPost(eventId: Long, postId: Long, userEmail: String): PostResponse {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val post = postRepository.findByIdOrThrow(postId)
+
+        if (post.event.id != eventId) {
+            throw com.cs2.volunteer_hub.exception.BadRequestException(
+                    "Post does not belong to the specified event."
+            )
+        }
+
+        val isLiked = isPostLikedByUser(user.id, post.id)
+        return postMapper.toPostResponse(post, isLiked)
+    }
+
+    @Transactional(readOnly = true)
     internal fun isPostLikedByUser(userId: Long, postId: Long): Boolean {
         val spec = LikeSpecifications.byUserAndPost(userId, postId)
         return likeRepository.findAll(spec).isNotEmpty()
     }
 
     @Transactional
-    fun deletePost(postId: Long, userEmail: String) {
+    fun deletePost(eventId: Long, postId: Long, userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
         val post = postRepository.findByIdOrThrow(postId)
+
+        if (post.event.id != eventId) {
+            throw com.cs2.volunteer_hub.exception.BadRequestException(
+                    "Post does not belong to the specified event."
+            )
+        }
 
         if (post.author.id != user.id) {
             throw UnauthorizedAccessException("You don't have permission to delete this post.")

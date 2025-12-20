@@ -11,9 +11,10 @@ import { QUERY_KEY_PREFIX } from './constants';
 interface PostCommentsProps {
     postId: number;
     onCommentAdded: () => void;
+    commentsDisabled?: boolean;
 }
 
-export const PostComments: React.FC<PostCommentsProps> = ({ postId, onCommentAdded }) => {
+export const PostComments: React.FC<PostCommentsProps> = ({ postId, onCommentAdded, commentsDisabled = false }) => {
     const { user } = useAuth();
     const [newComment, setNewComment] = useState('');
     const { addCommentMutation, addReplyMutation, updateCommentMutation, deleteCommentMutation } = useCommentMutations(postId);
@@ -70,10 +71,11 @@ export const PostComments: React.FC<PostCommentsProps> = ({ postId, onCommentAdd
                     value={newComment}
                     onChange={setNewComment}
                     onSubmit={handleAddComment}
-                    placeholder="Write a comment..."
+                    placeholder={commentsDisabled ? "Comments are disabled" : "Write a comment..."}
                     userAvatar={user?.profilePictureUrl}
                     userName={user?.name}
                     isSubmitting={addCommentMutation.isPending}
+                    disabled={commentsDisabled}
                 />
             </div>
         </div>

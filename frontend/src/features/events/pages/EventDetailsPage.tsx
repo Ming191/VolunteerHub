@@ -1,5 +1,4 @@
-
-import { useParams, useNavigate, useLocation } from '@tanstack/react-router';
+import { useParams, useNavigate, useLocation, Outlet } from '@tanstack/react-router';
 import { useGetEvent } from '../hooks/useEvents';
 import { useRegisterForEvent, useCancelRegistration } from '@/features/volunteer/hooks/useRegistration';
 import { SkeletonTransition } from '@/components/common/SkeletonTransition';
@@ -11,7 +10,7 @@ import { useEventPermissions } from '../hooks/useEventPermissions';
 import {
     EventHero,
     EventInfoSidebar,
-    EventContentTabs
+    EventTabsNavigation
 } from '../components/page';
 
 export const EventDetailsPage = () => {
@@ -20,8 +19,14 @@ export const EventDetailsPage = () => {
     const location = useLocation();
     const id = parseInt(eventId ?? '0', 10);
 
-    const isRegistrationPage = location.pathname.endsWith('/registration');
-    const defaultTab = isRegistrationPage ? 'attendees' : 'about';
+    const isPostsPage = location.pathname.endsWith('/posts');
+    const isAttendeesPage = location.pathname.endsWith('/attendees');
+    const isGalleryPage = location.pathname.endsWith('/gallery');
+
+    let activeTab = 'about';
+    if (isPostsPage) activeTab = 'community';
+    else if (isAttendeesPage) activeTab = 'attendees';
+    else if (isGalleryPage) activeTab = 'gallery';
 
     const { data: event, isLoading, isError, error, refetch } = useGetEvent(id);
     const { isOrganizer, isRegistered } = useEventPermissions(event || null);
@@ -56,7 +61,6 @@ export const EventDetailsPage = () => {
     };
 
     const handleBack = () => {
-        // Go back to previous page or dashboard
         if (window.history.length > 1) {
             navigate({ to: '..' });
         } else {
@@ -91,7 +95,8 @@ export const EventDetailsPage = () => {
 
                         <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 px-6">
                             <div className="lg:col-span-2 space-y-8">
-                                <EventContentTabs event={event} defaultTab={defaultTab} />
+                                <EventTabsNavigation event={event} activeTab={activeTab} />
+                                <Outlet />
                             </div>
 
                             <div className="lg:col-span-1">
