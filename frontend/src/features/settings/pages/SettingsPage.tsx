@@ -1,10 +1,12 @@
-import { Settings, Save } from "lucide-react";
+import { Settings, Save, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkeletonTransition } from "@/components/common/SkeletonTransition";
 import { SettingsPageSkeleton } from "../components/SettingsPageSkeleton";
 import { useSettings } from "../hooks/useSettings";
 import { NotificationsSection, PrivacySection } from "../components";
 import { ChangePasswordCard } from "../components/ChangePasswordCard";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
 
 export const SettingsPage = () => {
   const {
@@ -16,6 +18,7 @@ export const SettingsPage = () => {
     hasChanges,
     isSaving,
   } = useSettings();
+  const navigate = useNavigate();
 
   return (
     <SkeletonTransition
@@ -48,6 +51,37 @@ export const SettingsPage = () => {
           disabled={isSaving}
         />
 
+        {/* Legal Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Legal
+            </CardTitle>
+            <CardDescription>
+              View our terms of service and privacy policy
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full justify-start text-left"
+              onClick={() => navigate({ to: "/terms-of-service" })}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Terms of Service
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-left"
+              onClick={() => navigate({ to: "/privacy-policy" })}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Privacy Policy
+            </Button>
+          </CardContent>
+        </Card>
+
         <ChangePasswordCard />
 
         {/* Fixed Bottom Action Bar */}
@@ -62,7 +96,7 @@ export const SettingsPage = () => {
                 >
                   Discard
                 </Button>
-                <Button onClick={saveSettings} disabled={isSaving}>
+                <Button variant="green" onClick={saveSettings} disabled={isSaving}>
                   <Save className="h-4 w-4 mr-2" />
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>

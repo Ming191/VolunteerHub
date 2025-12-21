@@ -393,7 +393,7 @@ export const EventForm = (props: EventFormProps) => {
             </RippleButton>
             <RippleButton
               type="submit"
-              variant="outline"
+              variant="green"
               disabled={isSubmitting}
             >
               {isSubmitting && (

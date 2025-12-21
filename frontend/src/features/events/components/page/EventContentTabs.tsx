@@ -19,23 +19,27 @@ import { EventMap } from "./EventMap";
 import { useNavigate } from "@tanstack/react-router";
 
 export const EventAttendees = ({ event }: { event: EventResponse }) => {
-    const { isOrganizer, isApprovedMember } = useEventPermissions(event);
+  const { isOrganizer, isApprovedMember } = useEventPermissions(event);
 
-    // Organizer Data
-    const { data: organizerRegistrations, isLoading: isLoadingOrganizer } = useEventRegistrations(event.id, isOrganizer);
+  // Organizer Data
+  const { data: organizerRegistrations, isLoading: isLoadingOrganizer } =
+    useEventRegistrations(event.id, isOrganizer);
 
-    // Volunteer Data
-    const { data: publicAttendees, isLoading: isLoadingPublic } = useEventAttendees(event.id, isApprovedMember && !isOrganizer);
+  // Volunteer Data
+  const { data: publicAttendees, isLoading: isLoadingPublic } =
+    useEventAttendees(event.id, isApprovedMember && !isOrganizer);
 
-    const updateStatusMutation = useUpdateRegistrationStatus();
+  const updateStatusMutation = useUpdateRegistrationStatus();
 
-    if (!isOrganizer && !isApprovedMember) return null;
+  if (!isOrganizer && !isApprovedMember) return null;
 
-    const isLoading = isOrganizer ? isLoadingOrganizer : isLoadingPublic;
+  const isLoading = isOrganizer ? isLoadingOrganizer : isLoadingPublic;
 
-    if (isLoading) {
-        return <div className="text-sm text-muted-foreground">Loading attendees...</div>;
-    }
+  if (isLoading) {
+    return (
+      <div className="text-sm text-muted-foreground">Loading attendees...</div>
+    );
+  }
 
   // Render for Organizer
   if (isOrganizer) {
@@ -48,9 +52,12 @@ export const EventAttendees = ({ event }: { event: EventResponse }) => {
       );
     }
 
-        const handleStatusUpdate = (registrationId: number, status: 'APPROVED' | 'REJECTED') => {
-            updateStatusMutation.mutate({ registrationId, status });
-        };
+    const handleStatusUpdate = (
+      registrationId: number,
+      status: "APPROVED" | "REJECTED"
+    ) => {
+      updateStatusMutation.mutate({ registrationId, status });
+    };
 
     return (
       <Card>
@@ -124,44 +131,51 @@ export const EventAttendees = ({ event }: { event: EventResponse }) => {
     );
   }
 
-    // Render for Volunteer (Approved Member)
-    if (isApprovedMember) {
-        if (!publicAttendees || publicAttendees.length === 0) {
-            return <div className="text-sm text-muted-foreground">No other attendees yet.</div>;
-        }
-
-        return (
-            <Card>
-                <CardContent className="pt-6">
-                    <h3 className="text-xl font-semibold mb-4">Who's attending</h3>
-                    <div className="text-muted-foreground mb-4">
-                        {event.approvedCount} people are attending this event.
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                        {publicAttendees.map((attendee) => (
-                            <div key={attendee.volunteerId} className="flex items-center gap-3 p-3 border rounded-lg bg-card/50">
-                                {attendee.profilePictureUrl ? (
-                                    <img
-                                        src={attendee.profilePictureUrl}
-                                        alt={attendee.name}
-                                        className="h-10 w-10 rounded-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                                        {attendee.name.charAt(0)}
-                                    </div>
-                                )}
-                                <div>
-                                    <p className="font-medium text-sm">{attendee.name}</p>
-                                    <p className="text-xs text-muted-foreground">{attendee.bio ? attendee.bio.substring(0, 30) + (attendee.bio.length > 30 ? '...' : '') : `Joined ${new Date(attendee.joinedAt).toLocaleDateString()}`}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-        );
+  // Render for Volunteer (Approved Member)
+  if (isApprovedMember) {
+    if (!publicAttendees || publicAttendees.length === 0) {
+      return (
+        <div className="text-sm text-muted-foreground">
+          No other attendees yet.
+        </div>
+      );
     }
+
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="text-xl font-semibold mb-4">Who's attending</h3>
+          <div className="text-muted-foreground mb-4">
+            {event.approvedCount} people are attending this event.
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {publicAttendees.map((attendee) => (
+              <div
+                key={attendee.volunteerId}
+                className="flex items-center gap-3 p-3 border rounded-lg bg-card/50"
+              >
+                {attendee.profilePictureUrl ? (
+                  <img
+                    src={attendee.profilePictureUrl}
+                    alt={attendee.name}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                    {attendee.name.charAt(0)}
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium">{attendee.name}</p>
+                  <p className="text-xs text-muted-foreground">Volunteer</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return null;
 };
@@ -246,21 +260,27 @@ export const EventCommunity = ({ event }: { event: EventResponse }) => {
   );
 };
 
-export const EventTabsNavigation = ({ event, activeTab }: { event: EventResponse; activeTab: string }) => {
-    const navigate = useNavigate();
-    const { isOrganizer, isApprovedMember } = useEventPermissions(event);
+export const EventTabsNavigation = ({
+  event,
+  activeTab,
+}: {
+  event: EventResponse;
+  activeTab: string;
+}) => {
+  const navigate = useNavigate();
+  const { isOrganizer, isApprovedMember } = useEventPermissions(event);
 
-    const handleTabChange = (value: string) => {
-        if (value === 'about') {
-            navigate({ to: `/events/${event.id}` });
-        } else if (value === 'community') {
-            navigate({ to: `/events/${event.id}/posts` });
-        } else if (value === 'attendees') {
-            navigate({ to: `/events/${event.id}/attendees` });
-        } else if (value === 'gallery') {
-            navigate({ to: `/events/${event.id}/gallery` });
-        }
-    };
+  const handleTabChange = (value: string) => {
+    if (value === "about") {
+      navigate({ to: `/events/${event.id}` });
+    } else if (value === "community") {
+      navigate({ to: `/events/${event.id}/posts` });
+    } else if (value === "attendees") {
+      navigate({ to: `/events/${event.id}/attendees` });
+    } else if (value === "gallery") {
+      navigate({ to: `/events/${event.id}/gallery` });
+    }
+  };
 
     return (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">

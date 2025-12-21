@@ -77,7 +77,7 @@ export const EventMap = ({
   if (!center && !interactive) return null;
 
   return (
-    <div className="h-[250px] w-full rounded-md overflow-hidden border z-0 relative">
+    <div className="h-[250px] w-full rounded-md overflow-hidden border relative">
       <MapContainer
         center={center || defaultCenter}
         zoom={13}

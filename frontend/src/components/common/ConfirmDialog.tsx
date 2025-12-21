@@ -36,28 +36,28 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="z-[150]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
 
           <Button
-            variant={confirmVariant}
+            variant="outline"
             onClick={onConfirm}
             disabled={isLoading}
+            className={
+              confirmVariant === "destructive"
+                ? "border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors"
+                : ""
+            }
           >
-            {isLoading && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {confirmText}
           </Button>
         </DialogFooter>

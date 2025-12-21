@@ -21,27 +21,23 @@ export function EventHeader({ event, onEdit, onDelete }: EventHeaderProps) {
                 </SheetDescription>
             </div>
 
-            <div className="flex gap-2">
-                {(isOrganizer && isOwner) ? (
-                    <>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-2 border-green-600 bg-green-600 hover:bg-green-700 hover:border-green-700 text-white"
-                            onClick={onEdit}
-                        >
-                            Edit
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={onDelete}
-                        >
-                            Delete
-                        </Button>
-                    </>
-                ) : null}
-            </div>
-        </SheetHeader>
-    );
+      <div className="flex gap-2 mt-1">
+        {isOrganizer && isOwner ? (
+          <>
+            <Button size="sm" variant="outline" onClick={onEdit}>
+              Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onDelete}
+              className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+            >
+              Delete
+            </Button>
+          </>
+        ) : null}
+      </div>
+    </SheetHeader>
+  );
 }

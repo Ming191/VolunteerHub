@@ -438,7 +438,7 @@ export const EditProfileModal = ({
                 <RippleButton
                   type="submit"
                   disabled={isSubmitting}
-                  className="border-2 border-green-600 bg-green-600 hover:bg-green-700 hover:border-green-700"
+                  variant="green"
                 >
                   {isSubmitting ? (
                     <>

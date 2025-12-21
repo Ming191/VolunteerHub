@@ -13,6 +13,7 @@ import type { CreateEventRequest } from "@/api-client";
 import { EventForm, type EventFormValues } from "./EventForm";
 import { RippleButton } from "@/components/animate-ui/components/buttons/ripple";
 import { Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AddEventModalProps {
   open: boolean;
@@ -30,6 +31,7 @@ export const AddEventModal = ({
   onSuccess,
 }: AddEventModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleError = (error: unknown): void => {
     const err = error as {
@@ -94,6 +96,10 @@ export const AddEventModal = ({
 
       await eventService.createEvent(eventData as CreateEventRequest, files);
 
+      // Invalidate queries to refresh event lists with new images
+      await queryClient.invalidateQueries({ queryKey: ["events"] });
+      await queryClient.invalidateQueries({ queryKey: ["my-events"] });
+      
       toast.success("Event created successfully!", {
         description: "Your event has been submitted for approval.",
       });
