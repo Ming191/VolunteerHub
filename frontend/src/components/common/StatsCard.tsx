@@ -59,13 +59,11 @@ export const StatsCard = ({
 
   return (
     <Card
-      className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 border-gray-200 ${styles.hoverBorder} bg-white shadow-sm`}
+      className={`transition-shadow duration-200 border-2 border-gray-200 bg-white shadow-sm`}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div
-            className={`p-3.5 rounded-xl ${styles.iconBg} shadow-sm group-hover:shadow-md transition-shadow`}
-          >
+          <div className={`p-3.5 rounded-xl ${styles.iconBg} shadow-sm`}>
             <Icon className={`h-7 w-7 ${styles.iconColor}`} />
           </div>
         </div>
