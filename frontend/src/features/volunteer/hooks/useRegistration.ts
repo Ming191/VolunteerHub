@@ -87,8 +87,7 @@ export const useGetMyRegistrationEvents = () => {
     },
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    staleTime: Infinity, // dữ liệu luôn được coi là fresh
+    staleTime: 5 * 60 * 1000, // 5 minutes
     placeholderData: (prev) => prev,
-    initialData: [],
   });
 };
