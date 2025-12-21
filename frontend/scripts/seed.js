@@ -50,7 +50,7 @@ async function registerUser(name, email, role) {
             console.log(`User ${email} already exists. Skipping.`);
             return true;
         }
-        console.error(`Failed to register ${email}:`, res.data);
+        console.log(`Failed to register ${email}:`, res.data);
         return false;
     }
     return true;
@@ -63,7 +63,7 @@ async function login(email) {
     });
 
     if (res.error) {
-        console.error(`Login failed for ${email}`);
+        console.log(`Login failed for ${email}`, res.data);
         return null;
     }
     return res.data.accessToken;
@@ -94,7 +94,7 @@ async function createEvent(token) {
     });
 
     if (res.error) {
-        console.error('Failed to create event:', res.data);
+        console.log('Failed to create event:', res.data);
         return null;
     }
     console.log(`Created Event: ${title}`);
@@ -105,7 +105,7 @@ async function approveEvent(eventId, adminToken) {
     const res = await api.patch(`/admin/events/${eventId}/approve`, {}, {
         headers: { Authorization: `Bearer ${adminToken}` }
     });
-    if (res.error) console.error(`Failed to approve event ${eventId}`);
+    if (res.error) console.log(`Failed to approve event ${eventId}`);
     else console.log(`Approved event ${eventId}`);
     return !res.error;
 }
@@ -115,6 +115,7 @@ async function registerForEvent(eventId, token) {
         headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.error) console.log(`Registered for event ${eventId}`);
+    else console.log(`Failed register event ${eventId}`, res.data);
     return !res.error;
 }
 
@@ -143,16 +144,6 @@ async function reportContent(type, targetId, token) {
     if (!res.error) console.log(`Reported ${type} ${targetId}`);
 }
 
-async function verifyEmail(email) {
-    // In a real scenario we'd need the token from the email. 
-    // Since we are mocking, we can't easily verify unless we have a backdoor or if the system auto-verifies in dev.
-    // However, looking at the API, admin might be able to unlock users, but verifying email via API needs the token.
-    // For specific test users, maybe they are pre-verified or we can just ignore verification if it doesn't block login.
-    // Let's assume login works even if unverified, or we rely on the fact that this is a seeding script for dev.
-    // If strict verification is on, this script might fail at login.
-    // WORKAROUND: Login as Admin and "Unlock" user if possible, or assume dev environment has relaxed rules.
-}
-
 async function main() {
     console.log('🌱 Starting Database Seeding...');
 
@@ -175,12 +166,14 @@ async function main() {
     // 3. Create Random Users
     console.log('Creating random users...');
     for (let i = 0; i < 20; i++) {
+        await delay(500); // Prevent rate limit
         const role = faker.helpers.arrayElement(['VOLUNTEER', 'EVENT_ORGANIZER']);
         const email = faker.internet.email();
         const name = faker.person.fullName();
 
         const success = await registerUser(name, email, role);
         if (success) {
+            await delay(500);
             const token = await login(email);
             if (token) {
                 if (role === 'EVENT_ORGANIZER') tokens.randomOrganizers.push(token);
@@ -197,11 +190,13 @@ async function main() {
         // Each creates 1-3 events
         const numEvents = faker.number.int({ min: 1, max: 3 });
         for (let i = 0; i < numEvents; i++) {
+            await delay(1000); // Prevent rate limit
             const event = await createEvent(organizerToken);
             if (event) {
                 events.push(event);
                 // Admin approves it
                 if (tokens.admin) {
+                    await delay(300);
                     await approveEvent(event.id, tokens.admin);
                 }
             }
@@ -218,10 +213,12 @@ async function main() {
         const selected = shuffled.slice(0, faker.number.int({ min: 0, max: Math.min(10, shuffled.length) }));
 
         for (const volToken of selected) {
+            await delay(500); // Prevent rate limit
             await registerForEvent(event.id, volToken);
 
             // 20% chance to post
             if (Math.random() < 0.2) {
+                await delay(500);
                 const post = await createPost(event.id, volToken);
                 if (post) posts.push(post);
             }
@@ -232,6 +229,7 @@ async function main() {
     console.log('Creating reports...');
     if (posts.length > 0 && allVolunteers.length > 0) {
         for (let i = 0; i < 10; i++) {
+            await delay(500);
             const post = faker.helpers.arrayElement(posts);
             const reporter = faker.helpers.arrayElement(allVolunteers);
             await reportContent('POST', post.id, reporter);
