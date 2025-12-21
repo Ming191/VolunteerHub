@@ -17,13 +17,17 @@ export const useProfileData = (userId?: number) => {
             if (showLoading) setLoading(true);
 
             if (userId) {
-                // Fetch another user's public profile and their posts
-                const [profileRes, postsRes] = await Promise.all([
-                    userApi.getUserById({ id: userId }),
-                    postsApi.getPostsByUserId({ userId }),
-                ]);
+                // Fetch another user's public profile first
+                const profileRes = await userApi.getUserById({ id: userId });
                 setProfile(profileRes.data);
-                setPosts(postsRes.data.content);
+                
+                // Only fetch posts if profile is not private
+                if (!profileRes.data.isPrivate) {
+                    const postsRes = await postsApi.getPostsByUserId({ userId });
+                    setPosts(postsRes.data.content);
+                } else {
+                    setPosts([]);
+                }
             } else {
                 // Fetch current user's full profile and posts
                 const [profileRes, postsRes] = await Promise.all([

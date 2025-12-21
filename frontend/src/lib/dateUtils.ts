@@ -52,3 +52,10 @@ export const isRegistrationClosed = (registrationDeadline: string | undefined): 
     return deadline.getTime() <= Date.now();
 };
 
+export const formatDateForBackend = (date: Date | string | undefined): string => {
+    if (!date) return '';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    // Format: YYYY-MM-DDTHH:mm
+    return format(d, "yyyy-MM-dd'T'HH:mm");
+};
+

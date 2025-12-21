@@ -96,13 +96,6 @@ export function EventImages({ eventId, imageUrls, title, showGallery = true }: E
             }));
         }
 
-        const mainImages = imageUrls?.map(url => ({ 
-            url, 
-            source: 'event' as const, 
-            authorName: undefined, 
-            postId: undefined as number | undefined 
-        })) || [];
-
         const galleryImages = data?.pages.flatMap(page =>
             page.content.map(img => ({
                 url: img.url,
@@ -112,7 +105,18 @@ export function EventImages({ eventId, imageUrls, title, showGallery = true }: E
             }))
         ) || [];
 
-        return [...mainImages, ...galleryImages];
+        if (galleryImages.length > 0) {
+            return galleryImages;
+        }
+
+        const mainImages = imageUrls?.map(url => ({ 
+            url, 
+            source: 'event' as const, 
+            authorName: undefined, 
+            postId: undefined as number | undefined 
+        })) || [];
+
+        return mainImages;
     }, [imageUrls, data, showGallery]);
 
     const onSelect = useCallback((api: EmblaCarouselType) => {

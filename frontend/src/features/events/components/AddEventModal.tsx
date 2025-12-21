@@ -6,17 +6,14 @@ import type { CreateEventRequest } from '@/api-client';
 import { EventForm, type EventFormValues } from './EventForm';
 import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
 import { Loader2 } from 'lucide-react';
-import {useMemo} from "react";
+import { useMemo } from "react";
+import { formatDateForBackend } from '@/lib/dateUtils';
 
 interface AddEventModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: () => void;
 }
-
-const formatDateForBackend = (date: Date): string => {
-    return date.toISOString().substring(0, 19);
-};
 
 export const AddEventModal = ({ open, onOpenChange, onSuccess }: AddEventModalProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);

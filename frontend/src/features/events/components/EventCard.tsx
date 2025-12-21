@@ -4,16 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import type { UiEvent } from '@/types/ui-models';
 import type { EventResponse } from '@/api-client';
-
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-    });
-};
+import { formatDate } from '@/lib/dateUtils';
 
 interface EventCardProps<T extends UiEvent | EventResponse> {
     event: T;
@@ -31,6 +22,8 @@ const getStatusConfig = (status: string) => {
             return { variant: 'default' as const, label: 'Pending Approval' };
         case 'PUBLISHED':
             return { variant: 'default' as const, label: 'Published', className: 'bg-green-500 hover:bg-green-600' };
+        case 'REJECTED':
+            return { variant: 'destructive' as const, label: 'Rejected' };
         case 'CANCELLED':
             return { variant: 'destructive' as const, label: 'Cancelled' };
         case 'COMPLETED':
@@ -126,7 +119,7 @@ export const EventCard = <T extends UiEvent | EventResponse>({
                 <div className="space-y-3 text-sm text-muted-foreground">
                     <div className="flex items-center">
                         <Calendar className="mr-2 h-4 w-4" />
-                        <span>{formatDate(event.eventDateTime)}</span>
+                        <span>{formatDate(event.eventDateTime, 'PPP \'at\' p')}</span>
                     </div>
                     <div className="flex items-center">
                         <MapPin className="mr-2 h-4 w-4" />

@@ -5,8 +5,9 @@ import { SkeletonTransition } from '@/components/common/SkeletonTransition';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useEventPermissions } from '../hooks/useEventPermissions';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
     EventHero,
     EventInfoSidebar,
@@ -29,7 +30,11 @@ export const EventDetailsPage = () => {
     else if (isGalleryPage) activeTab = 'gallery';
 
     const { data: event, isLoading, isError, error, refetch } = useGetEvent(id);
-    const { isOrganizer, isRegistered } = useEventPermissions(event || null);
+    const { isOrganizer, isRegistered, isOwner, isAdmin } = useEventPermissions(event || null);
+
+    // Check if user can view unpublished events
+    const canViewUnpublished = isOrganizer || isOwner || isAdmin;
+    const isUnpublished = event && event.status !== 'PUBLISHED';
 
     const registerMutation = useRegisterForEvent();
     const cancelMutation = useCancelRegistration();
@@ -78,6 +83,13 @@ export const EventDetailsPage = () => {
                     <div className="container mx-auto py-8">
                         <ApiErrorState error={error} onRetry={refetch} />
                     </div>
+                ) : isUnpublished && !canViewUnpublished ? (
+                    <div className="container mx-auto py-8">
+                        <ApiErrorState 
+                            error={new Error('This event is not available')} 
+                            onRetry={() => navigate({ to: '/events' })}
+                        />
+                    </div>
                 ) : event ? (
                     <div className="min-h-screen bg-background pb-20">
                         {/* Optional: Breadcrumbs or Back Button Area */}
@@ -86,6 +98,24 @@ export const EventDetailsPage = () => {
                                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
                             </Button>
                         </div>
+
+                        {/* Rejection Notice */}
+                        {event.status === 'REJECTED' && (
+                        <div className="container mx-auto px-6 mb-6">
+                            <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+
+                            {/* 👇 div này là CHÌA KHOÁ */}
+                            <div>
+                                <AlertTitle>Event Not Approved</AlertTitle>
+                                <AlertDescription>
+                                {event.rejectionReason ||
+                                    'This event has been reviewed and was not approved for publication.'}
+                                </AlertDescription>
+                            </div>
+                            </Alert>
+                        </div>
+                        )}
 
                         <EventHero
                             event={event}

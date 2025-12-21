@@ -2,22 +2,15 @@ import { Calendar, MapPin, Users, CheckCircle, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { EventListSkeleton } from '@/components/ui/loaders';
 import { EmptyState } from '@/components/ui/empty-state';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import { useAdminPendingEvents } from '../hooks/useAdminPendingEvents';
-import {ConfirmDialog} from "@/components/common/ConfirmDialog.tsx";
-
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-    });
-};
+import { ConfirmDialog } from "@/components/common/ConfirmDialog.tsx";
+import { formatDate } from '@/lib/dateUtils';
 
 export const AdminPendingEvents = () => {
     const {
@@ -27,6 +20,8 @@ export const AdminPendingEvents = () => {
         selectedEvent,
         action,
         processingId,
+        rejectionReason,
+        setRejectionReason,
         fetchPendingEvents,
         handleApprove,
         handleReject,
@@ -79,7 +74,7 @@ export const AdminPendingEvents = () => {
                                         <div className="space-y-3 text-sm text-muted-foreground">
                                             <div className="flex items-center">
                                                 <Calendar className="mr-2 h-4 w-4" />
-                                                <span>{formatDate(event.eventDateTime)}</span>
+                                                <span>{formatDate(event.eventDateTime, 'PPP \'at\' p')}</span>
                                             </div>
                                             <div className="flex items-center">
                                                 <MapPin className="mr-2 h-4 w-4" />
@@ -124,11 +119,23 @@ export const AdminPendingEvents = () => {
                       This will make it visible to all volunteers.
                     </>
                   ) : (
-                    <>
-                      Are you sure you want to reject and delete the event{" "}
-                      <strong>{selectedEvent?.title}</strong>?
-                      This action cannot be undone.
-                    </>
+                    <div className="space-y-4">
+                      <p>
+                        Are you sure you want to reject the event{" "}
+                        <strong>{selectedEvent?.title}</strong>?
+                        The event will be marked as rejected and the organizer will be notified.
+                      </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="rejection-reason">Reason for rejection (optional)</Label>
+                        <Textarea
+                          id="rejection-reason"
+                          placeholder="Provide a reason for rejecting this event..."
+                          value={rejectionReason}
+                          onChange={(e) => setRejectionReason(e.target.value)}
+                          className="min-h-[100px]"
+                        />
+                      </div>
+                    </div>
                   )
                 }
                 confirmText={action === 'approve' ? 'Approve' : 'Reject'}

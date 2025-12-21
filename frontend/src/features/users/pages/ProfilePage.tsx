@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, MapPin, Edit, MessageCircle } from 'lucide-react';
+import { Calendar, MapPin, Edit, MessageCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +48,9 @@ export const ProfilePage = () => {
         .join('')
         .toUpperCase() ?? '';
 
+    // Check if profile is private
+    const isPrivateProfile = profile && 'isPrivate' in profile && profile.isPrivate === true;
+
     return (
         <SkeletonTransition
             isLoading={loading || !profile}
@@ -73,36 +76,36 @@ export const ProfilePage = () => {
                                 <div className="flex-1">
                                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
                                         <div>
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <h1 className="text-3xl font-bold tracking-tight">
-                                                    {profile.name}
-                                                </h1>
-                                                {'role' in profile && (
-                                                    <Badge variant="secondary" className="text-xs uppercase tracking-wider">
-                                                        {profile.role.replace(/_/g, ' ')}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            
-                                            <p className="text-muted-foreground text-base mb-3 max-w-2xl leading-relaxed">
-                                                {profile.bio || 'No bio added yet'}
-                                            </p>
-
-                                            {'createdAt' in profile && (
-                                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Calendar className="h-4 w-4" />
-                                                        <span>Joined {formatDate(profile.createdAt)}</span>
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <h1 className="text-3xl font-bold tracking-tight">
+                                                            {profile.name}
+                                                        </h1>
+                                                        {'role' in profile && (
+                                                            <Badge variant="secondary" className="text-xs uppercase tracking-wider">
+                                                                {profile.role.replace(/_/g, ' ')}
+                                                            </Badge>
+                                                        )}
                                                     </div>
-                                                    {profile.location && (
-                                                        <div className="flex items-center gap-1.5">
-                                                            <MapPin className="h-4 w-4" />
-                                                            <span>{profile.location}</span>
+                                                    
+                                                    <p className="text-muted-foreground text-base mb-3 max-w-2xl leading-relaxed">
+                                                        {profile.bio || 'No bio added yet'}
+                                                    </p>
+
+                                                    {'createdAt' in profile && (
+                                                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Calendar className="h-4 w-4" />
+                                                                <span>Joined {formatDate(profile.createdAt)}</span>
+                                                            </div>
+                                                            {profile.location && (
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <MapPin className="h-4 w-4" />
+                                                                    <span>{profile.location}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
 
                                         {/* Action Buttons - Desktop */}
                                         {isOwnProfile && (
@@ -168,42 +171,56 @@ export const ProfilePage = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Posts Section */}
-                    <div>
-                        <div className="flex items-center gap-2 mb-4 px-1">
-                            <h2 className="text-2xl font-semibold tracking-tight">
-                                {isOwnProfile ? 'My Posts' : 'Posts'}
-                            </h2>
-                            {posts.length > 0 && (
-                                <span className="text-sm text-muted-foreground">
-                                    ({posts.length})
-                                </span>
+                    {/* Posts Section - Hidden for private profiles */}
+                    {(!isPrivateProfile || isOwnProfile) ? (
+                        <div>
+                            <div className="flex items-center gap-2 mb-4 px-1">
+                                <h2 className="text-2xl font-semibold tracking-tight">
+                                    {isOwnProfile ? 'My Posts' : 'Posts'}
+                                </h2>
+                                {posts.length > 0 && (
+                                    <span className="text-sm text-muted-foreground">
+                                        ({posts.length})
+                                    </span>
+                                )}
+                            </div>
+                            
+                            {posts.length === 0 ? (
+                                <Card className="border-dashed">
+                                    <CardContent className="text-center py-16">
+                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                                            <MessageCircle className="h-8 w-8 text-muted-foreground/50" />
+                                        </div>
+                                        <p className="text-muted-foreground font-medium mb-1">No posts yet</p>
+                                        <p className="text-sm text-muted-foreground/60">
+                                            {isOwnProfile ? "Share your thoughts with your first post" : "This user hasn't posted anything yet"}
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                <div className="space-y-4">
+                                    {posts.map((post) => (
+                                        <PostCard key={post.id} post={post} />
+                                    ))}
+                                </div>
                             )}
                         </div>
-                        
-                        {posts.length === 0 ? (
-                            <Card className="border-dashed">
-                                <CardContent className="text-center py-16">
-                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                                        <MessageCircle className="h-8 w-8 text-muted-foreground/50" />
-                                    </div>
-                                    <p className="text-muted-foreground font-medium mb-1">No posts yet</p>
-                                    <p className="text-sm text-muted-foreground/60">
-                                        {isOwnProfile ? "Share your thoughts with your first post" : "This user hasn't posted anything yet"}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <div className="space-y-4">
-                                {posts.map((post) => (
-                                    <PostCard key={post.id} post={post} />
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    ) : (
+                        <Card className="border-dashed">
+                            <CardContent className="text-center py-16">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                                    <Lock className="h-8 w-8 text-muted-foreground/50" />
+                                </div>
+                                <p className="text-muted-foreground font-medium mb-1">Posts are private</p>
+                                <p className="text-sm text-muted-foreground/60">
+                                    This user has chosen to keep their posts private.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Modals */}
-                    {isOwnProfile && profile && (
+                    {isOwnProfile && profile && 'role' in profile && (
                         <EditProfileModal
                             open={isEditModalOpen}
                             onOpenChange={handleModalClose}

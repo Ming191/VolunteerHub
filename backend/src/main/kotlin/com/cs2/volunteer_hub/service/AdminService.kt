@@ -151,26 +151,41 @@ class AdminService(
     }
 
     @Transactional
-    fun deleteEventAsAdmin(eventId: Long) {
+    fun rejectEvent(eventId: Long, reason: String? = null): EventResponse {
         val event = eventRepository.findByIdOrThrow(eventId)
 
-        eventLifecycleValidator.validateDeletionAllowed(event)
+        // Validate state transition
+        val from = event.status
+        eventLifecycleValidator.validateStatusTransition(from, EventStatus.REJECTED, event)
 
+        event.status = EventStatus.REJECTED
+        event.rejectionReason = reason ?: "Your event has been reviewed and unfortunately cannot be approved at this time. Please contact support for more information."
+        val savedEvent = eventRepository.save(event)
+
+        // Send notifications
         notificationService.queuePushNotificationToUser(
             userId = event.creator.id,
             title = "Event Rejected",
-            body =
-                "Your event '${event.title}' has been reviewed and unfortunately cannot be approved at this time.",
-            link = null
+            body = "Your event '${event.title}' has been reviewed and cannot be approved.",
+            link = "/events/${event.id}"
         )
 
         emailQueueService.queueEventRejectedEmail(
             email = event.creator.email,
             name = event.creator.name,
             eventTitle = event.title,
-            reason =
-                "Your event has been reviewed and unfortunately cannot be approved at this time. Please contact support for more information."
+            reason = event.rejectionReason!!
         )
+
+        cacheEvictionService.evictAllEventCaches(eventId)
+        return eventMapper.toEventResponse(savedEvent)
+    }
+
+    @Transactional
+    fun deleteEventAsAdmin(eventId: Long) {
+        val event = eventRepository.findByIdOrThrow(eventId)
+
+        eventLifecycleValidator.validateDeletionAllowed(event)
 
         cacheEvictionService.evictAllEventCaches(eventId)
         eventRepository.deleteById(eventId)

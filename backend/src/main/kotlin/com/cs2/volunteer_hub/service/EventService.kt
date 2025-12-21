@@ -153,7 +153,7 @@ class EventService(
         @Cacheable(value = ["events"], key = "#id")
         @Transactional(readOnly = true)
         fun getEventById(id: Long): EventResponse {
-                val event = eventRepository.findById(id).orElseThrow()
+                val event = eventRepository.findByIdOrThrow(id)
                 return eventMapper.toEventResponse(event)
         }
 
