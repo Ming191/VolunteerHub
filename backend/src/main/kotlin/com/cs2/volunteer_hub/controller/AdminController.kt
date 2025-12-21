@@ -2,6 +2,9 @@ package com.cs2.volunteer_hub.controller
 
 import com.cs2.volunteer_hub.dto.EventResponse
 import com.cs2.volunteer_hub.service.AdminService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -105,5 +108,20 @@ class AdminController(private val adminService: AdminService) {
     fun getActiveEventsByCreator(@PathVariable userId: Long): ResponseEntity<List<EventResponse>> {
         val events = adminService.getActiveEventsByCreator(userId)
         return ResponseEntity.ok(events)
+    }
+
+    /**
+     * Get all events in the database
+     * Returns all events regardless of status with pagination support
+     * Example: GET /api/admin/events
+     */
+    @GetMapping("/events")
+    fun getAllEvents(
+      @RequestParam(defaultValue = "0") page: Int,
+      @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<EventResponse>> {
+      val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+      val events = adminService.getAllEvents(pageable)
+      return ResponseEntity.ok(events)
     }
 }
