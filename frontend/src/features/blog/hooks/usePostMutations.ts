@@ -34,7 +34,7 @@ export const usePostMutations = (eventId?: number) => {
   });
 
   const createPostMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       content,
       files,
       eventId: postEventId,
@@ -45,7 +45,39 @@ export const usePostMutations = (eventId?: number) => {
           "Cannot create post without event (Feed posting not supported yet)"
         );
       }
-      return blogService.createPost(targetEventId, content, files || undefined);
+
+      // Upload images to GCS using signed URLs
+      const imageUrls: string[] = [];
+      if (files && files.length > 0) {
+        const uploadPromises = files.map(async (file) => {
+          const { signedUrl, publicUrl } = await blogService.getSignedUrl(
+            targetEventId,
+            file.type,
+            file.name
+          );
+
+          // Upload to GCS using the signed URL
+          // Note: fetch is used here to avoid attaching API auth headers which might confuse GCS
+          const response = await fetch(signedUrl, {
+            method: "PUT",
+            body: file,
+            headers: {
+              "Content-Type": file.type,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to upload image: ${response.statusText}`);
+          }
+
+          return publicUrl;
+        });
+
+        const uploadedUrls = await Promise.all(uploadPromises);
+        imageUrls.push(...uploadedUrls);
+      }
+
+      return blogService.createPost(targetEventId, content, imageUrls);
     },
     onMutate: async ({ content, files, eventId: mutationEventId }) => {
       const targetEventId = mutationEventId || eventId;

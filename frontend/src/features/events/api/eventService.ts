@@ -1,7 +1,7 @@
 import {
     Configuration, EventsApi, type EventResponse, EnumsApi, type EventTagInfo, type PageEventResponse,
     type CreateEventRequest, EventManagerApi, type RegistrationResponse, type UpdateStatusRequestStatusEnum,
-    type UpdateEventRequest
+    type UpdateEventRequest, type PageGalleryImageResponse
 } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
 
@@ -18,6 +18,14 @@ export interface SearchEventsParams {
     matchAllTags?: boolean;
     page?: number;
     size?: number;
+}
+
+export interface PublicAttendeeResponse {
+    volunteerId: number;
+    name: string;
+    profilePictureUrl?: string;
+    bio?: string;
+    joinedAt: string;
 }
 
 /**
@@ -136,7 +144,7 @@ const updateRegistrationStatus = async (
 };
 
 const markRegistrationCompleted = async (registrationId: number) => {
-    const response = await eventManagerApi.markRegistrationAsCompleted({registrationId});
+    const response = await eventManagerApi.markRegistrationAsCompleted({ registrationId });
     return response.data;
 };
 
@@ -174,6 +182,26 @@ const deleteEvent = async (id: number): Promise<void> => {
     return response.data;
 }
 
+const getEventAttendees = async (eventId: number): Promise<PublicAttendeeResponse[]> => {
+    try {
+        const response = await axiosInstance.get<PublicAttendeeResponse[]>(`/api/events/${eventId}/attendees`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch event attendees:', error);
+        throw error;
+    }
+}
+
+const getEventGallery = async (eventId: number, page: number = 0, size: number = 20): Promise<PageGalleryImageResponse> => {
+    try {
+        const response = await eventsApi.getEventGallery({ id: eventId, page, size });
+        return response.data;
+    } catch (error) {
+        console.error(`Failed to fetch gallery for event ${eventId}:`, error);
+        throw error;
+    }
+}
+
 
 export const eventService = {
     searchEvents,
@@ -186,4 +214,6 @@ export const eventService = {
     markRegistrationCompleted,
     updateEvent,
     deleteEvent,
+    getEventAttendees,
+    getEventGallery,
 };

@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 import org.springframework.data.domain.Page
 
-data class PostRequest(val content: String)
+data class PostRequest(val content: String, val imageUrls: List<String>? = null)
 
 data class AuthorResponse(
         val id: Long,

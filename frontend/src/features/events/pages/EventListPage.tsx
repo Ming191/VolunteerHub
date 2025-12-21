@@ -143,6 +143,7 @@ export const EventListScreen = () => {
                   key={event.id}
                   event={event}
                   onViewDetails={handleViewDetails}
+                  isProcessingImages={event.imagesProcessing}
                 />
               ))}
             </>

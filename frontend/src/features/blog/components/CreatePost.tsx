@@ -40,7 +40,15 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
 
 
   return (
-    <Card className="w-full mb-6">
+    <Card className="w-full mb-6 relative">
+      {disabled && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 rounded-lg flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm font-medium text-muted-foreground">Creating post...</p>
+          </div>
+        </div>
+      )}
       <CardContent className="p-4">
         <div className="flex gap-4">
           <Avatar className="h-10 w-10 border border-primary/20">

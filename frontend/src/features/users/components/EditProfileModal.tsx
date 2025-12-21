@@ -163,6 +163,151 @@ export const EditProfileModal = ({
                     </FormControl>
                     <FormMessage />
                   </FormItem>
+                                            <Input {...field} placeholder="+1234567890" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="location"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Location</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="City, Country" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="dateOfBirth"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Date of Birth</FormLabel>
+                                        <FormControl>
+                                            <Input type="date" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="bio"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Bio</FormLabel>
+                                        <FormControl>
+                                            <Textarea
+                                                {...field}
+                                                placeholder="Tell us about yourself..."
+                                                rows={4}
+                                                className="resize-none"
+                                            />
+                                        </FormControl>
+                                        <FormDescription>Maximum 500 characters</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="skills"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Skills</FormLabel>
+                                        <FormControl>
+                                            <div className="space-y-3">
+                                                <ToggleGroup
+                                                    type="multiple"
+                                                    value={field.value || []}
+                                                    onValueChange={field.onChange}
+                                                    className="flex-wrap justify-start gap-2"
+                                                >
+                                                    {SKILLS.map((skill) => (
+                                                        <ToggleGroupItem
+                                                            key={skill}
+                                                            value={skill}
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="text-xs"
+                                                        >
+                                                            {formatLabel(skill)}
+                                                        </ToggleGroupItem>
+                                                    ))}
+                                                </ToggleGroup>
+                                            </div>
+                                        </FormControl>
+                                        <FormDescription>Select skills that apply to you</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="interests"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Interests</FormLabel>
+                                        <FormControl>
+                                            <div className="space-y-3">
+                                                <ToggleGroup
+                                                    type="multiple"
+                                                    value={field.value || []}
+                                                    onValueChange={field.onChange}
+                                                    className="flex-wrap justify-start gap-2"
+                                                >
+                                                    {INTERESTS.map((interest) => (
+                                                        <ToggleGroupItem
+                                                            key={interest}
+                                                            value={interest}
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="text-xs"
+                                                        >
+                                                            {formatLabel(interest)}
+                                                        </ToggleGroupItem>
+                                                    ))}
+                                                </ToggleGroup>
+                                            </div>
+                                        </FormControl>
+                                        <FormDescription>Select causes you care about</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <DialogFooter className="gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => onOpenChange(false)}
+                                    disabled={isSubmitting}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        'Save Changes'
+                                    )}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
                 )}
               />
 

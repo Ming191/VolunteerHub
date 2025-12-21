@@ -13,6 +13,7 @@ export const useGetMyEvents = (params: MyEventsParams) => {
         queryKey: [MY_EVENTS_QUERY_KEY, params],
         queryFn: () => eventService.getMyEvents(params),
         placeholderData: (prev) => prev,
+        refetchInterval: 3000, // Poll continuously when needed
     });
 };
 

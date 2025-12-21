@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -32,14 +34,36 @@ class MeService(
     private val rabbitTemplate: RabbitTemplate,
     private val tempFileService: TemporaryFileStorageService,
     private val fileValidationService: FileValidationService,
-    private val userMapper: UserMapper
+    private val userMapper: UserMapper,
+    private val cacheEvictionService: CacheEvictionService
 ) {
     private val logger = LoggerFactory.getLogger(MeService::class.java)
 
-    //@Cacheable(value = ["userRegistrations"], key = "#userEmail")
-    fun getMyRegistrations(userEmail: String): List<RegistrationResponse> {
-        return registrationRepository.findAllByUserEmailOrderByEventEventDateTimeDesc(userEmail)
-            .map(registrationMapper::toRegistrationResponse)
+    @Cacheable(value = ["userRegistrations"], key = "#userEmail")
+    @Transactional(readOnly = true)
+    fun getMyRegistrations(userEmail: String, pageable: Pageable): Page<RegistrationResponse> {
+        // Get registration IDs first for pagination
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        val spec = com.cs2.volunteer_hub.specification.RegistrationSpecifications.byUser(user.id)
+        val page = registrationRepository.findAll(spec, pageable)
+        
+        if (page.isEmpty) {
+            return Page.empty(pageable)
+        }
+        
+        // Load with associations
+        val registrationIds = page.content.map { it.id }
+        val registrationsWithAssociations = registrationRepository.findByIdsWithAssociations(registrationIds)
+        
+        // Maintain order
+        val registrationMap = registrationsWithAssociations.associateBy { it.id }
+        val orderedRegistrations = registrationIds.mapNotNull { registrationMap[it] }
+        
+        return org.springframework.data.domain.PageImpl(
+            orderedRegistrations.map(registrationMapper::toRegistrationResponse),
+            pageable,
+            page.totalElements
+        )
     }
 
     @Transactional
@@ -55,6 +79,13 @@ class MeService(
             val newFcmToken = FcmToken(token = token, user = user)
             fcmTokenRepository.save(newFcmToken)
         }
+    }
+
+    @Transactional
+    fun deleteFcmTokensForUser(userEmail: String) {
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        fcmTokenRepository.deleteAllByUserId(user.id)
+        logger.info("Deleted all FCM tokens for user: ${user.id}")
     }
 
     fun getMyProfile(userEmail: String): UserResponse {
@@ -82,6 +113,9 @@ class MeService(
         }
 
         val updatedUser = userRepository.save(user)
+
+        // Evict public profile cache using user ID
+        cacheEvictionService.evictPublicUserProfile(updatedUser.id)
 
         return userMapper.toUserResponse(updatedUser)
     }

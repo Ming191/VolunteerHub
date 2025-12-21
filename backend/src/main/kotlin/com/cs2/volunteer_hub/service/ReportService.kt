@@ -8,9 +8,13 @@ import com.cs2.volunteer_hub.model.ReportStatus
 import com.cs2.volunteer_hub.model.ReportType
 import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.repository.*
+import com.cs2.volunteer_hub.specification.ReportSpecifications
+import com.cs2.volunteer_hub.specification.UserSpecifications
 import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -77,26 +81,22 @@ class ReportService(
     }
 
     @Transactional(readOnly = true)
-    fun getMyReports(userEmail: String): List<ReportResponse> {
+    fun getMyReports(userEmail: String, pageable: Pageable): Page<ReportResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
-        return reportRepository
-                .findByReporterIdOrderByCreatedAtDesc(user.id)
-                .map(reportMapper::toReportResponse)
+        val spec = ReportSpecifications.byReporterId(user.id)
+        return reportRepository.findAll(spec, pageable).map(reportMapper::toReportResponse)
     }
 
     @Transactional(readOnly = true)
     fun getAllReports(status: ReportStatus?, page: Int = 0, size: Int = 20): List<ReportResponse> {
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
 
-        val reports =
-                if (status != null) {
-                    reportRepository
-                            .findByStatusOrderByCreatedAtDesc(status)
-                            .drop(page * size)
-                            .take(size)
-                } else {
-                    reportRepository.findAll(pageable).content
-                }
+        val reports = if (status != null) {
+            val spec = ReportSpecifications.byStatus(status)
+            reportRepository.findAll(spec, pageable).content
+        } else {
+            reportRepository.findAll(pageable).content
+        }
 
         return reports.map(reportMapper::toReportResponse)
     }
@@ -182,21 +182,19 @@ class ReportService(
 
     @Transactional(readOnly = true)
     fun getReportStats(): ReportStatsResponse {
-        val allReports = reportRepository.findAll()
-
         return ReportStatsResponse(
-                totalReports = allReports.size.toLong(),
-                pendingReports = allReports.count { it.status == ReportStatus.PENDING }.toLong(),
-                underReviewReports =
-                        allReports.count { it.status == ReportStatus.UNDER_REVIEW }.toLong(),
-                resolvedReports = allReports.count { it.status == ReportStatus.RESOLVED }.toLong(),
-                dismissedReports = allReports.count { it.status == ReportStatus.DISMISSED }.toLong()
+                totalReports = reportRepository.count(),
+                pendingReports = reportRepository.countByStatus(ReportStatus.PENDING),
+                underReviewReports = reportRepository.countByStatus(ReportStatus.UNDER_REVIEW),
+                resolvedReports = reportRepository.countByStatus(ReportStatus.RESOLVED),
+                dismissedReports = reportRepository.countByStatus(ReportStatus.DISMISSED)
         )
     }
 
     private fun notifyAdminsAboutNewReport(report: Report) {
         try {
-            val admins = userRepository.findAll().filter { it.role == Role.ADMIN }
+            val spec = UserSpecifications.hasRole(Role.ADMIN)
+            val admins = userRepository.findAll(spec)
             admins.forEach { admin ->
                 notificationService.queuePushNotificationToUser(
                         userId = admin.id,

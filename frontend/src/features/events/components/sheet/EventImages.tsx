@@ -1,12 +1,12 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, memo } from "react";
 import {
   Image as ImageIcon,
   X,
   User,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
-import type { GalleryImageResponse } from "@/api-client/api";
 import {
   AlertDialog,
   AlertDialogPopup,
@@ -16,6 +16,8 @@ import { motion, type Transition } from "motion/react";
 import { type EmblaCarouselType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
 import { Button } from "@/components/animate-ui/components/buttons/button";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { eventService } from "@/features/events/api/eventService";
 
 const transition: Transition = {
   type: "spring",
@@ -25,24 +27,26 @@ const transition: Transition = {
 };
 
 interface EventImagesProps {
+  eventId: number;
   imageUrls?: string[];
-  galleryImageUrls?: GalleryImageResponse[];
   title: string;
+  showGallery?: boolean;
 }
 
-const EventImageItem = ({
-  url,
-  title,
-  index,
-  className,
-  onClick,
-}: {
-  url: string;
-  title: string;
-  index: number;
-  className?: string;
-  onClick?: () => void;
-}) => {
+const EventImageItem = memo(
+  ({
+    url,
+    title,
+    index,
+    className,
+    onClick,
+  }: {
+    url: string;
+    title: string;
+    index: number;
+    className?: string;
+    onClick?: () => void;
+  }) => {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">(
     "loading"
   );
@@ -79,10 +83,17 @@ const EventImageItem = ({
       )}
     </div>
   );
-};
+  }
+);
+
+EventImageItem.displayName = "EventImageItem";
 
 export function EventImages({
+  eventId,
   imageUrls,
+  title,
+  showGallery = true,
+}: EventImagesProps) {
   galleryImageUrls,
   title,
 }: EventImagesProps) {
@@ -97,11 +108,50 @@ export function EventImages({
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Use galleryImageUrls if available, otherwise fall back to imageUrls
-  const imagesToDisplay =
-    galleryImageUrls && galleryImageUrls.length > 0
-      ? galleryImageUrls
-      : imageUrls?.map((url) => ({ url, source: "event" })) || [];
+  const {
+    data,
+    fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading
+    } = useInfiniteQuery({
+        queryKey: ['event-gallery', eventId],
+        queryFn: ({ pageParam = 0 }) => eventService.getEventGallery(eventId, pageParam, 20),
+        initialPageParam: 0,
+        getNextPageParam: (lastPage) => lastPage.last ? undefined : lastPage.pageNumber + 1,
+        enabled: showGallery,
+    });
+
+    // Combine main event images with paginated gallery images
+    const imagesToDisplay = useMemo(() => {
+        if (!showGallery && imageUrls) {
+            // If gallery is disabled, only show main images
+            return imageUrls.map(url => ({ 
+                url, 
+                source: 'event' as const, 
+                authorName: undefined, 
+                postId: undefined as number | undefined 
+            }));
+        }
+
+        const mainImages = imageUrls?.map(url => ({ 
+            url, 
+            source: 'event' as const, 
+            authorName: undefined, 
+            postId: undefined as number | undefined 
+        })) || [];
+
+        const galleryImages = data?.pages.flatMap(page =>
+            page.content.map(img => ({
+                url: img.url,
+                source: img.source as 'event' | 'post',
+                authorName: img.authorName || undefined,
+                postId: img.postId || undefined
+            }))
+        ) || [];
+
+        return [...mainImages, ...galleryImages];
+    }, [imageUrls, data, showGallery]);
 
   const onSelect = useCallback((api: EmblaCarouselType) => {
     setCurrentIndex(api.selectedScrollSnap());
@@ -128,10 +178,19 @@ export function EventImages({
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-32 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   if (imagesToDisplay.length > 0) {
     return (
       <>
-        <div>
+        <div className="space-y-4">
           <div
             className={`grid gap-3 ${
               imagesToDisplay.length === 1
@@ -143,7 +202,7 @@ export function EventImages({
           >
             {imagesToDisplay.map((image, index) => (
               <EventImageItem
-                key={index}
+                key={`${image.url}-${index}`}
                 url={image.url}
                 title={title}
                 index={index}
@@ -151,6 +210,21 @@ export function EventImages({
               />
             ))}
           </div>
+
+          {hasNextPage && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {isFetchingNextPage ? "Loading more..." : "Load more images"}
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Carousel Lightbox */}
@@ -211,7 +285,7 @@ export function EventImages({
                               {image.postId ? (
                                 <Link
                                   to="/events/$eventId"
-                                  params={{ eventId: String(image.postId) }}
+                                  params={{ eventId: String(eventId) }}
                                   className="font-semibold hover:underline"
                                 >
                                   {image.authorName}

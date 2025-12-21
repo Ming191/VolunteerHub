@@ -236,6 +236,7 @@ export const PostCard: React.FC<PostCardProps> = ({
               src={post.author.profilePictureUrl}
               alt={post.author.name}
             />
+            />
             <AvatarFallback>{post.author.name[0]}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col flex-1">

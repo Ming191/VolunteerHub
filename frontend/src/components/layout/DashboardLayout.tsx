@@ -8,6 +8,7 @@ import {
   UserCog,
   ShieldCheck,
   Users,
+  User,
 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { SuspenseFallback } from "@/components/common/SuspenseFallback";
@@ -76,27 +77,36 @@ const DashboardLayout = () => {
           },
         ]
       : []),
+    ...(user?.role === "VOLUNTEER"
+      ? [
+          {
+            title: "Registration",
+            icon: <User className="h-full w-full text-green-600" />,
+            href: "/my-registrations",
+          },
+        ]
+      : []),
   ];
 
-    return (
-        <div className="flex flex-col h-screen w-full">
-            {/* Navbar Component */}
-            <Navbar />
-            <ThemeListener />
+  return (
+    <div className="flex flex-col h-screen w-full">
+      {/* Navbar Component */}
+      <Navbar />
+      <ThemeListener />
 
-            {/* Main Content Area */}
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 pb-24 sm:pb-16">
-                {/* Outlet renders the active child route */}
-                <Outlet />
-                {/* Spacer for Floating Dock removed; use padding instead */}
-            </main>
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent p-4 sm:p-6 pb-24 sm:pb-16">
+        {/* Outlet renders the active child route */}
+        <Outlet />
+        {/* Spacer for Floating Dock removed; use padding instead */}
+      </main>
 
-            {/* Floating Dock at the bottom */}
-            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-                <FloatingDock items={dockItems} />
-            </div>
-        </div>
-    );
+      {/* Floating Dock at the bottom */}
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+        <FloatingDock items={dockItems} />
+      </div>
+    </div>
+  );
 };
 
 export default DashboardLayout;

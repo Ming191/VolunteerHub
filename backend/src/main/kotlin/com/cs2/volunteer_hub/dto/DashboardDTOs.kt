@@ -57,7 +57,7 @@ data class DashboardTopEventItem(
 data class OrganizerDashboardResponse(
     val stats: Map<String, Long>,
     val eventsPendingAdminApproval: List<DashboardEventItem>,
-    val recentPendingRegistrations: List<DashboardActionItem>,
+    val recentPendingRegistrations: List<DashboardPendingRegistrationItem>,
     val topEventsByRegistration: List<DashboardTopEventItem>
 )
 
@@ -65,4 +65,13 @@ data class AdminDashboardResponse(
     val stats: Map<String, Long>,
     val userRoleCounts: Map<String, Long>,
     val eventsToApprove: List<DashboardActionItem>
+)
+
+data class OrganizerAnalyticsResponse(
+    val totalEvents: Long,
+    val totalRegistrations: Long,
+    val activeEvents: Long,
+    val avgRegistrationRate: Double,
+    val topEvents: List<DashboardTopEventItem>,
+    val registrationsByStatus: Map<String, Long>
 )

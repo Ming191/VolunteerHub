@@ -4,13 +4,20 @@ import com.cs2.volunteer_hub.config.RabbitMQConfig
 import com.cs2.volunteer_hub.dto.CreateEventRequest
 import com.cs2.volunteer_hub.dto.EventCreationMessage
 import com.cs2.volunteer_hub.dto.EventResponse
+import com.cs2.volunteer_hub.dto.PublicAttendeeResponse
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
 import com.cs2.volunteer_hub.mapper.EventMapper
+import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.EventStatus
+import com.cs2.volunteer_hub.model.ImageStatus
+import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.EventRepository
+import com.cs2.volunteer_hub.repository.ImageRepository
+import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.findByEmailOrThrow
+import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.EventSpecifications
 import com.cs2.volunteer_hub.validation.EventCoordinateValidator
 import com.cs2.volunteer_hub.validation.EventDateValidator
@@ -24,6 +31,7 @@ import org.springframework.cache.annotation.Caching
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
@@ -34,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile
 class EventService(
         private val eventRepository: EventRepository,
         private val userRepository: UserRepository,
+        private val imageRepository: ImageRepository,
         private val rabbitTemplate: RabbitTemplate,
         private val fileValidationService: FileValidationService,
         private val eventMapper: EventMapper,
@@ -43,11 +52,13 @@ class EventService(
         private val eventLifecycleValidator: EventLifecycleValidator,
         private val eventQueueService: EventQueueService,
         private val eventCoordinateValidator: EventCoordinateValidator,
+        private val registrationRepository: RegistrationRepository,
+        private val registrationMapper: RegistrationMapper,
         @field:Value("\${upload.max-files-per-event:10}") private val maxFilesPerEvent: Int = 10
 ) {
         private val logger = LoggerFactory.getLogger(EventService::class.java)
 
-        @CacheEvict(value = ["events"], allEntries = true)
+        @CacheEvict(value = ["events", "organizerDashboard", "organizerAnalytics", "adminDashboard"], allEntries = true)
         @Transactional
         fun createEvent(
                 request: CreateEventRequest,
@@ -146,6 +157,38 @@ class EventService(
                 return eventMapper.toEventResponse(event)
         }
 
+        @Transactional(readOnly = true)
+        fun getPublicAttendees(
+                eventId: Long,
+                currentUserEmail: String
+        ): List<PublicAttendeeResponse> {
+                val user = userRepository.findByEmailOrThrow(currentUserEmail)
+                val event = eventRepository.findByIdOrThrow(eventId)
+
+                // 1. Get all approved registrations
+                val approvedRegistrations =
+                        registrationRepository.findAllByEventIdAndStatusWithAssociations(
+                                eventId,
+                                RegistrationStatus.APPROVED
+                        )
+
+                // 2. Security Check: Current user must be Organizer or an Approved Participant
+
+                val isCreator = event.creator.id == user.id
+                val isApprovedParticipant = approvedRegistrations.any { it.user.id == user.id }
+
+                if (!isCreator && !isApprovedParticipant) {
+                        // Check if user is an admin? Maybe. But for now strict.
+                        if (user.role != com.cs2.volunteer_hub.model.Role.ADMIN) {
+                                throw AccessDeniedException(
+                                        "Only approved participants or the organizer can view the attendee list."
+                                )
+                        }
+                }
+
+                return approvedRegistrations.map { registrationMapper.toPublicAttendeeResponse(it) }
+        }
+
         @Caching(
                 evict =
                         [
@@ -200,8 +243,6 @@ class EventService(
                         event.tags.addAll(it)
                 }
 
-                // Handle image removals: If existingImageUrls provided, remove any images not in
-                // this list
                 request.existingImageUrls?.let { keepUrls ->
                         event.images.removeIf { image ->
                                 image.url != null && !keepUrls.contains(image.url)
@@ -221,7 +262,6 @@ class EventService(
                 val updatedEvent = eventRepository.save(event)
                 logger.info("Updated event ID: $id by user: $currentUserEmail")
 
-                // Trigger async image upload if there are pending images
                 val hasPendingImages =
                         updatedEvent.images.any {
                                 it.status == com.cs2.volunteer_hub.model.ImageStatus.PENDING_UPLOAD
@@ -297,5 +337,28 @@ class EventService(
                         "Cancelled event ID: $id by user: $currentUserEmail with reason: $reason"
                 )
                 return eventMapper.toEventResponse(savedEvent)
+        }
+
+        @Transactional(readOnly = true)
+        fun getEventGallery(
+                eventId: Long,
+                pageable: Pageable
+        ): com.cs2.volunteer_hub.dto.PageGalleryImageResponse {
+                // Ensure event exists
+                eventRepository.findByIdOrThrow(eventId)
+
+                val imagePage =
+                        imageRepository.findAllByEventIncludingPosts(
+                                eventId,
+                                ImageStatus.UPLOADED,
+                                pageable
+                        )
+
+                val galleryImages =
+                        imagePage.content.mapNotNull { image ->
+                                eventMapper.toGalleryImageResponse(image, eventId)
+                        }
+                val resultPage = PageImpl(galleryImages, pageable, imagePage.totalElements)
+                return com.cs2.volunteer_hub.dto.PageGalleryImageResponse.from(resultPage)
         }
 }

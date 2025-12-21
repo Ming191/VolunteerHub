@@ -17,6 +17,7 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
+  Flag,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -35,6 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/animate-ui/components/base/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ReportDialog } from "@/features/report/components/ReportDialog";
 
 interface CommentItemProps {
   comment: CommentResponse;
@@ -64,6 +66,7 @@ export const CommentItem = React.memo(
     const [isEditing, setIsEditing] = useState(false);
     const [editedContent, setEditedContent] = useState(comment.content);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
     const canReply = depth < maxDepth;
     const hasReplies = comment.replies && comment.replies.length > 0;
     const replyCount = comment.replies?.length || 0;
@@ -173,6 +176,28 @@ export const CommentItem = React.memo(
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                {!isAuthor && user && !isEditing && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 flex-shrink-0"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => setIsReportDialogOpen(true)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <Flag className="mr-2 h-4 w-4" />
+                        Report
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -304,6 +329,13 @@ export const CommentItem = React.memo(
             </AlertDialogFooter>
           </AlertDialogPopup>
         </AlertDialog>
+
+        <ReportDialog
+          open={isReportDialogOpen}
+          onClose={() => setIsReportDialogOpen(false)}
+          targetId={comment.id}
+          targetType="COMMENT"
+        />
       </div>
     );
   }
