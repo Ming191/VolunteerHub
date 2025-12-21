@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Textarea } from '@/components/ui/textarea.tsx';
+import { Separator } from '@/components/ui/separator';
 import { Image } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -52,7 +53,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
           <div className="w-full">
             <Textarea
               placeholder="Share something with the community..."
-              className="min-h-[100px] resize-none border-none focus-visible:ring-0 px-0"
+              className="min-h-[100px] resize-none border-none focus-visible:ring-0 px-0 shadow-none"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               disabled={disabled}
@@ -62,7 +63,9 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-4">
+        <Separator className="my-4" />
+
+        <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <input
               type="file"
