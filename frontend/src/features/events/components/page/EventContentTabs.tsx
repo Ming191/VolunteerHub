@@ -282,21 +282,21 @@ export const EventTabsNavigation = ({
     }
   };
 
-    return (
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="mb-6">
-                <TabsTrigger value="about">About</TabsTrigger>
-                {event.status !== 'PENDING' && (
-                  <TabsTrigger value="community">Community</TabsTrigger>
-                )}
-                {(isOrganizer || isApprovedMember) && (
-                    <TabsTrigger value="attendees">Attendees</TabsTrigger>
-                )}
-                {/* Show gallery tab if there are any gallery images or regular event images */}
-                {(event.imageUrls && event.imageUrls.length > 0) && (
-                        <TabsTrigger value="gallery">Gallery</TabsTrigger>
-                )}
-            </TabsList>
-        </Tabs>
-    );
+  return (
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <TabsList className="mb-6">
+        <TabsTrigger value="about">About</TabsTrigger>
+        {event.status !== "PENDING" && (
+          <TabsTrigger value="community">Community</TabsTrigger>
+        )}
+        {(isOrganizer || isApprovedMember) && (
+          <TabsTrigger value="attendees">Attendees</TabsTrigger>
+        )}
+        {/* Show gallery tab if there are any gallery images or regular event images */}
+        {event.imageUrls && event.imageUrls.length > 0 && (
+          <TabsTrigger value="gallery">Gallery</TabsTrigger>
+        )}
+      </TabsList>
+    </Tabs>
+  );
 };

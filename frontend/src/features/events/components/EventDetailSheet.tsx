@@ -158,7 +158,6 @@ export const EventDetailSheet = ({
               <EventRegistrationsModal eventId={event.id} />
             </div>
           </div>
-
         )}
       </SheetContent>
 
