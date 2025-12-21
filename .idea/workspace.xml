@@ -5,20 +5,40 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="abe1e009-a909-425f-bd39-fa4207a5dcbc" name="Changes" comment="feat: Enhance blog post creation with loading state and image previews">
-      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/controller/PostController.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/controller/PostController.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/dto/PostDTOs.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/dto/PostDTOs.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/service/ImageUploadService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/service/ImageUploadService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/service/PostService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/service/PostService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/blog/api/blogService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/blog/api/blogService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/blog/components/BlogFeed.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/blog/components/BlogFeed.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/controller/AdminController.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/controller/AdminController.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/service/AdminService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/service/AdminService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/DashboardLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/DashboardLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/admin/hooks/useAdminEvents.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/admin/hooks/useAdminEvents.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/admin/pages/AdminEvents.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/admin/pages/AdminEvents.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/features/blog/components/PostCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/blog/components/PostCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/blog/components/PostCardLoading.tsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/blog/hooks/usePostMutations.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/blog/hooks/usePostMutations.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/events/components/page/EventContentTabs.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/events/components/page/EventContentTabs.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/events/pages/EventListPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/events/pages/EventListPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/volunteer/api/registrationService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/volunteer/api/registrationService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/volunteer/pages/VolunteerDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/volunteer/pages/VolunteerDashboard.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExternalProjectsManager">
+    <system id="GRADLE">
+      <state>
+        <projects_view>
+          <tree_state>
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="volunteer_hub" type="f1a62948:ProjectNode" />
+              </path>
+            </expand>
+            <select />
+          </tree_state>
+        </projects_view>
+      </state>
+    </system>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
@@ -28,22 +48,25 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "Ming191"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Ming191&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Ming191/VolunteerHub.git",
-    "accountId": "1a84e22a-4b81-4537-b3e9-b4f10a643686"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Ming191/VolunteerHub.git&quot;,
+    &quot;accountId&quot;: &quot;1a84e22a-4b81-4537-b3e9-b4f10a643686&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 6
-}]]></component>
+}</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 6
+}</component>
   <component name="ProjectId" id="377bPBsJQwOVnzr5TMi710pIgcn" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -51,20 +74,49 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Gradle.backend [:com.cs2.volunteer_hub.VolunteerHubApplicationKt.main()].executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "fix-ui-226",
+    "git-widget-placeholder": "#49 on Merging qm",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "ts.external.directory.path": "E:\\VolunteerHub\\frontend\\node_modules\\typescript\\lib",
+    "npm.generate-api.executor": "Run",
+    "ts.external.directory.path": "D:\\Web\\VolunteerHub\\frontend\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RunManager" selected="npm.generate-api">
+    <configuration name="VolunteerHubApplicationKt" type="JetRunConfigurationType" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.cs2.volunteer_hub.VolunteerHubApplicationKt" />
+      <module name="volunteer_hub.main" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="generate-api" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/frontend/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="generate-api" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="npm.generate-api" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="npm.generate-api" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

@@ -117,7 +117,7 @@ export const VolunteerDashboard = () => {
                           </svg>
                         </div>
                         <span className="font-semibold text-xs text-gray-700 group-hover:text-green-700 transition-colors">
-                          My Events
+                          My Registrations
                         </span>
                       </div>
                     </button>

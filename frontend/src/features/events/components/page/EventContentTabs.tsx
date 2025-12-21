@@ -273,10 +273,9 @@ export const EventTabsNavigation = ({ event, activeTab }: { event: EventResponse
                     <TabsTrigger value="attendees">Attendees</TabsTrigger>
                 )}
                 {/* Show gallery tab if there are any gallery images or regular event images */}
-                {((event.galleryImageUrls && event.galleryImageUrls.length > 0) ||
-                    (event.imageUrls && event.imageUrls.length > 0)) && (
+                {(event.imageUrls && event.imageUrls.length > 0) && (
                         <TabsTrigger value="gallery">Gallery</TabsTrigger>
-                    )}
+                )}
             </TabsList>
         </Tabs>
     );
