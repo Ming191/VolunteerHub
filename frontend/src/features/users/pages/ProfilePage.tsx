@@ -79,7 +79,7 @@ export const ProfilePage = () => {
                 </Avatar>
                 <div className="flex-1 text-center md:text-left">
                   <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                    <h1 className="text-3xl font-bold text-gray-900">
+                    <h1 className="text-3xl font-bold text-white">
                       {profile.name}
                     </h1>
                     {"role" in profile && (
@@ -97,12 +97,12 @@ export const ProfilePage = () => {
                   {"createdAt" in profile && (
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600 justify-center md:justify-start">
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4 text-green-600" />
+                        <Calendar className="h-4 w-4 text-gray-600" />
                         <span>Joined {formatDate(profile.createdAt)}</span>
                       </div>
                       {profile.location && (
                         <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4 text-green-600" />
+                          <MapPin className="h-4 w-4 text-gray-600" />
                           <span>{profile.location}</span>
                         </div>
                       )}
@@ -175,12 +175,7 @@ export const ProfilePage = () => {
               ) : (
                 <div className="space-y-4">
                   {posts.map((post) => (
-                    <div
-                      key={post.id}
-                      className="p-4 border-2 border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white"
-                    >
-                      <PostCard post={post} />
-                    </div>
+                    <PostCard key={post.id} post={post} />
                   ))}
                 </div>
               )}
