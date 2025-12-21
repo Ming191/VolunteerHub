@@ -107,7 +107,7 @@ export const ReportReviewDialog = ({ report, open, onOpenChange }: ReportReviewD
                             <SelectTrigger className="col-span-3" id="status">
                                 <SelectValue placeholder="Select action" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[200]">
                                 <SelectItem value={ReportResponseStatusEnum.Resolved}>Resolve (Valid Report)</SelectItem>
                                 <SelectItem value={ReportResponseStatusEnum.Dismissed}>Dismiss (Invalid Report)</SelectItem>
                                 <SelectItem value={ReportResponseStatusEnum.UnderReview}>Mark Under Review</SelectItem>
@@ -149,7 +149,11 @@ export const ReportReviewDialog = ({ report, open, onOpenChange }: ReportReviewD
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
-                    <Button onClick={handleSubmit} disabled={reviewMutation.isPending}>
+                    <Button 
+                        onClick={handleSubmit} 
+                        disabled={reviewMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                    >
                         {reviewMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Submit Review
                     </Button>
