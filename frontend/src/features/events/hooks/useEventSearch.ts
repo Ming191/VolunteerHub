@@ -7,7 +7,7 @@ export type FilterState = Omit<SearchEventsParams, "page" | "size">;
 
 export const useEventSearch = () => {
   const navigate = useNavigate();
-  const search = useSearch({ from: "/events" });
+  const search = useSearch({ strict: false });
 
   // Default values
   const page = search.page || 1;
