@@ -139,3 +139,9 @@ export const AdminReportsPage = lazy(() =>
     default: m.AdminReportsPage,
   }))
 );
+
+export const OrganizerAnalytics = lazy(() =>
+  import("@/features/organizer/pages/OrganizerAnalytics").then((m) => ({
+    default: m.OrganizerAnalytics,
+  }))
+);
