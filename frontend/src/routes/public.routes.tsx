@@ -4,7 +4,6 @@ import { LandingPage } from "@/features/home/LandingPage";
 import { Suspense, lazy } from "react";
 import { z } from "zod";
 import { SuspenseFallback } from "@/components/common/SuspenseFallback";
-import { TermsOfServicePage, PrivacyPolicyPage } from "@/features/legal/pages";
 
 const EventListPageComponent = lazy(() =>
   import("@/features/events/pages/EventListPage").then((m) => ({
@@ -43,18 +42,4 @@ export const publicEventsRoute = createRoute({
       <EventListPageComponent />
     </Suspense>
   ),
-});
-
-// Terms of Service route (public)
-export const termsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/terms-of-service",
-  component: TermsOfServicePage,
-});
-
-// Privacy Policy route (public)
-export const privacyRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/privacy-policy",
-  component: PrivacyPolicyPage,
 });

@@ -12,8 +12,6 @@ import {
 import { SkeletonTransition } from "@/components/common/SkeletonTransition";
 import AnimatedPage from "@/components/common/AnimatedPage";
 import { ApiErrorState } from "@/components/ui/api-error-state";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 import { useEventPermissions } from "../hooks/useEventPermissions";
 import {
   EventHero,
@@ -42,71 +40,6 @@ export const EventDetailsPage = () => {
   const registerMutation = useRegisterForEvent();
   const cancelMutation = useCancelRegistration();
 
-  if (isNaN(id)) {
-    return (
-      <AnimatedPage>
-        <div className="container mx-auto py-8">
-          <ApiErrorState
-            error={new Error("Invalid event ID")}
-            onRetry={() => navigate({ to: "/events" })}
-          />
-        </div>
-      </AnimatedPage>
-    );
-                            error={new Error('This event is not available')} 
-                            onRetry={() => navigate({ to: '/events' })}
-                        />
-                    </div>
-                ) : event ? (
-                    <div className="min-h-screen bg-background pb-20">
-                        {/* Optional: Breadcrumbs or Back Button Area */}
-                        <div className="container mx-auto py-4">
-                            <Button variant="ghost" className="pl-0 hover:bg-transparent hover:text-primary" onClick={handleBack}>
-                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
-                            </Button>
-                        </div>
-
-                        {/* Rejection Notice */}
-                        {event.status === 'REJECTED' && (
-                        <div className="container mx-auto px-6 mb-6">
-                            <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-
-                            {/* 👇 div này là CHÌA KHOÁ */}
-                            <div>
-                                <AlertTitle>Event Not Approved</AlertTitle>
-                                <AlertDescription>
-                                {event.rejectionReason ||
-                                    'This event has been reviewed and was not approved for publication.'}
-                                </AlertDescription>
-                            </div>
-                            </Alert>
-                        </div>
-                        )}
-
-                        <EventHero
-                            event={event}
-                            isOrganizer={isOrganizer}
-                            onRegister={handleRegister}
-                        />
-
-                        <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 px-6">
-                            <div className="lg:col-span-2 space-y-8">
-                                <EventTabsNavigation event={event} activeTab={activeTab} />
-                                <Outlet />
-                            </div>
-
-                            <div className="lg:col-span-1">
-                                <EventInfoSidebar event={event} onRegister={handleRegister} isOrganizer={isOrganizer} />
-                            </div>
-                        </div>
-                    </div>
-                ) : null}
-            </SkeletonTransition>
-        </AnimatedPage>
-    );
-  }
-
   const handleRegister = () => {
     if (!event) return;
 
@@ -119,13 +52,18 @@ export const EventDetailsPage = () => {
     }
   };
 
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate({ to: ".." });
-    } else {
-      navigate({ to: "/events" });
-    }
-  };
+  if (isNaN(id)) {
+    return (
+      <AnimatedPage>
+        <div className="container mx-auto py-8">
+          <ApiErrorState
+            error={new Error("Invalid event ID")}
+            onRetry={() => navigate({ to: "/events" })}
+          />
+        </div>
+      </AnimatedPage>
+    );
+  }
 
   return (
     <AnimatedPage>

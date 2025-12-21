@@ -253,157 +253,178 @@ export const PostCard: React.FC<PostCardProps> = ({
                 {post.author.name}
               </span>
               {post.eventTitle && (
-                            <>
-                                <span className="text-muted-foreground text-base">in</span>
-                                <span
-                                    className="font-medium text-base text-primary cursor-pointer hover:underline"
-                                    onClick={handleViewEvent}
-                                >
-                                    {post.eventTitle}
-                                </span>
-                            </>
-                        )}
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                        {formatDistanceToNowUTC(post.createdAt, { addSuffix: true })}
-                    </span>
-                </div>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {canEditOrDelete ? (
-                            <>
-                                <DropdownMenuItem onClick={handleEdit}>
-                                    <Edit2 className="mr-2 h-4 w-4" />
-                                    Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="text-red-600 focus:text-red-600"
-                                    onClick={() => setIsDeleteDialogOpen(true)}
-                                >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                </DropdownMenuItem>
-                            </>
-                        ) : (
-                            <DropdownMenuItem
-                                className="text-red-600 focus:text-red-600"
-                                onClick={() => setIsReportDialogOpen(true)}
-                            >
-                                <Flag className="mr-2 h-4 w-4" />
-                                Report
-                            </DropdownMenuItem>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </CardHeader>
-
-            <CardContent className="p-4 pt-0">
-                <p className="text-lg mb-3 whitespace-pre-wrap break-words">{currentContent}</p>
-
-                <PostImages images={post.imageUrls || []} />
-            </CardContent>
-
-            <Separator />
-
-            <div className="flex items-center justify-between px-4 py-2">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn("flex items-center gap-2 text-base", isLiked && "text-red-500 hover:text-red-600")}
-                    onClick={toggleLike}
-                >
-                    <Heart className={cn("h-5 w-5", isLiked && "fill-current")} />
-                    <span>{likesCount}</span>
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2 text-base"
-                    onClick={handleExpandComments}
-                >
-                    <MessageCircle className="h-5 w-5" />
-                    <span>{commentsCount} Comments</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="flex items-center gap-2 text-base" onClick={handleShare}>
-                    <Share2 className="h-5 w-5" />
-                    <span>Share</span>
-                </Button>
+                <>
+                  <span className="text-muted-foreground text-base">in</span>
+                  <span
+                    className="font-medium text-base text-primary cursor-pointer hover:underline"
+                    onClick={handleViewEvent}
+                  >
+                    {post.eventTitle}
+                  </span>
+                </>
+              )}
             </div>
+            <span className="text-sm text-muted-foreground">
+              {formatDistanceToNowUTC(post.createdAt, { addSuffix: true })}
+            </span>
+          </div>
 
-            <AnimatePresence>
-                {showComments && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.5, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                    >
-                        <PostComments
-                            postId={post.id}
-                            onCommentAdded={() => setCommentsCount(prev => prev + 1)}
-                            commentsDisabled={isCommentsDisabled}
-                        />
-                    </motion.div>
-                )}
-            </AnimatePresence>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {canEditOrDelete ? (
+                <>
+                  <DropdownMenuItem onClick={handleEdit}>
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem
+                  className="text-red-600 focus:text-red-600"
+                  onClick={() => setIsReportDialogOpen(true)}
+                >
+                  <Flag className="mr-2 h-4 w-4" />
+                  Report
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardHeader>
 
-            <ReportDialog
-                open={isReportDialogOpen}
-                onClose={() => setIsReportDialogOpen(false)}
-                targetId={post.id}
-                targetType="POST"
-            />
-        </motion.div>
+        <CardContent className="p-4 pt-0">
+          <p className="text-lg mb-3 whitespace-pre-wrap break-words">
+            {currentContent}
+          </p>
 
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogPopup>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Post</AlertDialogTitle>
-                    <AlertDialogDescription>Are you sure you want to delete this post? This action cannot be undone.</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogPopup>
-        </AlertDialog>
+          <PostImages images={post.imageUrls || []} />
+        </CardContent>
 
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Edit Post</DialogTitle>
-                    <DialogDescription>Make changes to your post content.</DialogDescription>
-                </DialogHeader>
-                <Textarea
-                    value={editedContent}
-                    onChange={(e) => setEditedContent(e.target.value)}
-                    placeholder="What's on your mind?"
-                    className="min-h-[150px]"
-                />
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                        Cancel
-                    </Button>
-                    <Button onClick={handleEditSave} disabled={isEditing}>
-                        {isEditing ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
-                            </>
-                        ) : (
-                            "Save changes"
-                        )}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <Separator />
+
+        <div className="flex items-center justify-between px-4 py-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "flex items-center gap-2 text-base",
+              isLiked && "text-red-500 hover:text-red-600"
+            )}
+            onClick={toggleLike}
+          >
+            <Heart className={cn("h-5 w-5", isLiked && "fill-current")} />
+            <span>{likesCount}</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2 text-base"
+            onClick={handleExpandComments}
+          >
+            <MessageCircle className="h-5 w-5" />
+            <span>{commentsCount} Comments</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2 text-base"
+            onClick={handleShare}
+          >
+            <Share2 className="h-5 w-5" />
+            <span>Share</span>
+          </Button>
+        </div>
+
+        <AnimatePresence>
+          {showComments && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <PostComments
+                postId={post.id}
+                onCommentAdded={() => setCommentsCount((prev) => prev + 1)}
+                commentsDisabled={isCommentsDisabled}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <ReportDialog
+          open={isReportDialogOpen}
+          onClose={() => setIsReportDialogOpen(false)}
+          targetId={post.id}
+          targetType="POST"
+        />
+      </motion.div>
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogPopup>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Post</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this post? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogPopup>
+      </AlertDialog>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+            <DialogDescription>
+              Make changes to your post content.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={editedContent}
+            onChange={(e) => setEditedContent(e.target.value)}
+            placeholder="What's on your mind?"
+            className="min-h-[150px]"
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEditSave} disabled={isEditing}>
+              {isEditing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Shield, ArrowUp } from "lucide-react";
+import { Shield, ArrowUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -19,31 +18,8 @@ export const PrivacyPolicyPage = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleBack = () => {
-    // Check if there's a previous page in history from our app
-    if (
-      document.referrer &&
-      document.referrer.includes(window.location.origin)
-    ) {
-      window.history.back();
-    } else {
-      // Default to signup if no referrer
-      window.location.href = "/signup";
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <Button variant="ghost" className="gap-2" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
-      </div>
-
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-12">
         <motion.div
