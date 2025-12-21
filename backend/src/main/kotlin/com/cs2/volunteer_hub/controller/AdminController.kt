@@ -139,4 +139,19 @@ class AdminController(private val adminService: AdminService) {
         val events = adminService.getActiveEventsByCreator(userId, pageable)
         return ResponseEntity.ok(events)
     }
+
+    /**
+     * Get all events in the database
+     * Returns all events regardless of status with pagination support
+     * Example: GET /api/admin/events
+     */
+    @GetMapping("/events")
+    fun getAllEvents(
+      @RequestParam(defaultValue = "0") page: Int,
+      @RequestParam(defaultValue = "20") size: Int
+    ): ResponseEntity<Page<EventResponse>> {
+      val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+      val events = adminService.getAllEvents(pageable)
+      return ResponseEntity.ok(events)
+    }
 }

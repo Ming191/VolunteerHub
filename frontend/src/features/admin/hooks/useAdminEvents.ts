@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import axiosInstance from '@/utils/axiosInstance';
 import { useDebounce } from '@/hooks/useDebounce';
 import { type EventResponse } from '@/api-client';
+import {useNavigate} from "@tanstack/react-router";
 
 interface PageEventResponse {
     content: EventResponse[];
@@ -13,6 +14,7 @@ interface PageEventResponse {
 
 export const useAdminEvents = () => {
     const [searchQuery, setSearchQuery] = useState('');
+    const navigate = useNavigate();
 
     const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -35,7 +37,7 @@ export const useAdminEvents = () => {
     } = useQuery<PageEventResponse, Error>({
         queryKey: ['adminEvents', debouncedSearchQuery, page],
         queryFn: async () => {
-            const endpoint = debouncedSearchQuery ? '/api/events/search' : '/api/events';
+            const endpoint = debouncedSearchQuery ? '/api/events/search' : '/api/admin/events';
             const response = await axiosInstance.get(endpoint, {
                 params: {
                     q: debouncedSearchQuery || undefined,
@@ -51,6 +53,10 @@ export const useAdminEvents = () => {
     const events = eventsPage?.content || [];
     const totalPages = eventsPage?.totalPages || 0;
     const totalElements = eventsPage?.totalElements || 0;
+
+    const handleNavigateToEventDetails = (eventId: number) => {
+        navigate({to: `/events/${eventId}`});
+    }
 
     const handleExportEvents = async () => {
         try {
@@ -97,6 +103,7 @@ export const useAdminEvents = () => {
         searchQuery,
         setSearchQuery,
         handleExportEvents,
+        handleNavigateToEventDetails,
         page,
         setPage,
         totalPages,
