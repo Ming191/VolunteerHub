@@ -83,7 +83,12 @@ export function EventSheetFooter({
               Login to Register
             </Button>
           ) : isOrganizer && isOwner ? (
-            <Button className="w-full" size="lg" onClick={onViewRegistrations}>
+            <Button
+              variant="outline"
+              className="w-full"
+              size="lg"
+              onClick={onViewRegistrations}
+            >
               View Registrations
             </Button>
           ) : isAdmin ? (
