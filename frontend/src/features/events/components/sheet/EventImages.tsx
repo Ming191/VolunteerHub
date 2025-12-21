@@ -47,42 +47,42 @@ const EventImageItem = memo(
     className?: string;
     onClick?: () => void;
   }) => {
-  const [status, setStatus] = useState<"loading" | "loaded" | "error">(
-    "loading"
-  );
+    const [status, setStatus] = useState<"loading" | "loaded" | "error">(
+      "loading"
+    );
 
-  return (
-    <div
-      className={`relative aspect-video rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border border-gray-200 ${
-        className || ""
-      }`}
-      onClick={onClick}
-    >
-      {status !== "loaded" && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-          <ImageIcon className="h-12 w-12 text-gray-300" />
-        </div>
-      )}
-      {status !== "error" && (
-        <img
-          src={url}
-          alt={`${title} - ${index + 1}`}
-          className={`relative w-full h-full object-cover transition-opacity duration-300 ${
-            status === "loaded" ? "opacity-100" : "opacity-0"
-          }`}
-          onLoad={() => setStatus("loaded")}
-          onError={() => setStatus("error")}
-          loading="lazy"
-        />
-      )}
-      {status === "error" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
-          <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
-          <p className="text-xs text-gray-500">Failed to load</p>
-        </div>
-      )}
-    </div>
-  );
+    return (
+      <div
+        className={`relative aspect-video rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border border-gray-200 ${
+          className || ""
+        }`}
+        onClick={onClick}
+      >
+        {status !== "loaded" && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+            <ImageIcon className="h-12 w-12 text-gray-300" />
+          </div>
+        )}
+        {status !== "error" && (
+          <img
+            src={url}
+            alt={`${title} - ${index + 1}`}
+            className={`relative w-full h-full object-cover transition-opacity duration-300 ${
+              status === "loaded" ? "opacity-100" : "opacity-0"
+            }`}
+            onLoad={() => setStatus("loaded")}
+            onError={() => setStatus("error")}
+            loading="lazy"
+          />
+        )}
+        {status === "error" && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100">
+            <ImageIcon className="h-12 w-12 text-gray-400 mb-2" />
+            <p className="text-xs text-gray-500">Failed to load</p>
+          </div>
+        )}
+      </div>
+    );
   }
 );
 
@@ -93,9 +93,6 @@ export function EventImages({
   imageUrls,
   title,
   showGallery = true,
-}: EventImagesProps) {
-  galleryImageUrls,
-  title,
 }: EventImagesProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
     null
@@ -108,50 +105,49 @@ export function EventImages({
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const {
-    data,
-    fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-        isLoading
-    } = useInfiniteQuery({
-        queryKey: ['event-gallery', eventId],
-        queryFn: ({ pageParam = 0 }) => eventService.getEventGallery(eventId, pageParam, 20),
-        initialPageParam: 0,
-        getNextPageParam: (lastPage) => lastPage.last ? undefined : lastPage.pageNumber + 1,
-        enabled: showGallery,
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfiniteQuery({
+      queryKey: ["event-gallery", eventId],
+      queryFn: ({ pageParam = 0 }) =>
+        eventService.getEventGallery(eventId, pageParam, 20),
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) =>
+        lastPage.last ? undefined : lastPage.pageNumber + 1,
+      enabled: showGallery,
     });
 
-    // Combine main event images with paginated gallery images
-    const imagesToDisplay = useMemo(() => {
-        if (!showGallery && imageUrls) {
-            // If gallery is disabled, only show main images
-            return imageUrls.map(url => ({ 
-                url, 
-                source: 'event' as const, 
-                authorName: undefined, 
-                postId: undefined as number | undefined 
-            }));
-        }
+  // Combine main event images with paginated gallery images
+  const imagesToDisplay = useMemo(() => {
+    if (!showGallery && imageUrls) {
+      // If gallery is disabled, only show main images
+      return imageUrls.map((url) => ({
+        url,
+        source: "event" as const,
+        authorName: undefined,
+        postId: undefined as number | undefined,
+      }));
+    }
 
-        const mainImages = imageUrls?.map(url => ({ 
-            url, 
-            source: 'event' as const, 
-            authorName: undefined, 
-            postId: undefined as number | undefined 
-        })) || [];
+    const mainImages =
+      imageUrls?.map((url) => ({
+        url,
+        source: "event" as const,
+        authorName: undefined,
+        postId: undefined as number | undefined,
+      })) || [];
 
-        const galleryImages = data?.pages.flatMap(page =>
-            page.content.map(img => ({
-                url: img.url,
-                source: img.source as 'event' | 'post',
-                authorName: img.authorName || undefined,
-                postId: img.postId || undefined
-            }))
-        ) || [];
+    const galleryImages =
+      data?.pages.flatMap((page) =>
+        page.content.map((img) => ({
+          url: img.url,
+          source: img.source as "event" | "post",
+          authorName: img.authorName || undefined,
+          postId: img.postId || undefined,
+        }))
+      ) || [];
 
-        return [...mainImages, ...galleryImages];
-    }, [imageUrls, data, showGallery]);
+    return [...mainImages, ...galleryImages];
+  }, [imageUrls, data, showGallery]);
 
   const onSelect = useCallback((api: EmblaCarouselType) => {
     setCurrentIndex(api.selectedScrollSnap());
