@@ -75,5 +75,6 @@ data class PublicUserResponse(
     val id: Long,
     val name: String,
     val profilePictureUrl: String?,
-    val bio: String?
+    val bio: String?,
+    val isPrivate: Boolean = false
 )

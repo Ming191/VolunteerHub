@@ -16,7 +16,6 @@ export const useOrganizerDashboard = () => {
             console.log('Dashboard Data:', response.data);
             return response.data;
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
     const handleNavigateToEvent = useCallback((eventId: number) => {
