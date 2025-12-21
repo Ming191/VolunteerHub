@@ -15,7 +15,6 @@ export const useVolunteerDashboard = () => {
             const response = await dashboardApi.getVolunteerDashboard();
             return response.data;
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes
         gcTime: 10 * 60 * 1000, // 10 minutes (previously cacheTime)
         refetchOnWindowFocus: false,
     });

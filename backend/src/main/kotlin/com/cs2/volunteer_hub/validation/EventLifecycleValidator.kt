@@ -30,6 +30,9 @@ class EventLifecycleValidator(
                 if (from == EventStatus.COMPLETED) {
                     throw BadRequestException("Cannot publish a completed event.")
                 }
+                if (from == EventStatus.REJECTED) {
+                    throw BadRequestException("Cannot publish a rejected event. Create a new event instead.")
+                }
                 if (event.isPast()) {
                     throw BadRequestException("Cannot publish an event that has already ended.")
                 }
@@ -39,6 +42,14 @@ class EventLifecycleValidator(
                     throw BadRequestException("Cannot cancel a completed event.")
                 }
             }
+            EventStatus.REJECTED -> {
+                if (from == EventStatus.PUBLISHED) {
+                    throw BadRequestException("Cannot reject a published event. Cancel it instead.")
+                }
+                if (from == EventStatus.COMPLETED) {
+                    throw BadRequestException("Cannot reject a completed event.")
+                }
+            }
             EventStatus.COMPLETED -> {
                 if (!event.isPast()) {
                     throw BadRequestException("Cannot mark event as completed. Event has not ended yet.")
@@ -46,10 +57,16 @@ class EventLifecycleValidator(
                 if (from == EventStatus.CANCELLED) {
                     throw BadRequestException("Cannot mark cancelled event as completed.")
                 }
+                if (from == EventStatus.REJECTED) {
+                    throw BadRequestException("Cannot mark rejected event as completed.")
+                }
             }
             EventStatus.PENDING -> {
                 if (from == EventStatus.PUBLISHED || from == EventStatus.COMPLETED) {
                     throw BadRequestException("Cannot revert $from event back to pending status.")
+                }
+                if (from == EventStatus.REJECTED) {
+                    throw BadRequestException("Cannot revert rejected event back to pending. Create a new event instead.")
                 }
             }
             EventStatus.DRAFT -> {
@@ -68,6 +85,9 @@ class EventLifecycleValidator(
             }
             EventStatus.CANCELLED -> {
                 throw BadRequestException("Cannot update cancelled events. Create a new event instead.")
+            }
+            EventStatus.REJECTED -> {
+                throw BadRequestException("Cannot update rejected events. Create a new event instead.")
             }
             else -> {
                 // Updates allowed for DRAFT, PENDING, and PUBLISHED events

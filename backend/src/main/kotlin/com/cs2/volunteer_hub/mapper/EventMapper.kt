@@ -51,6 +51,7 @@ class EventMapper(
                         isInProgress = event.isInProgress(),
                         tags = event.tags.toSet(),
                         status = event.status,
+                        rejectionReason = event.rejectionReason,
                         imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD }
                 )
         }
@@ -102,6 +103,7 @@ class EventMapper(
                                 isInProgress = event.isInProgress(),
                                 tags = event.tags.toSet(),
                                 status = event.status,
+                                rejectionReason = event.rejectionReason,
                                 imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD }
                         )
                 }

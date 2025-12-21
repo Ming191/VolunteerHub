@@ -13,13 +13,16 @@ export const useAdminPendingEvents = () => {
     const [selectedEvent, setSelectedEvent] = useState<EventResponse | null>(null);
     const [action, setAction] = useState<'approve' | 'reject' | null>(null);
     const [processingId, setProcessingId] = useState<number | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
 
     const fetchPendingEvents = async () => {
         try {
             setLoading(true);
             setError(null);
             const response = await adminApi.getPendingEvents();
-            setEvents(response.data);
+            // API returns a Page object with content array
+            const eventsData = response.data as any;
+            setEvents(eventsData.content || []);
         } catch (error) {
             console.error('Failed to fetch pending events:', error);
             setError(error instanceof Error ? error : new Error('Failed to fetch pending events'));
@@ -56,7 +59,10 @@ export const useAdminPendingEvents = () => {
 
         try {
             setProcessingId(selectedEvent.id);
-            await adminApi.deleteEventAsAdmin({ id: selectedEvent.id });
+            // Use reject endpoint with optional reason
+            await axiosInstance.patch(`/api/admin/events/${selectedEvent.id}/reject`, null, {
+                params: { reason: rejectionReason || undefined }
+            });
             toast.success(`Event "${selectedEvent.title}" rejected`);
             setEvents(events.filter(e => e.id !== selectedEvent.id));
         } catch (error) {
@@ -66,6 +72,7 @@ export const useAdminPendingEvents = () => {
             setProcessingId(null);
             setSelectedEvent(null);
             setAction(null);
+            setRejectionReason('');
         }
     };
 
@@ -75,7 +82,9 @@ export const useAdminPendingEvents = () => {
     };
 
     const closeConfirmDialog = () => {
+        setSelectedEvent(null);
         setAction(null);
+        setRejectionReason('');
     };
 
     return {
@@ -84,8 +93,8 @@ export const useAdminPendingEvents = () => {
         error,
         selectedEvent,
         action,
-        processingId,
-        fetchPendingEvents,
+        processingId,        rejectionReason,
+        setRejectionReason,        fetchPendingEvents,
         handleApprove,
         handleReject,
         openConfirmDialog,

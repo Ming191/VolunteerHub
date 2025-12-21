@@ -4,6 +4,7 @@ enum class EventStatus {
     DRAFT,        // Event created but not yet published
     PENDING,      // Awaiting admin approval
     PUBLISHED,    // Approved and visible to users
+    REJECTED,     // Event rejected by admin
     CANCELLED,    // Event cancelled by organizer or admin
     COMPLETED     // Event has finished
 }

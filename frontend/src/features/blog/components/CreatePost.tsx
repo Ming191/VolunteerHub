@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Textarea } from '@/components/ui/textarea.tsx';
-import { Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Image } from 'lucide-react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useImageUpload } from '@/features/blog/hooks/useImageUpload';
@@ -40,15 +41,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
 
 
   return (
-    <Card className="w-full mb-6 relative">
-      {disabled && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 rounded-lg flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm font-medium text-muted-foreground">Creating post...</p>
-          </div>
-        </div>
-      )}
+    <Card className="w-full mb-6">
       <CardContent className="p-4">
         <div className="flex gap-4">
           <Avatar className="h-10 w-10 border border-primary/20">
@@ -60,7 +53,7 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
           <div className="w-full">
             <Textarea
               placeholder="Share something with the community..."
-              className="min-h-[100px] resize-none border-none focus-visible:ring-0 px-0"
+              className="min-h-[100px] resize-none border-none focus-visible:ring-0 px-0 shadow-none"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               disabled={disabled}
@@ -70,7 +63,9 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-4">
+        <Separator className="my-4" />
+
+        <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <input
               type="file"
@@ -85,14 +80,11 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
               variant="ghost"
               size="sm"
               className="text-muted-foreground hover:text-primary"
-              onClick={(e) => {
-                e.preventDefault();
-                openFileDialog();
-              }}
+              onClick={openFileDialog}
               disabled={disabled || !canAddMore}
               type="button"
             >
-              <ImageIcon className="h-4 w-4 mr-2" />
+              <Image className="h-4 w-4 mr-2" />
               Photo {selectedImages.length > 0 && `(${selectedImages.length}/${maxImages})`}
             </Button>
           </div>
@@ -102,7 +94,6 @@ export const CreatePost: React.FC<CreatePostProps> = ({ onPost, disabled }) => {
             className="px-6"
             type="button"
           >
-            {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Post
           </Button>
         </div>

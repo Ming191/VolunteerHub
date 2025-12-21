@@ -20,8 +20,11 @@ export const useNotifications = () => {
     const { data: allNotifications, isLoading: isLoadingAll } = useQuery({
         queryKey: ['allNotifications', daysToLoad],
         queryFn: async () => {
-            const response = await notificationsApi.getRecentNotifications({ days: daysToLoad });
-            return response.data;
+            const response = await notificationsApi.getRecentNotifications({ 
+                pageable: { page: 0, size: 50, sort: ['createdAt,desc'] },
+                days: daysToLoad 
+            });
+            return response.data.content || [];
         },
         enabled: activeTab === 'all',
     });
@@ -29,8 +32,10 @@ export const useNotifications = () => {
     const { data: unreadNotifications, isLoading: isLoadingUnread } = useQuery({
         queryKey: ['unreadNotifications'],
         queryFn: async () => {
-            const response = await notificationsApi.getUnreadNotifications();
-            return response.data;
+            const response = await notificationsApi.getUnreadNotifications({
+                pageable: { page: 0, size: 100 }
+            });
+            return response.data.content || [];
         },
         enabled: activeTab === 'unread',
     });
