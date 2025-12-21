@@ -57,6 +57,7 @@ import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
 import { useGetRegistrationStatus } from "@/features/volunteer/hooks/useRegistration.ts";
+import { useGetEvent } from "@/features/events/hooks/useEvents";
 
 interface PostCardProps {
   post: PostResponse;
@@ -75,10 +76,16 @@ export const PostCard: React.FC<PostCardProps> = ({
 }) => {
   const { user } = useAuth();
   const isVolunteer = user?.role === "VOLUNTEER";
+  const isOrganizer = user?.role === "EVENT_ORGANIZER";
 
   const isAuthor = user?.userId === post.author.id;
 
   const eventId = post.eventId;
+  
+  // Fetch event details to check if user is the organizer of this event
+  const { data: eventData } = useGetEvent(eventId);
+  const isEventOrganizer = isOrganizer && eventData?.creatorId === user?.userId;
+  
   const shouldCheckPermissions =
     (commentsDisabled === undefined || isAuthor) && isVolunteer && !!eventId;
   const { data: registrationData } = useGetRegistrationStatus(
@@ -89,6 +96,8 @@ export const PostCard: React.FC<PostCardProps> = ({
   const isCommentsDisabled =
     commentsDisabled !== undefined
       ? commentsDisabled
+      : isEventOrganizer
+      ? false // Event organizer can always comment on their event
       : isVolunteer && registrationData?.status !== "APPROVED";
 
   const [showComments, setShowComments] = useState(false);
