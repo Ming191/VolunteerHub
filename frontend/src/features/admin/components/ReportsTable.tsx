@@ -11,20 +11,7 @@ interface ReportsTableProps {
     onReview: (report: ReportResponse) => void;
 }
 
-const getStatusBadgeVariant = (status: ReportResponseStatusEnum): 'default' | 'secondary' | 'destructive' | 'outline' => {
-    switch (status) {
-        case 'PENDING':
-            return 'secondary';
-        case 'UNDER_REVIEW':
-            return 'default';
-        case 'RESOLVED':
-            return 'outline';
-        case 'DISMISSED':
-            return 'outline';
-        default:
-            return 'outline';
-    }
-};
+
 
 const getStatusBadgeStyle = (status: ReportResponseStatusEnum) => {
     switch (status) {
