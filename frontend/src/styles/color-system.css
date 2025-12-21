@@ -118,7 +118,7 @@
   --color-bg-secondary: var(--color-gray-50);
   --color-bg-tertiary: var(--color-gray-100);
   --color-bg-elevated: #ffffff;
-  --color-bg-overlay: rgba(17, 24, 39, 0.5);
+  --color-bg-overlay: rgba(0, 0, 0, 0.3);
 
   /* ========================================
      SEMANTIC TEXT COLORS

@@ -41,7 +41,7 @@ export const EventListScreen = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Filter Panel */}
         <div className="mb-8">
-          <EventFilterPanel onFilterChange={handleFilterChange} initialFilters={filters} />
+            <EventFilterPanel onFilterChange={handleFilterChange} initialFilters={filters} />
         </div>
 
         {/* Results Count */}
