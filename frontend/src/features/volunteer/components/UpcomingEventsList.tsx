@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 
 interface UpcomingEventsListProps {
   events: DashboardEventItem[];
-  onEventClick: (event: DashboardEventItem) => void;
+  onEventClick: (id: number) => void;
 }
 
 export const UpcomingEventsList = ({
@@ -49,7 +49,7 @@ export const UpcomingEventsList = ({
               transition={{ delay: index * 0.1 }}
             >
               <button
-                onClick={() => onEventClick(event)}
+                onClick={() => onEventClick(event.id)}
                 className="group w-full p-4 rounded-xl border-2 border-gray-200 hover:border-green-500 bg-white hover:shadow-lg hover:shadow-green-500/20 cursor-pointer transition-all duration-300 text-left"
               >
                 <div className="flex justify-between items-start gap-4">

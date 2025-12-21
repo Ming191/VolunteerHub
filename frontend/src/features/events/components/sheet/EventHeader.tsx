@@ -27,13 +27,14 @@ export function EventHeader({ event, onEdit, onDelete }: EventHeaderProps) {
                         <Button
                             size="sm"
                             variant="outline"
+                            className="border-2 border-green-600 bg-green-600 hover:bg-green-700 hover:border-green-700 text-white"
                             onClick={onEdit}
                         >
                             Edit
                         </Button>
                         <Button
                             size="sm"
-                            variant="destructive"
+                            variant="outline"
                             onClick={onDelete}
                         >
                             Delete

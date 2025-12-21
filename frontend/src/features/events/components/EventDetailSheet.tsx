@@ -132,7 +132,8 @@ export const EventDetailSheet = ({
         ) : (
           // View registrations
           <div className="h-full flex flex-col">
-            <SheetHeader className="pb-4">
+            {/* Header */}
+            <SheetHeader className="pb-4 px-6">
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -142,6 +143,7 @@ export const EventDetailSheet = ({
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
+
                 <div>
                   <SheetTitle className="text-2xl">Registrations</SheetTitle>
                   <SheetDescription>
@@ -151,10 +153,12 @@ export const EventDetailSheet = ({
               </div>
             </SheetHeader>
 
-            <div className="flex-1 overflow-y-auto">
+            {/* Content – dùng chung lề với header */}
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
               <EventRegistrationsModal eventId={event.id} />
             </div>
           </div>
+
         )}
       </SheetContent>
 

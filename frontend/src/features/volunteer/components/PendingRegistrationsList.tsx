@@ -17,7 +17,7 @@ interface PendingRegistration {
 
 interface PendingRegistrationsListProps {
   registrations: PendingRegistration[];
-  onEventClick: () => void;
+  onEventClick: (id: number) => void;
 }
 
 export const PendingRegistrationsList = ({
@@ -51,7 +51,7 @@ export const PendingRegistrationsList = ({
               transition={{ delay: index * 0.1 }}
             >
               <button
-                onClick={onEventClick}
+                onClick={() => onEventClick(registration.eventId)}
                 className="group w-full p-4 rounded-xl border-2 border-gray-200 hover:border-orange-500 bg-white hover:shadow-lg hover:shadow-orange-500/20 cursor-pointer transition-all duration-300 text-left"
               >
                 <div className="flex items-start gap-3">

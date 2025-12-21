@@ -6,17 +6,19 @@
   <component name="ChangeListManager">
     <list default="true" id="abe1e009-a909-425f-bd39-fa4207a5dcbc" name="Changes" comment="feat: Enhance blog post creation with loading state and image previews">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/controller/AdminController.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/controller/AdminController.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/service/AdminService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/com/cs2/volunteer_hub/service/AdminService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/components/layout/DashboardLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/layout/DashboardLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/admin/hooks/useAdminEvents.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/admin/hooks/useAdminEvents.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/admin/pages/AdminEvents.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/admin/pages/AdminEvents.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/blog/components/PostCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/blog/components/PostCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/events/components/page/EventContentTabs.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/events/components/page/EventContentTabs.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/events/components/EventDetailSheet.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/events/components/EventDetailSheet.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/events/components/EventRegistrationsModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/events/components/EventRegistrationsModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/events/components/sheet/EventHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/events/components/sheet/EventHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/events/components/sheet/EventParticipation.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/events/components/sheet/EventParticipation.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/features/events/pages/EventListPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/events/pages/EventListPage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/volunteer/api/registrationService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/volunteer/api/registrationService.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/features/volunteer/pages/VolunteerDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/volunteer/pages/VolunteerDashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/events/pages/MyEventsPage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/events/pages/MyEventsPage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/organizer/components/EventsInReviewList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/organizer/components/EventsInReviewList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/organizer/components/PendingRegistrationsList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/organizer/components/PendingRegistrationsList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/organizer/hooks/useOrganizerDashboard.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/organizer/hooks/useOrganizerDashboard.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/organizer/pages/OrganizerDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/organizer/pages/OrganizerDashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/volunteer/components/PendingRegistrationsList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/volunteer/components/PendingRegistrationsList.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/features/volunteer/components/UpcomingEventsList.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/features/volunteer/components/UpcomingEventsList.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -79,7 +81,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "#49 on Merging qm",
+    "git-widget-placeholder": "#49 on qm",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -111,11 +113,6 @@
     <list>
       <item itemvalue="npm.generate-api" />
     </list>
-    <recent_temporary>
-      <list>
-        <item itemvalue="npm.generate-api" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
