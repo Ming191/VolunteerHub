@@ -76,7 +76,7 @@ export const NotificationsPage = () => {
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as "all" | "unread")}
           >
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsList className="grid w-full grid-cols-2 p-1">
               <TabsTrigger value="all">All Notifications</TabsTrigger>
               <TabsTrigger value="unread">
                 Unread {unreadCount > 0 && `(${unreadCount})`}

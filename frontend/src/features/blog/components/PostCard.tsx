@@ -98,7 +98,9 @@ export const PostCard: React.FC<PostCardProps> = ({
       ? commentsDisabled
       : isEventOrganizer
       ? false // Event organizer can always comment on their event
-      : isVolunteer && registrationData?.status !== "APPROVED";
+      : isVolunteer
+      ? registrationData?.status !== "APPROVED" // Volunteers must be approved
+      : true; // Everyone else (admins, other organizers) cannot comment
 
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.totalComments);

@@ -59,8 +59,9 @@ function NotificationList() {
     queryFn: async () => {
       const response = await notificationsApi.getRecentNotifications({
         days: 7,
+        pageable: { page: 0, size: 5 },
       });
-      return response.data.slice(0, 5); // Only show first 5
+      return (response.data.content || []).slice(0, 5); // Only show first 5
     },
     refetchInterval: 30000,
   });
@@ -168,11 +169,10 @@ function NotificationList() {
                 displayNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0 transition-colors ${
-                      !notification.isRead
-                        ? "bg-blue-50 dark:bg-blue-950/30"
-                        : "bg-white dark:bg-gray-900"
-                    }`}
+                    className={`px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0 transition-colors ${!notification.isRead
+                      ? "bg-blue-50 dark:bg-blue-950/30"
+                      : "bg-white dark:bg-gray-900"
+                      }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex items-start gap-3">
