@@ -63,7 +63,7 @@ export const OrganizerDashboard = () => {
         ) : (
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Welcome Section with Quick Actions */}
-            <div className="rounded-xl bg-gradient-to-br from-white via-orange-50/20 to-white border border-orange-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="rounded-xl bg-gradient-to-br from-white via-orange-50/20 to-white border border-orange-100 shadow-sm">
               <div className="p-4 sm:p-5">
                 {/* Compact Greeting */}
                 <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-700 via-gray-900 to-orange-700 bg-clip-text text-transparent mb-4">

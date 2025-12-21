@@ -81,11 +81,11 @@ export const PostCard: React.FC<PostCardProps> = ({
   const isAuthor = user?.userId === post.author.id;
 
   const eventId = post.eventId;
-  
+
   // Fetch event details to check if user is the organizer of this event
   const { data: eventData } = useGetEvent(eventId);
   const isEventOrganizer = isOrganizer && eventData?.creatorId === user?.userId;
-  
+
   const shouldCheckPermissions =
     (commentsDisabled === undefined || isAuthor) && isVolunteer && !!eventId;
   const { data: registrationData } = useGetRegistrationStatus(
@@ -405,7 +405,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       </AlertDialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Post</DialogTitle>
             <DialogDescription>

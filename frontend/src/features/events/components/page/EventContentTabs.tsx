@@ -184,7 +184,7 @@ export const EventAbout = ({ event }: { event: EventResponse }) => {
   return (
     <div className="space-y-4">
       {/* Description Card */}
-      <Card className="border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow">
+      <Card className="border-2 border-gray-200 shadow-md">
         <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100 pb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-green-100">
@@ -203,7 +203,7 @@ export const EventAbout = ({ event }: { event: EventResponse }) => {
       </Card>
 
       {/* Location Card */}
-      <Card className="border-2 border-gray-200 shadow-md hover:shadow-lg transition-shadow">
+      <Card className="border-2 border-gray-200 shadow-md">
         <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100 pb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-green-100">

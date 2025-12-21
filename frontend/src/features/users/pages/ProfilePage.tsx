@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, MapPin, Edit, MessageCircle, Key } from "lucide-react";
+import { Calendar, MapPin, Edit, MessageCircle, Key, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -159,7 +159,15 @@ export const ProfilePage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              {posts.length === 0 ? (
+              {!isOwnProfile && "isPrivate" in profile && profile.isPrivate ? (
+                <div className="text-center py-12">
+                  <Lock className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="font-semibold text-lg mb-2">Private Profile</p>
+                  <p className="text-muted-foreground">
+                    This user's posts are private
+                  </p>
+                </div>
+              ) : posts.length === 0 ? (
                 <div className="text-center py-12">
                   <MessageCircle className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
                   <p className="text-muted-foreground">No posts yet</p>

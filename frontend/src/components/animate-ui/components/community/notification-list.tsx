@@ -64,6 +64,7 @@ function NotificationList() {
       return (response.data.content || []).slice(0, 5); // Only show first 5
     },
     refetchInterval: 30000,
+    initialData: [],
   });
 
   // Mark notification as read mutation
