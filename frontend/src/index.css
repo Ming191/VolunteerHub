@@ -47,19 +47,24 @@
 :root {
   --radius: 0.75rem;
   /* Light theme - Volunteer friendly colors */
-  --background: 249 250 251; /* Soft gray background */
-  --foreground: 17 24 39; /* Dark gray text */
+  --background: 249 250 251;
+  /* Soft gray background */
+  --foreground: 17 24 39;
+  /* Dark gray text */
   --card: 255 255 255;
   --card-foreground: 17 24 39;
   --popover: 255 255 255;
   --popover-foreground: 17 24 39;
-  --primary: 34 197 94; /* Green - volunteer spirit */
+  --primary: 34 197 94;
+  /* Green - volunteer spirit */
   --primary-foreground: 255 255 255;
-  --secondary: 251 146 60; /* Orange - energy */
+  --secondary: 251 146 60;
+  /* Orange - energy */
   --secondary-foreground: 255 255 255;
   --muted: 243 244 246;
   --muted-foreground: 107 114 128;
-  --accent: 167 139 250; /* Purple accent */
+  --accent: 167 139 250;
+  /* Purple accent */
   --accent-foreground: 255 255 255;
   --destructive: 239 68 68;
   --border: 229 231 235;
@@ -164,9 +169,7 @@ select {
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
+
   body {
     @apply bg-background text-foreground;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -200,8 +203,10 @@ select {
 
   /* Hide scrollbar for IE, Edge and Firefox */
   html {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 }
 

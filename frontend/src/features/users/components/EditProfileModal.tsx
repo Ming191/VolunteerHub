@@ -234,7 +234,7 @@ export const EditProfileModal = ({
                               value={skill}
                               variant="outline"
                               size="sm"
-                              className="text-xs"
+                              className="text-sm data-[state=on]:bg-green-600 data-[state=on]:text-white data-[state=on]:border-green-600 hover:bg-green-50 transition-colors"
                             >
                               {formatLabel(skill)}
                             </ToggleGroupItem>
@@ -270,7 +270,7 @@ export const EditProfileModal = ({
                               value={interest}
                               variant="outline"
                               size="sm"
-                              className="text-xs"
+                              className="text-sm data-[state=on]:bg-green-600 data-[state=on]:text-white data-[state=on]:border-green-600 hover:bg-green-50 transition-colors"
                             >
                               {formatLabel(interest)}
                             </ToggleGroupItem>
@@ -295,131 +295,6 @@ export const EditProfileModal = ({
                     <FormControl>
                       <Input {...field} placeholder="+1234567890" />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="City, Country" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="dateOfBirth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        max={new Date().toISOString().split("T")[0]}
-                        min="1900-01-01"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Tell us about yourself..."
-                        rows={4}
-                        className="resize-none"
-                      />
-                    </FormControl>
-                    <FormDescription>Maximum 500 characters</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="skills"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Skills</FormLabel>
-                    <FormControl>
-                      <div className="space-y-3">
-                        <ToggleGroup
-                          type="multiple"
-                          value={field.value || []}
-                          onValueChange={field.onChange}
-                          className="flex-wrap justify-start gap-2"
-                        >
-                          {SKILLS.map((skill) => (
-                            <ToggleGroupItem
-                              key={skill}
-                              value={skill}
-                              variant="outline"
-                              size="sm"
-                              className="text-sm data-[state=on]:bg-green-600 data-[state=on]:text-white data-[state=on]:border-green-600 hover:bg-green-50 transition-colors"
-                            >
-                              {formatLabel(skill)}
-                            </ToggleGroupItem>
-                          ))}
-                        </ToggleGroup>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Select skills that apply to you
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="interests"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Interests</FormLabel>
-                    <FormControl>
-                      <div className="space-y-3">
-                        <ToggleGroup
-                          type="multiple"
-                          value={field.value || []}
-                          onValueChange={field.onChange}
-                          className="flex-wrap justify-start gap-2"
-                        >
-                          {INTERESTS.map((interest) => (
-                            <ToggleGroupItem
-                              key={interest}
-                              value={interest}
-                              variant="outline"
-                              size="sm"
-                              className="text-sm data-[state=on]:bg-green-600 data-[state=on]:text-white data-[state=on]:border-green-600 hover:bg-green-50 transition-colors"
-                            >
-                              {formatLabel(interest)}
-                            </ToggleGroupItem>
-                          ))}
-                        </ToggleGroup>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Select causes you care about
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

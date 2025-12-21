@@ -199,7 +199,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   };
 
   return (
-    <Card className="w-full mb-4 relative overflow-visible">
+    <Card className="w-full mb-4 relative overflow-hidden">
       {/* Loading Overlay for uploading posts */}
       <AnimatePresence mode="wait">
         {isUploading && (
