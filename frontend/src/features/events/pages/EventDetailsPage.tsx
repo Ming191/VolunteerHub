@@ -104,7 +104,6 @@ export const EventDetailsPage = () => {
                 ) : null}
             </SkeletonTransition>
         </AnimatedPage>
->>>>>>> origin
     );
   }
 
