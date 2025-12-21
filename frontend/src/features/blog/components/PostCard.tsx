@@ -37,10 +37,10 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogPopup,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogPopup,
   AlertDialogTitle,
 } from "@/components/animate-ui/components/base/alert-dialog";
 import {
@@ -181,6 +181,12 @@ export const PostCard: React.FC<PostCardProps> = ({
     navigate({ to: `/profile/${post.author.id}` });
   };
 
+  const handleViewEvent = () => {
+    if (post.eventId) {
+      navigate({ to: `/events/${post.eventId}` });
+    }
+  };
+
   return (
     <Card className="w-full mb-4 relative overflow-visible">
       {/* Loading Overlay for uploading posts */}
@@ -236,85 +242,17 @@ export const PostCard: React.FC<PostCardProps> = ({
               src={post.author.profilePictureUrl}
               alt={post.author.name}
             />
-            setIsEditDialogOpen(false);
-            onPostUpdated?.(post.id, editedContent);
-        } catch (error) {
-            console.error("Failed to update post:", error);
-            toast.error("Failed to update post");
-        } finally {
-            setIsEditing(false);
-        }
-    };
-
-    const handleShare = async () => {
-        const postUrl = `${window.location.origin}/events/${post.eventId}/posts/${post.id}`;
-
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: `Post by ${post.author.name}`,
-                    text: post.content,
-                    url: postUrl,
-                });
-                toast.success("Shared successfully");
-            } catch (error) {
-                if ((error as Error).name !== 'AbortError') {
-                    // Fallback to clipboard
-                    await navigator.clipboard.writeText(postUrl);
-                    toast.success("Link copied to clipboard");
-                }
-            }
-        } else {
-            // Fallback to clipboard
-            await navigator.clipboard.writeText(postUrl);
-            toast.success("Link copied to clipboard");
-        }
-    };
-    const handleViewAuthorProfile = (e?: React.MouseEvent) => {
-        e?.stopPropagation(); // Prevent card click if we add one later
-        navigate({ to: `/profile/${post.author.id}` });
-    };
-
-    const handleViewEvent = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (post.eventId) {
-            navigate({ to: `/events/${post.eventId}` });
-        }
-    };
-
-
-    return (
-        <Card className="w-full mb-4 relative">
-            {isUploading && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-xl">
-                    <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="h-8 w-8 animate-spin text-white" />
-                        <p className="text-sm font-medium text-white">Creating post...</p>
-                        {((post.imageUrls && post.imageUrls.length > 0)) && (
-                            <p className="text-xs text-zinc-300 text-center px-4">
-                                Processing images...
-                            </p>
-                        )}
-                    </div>
-                </div>
-            )}
-            <CardHeader className="flex flex-row items-center gap-4 p-4">
-                <Avatar
-                    className="cursor-pointer hover:opacity-80 transition-opacity h-12 w-12"
-                    onClick={handleViewAuthorProfile}
-                >
-                    <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
-                    <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col flex-1">
-                    <div className="flex items-center gap-2">
-                        <span
-                            className="font-semibold text-lg cursor-pointer hover:underline"
-                            onClick={handleViewAuthorProfile}
-                        >
-                            {post.author.name}
-                        </span>
-                        {post.eventTitle && (
+            <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col flex-1">
+            <div className="flex items-center gap-2">
+              <span
+                className="font-semibold text-sm cursor-pointer hover:underline"
+                onClick={handleViewAuthorProfile}
+              >
+                {post.author.name}
+              </span>
+              {post.eventTitle && (
                             <>
                                 <span className="text-muted-foreground text-base">in</span>
                                 <span
@@ -421,202 +359,51 @@ export const PostCard: React.FC<PostCardProps> = ({
                 onClose={() => setIsReportDialogOpen(false)}
                 targetId={post.id}
                 targetType="POST"
->>>>>>> origin
             />
-            <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm">{post.author.name}</span>
-              {post.eventTitle && (
-                <>
-                  <span className="text-muted-foreground text-xs">in</span>
-                  <span className="font-medium text-xs text-primary">
-                    {post.eventTitle}
-                  </span>
-                </>
-              )}
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {formatDistanceToNowUTC(post.createdAt, { addSuffix: true })}
-            </span>
-          </div>
+        </motion.div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative z-10">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="z-[70] bg-white">
-              {post.eventId && (
-                <DropdownMenuItem
-                  onClick={() => navigate({ to: `/events/${post.eventId}` })}
-                >
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Go to Event
-                </DropdownMenuItem>
-              )}
-              {canEditOrDelete ? (
-                <>
-                  <DropdownMenuItem onClick={handleEdit}>
-                    <Edit2 className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600"
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem
-                  className="text-red-600 focus:text-red-600"
-                  onClick={() => setIsReportDialogOpen(true)}
-                >
-                  <Flag className="mr-2 h-4 w-4" />
-                  Report
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </CardHeader>
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogPopup>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Post</AlertDialogTitle>
+                    <AlertDialogDescription>Are you sure you want to delete this post? This action cannot be undone.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogPopup>
+        </AlertDialog>
 
-        <CardContent className="p-4 pt-0">
-          <p className="text-sm mb-3 whitespace-pre-wrap break-words">
-            {currentContent}
-          </p>
-
-          <PostImages images={post.imageUrls || []} />
-        </CardContent>
-
-        <Separator />
-
-        <div className="flex items-center justify-between px-4 py-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "flex items-center gap-2",
-              isLiked && "text-red-500 hover:text-red-600"
-            )}
-            onClick={toggleLike}
-          >
-            <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
-            <span>{likesCount}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={handleExpandComments}
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>{commentsCount} Comments</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={handleShare}
-          >
-            <Share2 className="h-4 w-4" />
-            <span>Share</span>
-          </Button>
-        </div>
-
-        <AnimatePresence>
-          {showComments && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="overflow-hidden"
-            >
-              <PostComments
-                postId={post.id}
-                onCommentAdded={() => setCommentsCount((prev) => prev + 1)}
-                commentsDisabled={isCommentsDisabled}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      <ReportDialog
-        open={isReportDialogOpen}
-        onClose={() => setIsReportDialogOpen(false)}
-        targetId={post.id}
-        targetType="POST"
-      />
-
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-      >
-        <AlertDialogPopup>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Post?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              post.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleDelete();
-              }}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogPopup>
-      </AlertDialog>
-
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Edit Post</DialogTitle>
-            <DialogDescription>
-              Make changes to your post content. Click save when you're done.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Textarea
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              placeholder="What's on your mind?"
-              className="min-h-[150px] resize-none"
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-              disabled={isEditing}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleEditSave}
-              disabled={isEditing || !editedContent.trim()}
-            >
-              {isEditing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit Post</DialogTitle>
+                    <DialogDescription>Make changes to your post content.</DialogDescription>
+                </DialogHeader>
+                <Textarea
+                    value={editedContent}
+                    onChange={(e) => setEditedContent(e.target.value)}
+                    placeholder="What's on your mind?"
+                    className="min-h-[150px]"
+                />
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleEditSave} disabled={isEditing}>
+                        {isEditing ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            "Save changes"
+                        )}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </Card>
   );
 };
