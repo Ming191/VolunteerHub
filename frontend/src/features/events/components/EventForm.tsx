@@ -155,10 +155,10 @@ export const EventForm = (props: EventFormProps) => {
         />
 
         <div className="space-y-2">
-          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          <label className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             Map Location
           </label>
-          <div className="relative border rounded-md overflow-hidden">
+          <div className="relative border rounded-md">
             <EventMap
               latitude={latitude}
               longitude={longitude}

@@ -81,10 +81,14 @@ export const useCancelRegistration = () => {
 export const useGetMyRegistrationEvents = () => {
   return useQuery({
     queryKey: [REGISTRATION_QUERY_KEY],
-    queryFn: () => registrationService.getMyRegistrationEvents(),
+    queryFn: async () => {
+      const result = await registrationService.getMyRegistrationEvents();
+      return result ?? [];
+    },
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     staleTime: Infinity, // dữ liệu luôn được coi là fresh
     placeholderData: (prev) => prev,
+    initialData: [],
   });
 };

@@ -206,35 +206,37 @@ export const FileUpload = ({
       {/* File Detail Modal */}
       {selectedFileIndex !== null && files[selectedFileIndex] && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4"
           onClick={() => setSelectedFileIndex(null)}
         >
           <div
-            className="relative bg-background rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto"
+            className="relative bg-background rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
               onClick={() => setSelectedFileIndex(null)}
-              className="absolute top-4 right-4 z-10 bg-background/80 hover:bg-background rounded-full p-2 transition-colors"
+              className="absolute top-4 right-4 z-10 bg-background/90 hover:bg-background rounded-full p-2 transition-colors shadow-md"
+              type="button"
             >
               <X className="h-5 w-5" />
             </button>
 
-            {/* File Preview */}
-            <div className="p-6">
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto flex-1 p-6">
+              {/* File Preview */}
               {files[selectedFileIndex].type.startsWith("image/") ? (
-                <div className="flex justify-center items-center mb-6 bg-muted rounded-lg p-4">
+                <div className="flex justify-center items-center mb-6 bg-muted rounded-lg p-4 min-h-[200px]">
                   {previewUrl && (
                     <img
                       src={previewUrl}
                       alt={files[selectedFileIndex].name}
-                      className="max-w-full max-h-[60vh] object-contain rounded"
+                      className="max-w-full max-h-[60vh] w-auto h-auto object-contain rounded"
                     />
                   )}
                 </div>
               ) : (
-                <div className="flex justify-center items-center mb-6 bg-muted rounded-lg p-12">
+                <div className="flex justify-center items-center mb-6 bg-muted rounded-lg p-12 min-h-[200px]">
                   <div className="text-center">
                     <IconUpload className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">
@@ -281,21 +283,21 @@ export const FileUpload = ({
                     </div>
                   </div>
                 </div>
-
-                {/* Delete Button */}
-                <div className="flex justify-end pt-4 border-t">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      removeFile(selectedFileIndex);
-                    }}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2 rounded-md transition-colors flex items-center gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    Delete File
-                  </button>
-                </div>
               </div>
+            </div>
+
+            {/* Footer with Delete Button */}
+            <div className="flex justify-end p-6 pt-4 border-t bg-muted/30 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  removeFile(selectedFileIndex);
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2 rounded-md transition-colors flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Delete File
+              </button>
             </div>
           </div>
         </div>

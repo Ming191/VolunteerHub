@@ -20,7 +20,7 @@ export const NewOpportunitiesList = ({
   onEventClick,
 }: NewOpportunitiesListProps) => {
   return (
-    <Card className="lg:col-span-3 border-2 border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+    <Card className="lg:col-span-3 border-2 border-gray-200 shadow-sm bg-white">
       <CardHeader className="border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

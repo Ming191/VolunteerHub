@@ -53,7 +53,7 @@ const EventImageItem = memo(
 
     return (
       <div
-        className={`relative aspect-video rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border border-gray-200 ${
+        className={`relative aspect-video rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 ${
           className || ""
         }`}
         onClick={onClick}
@@ -232,7 +232,7 @@ export function EventImages({
                   e.stopPropagation();
                   setSelectedImageIndex(null);
                 }}
-                className="absolute top-4 right-4 z-[210] w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                className="absolute top-4 right-4 z-[210] w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors pointer-events-auto cursor-pointer"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />

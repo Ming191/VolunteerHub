@@ -60,9 +60,10 @@ function NotificationList() {
       const response = await notificationsApi.getRecentNotifications({
         days: 7,
       });
-      return response.data.slice(0, 5); // Only show first 5
+      return response.data || []; // Handle potential undefined
     },
     refetchInterval: 30000,
+    initialData: [],
   });
 
   // Mark notification as read mutation
