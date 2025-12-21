@@ -6,7 +6,7 @@ import { EventGrid } from '../components/EventGrid';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { SmartPagination } from '@/components/common/SmartPagination';
 import { useMyEventsPage } from '../hooks/useMyEventsPage';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,8 @@ import {
 
 export const MyEventsScreen = () => {
   const [updatingEventId, setUpdatingEventId] = useState<number | null>(null);
+  const [processingImageEventIds, setProcessingImageEventIds] = useState<Set<number>>(new Set());
+  const timeoutIdsRef = useRef<Map<number, number>>(new Map());
 
   const {
     page,
@@ -35,10 +37,15 @@ export const MyEventsScreen = () => {
     handleFilterChange
   } = useMyEventsPage();
 
-  // Derive processing image event IDs from backend data
-  const processingImageEventIds = new Set(
-    eventsData?.content.filter(event => event.imagesProcessing).map(event => event.id) || []
-  );
+  useEffect(() => {
+    const timeoutIds = timeoutIdsRef.current;
+    return () => {
+      timeoutIds.forEach((timeoutId) => {
+        clearTimeout(timeoutId);
+      });
+      timeoutIds.clear();
+    };
+  }, []);
 
   const handleEventUpdateStart = (eventId: number) => {
     setUpdatingEventId(eventId);
@@ -49,9 +56,25 @@ export const MyEventsScreen = () => {
   };
 
   const handleImageProcessingStart = (eventId: number) => {
-    // No longer need manual tracking - backend will provide imagesProcessing status
-    // Just trigger a refetch to get updated status
-    console.log('Image processing started for event', eventId);
+    // Clear existing timeout for this event if any
+    const existingTimeoutId = timeoutIdsRef.current.get(eventId);
+    if (existingTimeoutId !== undefined) {
+      clearTimeout(existingTimeoutId);
+    }
+
+    setProcessingImageEventIds(prev => new Set(prev).add(eventId));
+
+    // Automatically remove after 30 seconds as fallback
+    const timeoutId = setTimeout(() => {
+      setProcessingImageEventIds(prev => {
+        const next = new Set(prev);
+        next.delete(eventId);
+        return next;
+      });
+      timeoutIdsRef.current.delete(eventId);
+    }, 30000);
+
+    timeoutIdsRef.current.set(eventId, timeoutId as unknown as number);
   };
 
   const isActiveSort = (
@@ -80,7 +103,7 @@ export const MyEventsScreen = () => {
                 </Button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuContent align="end" className="w-64 bg-white">
 
                 {/* Default */}
                 <DropdownMenuItem
@@ -163,7 +186,11 @@ export const MyEventsScreen = () => {
             </DropdownMenu>
 
 
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="border-2 border-green-600 bg-green-600 hover:bg-green-700 hover:border-green-700 text-white"
+            >
               <Plus className="mr-2 h-4 w-4" />
               Create Event
             </Button>
@@ -188,7 +215,6 @@ export const MyEventsScreen = () => {
           emptyStateDescription="Created events will appear here."
           updatingEventId={updatingEventId}
           processingImageEventIds={processingImageEventIds}
-          showStatus={true}
         />
 
         {/* Pagination */}

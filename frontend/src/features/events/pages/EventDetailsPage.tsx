@@ -1,141 +1,114 @@
-import { useParams, useNavigate, useLocation, Outlet } from '@tanstack/react-router';
-import { useGetEvent } from '../hooks/useEvents';
-import { useRegisterForEvent, useCancelRegistration } from '@/features/volunteer/hooks/useRegistration';
-import { SkeletonTransition } from '@/components/common/SkeletonTransition';
-import AnimatedPage from '@/components/common/AnimatedPage';
-import { ApiErrorState } from '@/components/ui/api-error-state';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { useEventPermissions } from '../hooks/useEventPermissions';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
-    EventHero,
-    EventInfoSidebar,
-    EventTabsNavigation
-} from '../components/page';
+  useParams,
+  useNavigate,
+  useLocation,
+  Outlet,
+} from "@tanstack/react-router";
+import { useGetEvent } from "../hooks/useEvents";
+import {
+  useRegisterForEvent,
+  useCancelRegistration,
+} from "@/features/volunteer/hooks/useRegistration";
+import { SkeletonTransition } from "@/components/common/SkeletonTransition";
+import AnimatedPage from "@/components/common/AnimatedPage";
+import { ApiErrorState } from "@/components/ui/api-error-state";
+import { useEventPermissions } from "../hooks/useEventPermissions";
+import {
+  EventHero,
+  EventInfoSidebar,
+  EventTabsNavigation,
+} from "../components/page";
 
 export const EventDetailsPage = () => {
-    const { eventId } = useParams({ strict: false });
-    const navigate = useNavigate();
-    const location = useLocation();
-    const id = parseInt(eventId ?? '0', 10);
+  const { eventId } = useParams({ strict: false });
+  const navigate = useNavigate();
+  const location = useLocation();
+  const id = parseInt(eventId ?? "0", 10);
 
-    const isPostsPage = location.pathname.endsWith('/posts');
-    const isAttendeesPage = location.pathname.endsWith('/attendees');
-    const isGalleryPage = location.pathname.endsWith('/gallery');
+  const isPostsPage = location.pathname.endsWith("/posts");
+  const isAttendeesPage = location.pathname.endsWith("/attendees");
+  const isGalleryPage = location.pathname.endsWith("/gallery");
 
-    let activeTab = 'about';
-    if (isPostsPage) activeTab = 'community';
-    else if (isAttendeesPage) activeTab = 'attendees';
-    else if (isGalleryPage) activeTab = 'gallery';
+  let activeTab = "about";
+  if (isPostsPage) activeTab = "community";
+  else if (isAttendeesPage) activeTab = "attendees";
+  else if (isGalleryPage) activeTab = "gallery";
 
-    const { data: event, isLoading, isError, error, refetch } = useGetEvent(id);
-    const { isOrganizer, isRegistered, isOwner, isAdmin } = useEventPermissions(event || null);
+  const { data: event, isLoading, isError, error, refetch } = useGetEvent(id);
+  const { isOrganizer, isRegistered } = useEventPermissions(event || null);
 
-    // Check if user can view unpublished events
-    const canViewUnpublished = isOrganizer || isOwner || isAdmin;
-    const isUnpublished = event && event.status !== 'PUBLISHED';
+  const registerMutation = useRegisterForEvent();
+  const cancelMutation = useCancelRegistration();
 
-    const registerMutation = useRegisterForEvent();
-    const cancelMutation = useCancelRegistration();
+  const handleRegister = () => {
+    if (!event) return;
 
-    if (isNaN(id)) {
-        return (
-            <AnimatedPage>
-                <div className="container mx-auto py-8">
-                    <ApiErrorState
-                        error={new Error('Invalid event ID')}
-                        onRetry={() => navigate({ to: '/events' })}
-                    />
-                </div>
-            </AnimatedPage>
-        );
+    if (isRegistered) {
+      if (confirm("Are you sure you want to cancel your registration?")) {
+        cancelMutation.mutate(id);
+      }
+    } else {
+      registerMutation.mutate(id);
     }
+  };
 
-
-    const handleRegister = () => {
-        if (!event) return;
-
-        if (isRegistered) {
-            if (confirm('Are you sure you want to cancel your registration?')) {
-                cancelMutation.mutate(id);
-            }
-        } else {
-            registerMutation.mutate(id);
-        }
-    };
-
-    const handleBack = () => {
-        if (window.history.length > 1) {
-            navigate({ to: '..' });
-        } else {
-            navigate({ to: '/events' });
-        }
-    };
-
+  if (isNaN(id)) {
     return (
-        <AnimatedPage>
-            <SkeletonTransition
-                isLoading={isLoading}
-                skeleton={<div className="h-screen w-full bg-muted animate-pulse" />}
-            >
-                {isError ? (
-                    <div className="container mx-auto py-8">
-                        <ApiErrorState error={error} onRetry={refetch} />
-                    </div>
-                ) : isUnpublished && !canViewUnpublished ? (
-                    <div className="container mx-auto py-8">
-                        <ApiErrorState 
-                            error={new Error('This event is not available')} 
-                            onRetry={() => navigate({ to: '/events' })}
-                        />
-                    </div>
-                ) : event ? (
-                    <div className="min-h-screen bg-background pb-20">
-                        {/* Optional: Breadcrumbs or Back Button Area */}
-                        <div className="container mx-auto py-4">
-                            <Button variant="ghost" className="pl-0 hover:bg-transparent hover:text-primary" onClick={handleBack}>
-                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
-                            </Button>
-                        </div>
-
-                        {/* Rejection Notice */}
-                        {event.status === 'REJECTED' && (
-                        <div className="container mx-auto px-6 mb-6">
-                            <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-
-                            {/* 👇 div này là CHÌA KHOÁ */}
-                            <div>
-                                <AlertTitle>Event Not Approved</AlertTitle>
-                                <AlertDescription>
-                                {event.rejectionReason ||
-                                    'This event has been reviewed and was not approved for publication.'}
-                                </AlertDescription>
-                            </div>
-                            </Alert>
-                        </div>
-                        )}
-
-                        <EventHero
-                            event={event}
-                            isOrganizer={isOrganizer}
-                            onRegister={handleRegister}
-                        />
-
-                        <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 px-6">
-                            <div className="lg:col-span-2 space-y-8">
-                                <EventTabsNavigation event={event} activeTab={activeTab} />
-                                <Outlet />
-                            </div>
-
-                            <div className="lg:col-span-1">
-                                <EventInfoSidebar event={event} onRegister={handleRegister} isOrganizer={isOrganizer} />
-                            </div>
-                        </div>
-                    </div>
-                ) : null}
-            </SkeletonTransition>
-        </AnimatedPage>
+      <AnimatedPage>
+        <div className="container mx-auto py-8">
+          <ApiErrorState
+            error={new Error("Invalid event ID")}
+            onRetry={() => navigate({ to: "/events" })}
+          />
+        </div>
+      </AnimatedPage>
     );
+  }
+
+  return (
+    <AnimatedPage>
+      <SkeletonTransition
+        isLoading={isLoading}
+        skeleton={<div className="h-screen w-full bg-muted animate-pulse" />}
+      >
+        {isError ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <ApiErrorState error={error} onRetry={refetch} />
+          </div>
+        ) : event ? (
+          <div className="min-h-screen bg-gray-50">
+            {/* Hero Section */}
+            <EventHero
+              event={event}
+              isOrganizer={isOrganizer}
+              onRegister={handleRegister}
+            />
+
+            {/* Main Content Container */}
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+                {/* Left Column - Main Content */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Tabs Navigation */}
+                  <EventTabsNavigation event={event} activeTab={activeTab} />
+
+                  {/* Tab Content */}
+                  <Outlet />
+                </div>
+
+                {/* Right Column - Sidebar */}
+                <div className="lg:col-span-1">
+                  <EventInfoSidebar
+                    event={event}
+                    onRegister={handleRegister}
+                    isOrganizer={isOrganizer}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </SkeletonTransition>
+    </AnimatedPage>
+  );
 };

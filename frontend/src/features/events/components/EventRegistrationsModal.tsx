@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Users } from "lucide-react";
 
 import {
-  useGetEventRegistrations, useMarkRegistrationCompleted,
+  useGetEventRegistrations,
+  useMarkRegistrationCompleted,
   useUpdateRegistrationStatus,
 } from "../hooks/useMyEvents";
 
@@ -51,7 +52,8 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
   const { data: registrations, isLoading } = useGetEventRegistrations(eventId);
 
   const updateStatusMutation = useUpdateRegistrationStatus(eventId);
-  const markRegistrationCompletedMutation = useMarkRegistrationCompleted(eventId);
+  const markRegistrationCompletedMutation =
+    useMarkRegistrationCompleted(eventId);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedRegistration, setSelectedRegistration] =
@@ -59,7 +61,7 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-32">
+      <div className="flex items-center justify-center h-32 text-muted-foreground">
         Loading registrations...
       </div>
     );
@@ -80,19 +82,15 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
     const { id, action } = selectedRegistration;
 
     if (action === "COMPLETED") {
-      markRegistrationCompletedMutation.mutate(
-        id,
-        {
-          onSuccess: () => {
-            setConfirmOpen(false);
-            setSelectedRegistration(null);
-          },
-        }
-      );
+      markRegistrationCompletedMutation.mutate(id, {
+        onSuccess: () => {
+          setConfirmOpen(false);
+          setSelectedRegistration(null);
+        },
+      });
       return;
     }
 
-    // APPROVED / REJECTED
     updateStatusMutation.mutate(
       {
         registrationId: id,
@@ -107,7 +105,6 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
     );
   };
 
-
   const actionConfig = selectedRegistration
     ? ACTION_CONFIG[selectedRegistration.action]
     : null;
@@ -118,20 +115,18 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
       : updateStatusMutation.isPending;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            Total Registrations: {registrations?.length || 0}
-          </span>
-        </div>
+      <div className="flex items-center gap-2">
+        <Users className="h-4 w-4" />
+        <span className="text-sm font-medium">
+          Total Registrations: {registrations?.length || 0}
+        </span>
       </div>
 
       {/* Registrations list */}
       {registrations && registrations.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {registrations.map((registration) => (
             <EventRegistrationCard
               key={registration.id}
@@ -141,11 +136,9 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-8">
-          <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            No Registrations
-          </h3>
+        <div className="text-center py-12">
+          <Users className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-1">No Registrations</h3>
           <p className="text-muted-foreground">
             There are no registrations for this event yet.
           </p>
@@ -163,6 +156,7 @@ export function EventRegistrationsModal({ eventId }: { eventId: number }) {
               Are you sure you want to{" "}
               <strong>{actionConfig.verb}</strong> the registration of{" "}
               <strong>{selectedRegistration?.volunteerName}</strong>?
+              <br />
               This action cannot be undone.
             </>
           }

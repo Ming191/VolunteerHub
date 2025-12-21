@@ -39,10 +39,21 @@ const getRegistrationStatus = async (eventId: number): Promise<RegistrationStatu
 /**
  * Get user's registrations with pagination
  */
-const getMyRegistrationEvents = async (): Promise<RegistrationResponse[]> => {
+const getMyRegistrationEvents = async (): Promise<Array<RegistrationResponse> | undefined> => {
   try {
-    const res = await userProfileApi.getMyRegistrations();
-    return res.data;
+    const res = await userProfileApi.getMyRegistrations(
+      {
+        pageable: {},
+      } as any,
+      {
+        params: {
+          page: 0,
+          size: 100,
+        },
+      }
+    );
+
+    return res.data.content;
   } catch (err: any) {
     console.error('Failed to get my registrations:', {
       code: err.code,
@@ -52,6 +63,8 @@ const getMyRegistrationEvents = async (): Promise<RegistrationResponse[]> => {
     throw err;
   }
 };
+
+
 
 /**
  * Cancel a registration

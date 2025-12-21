@@ -20,6 +20,7 @@ export const AdminEvents = () => {
         searchQuery,
         setSearchQuery,
         handleExportEvents,
+        handleNavigateToEventDetails,
         page,
         setPage,
         totalPages
@@ -90,7 +91,7 @@ export const AdminEvents = () => {
                     ) : (
                         <div className={`space-y-4 transition-opacity duration-200 ${isFetching ? 'opacity-50 pointer-events-none' : ''}`}>
                             {(events).map((event) => (
-                                <Card key={event.id} className="p-4 hover:bg-muted/50 transition-colors">
+                                <Card key={event.id} className="p-4 hover:bg-muted/50 transition-colors" onClick={() => handleNavigateToEventDetails(event.id)}>
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -112,7 +113,7 @@ export const AdminEvents = () => {
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <Users className="h-3 w-3" />
-                                                <span>{event.approvedCount}/{event.maxParticipants || 'User Limit'}</span>
+                                                <span>{event.approvedCount}/{event.maxParticipants || 'Unlimited'}</span>
                                             </div>
                                         </div>
 

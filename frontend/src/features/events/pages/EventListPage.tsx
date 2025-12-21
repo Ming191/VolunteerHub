@@ -41,7 +41,7 @@ export const EventListScreen = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Filter Panel */}
         <div className="mb-8">
-          <EventFilterPanel onFilterChange={handleFilterChange} initialFilters={filters} />
+            <EventFilterPanel onFilterChange={handleFilterChange} initialFilters={filters} />
         </div>
 
         {/* Results Count */}
@@ -85,12 +85,7 @@ export const EventListScreen = () => {
           {!isLoading && !isError && data && data.content.length > 0 && (
             <>
               {data.content.map((event) => (
-                <EventCard 
-                  key={event.id} 
-                  event={event} 
-                  onViewDetails={handleViewDetails}
-                  isProcessingImages={event.imagesProcessing}
-                />
+                <EventCard key={event.id} event={event} onViewDetails={handleViewDetails} />
               ))}
             </>
           )}

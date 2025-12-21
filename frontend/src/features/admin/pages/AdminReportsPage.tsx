@@ -112,7 +112,7 @@ export const AdminReportsPage = () => {
                     </Card>
                 </div>
 
-                <Card>
+                <Card className="overflow-hidden">
                     <CardContent className="p-0">
                         {isError ? (
                             <div className="p-6">
@@ -130,11 +130,6 @@ export const AdminReportsPage = () => {
                                     reports={reports || []}
                                     onReview={handleReview}
                                 />
-                                {(!reports || reports.length === 0) && (
-                                    <div className="p-8 text-center text-muted-foreground">
-                                        No reports found matching criteria.
-                                    </div>
-                                )}
                             </>
                         )}
                     </CardContent>

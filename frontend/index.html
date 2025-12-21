@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8,6 +8,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
     <title>Volunteer Hub</title>
+    <script>
+      // Force light theme immediately - prevent dark mode flash
+      (function () {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("theme", "light");
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
