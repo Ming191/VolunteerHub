@@ -48,14 +48,14 @@ const getStatusLabel = (status: ReportResponseStatusEnum) => {
 export const ReportsTable = ({ reports, onReview }: ReportsTableProps) => {
     if (reports.length === 0) {
         return (
-            <div className="rounded-lg border bg-white p-8 text-center">
+            <div className="bg-white p-8 text-center">
                 <p className="text-muted-foreground">No reports found.</p>
             </div>
         );
     }
 
     return (
-        <div className="rounded-xl overflow-hidden bg-white border border-gray-200">
+        <div className="overflow-hidden bg-white">
             {/* Header Row */}
             <div className="bg-gray-50 p-4 border-b border-gray-200 border-t-0 border-x-0">
                 <div className="flex items-center justify-between gap-4">
@@ -73,11 +73,10 @@ export const ReportsTable = ({ reports, onReview }: ReportsTableProps) => {
 
             {/* Data Rows */}
             {reports.map((report, index) => (
-                <div 
-                    key={report.id} 
-                    className={`p-4 hover:bg-gray-50 transition-colors border-x-0 ${
-                        index !== reports.length - 1 ? 'border-b border-gray-200 border-t-0' : 'border-0'
-                    }`}
+                <div
+                    key={report.id}
+                    className={`p-4 hover:bg-gray-50 transition-colors border-x-0 ${index !== reports.length - 1 ? 'border-b border-gray-200 border-t-0' : 'border-0'
+                        }`}
                 >
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex-1 grid grid-cols-6 gap-4 items-center">
@@ -115,8 +114,8 @@ export const ReportsTable = ({ reports, onReview }: ReportsTableProps) => {
 
                             {/* Status */}
                             <div className="min-w-0">
-                                <Badge 
-                                    variant="outline" 
+                                <Badge
+                                    variant="outline"
                                     className={getStatusBadgeStyle(report.status)}
                                 >
                                     {getStatusLabel(report.status)}
@@ -126,8 +125,8 @@ export const ReportsTable = ({ reports, onReview }: ReportsTableProps) => {
 
                         {/* Actions */}
                         {(report.status === ReportResponseStatusEnum.UnderReview || report.status === ReportResponseStatusEnum.Pending) ? (
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => onReview(report)}
                                 className="shrink-0 w-24"
