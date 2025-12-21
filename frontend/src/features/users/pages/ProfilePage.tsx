@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SkeletonTransition } from '@/components/common/SkeletonTransition';
 import { ProfilePageSkeleton } from '@/features/users/components/ProfilePageSkeleton';
 import { EditProfileModal } from '@/features/users/components/EditProfileModal';
 import { ChangePasswordModal } from "@/features/users/components/ChangePasswordModal";
@@ -12,6 +11,7 @@ import { useProfileData } from '../hooks/useProfileData';
 import { PostCard } from '@/features/blog/components/PostCard';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useParams } from '@tanstack/react-router';
+import AnimatedPage from '@/components/common/AnimatedPage';
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -24,10 +24,17 @@ const formatDate = (dateString: string) => {
 export const ProfilePage = () => {
     const params = useParams({ from: '/_auth/profile/$userId', shouldThrow: false, });
     const userId = params?.userId ? Number(params.userId) : undefined;
-    const { profile, posts, loading, refetch } = useProfileData(userId);
+    const { profile, posts, loading, hasMorePosts, loadMorePosts, refetch } = useProfileData(userId);
     const { user } = useAuth();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+    const handleShowMore = async () => {
+        setIsLoadingMore(true);
+        await loadMorePosts();
+        setIsLoadingMore(false);
+    };
 
     const isOwnProfile = !userId || (user && profile && user.userId === profile.id);
 
@@ -51,13 +58,18 @@ export const ProfilePage = () => {
     // Check if profile is private
     const isPrivateProfile = profile && 'isPrivate' in profile && profile.isPrivate === true;
 
+    // Show skeleton while loading or no profile
+    if (loading || !profile) {
+        return (
+            <AnimatedPage>
+                <ProfilePageSkeleton />
+            </AnimatedPage>
+        );
+    }
+
     return (
-        <SkeletonTransition
-            isLoading={loading || !profile}
-            skeleton={<ProfilePageSkeleton />}
-        >
-            {profile && (
-                <div className="container mx-auto p-6 space-y-8 max-w-5xl">
+        <AnimatedPage>
+            <div className="container mx-auto p-6 space-y-8 max-w-5xl">
                     {/* Hero Section */}
                     <Card className="border-0 shadow-lg">
                         <CardContent className="p-8">
@@ -131,17 +143,38 @@ export const ProfilePage = () => {
                                     </div>
 
                                     {/* Skills */}
-                                    {'skills' in profile && profile.skills && profile.skills.size > 0 && (
-                                        <div className="mt-4 flex flex-wrap gap-2">
-                                            {Array.from(profile.skills).map((skill) => (
-                                                <Badge 
-                                                    key={skill} 
-                                                    variant="outline" 
-                                                    className="bg-muted/50 hover:bg-muted border-border/50"
-                                                >
-                                                    {skill}
-                                                </Badge>
-                                            ))}
+                                    {'skills' in profile && profile.skills && (Array.isArray(profile.skills) ? profile.skills.length > 0 : profile.skills.size > 0) && (
+                                        <div className="mt-4">
+                                            <p className="text-xs font-medium text-muted-foreground mb-2">SKILLS</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {(Array.isArray(profile.skills) ? profile.skills : Array.from(profile.skills)).map((skill) => (
+                                                    <Badge 
+                                                        key={skill} 
+                                                        variant="secondary" 
+                                                        className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20 hover:bg-blue-500/20"
+                                                    >
+                                                        {skill.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Interests */}
+                                    {'interests' in profile && profile.interests && (Array.isArray(profile.interests) ? profile.interests.length > 0 : profile.interests.size > 0) && (
+                                        <div className="mt-4">
+                                            <p className="text-xs font-medium text-muted-foreground mb-2">INTERESTS</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {(Array.isArray(profile.interests) ? profile.interests : Array.from(profile.interests)).map((interest) => (
+                                                    <Badge 
+                                                        key={interest} 
+                                                        variant="secondary" 
+                                                        className="bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20"
+                                                    >
+                                                        {interest.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                                                    </Badge>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 
@@ -198,11 +231,25 @@ export const ProfilePage = () => {
                                     </CardContent>
                                 </Card>
                             ) : (
-                                <div className="space-y-4">
-                                    {posts.map((post) => (
-                                        <PostCard key={post.id} post={post} />
-                                    ))}
-                                </div>
+                                <>
+                                    <div className="space-y-4">
+                                        {posts.map((post) => (
+                                            <PostCard key={post.id} post={post} />
+                                        ))}
+                                    </div>
+                                    {hasMorePosts && (
+                                        <div className="flex justify-center mt-6">
+                                            <Button
+                                                variant="outline"
+                                                onClick={handleShowMore}
+                                                disabled={isLoadingMore}
+                                                className="min-w-[200px]"
+                                            >
+                                                {isLoadingMore ? 'Loading...' : 'Show More Posts'}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     ) : (
@@ -235,7 +282,6 @@ export const ProfilePage = () => {
                         />
                     )}
                 </div>
-            )}
-        </SkeletonTransition>
+            </AnimatedPage>
     );
 }
