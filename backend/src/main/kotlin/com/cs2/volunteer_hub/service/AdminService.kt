@@ -258,4 +258,9 @@ class AdminService(
         val events = eventRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
         return eventMapper.toEventResponseList(events)
     }
+
+    @Transactional(readOnly = true)
+    fun getAllEvents(pageable: Pageable): Page<EventResponse> {
+        return eventRepository.findAll(pageable).map(eventMapper::toEventResponse)
+    }
 }

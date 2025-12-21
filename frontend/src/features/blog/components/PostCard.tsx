@@ -43,6 +43,7 @@ import { toast } from 'sonner';
 import { useNavigate } from "@tanstack/react-router";
 
 import { useGetRegistrationStatus } from "@/features/volunteer/hooks/useRegistration.ts";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PostCardProps {
     post: PostResponse;
@@ -53,6 +54,7 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated, commentsDisabled, isUploading = false }) => {
+    const queryClient = useQueryClient();
     const { user } = useAuth();
     const isVolunteer = user?.role === 'VOLUNTEER';
 
@@ -92,6 +94,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
         try {
             await blogService.deletePost(eventId, post.id);
             toast.success("Post deleted successfully");
+            await queryClient.invalidateQueries({queryKey: ['posts', eventId ? `event-${eventId}` : 'feed']})
             setIsDeleteDialogOpen(false);
             onPostDeleted?.(post.id);
         } catch (error) {

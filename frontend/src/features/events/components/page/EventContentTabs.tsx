@@ -215,7 +215,9 @@ export const EventTabsNavigation = ({ event, activeTab }: { event: EventResponse
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="mb-6">
                 <TabsTrigger value="about">About</TabsTrigger>
-                <TabsTrigger value="community">Community</TabsTrigger>
+                {event.status !== 'PENDING' && (
+                  <TabsTrigger value="community">Community</TabsTrigger>
+                )}
                 {(isOrganizer || isApprovedMember) && (
                     <TabsTrigger value="attendees">Attendees</TabsTrigger>
                 )}
