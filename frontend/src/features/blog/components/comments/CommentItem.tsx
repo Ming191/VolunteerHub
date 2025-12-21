@@ -100,13 +100,11 @@ export const CommentItem = React.memo(
     return (
       <div
         className={`flex flex-col ${
-          depth > 0
-            ? "ml-8 mt-2"
-            : "p-4 border-2 border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow mb-3"
+          depth > 0 ? "ml-8 mt-3" : "mb-4"
         }`}
       >
         <div className="flex gap-3">
-          <Avatar className="h-9 w-9 flex-shrink-0">
+          <Avatar className="h-10 w-10 flex-shrink-0">
             <AvatarImage
               src={comment.author.profilePictureUrl}
               alt={comment.author.name}
@@ -116,7 +114,7 @@ export const CommentItem = React.memo(
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <div className="bg-gray-100 px-3 py-2 rounded-2xl inline-block max-w-full">
+            <div className="bg-gray-50 px-4 py-2.5 rounded-2xl">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <span className="font-semibold text-sm block">
@@ -127,7 +125,7 @@ export const CommentItem = React.memo(
                       <Textarea
                         value={editedContent}
                         onChange={(e) => setEditedContent(e.target.value)}
-                        className="min-h-[60px] resize-none bg-white"
+                        className="min-h-[60px] resize-none bg-white border-gray-200"
                         autoFocus
                       />
                       <div className="flex gap-2 justify-end">
@@ -142,7 +140,7 @@ export const CommentItem = React.memo(
                           size="sm"
                           onClick={handleEditSave}
                           disabled={!editedContent.trim()}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-green-600 hover:bg-green-700 text-white"
                         >
                           Save
                         </Button>

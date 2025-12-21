@@ -1,15 +1,14 @@
-import { useParams } from "@tanstack/react-router";
+import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { blogService } from "../api/blogService";
 import { PostCard } from "../components/PostCard";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { postDetailsRoute } from "@/routes/events.routes";
 
 export const PostDetailsPage = () => {
   const { eventId, postId } = useParams({
-    from: "/events/$eventId/posts/$postId",
+    from: postDetailsRoute.id,
   });
   const navigate = useNavigate();
 

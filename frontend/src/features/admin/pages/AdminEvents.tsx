@@ -113,7 +113,7 @@ export const AdminEvents = () => {
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <Users className="h-3 w-3" />
-                                                <span>{event.approvedCount}/{event.maxParticipants || 'User Limit'}</span>
+                                                <span>{event.approvedCount}/{event.maxParticipants || 'Unlimited'}</span>
                                             </div>
                                         </div>
 

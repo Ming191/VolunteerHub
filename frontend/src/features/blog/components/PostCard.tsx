@@ -57,6 +57,7 @@ import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
 import { useGetRegistrationStatus } from "@/features/volunteer/hooks/useRegistration.ts";
+import { useGetEvent } from "@/features/events/hooks/useEvents";
 
 interface PostCardProps {
   post: PostResponse;
@@ -75,10 +76,16 @@ export const PostCard: React.FC<PostCardProps> = ({
 }) => {
   const { user } = useAuth();
   const isVolunteer = user?.role === "VOLUNTEER";
+  const isOrganizer = user?.role === "EVENT_ORGANIZER";
 
   const isAuthor = user?.userId === post.author.id;
 
   const eventId = post.eventId;
+  
+  // Fetch event details to check if user is the organizer of this event
+  const { data: eventData } = useGetEvent(eventId);
+  const isEventOrganizer = isOrganizer && eventData?.creatorId === user?.userId;
+  
   const shouldCheckPermissions =
     (commentsDisabled === undefined || isAuthor) && isVolunteer && !!eventId;
   const { data: registrationData } = useGetRegistrationStatus(
@@ -89,6 +96,8 @@ export const PostCard: React.FC<PostCardProps> = ({
   const isCommentsDisabled =
     commentsDisabled !== undefined
       ? commentsDisabled
+      : isEventOrganizer
+      ? false // Event organizer can always comment on their event
       : isVolunteer && registrationData?.status !== "APPROVED";
 
   const [showComments, setShowComments] = useState(false);
@@ -278,12 +287,6 @@ export const PostCard: React.FC<PostCardProps> = ({
             <DropdownMenuContent align="end" className="z-[60]">
               {canEditOrDelete ? (
                 <>
-                  {post.eventId && (
-                    <DropdownMenuItem onClick={handleViewEvent}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Go to Event
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem onClick={handleEdit}>
                     <Edit2 className="mr-2 h-4 w-4" />
                     Edit
@@ -298,12 +301,6 @@ export const PostCard: React.FC<PostCardProps> = ({
                 </>
               ) : (
                 <>
-                  {post.eventId && (
-                    <DropdownMenuItem onClick={handleViewEvent}>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Go to Event
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem
                     className="text-red-600 focus:text-red-600"
                     onClick={() => setIsReportDialogOpen(true)}
