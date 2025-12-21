@@ -182,7 +182,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
             )}
             <CardHeader className="flex flex-row items-center gap-4 p-4">
                 <Avatar
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    className="cursor-pointer hover:opacity-80 transition-opacity h-12 w-12"
                     onClick={handleViewAuthorProfile}
                 >
                     <AvatarImage src={post.author.profilePictureUrl} alt={post.author.name} />
@@ -191,16 +191,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
                 <div className="flex flex-col flex-1">
                     <div className="flex items-center gap-2">
                         <span
-                            className="font-semibold text-base cursor-pointer hover:underline"
+                            className="font-semibold text-lg cursor-pointer hover:underline"
                             onClick={handleViewAuthorProfile}
                         >
                             {post.author.name}
                         </span>
                         {post.eventTitle && (
                             <>
-                                <span className="text-muted-foreground text-sm">in</span>
+                                <span className="text-muted-foreground text-base">in</span>
                                 <span
-                                    className="font-medium text-sm text-primary cursor-pointer hover:underline"
+                                    className="font-medium text-base text-primary cursor-pointer hover:underline"
                                     onClick={handleViewEvent}
                                 >
                                     {post.eventTitle}
@@ -368,4 +368,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
         </Card>
     );
 };
+
+export default React.memo(PostCard);
 
