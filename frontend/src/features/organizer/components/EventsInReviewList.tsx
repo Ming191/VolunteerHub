@@ -6,11 +6,11 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { FileCheck, MapPin, ArrowRight } from "lucide-react";
-import type { EventResponse } from "@/api-client";
+import type { DashboardEventItem } from "@/api-client";
 import { motion } from "framer-motion";
 
 interface EventsInReviewListProps {
-  events: EventResponse[];
+  events: DashboardEventItem[];
   onEventClick: (id: number) => void;
 }
 

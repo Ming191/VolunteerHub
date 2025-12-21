@@ -132,7 +132,7 @@ export const OrganizerDashboard = () => {
                     </button>
 
                     <button
-                      onClick={handleNavigateToMyEvents}
+                      onClick={handleNavigateToNotifications}
                       className="group relative p-4 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 hover:from-orange-50 hover:to-amber-50 border border-gray-200 hover:border-orange-300 hover:shadow-md transition-all duration-200"
                     >
                       <div className="flex flex-col items-center gap-2 text-center">
@@ -152,7 +152,7 @@ export const OrganizerDashboard = () => {
                           </svg>
                         </div>
                         <span className="font-semibold text-xs text-gray-700 group-hover:text-orange-700 transition-colors">
-                          Registrations
+                          Notifications
                         </span>
                       </div>
                     </button>

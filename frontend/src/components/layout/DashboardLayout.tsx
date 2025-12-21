@@ -7,7 +7,6 @@ import {
   CalendarDays,
   UserCog,
   ShieldCheck,
-  Users,
   User, List,
 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
