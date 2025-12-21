@@ -163,16 +163,12 @@ export const EditProfileModal = ({
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                                            <Input {...field} placeholder="+1234567890" />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                )}
+              />
 
-                            <FormField
-                                control={form.control}
-                                name="location"
+              <FormField
+                control={form.control}
+                name="location"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Location</FormLabel>
@@ -285,31 +281,6 @@ export const EditProfileModal = ({
                                     </FormItem>
                                 )}
                             />
-
-                            <DialogFooter className="gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => onOpenChange(false)}
-                                    disabled={isSubmitting}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button type="submit" disabled={isSubmitting}>
-                                    {isSubmitting ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        'Save Changes'
-                                    )}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </Form>
-                )}
-              />
 
               <FormField
                 control={form.control}
