@@ -30,6 +30,8 @@ import {
   profileByIdRoute,
   notificationsRoute,
   settingsRoute,
+  termsRoute,
+  privacyRoute,
 } from "./routes/user.routes";
 import {
   adminPendingEventsRoute,
@@ -37,19 +39,12 @@ import {
   adminReportsRoute,
   adminSettingsRoute,
 } from "./routes/admin.routes";
-import {
-  landingRoute,
-  publicEventsRoute,
-  termsRoute,
-  privacyRoute,
-} from "./routes/public.routes";
+import { landingRoute, publicEventsRoute } from "./routes/public.routes";
 
 // 6. Create Router
 const routeTree = rootRoute.addChildren([
   landingRoute,
   publicEventsRoute,
-  termsRoute,
-  privacyRoute,
   signinRoute,
   signupRoute,
   forgotPasswordRoute,
@@ -65,6 +60,8 @@ const routeTree = rootRoute.addChildren([
     profileByIdRoute,
     notificationsRoute,
     settingsRoute,
+    termsRoute,
+    privacyRoute,
     myEventsRoute,
     myRegistrationsRoute,
     eventDetailsRoute.addChildren([
