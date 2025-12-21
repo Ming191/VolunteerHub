@@ -1,118 +1,107 @@
 # VolunteerHub
 
-VolunteerHub is a modern application connecting volunteers with opportunities. It features a reactive frontend and a resilient microservices-ready backend.
+VolunteerHub is a modern, full-stack application connecting volunteers with opportunities. It features a reactive, high-performance frontend and a resilient, microservices-ready backend.
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework:** React 19 (Vite)
+- **Framework:** [React 19](https://react.dev/) (Vite)
 - **Language:** TypeScript
-- **Styling:** Tailwind CSS 4, Radix UI, Framer Motion
-- **State Management:** TanStack Query
-- **Routing:** React Router 7
+- **Styling:** [Tailwind CSS 4](https://tailwindcss.com/), [Radix UI](https://www.radix-ui.com/), [Framer Motion](https://www.framer.com/motion/)
+- **State Management:** [TanStack Query](https://tanstack.com/query/latest)
+- **Routing:** [React Router 7](https://reactrouter.com/)
 - **Form Handling:** React Hook Form + Zod
+- **Maps:** Leaflet / React Leaflet
+- **Testing:** Vitest, Playwright
 
 ### Backend
-- **Framework:** Spring Boot 3.5.6 (Kotlin)
-- **Database:** PostgreSQL
-- **Caching & Rate Limiting:** Redis, Bucket4j
-- **Message Queue:** RabbitMQ
+- **Framework:** [Spring Boot 3.5](https://spring.io/projects/spring-boot) (Kotlin 2.2)
+- **Runtime:** JDK 23
+- **Database:** PostgreSQL 15
+- **Caching & Rate Limiting:** Redis 7, Bucket4j
+- **Message Queue:** RabbitMQ 3.13
 - **Storage:** Google Cloud Storage, Firebase
-- **Documentation:** Swagger UI / OpenAPI 3
+- **Documentation:** Swagger UI / OpenAPI 3 (SpringDoc)
 - **Resiliency:** Resilience4j (Circuit Breaker, Time Limiter)
+- **Security:** Spring Security, JWT
 
 ### Infrastructure & Monitoring
 - **Containerization:** Docker, Docker Compose
 - **Monitoring:** Prometheus, Grafana
-- **Logging:** Loki, Promtail (JSON Structured Logs)
-- **Tracing:** Grafana Tempo (Distributed Tracing)
+- **Logging:** Loki, Promtail (Structured JSON Logs)
+- **Tracing:** Grafana Tempo (Distributed Tracing/Zipkin)
 
-## Features
+## 🚀 Getting Started (Installation)
 
-- **Authentication & Authorization**: JWT-based auth with secure password hashing.
-- **Volunteer Management**: Create and manage volunteer profiles and opportunities.
-- **Real-time Notifications**: Firebase Cloud Messaging (FCM) integration for push notifications.
-- **Resiliency**: Circuit breakers and time limiters for external services (GCS, RabbitMQ, Prometheus).
-- **Rate Limiting**: Intelligent rate limiting using Bucket4j and Redis to prevent abuse.
-- **Monitoring**: Comprehensive metrics with Prometheus and Grafana dashboards.
-- **Distributed Tracing**: Full request tracing (Frontend -> Backend -> DB) with Grafana Tempo.
-- **Centralized Logging**: Structured logs with Loki and Promtail.
-- **File Storage**: Secure image upload to Google Cloud Storage.
+### Option 1: Full-Stack Docker (Recommended)
+This is the easiest way to run the entire application (Frontend + Backend + DBs + Monitoring).
 
-## Configuration
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop)
 
-The application uses standard Spring Boot configuration. Key environment variables:
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd volunteerhub
+    ```
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SPRING_DATASOURCE_URL` | PostgreSQL connection URL | `jdbc:postgresql://localhost:5432/volunteerhub` |
-| `SPRING_DATASOURCE_USERNAME` | Database username | `myuser` |
-| `SPRING_DATASOURCE_PASSWORD` | Database password | `mypassword` |
-| `SPRING_RABBITMQ_HOST` | RabbitMQ host | `localhost` |
-| `SPRING_DATA_REDIS_HOST` | Redis host | `localhost` |
-| `JWT_SECRET` | Secret key for JWT signing | (See `application.properties`) |
-| `GCS_BUCKET_NAME` | Google Cloud Storage bucket | `volunteerhub-bucket` |
+2.  **Start the application:**
+    ```bash
+    docker-compose up -d --build
+    ```
 
-## Getting Started
+3.  **Access the services:**
+    - **Frontend:** [`http://localhost:5173`](http://localhost:5173)
+    - **Backend API:** [`http://localhost:8080`](http://localhost:8080)
+    - **API Documentation:** [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html)
+    - **Grafana (Monitoring):** [`http://localhost:3001`](http://localhost:3001) (User: `admin`, Pass: `admin`)
+    - **Prometheus:** [`http://localhost:9090`](http://localhost:9090)
 
-### Prerequisites
-- [Docker & Docker Compose](https://www.docker.com/products/docker-desktop)
-- [Node.js](https://nodejs.org/) (for local frontend dev)
-- [JDK 23](https://adoptium.net/) (for local backend dev)
+### Option 2: Local Development
+Run services individually for development. You will still need Docker for databases (Postgres, Redis, etc.) or install them locally.
 
-### Quick Start (Docker)
-
-The easiest way to run the entire stack is using Docker Compose.
-
+#### 1. Start Infrastructure (Databases & Brokers)
+You can use Docker Compose to start just the dependencies:
 ```bash
-docker-compose up -d --build
+docker-compose up -d postgres-db redis rabbitmq
 ```
-This will start:
-- Backend API (`http://localhost:8080`)
-- Frontend is not currently in docker-compose, run locally (see below)
-- PostgreSQL
-- RabbitMQ
-- Redis
-- Prometheus (`http://localhost:9090`)
-- Grafana (`http://localhost:3001` - user/pass: admin/admin)
-- Loki (Logs) & Tempo (Traces) - Integrated into Grafana
-- Promtail (Log Shipper)
 
-### Local Development
+#### 2. Backend (Spring Boot)
+**Prerequisites:** JDK 23
+```bash
+cd backend
+./gradlew bootRun
+```
+*The API will start at `http://localhost:8080`*
 
-#### Frontend
+#### 3. Frontend (React)
+**Prerequisites:** Node.js 20+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Access at `http://localhost:5173`.
+*The app will start at `http://localhost:5173`*
 
-#### Backend
-```bash
-cd backend
-./gradlew bootRun
-```
-Access API docs at `http://localhost:8080/swagger-ui.html`.
+## ✨ Features
 
-### Testing
+- **Authentication & Authorization**: Secure JWT-based auth with Spring Security.
+- **Volunteer Management**: Comprehensive management of volunteer profiles and events.
+- **Real-time Notifications**: Integration with Firebase Cloud Messaging (FCM).
+- **Resiliency Patterns**: Circuit breakers and time limiters for external service calls.
+- **Advanced Rate Limiting**: Distributed rate limiting using Bucket4j and Redis.
+- **Full Observability**:
+    - **Metrics**: Prometheus & Grafana dashboards.
+    - **Tracing**: Distributed tracing (Frontend → Backend → DB) with Grafana Tempo.
+    - **logs**: Centralized structured logging with Loki.
+- **File Storage**: Secure image uploads to Google Cloud Storage.
+- **Interactive Maps**: Event location visualization using Leaflet.
 
-#### Backend Tests
-Run unit and integration tests using Gradle:
-```bash
-cd backend
-./gradlew test
-```
+## 🔧 Configuration
 
+The application uses standard environment variables for configuration. See `docker-compose.yml` and `backend/src/main/resources/application.properties` for all options.
 
-
-## Project Structure
-
-- `backend/` - Spring Boot application
-- `frontend/` - React application
-- `monitoring/` - Prometheus & Grafana configuration
-- `docker-compose.yml` - Container orchestration
-
-## Environment Variables
-
-Check `backend/src/main/resources/application.properties` and `docker-compose.yml` for configuration details (Database credentials, API keys, etc).
+| Variable                 | Description    | Default                                         |
+| ------------------------ | -------------- | ----------------------------------------------- |
+| `SPRING_DATASOURCE_URL`  | PostgreSQL URL | `jdbc:postgresql://localhost:5432/volunteerhub` |
+| `SPRING_RABBITMQ_HOST`   | RabbitMQ Host  | `localhost`                                     |
+| `SPRING_DATA_REDIS_HOST` | Redis Host     | `localhost`                                     |
