@@ -1,5 +1,5 @@
 import { SkeletonTransition } from '@/components/common/SkeletonTransition';
-import { OrganizerDashboardSkeleton } from '../components/OrganizerDashboardSkeleton';
+import { OrganizerDashboardSkeleton } from '@/features/organizer/components';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { ApiErrorState } from '@/components/ui/api-error-state';
 import { useOrganizerDashboard } from '../hooks/useOrganizerDashboard';
@@ -15,6 +15,7 @@ export const OrganizerDashboard = () => {
     handleNavigateToEvent,
     handleNavigateToMyEvents,
     handleNavigateToCreateEvent,
+    handleNavigateToNotifications,
     handleNavigateToAnalytics
   } = useOrganizerDashboard();
 
@@ -50,7 +51,7 @@ export const OrganizerDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <PendingRegistrationsList
                 registrations={recentPendingRegistrations}
-                onRegistrationClick={handleNavigateToMyEvents}
+                onRegistrationClick={handleNavigateToEvent}
               />
 
               <EventsInReviewList
@@ -67,7 +68,7 @@ export const OrganizerDashboard = () => {
             <OrganizerQuickActions
               onCreateEvent={handleNavigateToCreateEvent}
               onManageEvents={handleNavigateToMyEvents}
-              onRegistrations={handleNavigateToMyEvents}
+              onNotifications={handleNavigateToNotifications}
               onAnalytics={handleNavigateToAnalytics}
             />
           </div>

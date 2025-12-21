@@ -143,7 +143,7 @@ class DashboardService(
                                 Sort.by(Sort.Direction.DESC, "registeredAt")
                         )
                         .take(5)
-                        .let { dashboardMapper.registrationsToDashboardActionItemList(it) }
+                        .let { dashboardMapper.toDashboardPendingRegistrationItemList(it) }
 
         val topEventsByRegistration =
                 eventRepository.findTop3EventsByRegistrations(user.id, PageRequest.of(0, 3)).let {

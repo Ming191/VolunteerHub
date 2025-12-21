@@ -59,7 +59,18 @@ export const EventCard = <T extends UiEvent | EventResponse>({
     const statusConfig = eventStatus ? getStatusConfig(eventStatus) : null;
 
     return (
-        <Card className="flex flex-col h-full relative">
+        <Card
+            className="
+            flex flex-col h-full relative
+            transition-all duration-300 ease-out
+            hover:-translate-y-2
+            hover:shadow-[0_20px_40px_rgba(0,0,0,0.25)]
+            dark:hover:shadow-[
+              0_8px_30px_rgba(0,0,0,0.9),
+              0_0_60px_rgba(255,255,255,0.15)
+            ]
+        "
+        >
             {(isUpdating || isProcessingImages) && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
                     <div className="flex flex-col items-center gap-2">

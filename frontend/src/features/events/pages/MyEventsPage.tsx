@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import {ArrowDown, ArrowUp, Check, ListFilter, Plus} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddEventModal } from '../components/AddEventModal';
 import { EventDetailSheet } from '../components/EventDetailSheet';
@@ -6,8 +6,13 @@ import { EventGrid } from '../components/EventGrid';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { SmartPagination } from '@/components/common/SmartPagination';
 import { useMyEventsPage } from '../hooks/useMyEventsPage';
-import { useState } from 'react';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import { useState, useRef, useEffect } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 export const MyEventsScreen = () => {
   const [updatingEventId, setUpdatingEventId] = useState<number | null>(null);
@@ -49,6 +54,14 @@ export const MyEventsScreen = () => {
     console.log('Image processing started for event', eventId);
   };
 
+  const isActiveSort = (
+    sort?: string,
+    direction?: 'ASC' | 'DESC'
+  ) => {
+    if (!filters.sort) return !sort;
+    return filters.sort === sort && filters.direction === direction;
+  };
+
   return (
     <AnimatedPage>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -59,42 +72,95 @@ export const MyEventsScreen = () => {
 
           <div className="flex gap-2">
             {/* Sort (Optional) */}
-            <Select
-              value={
-                filters.sort
-                  ? `${filters.sort}_${filters.direction}`
-                  : 'DEFAULT'
-              }
-              onValueChange={(value) => {
-                if (value === 'DEFAULT') {
-                  handleFilterChange({
-                    sort: undefined,
-                    direction: 'DESC',
-                  });
-                  return;
-                }
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <ListFilter className="h-4 w-4" />
+                  Sort Events
+                </Button>
+              </DropdownMenuTrigger>
 
-                const [sort, direction] = value.split('_');
+              <DropdownMenuContent align="end" className="w-64">
 
-                handleFilterChange({
-                  sort,
-                  direction: direction as 'ASC' | 'DESC',
-                });
-              }}
-            >
-              <SelectTrigger className="w-full bg-background">
-                <SelectValue placeholder="Sort events" />
-              </SelectTrigger>
+                {/* Default */}
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleFilterChange({ sort: undefined, direction: 'DESC' })
+                  }
+                  className="flex items-center justify-between"
+                >
+                  Default
+                  {isActiveSort() && <Check className="h-4 w-4 text-primary" />}
+                </DropdownMenuItem>
 
-              <SelectContent>
-                <SelectItem value="DEFAULT">Default</SelectItem>
+                <DropdownMenuSeparator />
 
-                <SelectItem value="eventDateTime_DESC">
-                  🔽 Start Date (Newest)
-                </SelectItem>
-                <SelectItem value="eventDateTime_ASC">
-                  🔼 Start Date (Oldest)
-                </SelectItem>
+                {/* Start Date */}
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleFilterChange({ sort: 'eventDateTime', direction: 'DESC' })
+                  }
+                  className="flex items-center justify-between"
+                >
+      <span className="flex items-center gap-2">
+        <ArrowDown className="h-4 w-4" />
+        Start Date (Newest)
+      </span>
+                  {isActiveSort('eventDateTime', 'DESC') && (
+                    <Check className="h-4 w-4 text-primary" />
+                  )}
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleFilterChange({ sort: 'eventDateTime', direction: 'ASC' })
+                  }
+                  className="flex items-center justify-between"
+                >
+      <span className="flex items-center gap-2">
+        <ArrowUp className="h-4 w-4" />
+        Start Date (Oldest)
+      </span>
+                  {isActiveSort('eventDateTime', 'ASC') && (
+                    <Check className="h-4 w-4 text-primary" />
+                  )}
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                {/* Created At */}
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleFilterChange({ sort: 'createdAt', direction: 'DESC' })
+                  }
+                  className="flex items-center justify-between"
+                >
+      <span className="flex items-center gap-2">
+        <ArrowDown className="h-4 w-4" />
+        Created At (Newest)
+      </span>
+                  {isActiveSort('createdAt', 'DESC') && (
+                    <Check className="h-4 w-4 text-primary" />
+                  )}
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleFilterChange({ sort: 'createdAt', direction: 'ASC' })
+                  }
+                  className="flex items-center justify-between"
+                >
+      <span className="flex items-center gap-2">
+        <ArrowUp className="h-4 w-4" />
+        Created At (Oldest)
+      </span>
+                  {isActiveSort('createdAt', 'ASC') && (
+                    <Check className="h-4 w-4 text-primary" />
+                  )}
+                </DropdownMenuItem>
+
+              </DropdownMenuContent>
+            </DropdownMenu>
 
                 <SelectItem value="createdAt_DESC">
                   🔽 Created At (Newest)
