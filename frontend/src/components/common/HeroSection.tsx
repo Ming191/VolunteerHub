@@ -75,7 +75,7 @@ export const HeroSection = ({
 
           {/* Subtitle */}
           {subtitle && (
-            <p className="text-base sm:text-lg text-gray-600 mb-6 max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg text-gray-600 mb-6 leading-relaxed whitespace-normal">
               {subtitle}
             </p>
           )}

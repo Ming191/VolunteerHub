@@ -29,11 +29,6 @@ const refreshAccessToken = async (): Promise<string | null> => {
             refreshToken,
         });
 
-        // Update tokens and user data if returned (though refresh mainly returns tokens)
-        // If the refresh response includes partial user data, we might need to handle it carefully.
-        // For now assuming typical refresh flow:
-        // Adjust if response has different structure. Assuming response.data follows similar structure.
-
         const { accessToken, refreshToken: newRefreshToken, userId, email, name, role, isEmailVerified } = response.data;
 
         if (userId && email) {
@@ -46,12 +41,6 @@ const refreshAccessToken = async (): Promise<string | null> => {
             };
             authStorage.setAuth(accessToken, newRefreshToken, userData);
         } else {
-            // If refreshing doesn't return full user info, just update tokens.
-            // But we prefer keeping them in sync. If your refresh endpoint
-            // just returns tokens, we use existing user data if available.
-            // If existing user data is missing, we might need to fetch it or logout.
-
-            // Simple token update if user data isn't in refresh response
             authStorage.setAccessToken(accessToken);
             if (newRefreshToken) authStorage.setRefreshToken(newRefreshToken);
         }
@@ -125,10 +114,6 @@ axiosInstance.interceptors.response.use(
                 // Update storage
                 authStorage.setAccessToken(accessToken);
                 if (newRefreshToken) authStorage.setRefreshToken(newRefreshToken);
-
-                // Note: We might want to update user data here too if the API returns it
-                // similar to the refreshAccessToken function above. 
-
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
                 return axiosInstance(originalRequest);
