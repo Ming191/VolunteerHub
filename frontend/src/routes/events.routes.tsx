@@ -62,7 +62,7 @@ export const eventGalleryRoute = createRoute({
 
 export const postDetailsRoute = createRoute({
     getParentRoute: () => authenticatedLayoutRoute,
-    path: 'events/$eventId/posts/$postId',
+    path: '/events/$eventId/posts/$postId',
     component: () => <Suspense fallback={<SuspenseFallback />}><PostDetailsPage /></Suspense>,
 });
 
