@@ -99,12 +99,6 @@ export const LandingPage = () => {
               >
                 Browse Events
               </Link>
-              <Link
-                to="/blog"
-                className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors"
-              >
-                Blog
-              </Link>
               <a
                 href="#how-it-works"
                 className="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors"

@@ -90,10 +90,10 @@ export const SettingsPage = () => {
 
         <ChangePasswordCard />
 
-        {/* Fixed Bottom Action Bar */}
+        {/* Action Buttons at Bottom */}
         {hasChanges && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-            <div className="w-full max-w-4xl mx-auto px-4 py-4">
+          <Card>
+            <CardContent className="pt-6">
               <div className="flex items-center justify-end gap-2">
                 <Button
                   variant="outline"
@@ -111,8 +111,8 @@ export const SettingsPage = () => {
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     </SkeletonTransition>

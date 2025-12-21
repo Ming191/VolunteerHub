@@ -43,7 +43,7 @@ export const VolunteerQuickActions = ({
   ];
 
   return (
-    <Card className="h-full border-2 border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+    <Card className="h-full border-2 border-gray-200 shadow-sm bg-white">
       <CardHeader className="pb-3 border-b border-gray-100">
         <CardTitle className="text-base font-bold flex items-center gap-2 text-gray-900">
           <div className="p-2 rounded-lg bg-gradient-to-br from-green-100 to-green-200">

@@ -169,9 +169,25 @@ select {
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
+  /* Placeholder text styling */
+  ::placeholder {
+    @apply text-muted-foreground/60;
+    opacity: 1;
+  }
+
+  :-ms-input-placeholder {
+    @apply text-muted-foreground/60;
+  }
+
+  ::-ms-input-placeholder {
+    @apply text-muted-foreground/60;
+  }
+
   html {
     overflow-y: scroll;
     scrollbar-gutter: stable;
