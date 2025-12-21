@@ -27,7 +27,7 @@ export const landingRoute = createRoute({
 // Public events listing route (no auth required, with navbar)
 export const publicEventsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/events",
+  path: "/public/events",
   validateSearch: z.object({
     q: z.string().optional(),
     location: z.string().optional(),
