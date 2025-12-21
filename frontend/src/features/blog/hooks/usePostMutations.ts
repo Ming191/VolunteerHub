@@ -46,14 +46,14 @@ export const usePostMutations = (eventId?: number) => {
         );
       }
 
-      console.log('Creating post for event:', targetEventId);
-      console.log('Post content:', content);
-      console.log('Files:', files);
+      console.log("Creating post for event:", targetEventId);
+      console.log("Post content:", content);
+      console.log("Files:", files);
 
       // Upload images to GCS using signed URLs
       const imageUrls: string[] = [];
       if (files && files.length > 0) {
-        console.log('Uploading', files.length, 'files...');
+        console.log("Uploading", files.length, "files...");
         const uploadPromises = files.map(async (file) => {
           const { signedUrl, publicUrl } = await blogService.getSignedUrl(
             targetEventId,
@@ -72,11 +72,15 @@ export const usePostMutations = (eventId?: number) => {
           });
 
           if (!response.ok) {
-            console.error('Upload failed:', response.status, response.statusText);
+            console.error(
+              "Upload failed:",
+              response.status,
+              response.statusText
+            );
             throw new Error(`Failed to upload image: ${response.statusText}`);
           }
 
-          console.log('File uploaded successfully:', publicUrl);
+          console.log("File uploaded successfully:", publicUrl);
           return publicUrl;
         });
 
@@ -84,7 +88,7 @@ export const usePostMutations = (eventId?: number) => {
         imageUrls.push(...uploadedUrls);
       }
 
-      console.log('Creating post with image URLs:', imageUrls);
+      console.log("Creating post with image URLs:", imageUrls);
       return blogService.createPost(targetEventId, content, imageUrls);
     },
     onMutate: async ({ content, files, eventId: mutationEventId }) => {
@@ -184,7 +188,7 @@ export const usePostMutations = (eventId?: number) => {
       toast.success("Post created!");
     },
     onError: (err, _variables, context: unknown) => {
-      console.error('Failed to create post:', err);
+      console.error("Failed to create post:", err);
       const ctx = context as
         | { previousPosts?: unknown; targetQueryKey?: unknown[] }
         | undefined;
@@ -194,9 +198,10 @@ export const usePostMutations = (eventId?: number) => {
           ctx.previousPosts
         );
       }
-      
+
       // Show more detailed error message
-      const errorMessage = err instanceof Error ? err.message : "Failed to create post";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create post";
       toast.error(errorMessage);
     },
     onSettled: (_data, _error, _variables, context: unknown) => {

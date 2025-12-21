@@ -128,7 +128,10 @@ export const EventFilterPanel = ({
                 align="start"
               >
                 <Command>
-                  <CommandInput placeholder="Search tags..." className="border-0" />
+                  <CommandInput
+                    placeholder="Search tags..."
+                    className="border-0"
+                  />
                   <CommandList>
                     <CommandEmpty>No tags found.</CommandEmpty>
                     <CommandGroup>
