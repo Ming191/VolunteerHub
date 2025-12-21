@@ -159,12 +159,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
         navigate({ to: `/profile/${post.author.id}` });
     };
 
-  const handleViewEvent = () => {
-    if (post.eventId) {
-      navigate({ to: `/events/${post.eventId}` });
-    }
-  };
-
     return (
         <Card className="w-full mb-4 relative overflow-visible">
             {/* Loading Overlay for uploading posts */}

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ApiErrorState } from "@/components/ui/api-error-state";
 import {
@@ -46,13 +45,7 @@ export const EventListScreen = () => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
 
-  const navigate = useNavigate();
-
   const handleViewDetails = (event: EventResponse | UiEvent) => {
-    navigate({
-      to: "/blog",
-      search: { eventId: event.id.toString() },
-    });
     setSelectedEvent(event);
     setIsDetailOpen(true);
   };

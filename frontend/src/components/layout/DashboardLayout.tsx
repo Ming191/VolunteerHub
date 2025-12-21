@@ -8,7 +8,7 @@ import {
   UserCog,
   ShieldCheck,
   Users,
-  User,
+  User, List,
 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { SuspenseFallback } from "@/components/common/SuspenseFallback";
@@ -71,9 +71,9 @@ const DashboardLayout = () => {
             href: "/admin/pending-events",
           },
           {
-            title: "Users",
-            icon: <Users className="h-full w-full text-green-600" />,
-            href: "/admin/users",
+            title: "Management",
+            icon: <List className="h-full w-full text-green-600" />,
+            href: "/admin/management",
           },
         ]
       : []),
