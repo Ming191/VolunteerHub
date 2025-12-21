@@ -391,11 +391,7 @@ export const EventForm = (props: EventFormProps) => {
             >
               Cancel
             </RippleButton>
-            <RippleButton
-              type="submit"
-              variant="green"
-              disabled={isSubmitting}
-            >
+            <RippleButton type="submit" variant="green" disabled={isSubmitting}>
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}

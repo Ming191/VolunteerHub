@@ -5,7 +5,13 @@ import { SettingsPageSkeleton } from "../components/SettingsPageSkeleton";
 import { useSettings } from "../hooks/useSettings";
 import { NotificationsSection, PrivacySection } from "../components";
 import { ChangePasswordCard } from "../components/ChangePasswordCard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useNavigate } from "@tanstack/react-router";
 
 export const SettingsPage = () => {
@@ -96,7 +102,11 @@ export const SettingsPage = () => {
                 >
                   Discard
                 </Button>
-                <Button variant="green" onClick={saveSettings} disabled={isSaving}>
+                <Button
+                  variant="green"
+                  onClick={saveSettings}
+                  disabled={isSaving}
+                >
                   <Save className="h-4 w-4 mr-2" />
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>

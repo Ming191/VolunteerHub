@@ -99,7 +99,7 @@ export const AddEventModal = ({
       // Invalidate queries to refresh event lists with new images
       await queryClient.invalidateQueries({ queryKey: ["events"] });
       await queryClient.invalidateQueries({ queryKey: ["my-events"] });
-      
+
       toast.success("Event created successfully!", {
         description: "Your event has been submitted for approval.",
       });
