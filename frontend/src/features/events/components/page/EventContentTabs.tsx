@@ -128,6 +128,42 @@ export const EventAttendees = ({ event }: { event: EventResponse }) => {
           </div>
         </CardContent>
       </Card>
+=======
+export const EventTabsNavigation = ({ event, activeTab }: { event: EventResponse; activeTab: string }) => {
+    const navigate = useNavigate();
+    const { isOrganizer, isApprovedMember } = useEventPermissions(event);
+
+    // Only show full tabs for published events
+    const isPublished = event.status === 'PUBLISHED';
+
+    const handleTabChange = (value: string) => {
+        if (value === 'about') {
+            navigate({ to: `/events/${event.id}` });
+        } else if (value === 'community') {
+            navigate({ to: `/events/${event.id}/posts` });
+        } else if (value === 'attendees') {
+            navigate({ to: `/events/${event.id}/attendees` });
+        } else if (value === 'gallery') {
+            navigate({ to: `/events/${event.id}/gallery` });
+        }
+    };
+
+    return (
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList>
+                <TabsTrigger value="about">About</TabsTrigger>
+                {isPublished && (
+                    <>
+                        <TabsTrigger value="community">Community</TabsTrigger>
+                        {(isOrganizer || isApprovedMember) && (
+                            <TabsTrigger value="attendees">Attendees</TabsTrigger>
+                        )}
+                        <TabsTrigger value="gallery">Gallery</TabsTrigger>
+                    </>
+                )}
+            </TabsList>
+        </Tabs>
+>>>>>>> origin
     );
   }
 

@@ -131,10 +131,10 @@ export const useEditProfile = ({ currentProfile, open, onOpenChange }: UseEditPr
                 location: data.location || undefined,
                 dateOfBirth: data.dateOfBirth || undefined,
                 skills: data.skills && data.skills.length > 0
-                    ? new Set(data.skills as unknown as UpdateProfileRequestSkillsEnum[])
+                    ? (data.skills as unknown as UpdateProfileRequestSkillsEnum[])
                     : undefined,
                 interests: data.interests && data.interests.length > 0
-                    ? new Set(data.interests as unknown as UpdateProfileRequestInterestsEnum[])
+                    ? (data.interests as unknown as UpdateProfileRequestInterestsEnum[])
                     : undefined,
             };
 

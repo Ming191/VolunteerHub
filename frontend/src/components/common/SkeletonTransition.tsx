@@ -62,7 +62,7 @@ export const SkeletonTransition = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
                     className={className}
                 >
                     {skeleton}
@@ -70,9 +70,9 @@ export const SkeletonTransition = ({
             ) : (
                 <motion.div
                     key="content"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
                     className={className}
                 >
                     {children}

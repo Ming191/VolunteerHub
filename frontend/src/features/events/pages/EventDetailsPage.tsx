@@ -53,6 +53,59 @@ export const EventDetailsPage = () => {
         </div>
       </AnimatedPage>
     );
+                            error={new Error('This event is not available')} 
+                            onRetry={() => navigate({ to: '/events' })}
+                        />
+                    </div>
+                ) : event ? (
+                    <div className="min-h-screen bg-background pb-20">
+                        {/* Optional: Breadcrumbs or Back Button Area */}
+                        <div className="container mx-auto py-4">
+                            <Button variant="ghost" className="pl-0 hover:bg-transparent hover:text-primary" onClick={handleBack}>
+                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
+                            </Button>
+                        </div>
+
+                        {/* Rejection Notice */}
+                        {event.status === 'REJECTED' && (
+                        <div className="container mx-auto px-6 mb-6">
+                            <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+
+                            {/* 👇 div này là CHÌA KHOÁ */}
+                            <div>
+                                <AlertTitle>Event Not Approved</AlertTitle>
+                                <AlertDescription>
+                                {event.rejectionReason ||
+                                    'This event has been reviewed and was not approved for publication.'}
+                                </AlertDescription>
+                            </div>
+                            </Alert>
+                        </div>
+                        )}
+
+                        <EventHero
+                            event={event}
+                            isOrganizer={isOrganizer}
+                            onRegister={handleRegister}
+                        />
+
+                        <div className="container mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 px-6">
+                            <div className="lg:col-span-2 space-y-8">
+                                <EventTabsNavigation event={event} activeTab={activeTab} />
+                                <Outlet />
+                            </div>
+
+                            <div className="lg:col-span-1">
+                                <EventInfoSidebar event={event} onRegister={handleRegister} isOrganizer={isOrganizer} />
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+            </SkeletonTransition>
+        </AnimatedPage>
+>>>>>>> origin
+    );
   }
 
   const handleRegister = () => {
