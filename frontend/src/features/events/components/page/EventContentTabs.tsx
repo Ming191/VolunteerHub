@@ -200,6 +200,9 @@ export const EventTabsNavigation = ({ event, activeTab }: { event: EventResponse
     const navigate = useNavigate();
     const { isOrganizer, isApprovedMember } = useEventPermissions(event);
 
+    // Only show full tabs for published events
+    const isPublished = event.status === 'PUBLISHED';
+
     const handleTabChange = (value: string) => {
         if (value === 'about') {
             navigate({ to: `/events/${event.id}` });
@@ -216,11 +219,15 @@ export const EventTabsNavigation = ({ event, activeTab }: { event: EventResponse
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList>
                 <TabsTrigger value="about">About</TabsTrigger>
-                <TabsTrigger value="community">Community</TabsTrigger>
-                {(isOrganizer || isApprovedMember) && (
-                    <TabsTrigger value="attendees">Attendees</TabsTrigger>
+                {isPublished && (
+                    <>
+                        <TabsTrigger value="community">Community</TabsTrigger>
+                        {(isOrganizer || isApprovedMember) && (
+                            <TabsTrigger value="attendees">Attendees</TabsTrigger>
+                        )}
+                        <TabsTrigger value="gallery">Gallery</TabsTrigger>
+                    </>
                 )}
-                <TabsTrigger value="gallery">Gallery</TabsTrigger>
             </TabsList>
         </Tabs>
     );

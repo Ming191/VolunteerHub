@@ -152,8 +152,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
             toast.success("Link copied to clipboard");
         }
     };
-    const handleViewAuthorProfile = () => {
+    const handleViewAuthorProfile = (e?: React.MouseEvent) => {
+        e?.stopPropagation(); // Prevent card click if we add one later
         navigate({ to: `/profile/${post.author.id}` });
+    };
+
+    const handleViewEvent = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (post.eventId) {
+            navigate({ to: `/events/${post.eventId}` });
+        }
     };
 
 
@@ -182,11 +190,21 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
                 </Avatar>
                 <div className="flex flex-col flex-1">
                     <div className="flex items-center gap-2">
-                        <span className="font-semibold text-base">{post.author.name}</span>
+                        <span
+                            className="font-semibold text-base cursor-pointer hover:underline"
+                            onClick={handleViewAuthorProfile}
+                        >
+                            {post.author.name}
+                        </span>
                         {post.eventTitle && (
                             <>
                                 <span className="text-muted-foreground text-sm">in</span>
-                                <span className="font-medium text-sm text-primary">{post.eventTitle}</span>
+                                <span
+                                    className="font-medium text-sm text-primary cursor-pointer hover:underline"
+                                    onClick={handleViewEvent}
+                                >
+                                    {post.eventTitle}
+                                </span>
                             </>
                         )}
                     </div>
@@ -230,7 +248,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostU
             </CardHeader>
 
             <CardContent className="p-4 pt-0">
-                <p className="text-base mb-3 whitespace-pre-wrap break-words">{currentContent}</p>
+                <p className="text-lg mb-3 whitespace-pre-wrap break-words">{currentContent}</p>
 
                 <PostImages images={post.imageUrls || []} />
             </CardContent>

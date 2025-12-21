@@ -7,19 +7,34 @@ interface EventBadgesProps {
 }
 
 export function EventBadges({ event }: EventBadgesProps) {
-    return (
-        <div className="flex flex-wrap gap-2">
-            {event.isApproved ? (
+    const getStatusBadge = () => {
+        if (event.status === 'REJECTED') {
+            return (
+                <Badge variant="destructive">
+                    <UserX className="mr-1 h-3 w-3" />
+                    Rejected
+                </Badge>
+            );
+        }
+        if (event.isApproved) {
+            return (
                 <Badge variant="default" className="bg-green-500">
                     <UserCheck className="mr-1 h-3 w-3" />
                     Approved
                 </Badge>
-            ) : (
-                <Badge variant="secondary">
-                    <AlertCircle className="mr-1 h-3 w-3" />
-                    Pending Approval
-                </Badge>
-            )}
+            );
+        }
+        return (
+            <Badge variant="secondary">
+                <AlertCircle className="mr-1 h-3 w-3" />
+                Pending Approval
+            </Badge>
+        );
+    };
+
+    return (
+        <div className="flex flex-wrap gap-2">
+            {getStatusBadge()}
             {event.isFull && (
                 <Badge variant="destructive">
                     <UserX className="mr-1 h-3 w-3" />

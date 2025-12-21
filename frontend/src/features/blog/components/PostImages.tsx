@@ -79,23 +79,11 @@ export const PostImages: React.FC<PostImagesProps> = ({ images }) => {
                                 - Single Image: Permanent blurred background
                                 - Multiple Images: Hover-only blurred background
                             */}
-                            {images.length === 1 ? (
-                                <div
-                                    className="absolute inset-0 bg-cover bg-center scale-110 opacity-60 blur-[100px]"
-                                    style={{ backgroundImage: `url(${image})` }}
-                                />
-                            ) : (
-                                <motion.div
-                                    className="absolute inset-0 bg-cover bg-center scale-110"
-                                    style={{ backgroundImage: `url(${image})` }}
-                                    initial={{ opacity: 0, filter: 'blur(0px)' }}
-                                    whileHover={{
-                                        opacity: 0.6,
-                                        filter: 'blur(16px)',
-                                    }}
-                                    transition={{ duration: 0.3 }}
-                                />
-                            )}
+                            {/* Background Logic: Always show blurred background for filling space */}
+                            <div
+                                className="absolute inset-0 bg-cover bg-center scale-110 opacity-60 blur-2xl"
+                                style={{ backgroundImage: `url(${image})` }}
+                            />
 
                             {/* Main image */}
                             <motion.img
@@ -108,7 +96,7 @@ export const PostImages: React.FC<PostImagesProps> = ({ images }) => {
                                     images.length === 1
                                         ? 'max-h-[500px] w-auto h-auto object-contain mx-auto'
                                         : cn(
-                                            'object-cover w-full',
+                                            'object-contain w-full h-full',
                                             isLarge ? 'aspect-video' : 'aspect-square'
                                         )
                                 )}
