@@ -103,7 +103,7 @@ export const MyEventsScreen = () => {
                 </Button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuContent align="end" className="w-64 bg-white">
 
                 {/* Default */}
                 <DropdownMenuItem
