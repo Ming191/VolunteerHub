@@ -165,7 +165,7 @@ export const CommentItem = React.memo(
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="z-[70]">
                       <DropdownMenuItem onClick={() => setIsEditing(true)}>
                         <Edit2 className="mr-2 h-4 w-4" />
                         Edit
@@ -191,7 +191,7 @@ export const CommentItem = React.memo(
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="z-[70]">
                       <DropdownMenuItem
                         onClick={() => setIsReportDialogOpen(true)}
                         className="text-red-600 focus:text-red-600"

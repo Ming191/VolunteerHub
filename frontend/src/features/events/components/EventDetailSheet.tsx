@@ -94,7 +94,7 @@ export const EventDetailSheet = ({
         {currentView === "event-details" ? (
           <>
             {/* Header - Fixed at top */}
-            <div className="px-6 pt-6 pb-4 border-b border-gray-200 bg-white">
+            <div className="px-6 pt-8 pb-4 border-b border-gray-200 bg-white">
               <EventHeader
                 event={event}
                 onEdit={handleEditEvent}

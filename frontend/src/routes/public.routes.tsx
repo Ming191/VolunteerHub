@@ -4,6 +4,7 @@ import { LandingPage } from "@/features/home/LandingPage";
 import { Suspense, lazy } from "react";
 import { z } from "zod";
 import { SuspenseFallback } from "@/components/common/SuspenseFallback";
+import PublicLayout from "@/components/layout/PublicLayout";
 
 const EventListPageComponent = lazy(() =>
   import("@/features/events/pages/EventListPage").then((m) => ({
@@ -24,7 +25,7 @@ export const landingRoute = createRoute({
   component: LandingPage,
 });
 
-// Public events listing route (no auth required)
+// Public events listing route (no auth required, with navbar)
 export const publicEventsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/events",
@@ -38,8 +39,10 @@ export const publicEventsRoute = createRoute({
     size: z.number().optional(),
   }),
   component: () => (
-    <Suspense fallback={<SuspenseFallback />}>
-      <EventListPageComponent />
-    </Suspense>
+    <PublicLayout>
+      <Suspense fallback={<SuspenseFallback />}>
+        <EventListPageComponent />
+      </Suspense>
+    </PublicLayout>
   ),
 });

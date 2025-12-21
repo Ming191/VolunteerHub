@@ -85,7 +85,7 @@ export function EventSheetFooter({
           ) : isOrganizer && isOwner ? (
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors"
               size="lg"
               onClick={onViewRegistrations}
             >

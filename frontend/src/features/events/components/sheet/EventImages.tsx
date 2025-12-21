@@ -220,14 +220,19 @@ export function EventImages({
         {/* Carousel Lightbox */}
         <AlertDialog
           open={selectedImageIndex !== null}
-          onOpenChange={(open) => !open && setSelectedImageIndex(null)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedImageIndex(null);
+          }}
         >
-          <AlertDialogPopup className="max-w-[95vw] md:max-w-7xl lg:max-w-[90vw] w-full p-0 bg-black/95 border-none">
+          <AlertDialogPopup className="max-w-[95vw] md:max-w-7xl lg:max-w-[90vw] w-full p-0 bg-black/95 border-none z-[200]">
             <div className="relative">
               {/* Close button */}
               <button
-                onClick={() => setSelectedImageIndex(null)}
-                className="absolute top-4 right-4 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImageIndex(null);
+                }}
+                className="absolute top-4 right-4 z-[210] w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
