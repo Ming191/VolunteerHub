@@ -66,7 +66,7 @@ export const EventListScreen = () => {
           subtitle="Join events that match your passion and make a meaningful impact in your community."
           variant="default"
         >
-          {user?.role !== "VOLUNTEER" && (
+          {user && user.role !== "VOLUNTEER" && (
             <div className="flex flex-wrap gap-4">
               <Button
                 onClick={() => setIsAddEventModalOpen(true)}

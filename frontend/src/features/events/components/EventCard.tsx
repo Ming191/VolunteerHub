@@ -61,23 +61,6 @@ const getStatusConfig = (status: string) => {
       return { variant: "secondary" as const, label: status };
   }
 };
-        case 'DRAFT':
-            return { variant: 'secondary' as const, label: 'Draft' };
-        case 'PENDING':
-            return { variant: 'default' as const, label: 'Pending Approval' };
-        case 'PUBLISHED':
-            return { variant: 'default' as const, label: 'Published', className: 'bg-green-500 hover:bg-green-600' };
-        case 'REJECTED':
-            return { variant: 'destructive' as const, label: 'Rejected' };
-        case 'CANCELLED':
-            return { variant: 'destructive' as const, label: 'Cancelled' };
-        case 'COMPLETED':
-            return { variant: 'outline' as const, label: 'Completed' };
-        default:
-            return { variant: 'secondary' as const, label: status };
-    }
->>>>>>> origin
-};
 
 export const EventCard = <T extends UiEvent | EventResponse>({
   event,
@@ -246,80 +229,3 @@ export const EventCard = <T extends UiEvent | EventResponse>({
     </Card>
   );
 };
-=======
-            <CardHeader className="p-0">
-                {hasImage ? (
-                    <div className="relative">
-                        <img
-                            src={event.imageUrls[0]}
-                            alt={event.title}
-                            className="w-full h-48 object-cover rounded-t-lg"
-                        />
-                        {showStatus && statusConfig && (
-                            <Badge 
-                                variant={statusConfig.variant} 
-                                className={`absolute top-2 right-2 ${statusConfig.className || ''}`}
-                            >
-                                {statusConfig.label}
-                            </Badge>
-                        )}
-                    </div>
-                ) : (
-                    <div className="relative w-full h-48 bg-gradient-to-br from-muted to-muted/50 rounded-t-lg flex items-center justify-center">
-                        <Calendar className="h-16 w-16 text-muted-foreground/30" />
-                        {showStatus && statusConfig && (
-                            <Badge 
-                                variant={statusConfig.variant}
-                                className={`absolute top-2 right-2 ${statusConfig.className || ''}`}
-                            >
-                                {statusConfig.label}
-                            </Badge>
-                        )}
-                    </div>
-                )}
-                <div className="p-4">
-                    <CardTitle className="text-xl font-bold leading-tight truncate">
-                        {event.title}
-                    </CardTitle>
-                </div>
-            </CardHeader>
-            <CardContent className="flex-grow p-4 pt-0">
-                <div className="space-y-3 text-sm text-muted-foreground">
-                    <div className="flex items-center">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        <span>{formatDate(event.eventDateTime, 'PPP \'at\' p')}</span>
-                    </div>
-                    <div className="flex items-center">
-                        <MapPin className="mr-2 h-4 w-4" />
-                        <span className="truncate">{event.location}</span>
-                    </div>
-                    <div className="flex items-center">
-                        <Users className="mr-2 h-4 w-4" />
-                        <span>{event.isFull ? 'Full' : availableSpotsText}</span>
-                    </div>
-                </div>
-                {tags.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {tags.slice(0, 3).map((tag: string) => (
-                            <Badge key={tag} variant="secondary">
-                                {tag.replace(/_/g, ' ')}
-                            </Badge>
-                        ))}
-                        {tags.length > 3 && (
-                            <Badge variant="outline">+{tags.length - 3} more</Badge>
-                        )}
-                    </div>
-                )}
-            </CardContent>
-            <CardFooter className="p-4 pt-0">
-                <Button
-                    className="w-full"
-                    onClick={() => onViewDetails?.(event)}
-                >
-                    View Details
-                </Button>
-            </CardFooter>
-        </Card>
-    );
-}
->>>>>>> origin
