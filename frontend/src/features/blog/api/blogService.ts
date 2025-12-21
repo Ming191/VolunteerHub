@@ -4,6 +4,7 @@ import {
   CommentsApi,
   Configuration,
   LikesApi,
+  type PagePostResponse,
   type PostResponse,
   PostsApi
 } from '@/api-client';
@@ -14,15 +15,15 @@ const likeApi = new LikesApi(config, undefined, axiosInstance);
 const commentApi = new CommentsApi(config, undefined, axiosInstance);
 
 export const blogService = {
-  getPostsForEvent: async (eventId: number, page = 0, size = 20) => {
-    const response = await axiosInstance.get<PostResponse>(
+  getPostsForEvent: async (eventId: number, page = 0, size = 20): Promise<PagePostResponse> => {
+    const response = await axiosInstance.get<PagePostResponse>(
       `api/events/${eventId}/posts`,
       { params: { page, size } }
     );
     return response.data;
   },
 
-  getRecentPostsFeed: async (days = 7, page = 0, size = 20) => {
+  getRecentPostsFeed: async (days = 7, page = 0, size = 20): Promise<PagePostResponse> => {
     const response = await postsApi.getRecentPostsFeed({ days, page, size });
     return response.data;
   },
@@ -34,22 +35,23 @@ export const blogService = {
     return response.data;
   },
 
-  createPost: async (eventId: number, content: string, files?: File[]) => {
-    const formData = new FormData();
-    const postRequestPayload = { content };
-    const requestBlob = new Blob([JSON.stringify(postRequestPayload)], {
-      type: 'application/json'
-    });
-    formData.append('request', requestBlob);
+  getSignedUrl: async (eventId: number, contentType: string, fileName: string) => {
+    const response = await axiosInstance.post<{ signedUrl: string; publicUrl: string }>(
+      `api/events/${eventId}/posts/signed-url`,
+      { contentType, fileName }
+    );
+    return response.data;
+  },
 
-    if (files && files.length > 0) {
-      files.forEach(file => formData.append('files', file));
-    }
-
+  createPost: async (eventId: number, content: string, imageUrls?: string[]) => {
     const response = await axiosInstance.post<PostResponse>(
       `api/events/${eventId}/posts`,
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      { content, imageUrls: imageUrls || [] },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
     );
     return response.data;
   },

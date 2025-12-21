@@ -15,9 +15,14 @@ import com.google.firebase.messaging.FirebaseMessagingException
 import com.google.firebase.messaging.Message
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
+import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -34,9 +39,10 @@ class NotificationService(
     private val logger = LoggerFactory.getLogger(NotificationService::class.java)
 
     @Transactional(readOnly = true)
-    fun getNotificationsForUser(userEmail: String): List<NotificationResponse> {
+    fun getNotificationsForUser(userEmail: String, pageable: Pageable): Page<NotificationResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
-        return notificationRepository.findByRecipientIdOrderByCreatedAtDesc(user.id)
+        val spec = NotificationSpecifications.forUser(user.id)
+        return notificationRepository.findAll(spec, pageable)
             .map(notificationMapper::toNotificationResponse)
     }
 
@@ -44,11 +50,10 @@ class NotificationService(
      * Get unread notifications using NotificationSpecifications
      */
     @Transactional(readOnly = true)
-    fun getUnreadNotificationsForUser(userEmail: String): List<NotificationResponse> {
+    fun getUnreadNotificationsForUser(userEmail: String, pageable: Pageable): Page<NotificationResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
         val spec = NotificationSpecifications.unreadForUser(user.id)
-
-        return notificationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+        return notificationRepository.findAll(spec, pageable)
             .map(notificationMapper::toNotificationResponse)
     }
 
@@ -56,12 +61,11 @@ class NotificationService(
      * Get recent notifications from the last N days using NotificationSpecifications
      */
     @Transactional(readOnly = true)
-    fun getRecentNotifications(userEmail: String, days: Int): List<NotificationResponse> {
+    fun getRecentNotifications(userEmail: String, days: Int, pageable: Pageable): Page<NotificationResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
         val since = LocalDateTime.now().minusDays(days.toLong())
         val spec = NotificationSpecifications.recentForUser(user.id, since)
-
-        return notificationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+        return notificationRepository.findAll(spec, pageable)
             .map(notificationMapper::toNotificationResponse)
     }
 
@@ -69,12 +73,11 @@ class NotificationService(
      * Search notifications by content text using NotificationSpecifications
      */
     @Transactional(readOnly = true)
-    fun searchNotifications(userEmail: String, searchText: String): List<NotificationResponse> {
+    fun searchNotifications(userEmail: String, searchText: String, pageable: Pageable): Page<NotificationResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
         val spec = NotificationSpecifications.forUser(user.id)
             .and(NotificationSpecifications.contentContains(searchText))
-
-        return notificationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+        return notificationRepository.findAll(spec, pageable)
             .map(notificationMapper::toNotificationResponse)
     }
 
@@ -85,14 +88,14 @@ class NotificationService(
     fun getNotificationsByDateRange(
         userEmail: String,
         from: LocalDateTime,
-        to: LocalDateTime
-    ): List<NotificationResponse> {
+        to: LocalDateTime,
+        pageable: Pageable
+    ): Page<NotificationResponse> {
         val user = userRepository.findByEmailOrThrow(userEmail)
         val spec = NotificationSpecifications.forUser(user.id)
             .and(NotificationSpecifications.createdAfter(from))
             .and(NotificationSpecifications.createdBefore(to))
-
-        return notificationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+        return notificationRepository.findAll(spec, pageable)
             .map(notificationMapper::toNotificationResponse)
     }
 
@@ -124,6 +127,7 @@ class NotificationService(
     /**
      * Save notification to database
      */
+    @CacheEvict(value = ["notificationCounts"], key = "#result.recipient.email")
     @Transactional
     fun saveNotification(userId: Long, content: String, link: String?): Notification {
         val user = userRepository.findById(userId)
@@ -141,7 +145,9 @@ class NotificationService(
     /**
      * Send FCM push notification to all user devices (called by worker)
      * Enhanced with data payload support
+     * ASYNC - Does not block calling thread
      */
+    @Async
     fun sendFcmPushNotificationToUser(userId: Long, title: String, body: String, link: String? = null, data: Map<String, String> = emptyMap()) {
         val fcmTokens = fcmTokenRepository.findAllByUserId(userId)
 
@@ -150,6 +156,7 @@ class NotificationService(
             return
         }
 
+        // Process tokens concurrently for better performance
         fcmTokens.forEach { fcmToken ->
             sendPushNotificationWithRetry(fcmToken.token, fcmToken.id, title, body, link, data)
         }
@@ -242,8 +249,7 @@ class NotificationService(
     fun cleanupStaleTokens() {
         try {
             val cutoffDate = LocalDateTime.now().minusDays(90)
-            val staleTokens = fcmTokenRepository.findAll()
-                .filter { it.createdAt.isBefore(cutoffDate) }
+            val staleTokens = fcmTokenRepository.findStaleTokens(cutoffDate)
 
             if (staleTokens.isNotEmpty()) {
                 fcmTokenRepository.deleteAll(staleTokens)
@@ -259,6 +265,7 @@ class NotificationService(
     /**
      * Mark notification as read
      */
+    @CacheEvict(value = ["notificationCounts"], key = "#userEmail")
     @Transactional
     fun markNotificationAsRead(notificationId: Long, userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
@@ -277,6 +284,7 @@ class NotificationService(
     /**
      * Mark all notifications as read for a user
      */
+    @CacheEvict(value = ["notificationCounts"], key = "#userEmail")
     @Transactional
     fun markAllNotificationsAsRead(userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
@@ -307,6 +315,7 @@ class NotificationService(
     /**
      * Get unread notification count for a user
      */
+    @Cacheable(value = ["notificationCounts"], key = "#userEmail")
     @Transactional(readOnly = true)
     fun getUnreadNotificationCount(userEmail: String): Long {
         val user = userRepository.findByEmailOrThrow(userEmail)

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { fcmService } from '@/features/notifications/services/fcmService';
 import { SettingRow } from './SettingRow';
 import type { UserSettingsResponse, UpdateUserSettingsRequest } from '@/api-client';
+import { useState, useEffect } from 'react';
 
 interface NotificationsSectionProps {
     settings: UserSettingsResponse | undefined;
@@ -14,6 +15,61 @@ interface NotificationsSectionProps {
 }
 
 export const NotificationsSection = ({ settings, updateSettings, disabled }: NotificationsSectionProps) => {
+    const [isPushEnabled, setIsPushEnabled] = useState(settings?.pushNotificationsEnabled ?? true);
+    const [isProcessingPush, setIsProcessingPush] = useState(false);
+
+    // Sync state with settings when they change
+    useEffect(() => {
+        setIsPushEnabled(settings?.pushNotificationsEnabled ?? true);
+    }, [settings?.pushNotificationsEnabled]);
+
+    const handlePushNotificationToggle = async (checked: boolean) => {
+        if (isProcessingPush) return;
+
+        if (checked) {
+            setIsProcessingPush(true);
+            setIsPushEnabled(true); // Optimistically enable
+            
+            try {
+                // Request permission first
+                const permission = await fcmService.requestNotificationPermission();
+                if (permission === 'granted') {
+                    const registered = await fcmService.registerDeviceForNotifications();
+                    if (registered) {
+                        updateSettings('pushNotificationsEnabled', true);
+                        toast.success('Push notifications enabled');
+                    } else {
+                        setIsPushEnabled(false); // Revert on failure
+                        toast.error('Failed to register device for notifications');
+                    }
+                } else {
+                    setIsPushEnabled(false); // Revert on denial
+                    toast.error('Notification permission denied by browser');
+                }
+            } catch (error) {
+                setIsPushEnabled(false); // Revert on error
+                toast.error('Failed to enable push notifications');
+            } finally {
+                setIsProcessingPush(false);
+            }
+        } else {
+            setIsProcessingPush(true);
+            setIsPushEnabled(false);
+            
+            try {
+                // Unregister FCM token when disabling
+                await fcmService.unregisterDevice();
+                updateSettings('pushNotificationsEnabled', false);
+                toast.success('Push notifications disabled');
+            } catch (error) {
+                console.error('Error disabling push notifications:', error);
+                updateSettings('pushNotificationsEnabled', false);
+            } finally {
+                setIsProcessingPush(false);
+            }
+        }
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -46,30 +102,9 @@ export const NotificationsSection = ({ settings, updateSettings, disabled }: Not
                 >
                     <Switch
                         id="push-notifications"
-                        checked={settings?.pushNotificationsEnabled ?? true}
-                        onCheckedChange={async (checked) => {
-                            if (checked) {
-                                try {
-                                    // Request permission first
-                                    const permission = await fcmService.requestNotificationPermission();
-                                    if (permission === 'granted') {
-                                        const registered = await fcmService.registerDeviceForNotifications();
-                                        if (registered) {
-                                            updateSettings('pushNotificationsEnabled', true);
-                                        } else {
-                                            toast.error('Failed to register device for notifications');
-                                        }
-                                    } else {
-                                        toast.error('Notification permission denied by browser');
-                                    }
-                                } catch {
-                                    toast.error('Failed to enable push notifications');
-                                }
-                            } else {
-                                updateSettings('pushNotificationsEnabled', false);
-                            }
-                        }}
-                        disabled={disabled}
+                        checked={isPushEnabled}
+                        onCheckedChange={handlePushNotificationToggle}
+                        disabled={disabled || isProcessingPush}
                     />
                 </SettingRow>
                 <Separator />

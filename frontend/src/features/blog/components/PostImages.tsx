@@ -101,11 +101,16 @@ export const PostImages: React.FC<PostImagesProps> = ({ images }) => {
                             <motion.img
                                 src={image}
                                 alt=""
+                                loading="lazy"
+                                decoding="async"
                                 className={cn(
                                     'relative z-10 w-full rounded-lg',
                                     images.length === 1
-                                        ? 'h-[500px] object-contain' // Removed bg-black/5 as we have the blur
-                                        : 'aspect-[4/3] object-cover'
+                                        ? 'max-h-[500px] w-auto h-auto object-contain mx-auto'
+                                        : cn(
+                                            'object-cover w-full',
+                                            isLarge ? 'aspect-video' : 'aspect-square'
+                                        )
                                 )}
                                 whileHover={{ scale: 1.05 }}
                                 transition={{ duration: 0.3 }}

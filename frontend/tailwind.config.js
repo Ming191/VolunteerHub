@@ -4,6 +4,17 @@ export default {
   darkMode: ["class"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: [
+          "Inter",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+      },
       colors: {
         brand: {
           teal: {
@@ -51,16 +62,19 @@ export default {
         },
       },
       backgroundImage: {
-        "gradient-hero": "linear-gradient(135deg, #E0FFF8 0%, #FFFFFF 50%, #FFF8E6 100%)",
+        "gradient-hero":
+          "linear-gradient(135deg, #E0FFF8 0%, #FFFFFF 50%, #FFF8E6 100%)",
         "gradient-vibrant": "linear-gradient(135deg, #00D4A8 0%, #FF9500 100%)",
         "gradient-warm": "linear-gradient(135deg, #FFF8E6 0%, #FFECB3 100%)",
         "gradient-cool": "linear-gradient(135deg, #E0FFF8 0%, #B3FFF0 100%)",
-        "gradient-community": "linear-gradient(135deg, #00D4A8 0%, #FF9500 50%, #FF6B9D 100%)",
+        "gradient-community":
+          "linear-gradient(135deg, #00D4A8 0%, #FF9500 50%, #FF6B9D 100%)",
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-in",
         "slide-up": "slideUp 0.4s ease-out",
-        "pulse-vibrant": "pulseVibrant 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "pulse-vibrant":
+          "pulseVibrant 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "bounce-gentle": "bounceGentle 2s ease-in-out infinite",
       },
       keyframes: {
@@ -88,9 +102,9 @@ export default {
         },
       },
       boxShadow: {
-        'vibrant': '0 10px 20px -5px rgba(0, 212, 168, 0.3)',
-        'warm': '0 10px 20px -5px rgba(255, 149, 0, 0.3)',
-        'coral': '0 10px 20px -5px rgba(255, 107, 157, 0.25)',
+        vibrant: "0 10px 20px -5px rgba(0, 212, 168, 0.3)",
+        warm: "0 10px 20px -5px rgba(255, 149, 0, 0.3)",
+        coral: "0 10px 20px -5px rgba(255, 107, 157, 0.25)",
       },
     },
   },

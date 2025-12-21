@@ -105,7 +105,12 @@ export const EventDetailSheet = ({
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto px-6 py-6">
               <div className="space-y-6 pb-6">
-                <EventImages imageUrls={event.imageUrls} title={event.title} />
+                <EventImages
+                  eventId={event.id}
+                  imageUrls={event.imageUrls}
+                  title={event.title}
+                  showGallery={false}
+                />
                 <EventBadges event={event} />
                 <EventDateInfo event={event} />
                 <Separator className="my-4" />

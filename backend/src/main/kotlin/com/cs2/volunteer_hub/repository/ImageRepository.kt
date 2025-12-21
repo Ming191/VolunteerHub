@@ -9,14 +9,14 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface ImageRepository : JpaRepository<Image, Long> {
-    
+
     /**
-     * Fetch all uploaded images from an event and its associated posts.
-     * Returns images from both event.images and event.posts[*].images where status = UPLOADED.
-     * Results are ordered by upload date (newest first).
-     * Eagerly fetches related entities to avoid N+1 queries.
+     * Fetch all uploaded images from an event and its associated posts. Returns images from both
+     * event.images and event.posts[*].images where status = UPLOADED. Results are ordered by upload
+     * date (newest first). Eagerly fetches related entities to avoid N+1 queries.
      */
-    @Query("""
+    @Query(
+            """
         SELECT DISTINCT i FROM Image i
         LEFT JOIN FETCH i.post p
         LEFT JOIN FETCH i.event e
@@ -28,9 +28,28 @@ interface ImageRepository : JpaRepository<Image, Long> {
             OR i.post.event.id = :eventId
         )
         ORDER BY i.id DESC
-    """)
+    """
+    )
     fun findAllByEventIncludingPosts(
-        @Param("eventId") eventId: Long,
-        @Param("status") status: ImageStatus = ImageStatus.UPLOADED
+            @Param("eventId") eventId: Long,
+            @Param("status") status: ImageStatus = ImageStatus.UPLOADED
     ): List<Image>
+
+    @Query(
+            """
+        SELECT DISTINCT i FROM Image i
+        LEFT JOIN i.post p
+        LEFT JOIN i.event e
+        WHERE i.status = :status
+        AND (
+            i.event.id = :eventId
+            OR i.post.event.id = :eventId
+        )
+    """
+    )
+    fun findAllByEventIncludingPosts(
+            @Param("eventId") eventId: Long,
+            @Param("status") status: ImageStatus = ImageStatus.UPLOADED,
+            pageable: org.springframework.data.domain.Pageable
+    ): org.springframework.data.domain.Page<Image>
 }

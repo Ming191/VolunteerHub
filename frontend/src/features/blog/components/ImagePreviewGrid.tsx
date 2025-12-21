@@ -18,20 +18,20 @@ export const ImagePreviewGrid: React.FC<ImagePreviewGridProps> = ({ images, onRe
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 mb-2">
             {images.map((image, index) => (
-                <div key={`${image.file.name}-${index}`} className="relative group">
+                <div key={`${image.file.name}-${index}`} className="relative group overflow-hidden rounded-md aspect-square">
                     <img
                         src={image.url}
                         alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-md border"
+                        className="w-full h-full object-cover border"
                     />
                     <Button
-                        variant="secondary"
+                        variant="destructive"
                         size="icon"
-                        className="absolute top-1 right-1 h-6 w-6 rounded-full opacity-80 hover:opacity-100"
+                        className="!absolute !top-2 !right-2 h-7 w-7 rounded-full shadow-lg !z-10 opacity-90 hover:opacity-100"
                         onClick={() => onRemove(index)}
                         type="button"
                     >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" />
                     </Button>
                 </div>
             ))}

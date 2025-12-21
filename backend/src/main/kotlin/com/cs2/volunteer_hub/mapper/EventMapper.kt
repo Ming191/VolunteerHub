@@ -11,21 +11,22 @@ import org.springframework.stereotype.Component
 
 @Component
 class EventMapper(
-    private val eventCapacityService: EventCapacityService,
-    private val imageRepository: ImageRepository
+        private val eventCapacityService: EventCapacityService,
+        private val imageRepository: ImageRepository
 ) {
         /** Map Event entity to EventResponse DTO */
         fun toEventResponse(event: Event): EventResponse {
                 val approvedCount = eventCapacityService.getApprovedCount(event.id)
                 val waitlistCount = eventCapacityService.getWaitlistCount(event.id)
                 val pendingCount = eventCapacityService.getPendingCount(event.id)
-                val galleryImages = buildGalleryImages(event.id)
+                // Removed massive gallery fetch for performance
+                // val galleryImages = buildGalleryImages(event.id)
 
                 return EventResponse(
                         id = event.id,
                         title = event.title,
                         imageUrls = event.images.mapNotNull { it.url },
-                        galleryImageUrls = galleryImages,
+                        // galleryImageUrls = galleryImages,
                         description = event.description,
                         location = event.location,
                         latitude = event.latitude,
@@ -49,7 +50,8 @@ class EventMapper(
                         isFull = event.maxParticipants?.let { approvedCount >= it } ?: false,
                         isInProgress = event.isInProgress(),
                         tags = event.tags.toSet(),
-                        status = event.status
+                        status = event.status,
+                        imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD }
                 )
         }
 
@@ -71,13 +73,13 @@ class EventMapper(
                                                 "Missing capacity stats for event ${event.id}"
                                         )
 
-                        val galleryImages = buildGalleryImages(event.id)
+                        // val galleryImages = buildGalleryImages(event.id)
 
                         EventResponse(
                                 id = event.id,
                                 title = event.title,
                                 imageUrls = event.images.mapNotNull { it.url },
-                                galleryImageUrls = galleryImages,
+                                // galleryImageUrls = galleryImages,
                                 description = event.description,
                                 location = event.location,
                                 latitude = event.latitude,
@@ -99,43 +101,36 @@ class EventMapper(
                                                 ?: false,
                                 isInProgress = event.isInProgress(),
                                 tags = event.tags.toSet(),
-                                status = event.status
+                                status = event.status,
+                                imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD }
                         )
                 }
         }
 
-        /**
-         * Build gallery images list including images from both the event and its posts.
-         * Returns images ordered by upload date (newest first) with attribution metadata.
-         */
-        private fun buildGalleryImages(eventId: Long): List<GalleryImageResponse> {
-                val allImages = imageRepository.findAllByEventIncludingPosts(eventId, ImageStatus.UPLOADED)
-
-                return allImages.mapNotNull { image ->
-                        image.url?.let { url ->
-                                when {
-                                        image.event?.id == eventId -> {
-                                                // Image belongs directly to the event
-                                                GalleryImageResponse(
-                                                        url = url,
-                                                        source = "event",
-                                                        authorName = null,
-                                                        authorId = null,
-                                                        postId = null
-                                                )
-                                        }
-                                        image.post?.event?.id == eventId -> {
-                                                // Image belongs to a post associated with the event
-                                                GalleryImageResponse(
-                                                        url = url,
-                                                        source = "post",
-                                                        authorName = image.post?.author?.name,
-                                                        authorId = image.post?.author?.id,
-                                                        postId = image.post?.id
-                                                )
-                                        }
-                                        else -> null
+        fun toGalleryImageResponse(image: Image, eventId: Long): GalleryImageResponse? {
+                return image.url?.let { url ->
+                        when {
+                                image.event?.id == eventId -> {
+                                        // Image belongs directly to the event
+                                        GalleryImageResponse(
+                                                url = url,
+                                                source = "event",
+                                                authorName = null,
+                                                authorId = null,
+                                                postId = null
+                                        )
                                 }
+                                image.post?.event?.id == eventId -> {
+                                        // Image belongs to a post associated with the event
+                                        GalleryImageResponse(
+                                                url = url,
+                                                source = "post",
+                                                authorName = image.post?.author?.name,
+                                                authorId = image.post?.author?.id,
+                                                postId = image.post?.id
+                                        )
+                                }
+                                else -> null
                         }
                 }
         }

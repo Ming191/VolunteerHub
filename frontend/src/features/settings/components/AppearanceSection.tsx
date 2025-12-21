@@ -31,8 +31,10 @@ export const AppearanceSection = ({ settings, updateSettings, disabled }: Appear
                     <div className="flex items-center gap-2">
                         <AnimatedThemeToggler
                             disabled={disabled}
-                            onToggle={(newTheme: string) => {
-                                const backendValue = newTheme === 'dark' ? 'DARK' : 'LIGHT';
+                            onThemeChange={(newTheme) => {
+                                const backendValue = newTheme === 'light' ? 'LIGHT' : 
+                                                    newTheme === 'dark' ? 'DARK' : 
+                                                    'SYSTEM';
                                 updateSettings('theme', backendValue);
                             }}
                         />

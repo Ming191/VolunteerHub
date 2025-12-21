@@ -36,3 +36,11 @@ export const useUpdateRegistrationStatus = () => {
     },
   });
 };
+
+export const useEventAttendees = (eventId: number, enabled: boolean = false) => {
+    return useQuery({
+        queryKey: ['event-attendees', eventId],
+        queryFn: () => eventService.getEventAttendees(eventId),
+        enabled: enabled,
+    });
+};

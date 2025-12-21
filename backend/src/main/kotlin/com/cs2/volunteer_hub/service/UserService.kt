@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.service
 import com.cs2.volunteer_hub.dto.PublicUserResponse
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.repository.UserRepository
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -11,6 +12,7 @@ class UserService(
     private val userRepository: UserRepository
 ) {
 
+    @Cacheable(value = ["publicUserProfiles"], key = "#id")
     @Transactional(readOnly = true)
     fun getPublicUserProfile(id: Long): PublicUserResponse {
         val user = userRepository.findById(id)

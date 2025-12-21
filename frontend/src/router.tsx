@@ -12,6 +12,7 @@ import {
   authenticatedLayoutRoute,
   dashboardRoute,
   indexRoute,
+  organizerAnalyticsRoute,
 } from "./routes/dashboard.routes";
 import {
   myEventsRoute,
@@ -26,6 +27,7 @@ import {
 } from "./routes/events.routes";
 import {
   profileRoute,
+  profileByIdRoute,
   notificationsRoute,
   settingsRoute,
 } from "./routes/user.routes";
@@ -57,12 +59,14 @@ const routeTree = rootRoute.addChildren([
   authenticatedLayoutRoute.addChildren([
     indexRoute,
     dashboardRoute,
+    organizerAnalyticsRoute,
+    eventsRoute,
     profileRoute,
+    profileByIdRoute,
     notificationsRoute,
     settingsRoute,
     myEventsRoute,
     myRegistrationsRoute,
-    eventsRoute,
     eventDetailsRoute.addChildren([
       eventAboutRoute,
       eventCommunityRoute,

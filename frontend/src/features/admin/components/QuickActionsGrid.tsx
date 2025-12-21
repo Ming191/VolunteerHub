@@ -17,7 +17,7 @@ export const QuickActionsGrid = () => {
                         <FileCheck className="h-5 w-5 mb-2" />
                         <span className="text-sm">Approve Events</span>
                     </Button>
-                    <Button variant="outline" className="h-auto py-4 flex-col" onClick={() => navigate({ to: '/admin/users' })}>
+                    <Button variant="outline" className="h-auto py-4 flex-col" onClick={() => navigate({ to: '/admin/management' })}>
                         <Users className="h-5 w-5 mb-2" />
                         <span className="text-sm">Manage Users</span>
                     </Button>

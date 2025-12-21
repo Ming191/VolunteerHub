@@ -1,7 +1,10 @@
 import { createRoute, redirect } from "@tanstack/react-router";
+import { Suspense } from "react";
 import { rootRoute } from "./root.route";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { DashboardRouter } from "./components/DashboardRouter";
+import { SuspenseFallback } from "@/components/common/SuspenseFallback";
+import { OrganizerAnalytics } from "./lazy-components";
 
 // 3. Protected Routes Layout
 export const authenticatedLayoutRoute = createRoute({
@@ -37,4 +40,14 @@ export const indexRoute = createRoute({
   beforeLoad: () => {
     throw redirect({ to: "/dashboard" });
   },
+});
+
+export const organizerAnalyticsRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: "/organizer/analytics",
+  component: () => (
+    <Suspense fallback={<SuspenseFallback />}>
+      <OrganizerAnalytics />
+    </Suspense>
+  ),
 });

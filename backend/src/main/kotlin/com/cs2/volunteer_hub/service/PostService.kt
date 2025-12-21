@@ -4,15 +4,14 @@ import com.cs2.volunteer_hub.config.RabbitMQConfig
 import com.cs2.volunteer_hub.dto.PostCreationMessage
 import com.cs2.volunteer_hub.dto.PostRequest
 import com.cs2.volunteer_hub.dto.PostResponse
+import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.mapper.PostMapper
 import com.cs2.volunteer_hub.model.Post
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.repository.*
-import com.cs2.volunteer_hub.specification.LikeSpecifications
 import com.cs2.volunteer_hub.specification.PostSpecifications
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
-import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
@@ -25,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile
+import java.time.LocalDateTime
 
 @Service
 class PostService(
@@ -37,58 +37,59 @@ class PostService(
         private val postMapper: PostMapper,
         private val authorizationService: AuthorizationService,
         private val cacheEvictionService: CacheEvictionService,
-        @field:Value($$"${upload.max-files-per-post:5}") private val maxFilesPerPost: Int = 5
+        private val imageUploadService: ImageUploadService,
+        @Value("\${upload.max-files-per-post:5}") private val maxFilesPerPost: Int
 ) {
     private val logger = LoggerFactory.getLogger(PostService::class.java)
+
+    fun generateSignedUrl(contentType: String, fileName: String): Pair<String, String> {
+        return imageUploadService.generateSignedUrl(contentType, fileName)
+    }
 
     @CacheEvict(value = ["posts"], key = "#eventId")
     @Transactional
     fun createPost(
             eventId: Long,
             request: PostRequest,
-            files: List<MultipartFile>?,
             userEmail: String
     ): PostResponse {
         val author = userRepository.findByEmailOrThrow(userEmail)
         val event = authorizationService.requireEventPostPermission(eventId, author.id)
 
-        if (request.content.isBlank() && (files == null || files.isEmpty())) {
-            throw com.cs2.volunteer_hub.exception.BadRequestException(
-                    "Post must contain either text content or an image."
+        if (request.content.isBlank() && request.imageUrls.isNullOrEmpty()) {
+            throw BadRequestException(
+                "Post must contain either text content or an image."
             )
         }
 
-        files?.let { fileValidationService.validateFiles(it, maxFilesPerPost) }
+        request.imageUrls?.let {
+            if (it.size > maxFilesPerPost) {
+                 throw BadRequestException("Cannot upload more than $maxFilesPerPost images.")
+            }
+        }
 
         val post = Post(content = request.content, author = author, event = event)
 
-        if (!files.isNullOrEmpty()) {
-            fileValidationService.processFilesForPost(files, post)
-        }
-
         val savedPost = postRepository.save(post)
-        logger.info(
-                "Created post ID: ${savedPost.id} with ${savedPost.images.size} images pending upload"
-        )
-
-        if (savedPost.images.isNotEmpty()) {
-            val message = PostCreationMessage(postId = savedPost.id)
-
-            TransactionSynchronizationManager.registerSynchronization(
-                    object : TransactionSynchronization {
-                        override fun afterCommit() {
-                            rabbitTemplate.convertAndSend(
-                                    RabbitMQConfig.EXCHANGE_NAME,
-                                    RabbitMQConfig.POST_CREATION_PENDING_ROUTING_KEY,
-                                    message
-                            )
-                            logger.info(
-                                    "Sent post creation message to queue for Post ID: ${savedPost.id}"
-                            )
-                        }
-                    }
-            )
+        
+        // Handle pre-uploaded images
+        if (!request.imageUrls.isNullOrEmpty()) {
+             request.imageUrls.forEachIndexed { index, url ->
+                 val image = com.cs2.volunteer_hub.model.Image(
+                     url = url,
+                     post = savedPost,
+                     originalFileName = "direct-upload-$index.jpg",
+                     contentType = "image/jpeg",
+                     status = com.cs2.volunteer_hub.model.ImageStatus.UPLOADED
+                 )
+                 savedPost.images.add(image)
+             }
+             postRepository.save(savedPost)
         }
+        
+        logger.info(
+                "Created post ID: ${savedPost.id} with ${savedPost.images.size} images (pre-uploaded)"
+        )
 
         return postMapper.toPostResponse(savedPost, false)
     }
@@ -109,18 +110,23 @@ class PostService(
             return Page.empty(pageable)
         }
 
+        // Load posts with all associations in single query
         val postIds = postPage.content.map { it.id }
-        val likedPostIds = user?.let { getLikedPostIdsByUser(it.id, postIds) } ?: emptySet()
+        val postsWithAssociations = postRepository.findByIdsWithAssociations(postIds)
+        
+        // Maintain original order from pagination
+        val postMap = postsWithAssociations.associateBy { it.id }
+        val orderedPosts = postIds.mapNotNull { postMap[it] }
 
-        val postResponses = postMapper.toPostResponseList(postPage.content, likedPostIds)
+        val likedPostIds = user?.let { getLikedPostIdsByUser(it.id, postIds) } ?: emptySet()
+        val postResponses = postMapper.toPostResponseList(orderedPosts, likedPostIds)
 
         return PageImpl(postResponses, pageable, postPage.totalElements)
     }
 
     @Transactional(readOnly = true)
     internal fun getLikedPostIdsByUser(userId: Long, postIds: List<Long>): Set<Long> {
-        val spec = LikeSpecifications.byUserForPosts(userId, postIds)
-        return likeRepository.findAll(spec).map { it.post.id }.toSet()
+        return likeRepository.findLikedPostIdsByUserAndPosts(userId, postIds)
     }
 
     @Transactional
@@ -134,7 +140,7 @@ class PostService(
         val post = postRepository.findByIdOrThrow(postId)
 
         if (post.event.id != eventId) {
-            throw com.cs2.volunteer_hub.exception.BadRequestException(
+            throw BadRequestException(
                     "Post does not belong to the specified event."
             )
         }
@@ -160,7 +166,7 @@ class PostService(
         val post = postRepository.findByIdOrThrow(postId)
 
         if (post.event.id != eventId) {
-            throw com.cs2.volunteer_hub.exception.BadRequestException(
+            throw BadRequestException(
                     "Post does not belong to the specified event."
             )
         }
@@ -171,8 +177,7 @@ class PostService(
 
     @Transactional(readOnly = true)
     internal fun isPostLikedByUser(userId: Long, postId: Long): Boolean {
-        val spec = LikeSpecifications.byUserAndPost(userId, postId)
-        return likeRepository.findAll(spec).isNotEmpty()
+        return likeRepository.existsByUserIdAndPostId(userId, postId)
     }
 
     @Transactional
@@ -181,7 +186,7 @@ class PostService(
         val post = postRepository.findByIdOrThrow(postId)
 
         if (post.event.id != eventId) {
-            throw com.cs2.volunteer_hub.exception.BadRequestException(
+            throw BadRequestException(
                     "Post does not belong to the specified event."
             )
         }

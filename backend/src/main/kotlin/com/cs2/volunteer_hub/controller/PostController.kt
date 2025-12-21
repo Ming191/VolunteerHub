@@ -3,6 +3,8 @@ package com.cs2.volunteer_hub.controller
 import com.cs2.volunteer_hub.dto.PagePostResponse
 import com.cs2.volunteer_hub.dto.PostRequest
 import com.cs2.volunteer_hub.dto.PostResponse
+import com.cs2.volunteer_hub.dto.SignedUrlRequest
+import com.cs2.volunteer_hub.dto.SignedUrlResponse
 import com.cs2.volunteer_hub.service.PostService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -17,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api")
@@ -26,23 +27,36 @@ import org.springframework.web.multipart.MultipartFile
 class PostController(private val postService: PostService) {
 
         @Operation(
+                summary = "Get signed URL for image upload",
+                description = "Get a pre-signed URL to upload an image directly to GCS."
+        )
+        @PreAuthorize("isAuthenticated()")
+        @PostMapping(value = ["/events/{eventId}/posts/signed-url"])
+        fun getSignedUrlForPost(
+                @PathVariable eventId: Long,
+                @RequestBody request: SignedUrlRequest
+        ): ResponseEntity<SignedUrlResponse> {
+                val (signedUrl, publicUrl) =
+                        postService.generateSignedUrl(request.contentType, request.fileName)
+                return ResponseEntity.ok(SignedUrlResponse(signedUrl, publicUrl))
+        }
+
+        @Operation(
                 summary = "Create post for event",
                 description =
-                        "Create a new post for a specific event. Optionally upload up to 5 images with the post."
+                        "Create a new post for a specific event. Optionally include image URLs if uploaded via signed URL."
         )
         @PreAuthorize("isAuthenticated()")
         @PostMapping(
                 value = ["/events/{eventId}/posts"],
-                consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
+                consumes = [MediaType.APPLICATION_JSON_VALUE]
         )
         fun createPostForEvent(
                 @PathVariable eventId: Long,
-                @RequestPart("request") @Valid postRequest: PostRequest,
-                @RequestPart("files", required = false) files: List<MultipartFile>?,
+                @Valid @RequestBody postRequest: PostRequest,
                 @AuthenticationPrincipal currentUser: UserDetails
         ): ResponseEntity<PostResponse> {
-                val newPost =
-                        postService.createPost(eventId, postRequest, files, currentUser.username)
+                val newPost = postService.createPost(eventId, postRequest, currentUser.username)
                 return ResponseEntity.status(HttpStatus.CREATED).body(newPost)
         }
 
@@ -138,52 +152,57 @@ class PostController(private val postService: PostService) {
                         postService.updatePost(eventId, postId, postRequest, currentUser.username)
                 return ResponseEntity.ok(updatedPost)
         }
-    @Operation(
-            summary = "Get posts by user ID",
-            description = "Get all posts created by a specific user with pagination and sorting"
-    )
-    @GetMapping("posts/user/{userId}")
-    fun getPostsByUserId(
-            @PathVariable userId: Long,
-            @RequestParam(defaultValue = "0") page: Int,
-            @RequestParam(defaultValue = "20") size: Int,
-            @RequestParam(defaultValue = "createdAt") sort: String,
-            @RequestParam(defaultValue = "desc") direction: String,
-            @AuthenticationPrincipal currentUser: UserDetails?
-    ): ResponseEntity<PagePostResponse> {
-        val pageable =
-                PageRequest.of(page, size, Sort.Direction.fromString(direction.uppercase()), sort)
-        val posts = postService.getPostsByUserId(userId, currentUser?.username, pageable)
-        return ResponseEntity.ok(PagePostResponse.from(posts))
-    }
+        @Operation(
+                summary = "Get posts by user ID",
+                description = "Get all posts created by a specific user with pagination and sorting"
+        )
+        @GetMapping("posts/user/{userId}")
+        fun getPostsByUserId(
+                @PathVariable userId: Long,
+                @RequestParam(defaultValue = "0") page: Int,
+                @RequestParam(defaultValue = "20") size: Int,
+                @RequestParam(defaultValue = "createdAt") sort: String,
+                @RequestParam(defaultValue = "desc") direction: String,
+                @AuthenticationPrincipal currentUser: UserDetails?
+        ): ResponseEntity<PagePostResponse> {
+                val pageable =
+                        PageRequest.of(
+                                page,
+                                size,
+                                Sort.Direction.fromString(direction.uppercase()),
+                                sort
+                        )
+                val posts = postService.getPostsByUserId(userId, currentUser?.username, pageable)
+                return ResponseEntity.ok(PagePostResponse.from(posts))
+        }
 
-    @Operation(
-            summary = "Get post details",
-            description = "Get details of a specific post in an event."
-    )
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/events/{eventId}/posts/{postId}")
-    fun getPost(
-            @PathVariable eventId: Long,
-            @PathVariable postId: Long,
-            @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<PostResponse> {
-            val post = postService.getPost(eventId, postId, currentUser.username)
-            return ResponseEntity.ok(post)
-    }
+        @Operation(
+                summary = "Get post details",
+                description = "Get details of a specific post in an event."
+        )
+        @PreAuthorize("isAuthenticated()")
+        @GetMapping("/events/{eventId}/posts/{postId}")
+        fun getPost(
+                @PathVariable eventId: Long,
+                @PathVariable postId: Long,
+                @AuthenticationPrincipal currentUser: UserDetails
+        ): ResponseEntity<PostResponse> {
+                val post = postService.getPost(eventId, postId, currentUser.username)
+                return ResponseEntity.ok(post)
+        }
 
-    @Operation(
-            summary = "Delete post",
-            description = "Delete a post. Only the author can delete their own posts."
-    )
-    @PreAuthorize("isAuthenticated()")
-    @DeleteMapping("/events/{eventId}/posts/{postId}")
-    fun deletePost(
-            @PathVariable eventId: Long,
-            @PathVariable postId: Long,
-            @AuthenticationPrincipal currentUser: UserDetails
-    ): ResponseEntity<Unit> {
-            postService.deletePost(eventId, postId, currentUser.username)
-            return ResponseEntity.noContent().build()
-    }
+        @Operation(
+                summary = "Delete post",
+                description = "Delete a post. Only the author can delete their own posts."
+        )
+        @PreAuthorize("isAuthenticated()")
+        @DeleteMapping("/events/{eventId}/posts/{postId}")
+        fun deletePost(
+                @PathVariable eventId: Long,
+                @PathVariable postId: Long,
+                @AuthenticationPrincipal currentUser: UserDetails
+        ): ResponseEntity<Unit> {
+                postService.deletePost(eventId, postId, currentUser.username)
+                return ResponseEntity.noContent().build()
+        }
 }

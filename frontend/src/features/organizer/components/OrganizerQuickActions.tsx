@@ -1,18 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Settings, Users, TrendingUp } from 'lucide-react';
+import {PlusCircle, Settings, TrendingUp, AlertCircle} from 'lucide-react';
 
 interface OrganizerQuickActionsProps {
     onCreateEvent: () => void;
     onManageEvents: () => void;
-    onRegistrations: () => void;
+    onNotifications: () => void;
     onAnalytics: () => void;
 }
 
 export const OrganizerQuickActions = ({
     onCreateEvent,
     onManageEvents,
-    onRegistrations,
+    onNotifications,
     onAnalytics
 }: OrganizerQuickActionsProps) => {
     return (
@@ -30,9 +30,9 @@ export const OrganizerQuickActions = ({
                         <Settings className="h-5 w-5 mb-2" />
                         <span className="text-sm">Manage Events</span>
                     </Button>
-                    <Button variant="outline" className="h-auto py-4 flex-col" onClick={onRegistrations}>
-                        <Users className="h-5 w-5 mb-2" />
-                        <span className="text-sm">Registrations</span>
+                    <Button variant="outline" className="h-auto py-4 flex-col" onClick={onNotifications}>
+                        <AlertCircle className="h-5 w-5 mb-2" />
+                        <span className="text-sm">Notifications</span>
                     </Button>
                     <Button variant="outline" className="h-auto py-4 flex-col" onClick={onAnalytics}>
                         <TrendingUp className="h-5 w-5 mb-2" />
