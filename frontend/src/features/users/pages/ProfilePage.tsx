@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Calendar, MapPin, Edit, MessageCircle } from 'lucide-react';
+import { Calendar, MapPin, Edit, MessageCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SkeletonTransition } from '@/components/common/SkeletonTransition';
 import { ProfilePageSkeleton } from '@/features/users/components/ProfilePageSkeleton';
 import { EditProfileModal } from '@/features/users/components/EditProfileModal';
 import { ChangePasswordModal } from "@/features/users/components/ChangePasswordModal";
@@ -12,6 +11,7 @@ import { useProfileData } from '../hooks/useProfileData';
 import { PostCard } from '@/features/blog/components/PostCard';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useParams } from '@tanstack/react-router';
+import AnimatedPage from '@/components/common/AnimatedPage';
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -24,10 +24,17 @@ const formatDate = (dateString: string) => {
 export const ProfilePage = () => {
     const params = useParams({ from: '/_auth/profile/$userId', shouldThrow: false, });
     const userId = params?.userId ? Number(params.userId) : undefined;
-    const { profile, posts, loading, refetch } = useProfileData(userId);
+    const { profile, posts, loading, hasMorePosts, loadMorePosts, refetch } = useProfileData(userId);
     const { user } = useAuth();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+    const handleShowMore = async () => {
+        setIsLoadingMore(true);
+        await loadMorePosts();
+        setIsLoadingMore(false);
+    };
 
     const isOwnProfile = !userId || (user && profile && user.userId === profile.id);
 
@@ -48,13 +55,21 @@ export const ProfilePage = () => {
         .join('')
         .toUpperCase() ?? '';
 
+    // Check if profile is private
+    const isPrivateProfile = profile && 'isPrivate' in profile && profile.isPrivate === true;
+
+    // Show skeleton while loading or no profile
+    if (loading || !profile) {
+        return (
+            <AnimatedPage>
+                <ProfilePageSkeleton />
+            </AnimatedPage>
+        );
+    }
+
     return (
-        <SkeletonTransition
-            isLoading={loading || !profile}
-            skeleton={<ProfilePageSkeleton />}
-        >
-            {profile && (
-                <div className="container mx-auto p-6 space-y-8 max-w-5xl">
+        <AnimatedPage>
+            <div className="container mx-auto p-6 space-y-8 max-w-5xl">
                     {/* Hero Section */}
                     <Card className="border-0 shadow-lg">
                         <CardContent className="p-8">
@@ -73,36 +88,36 @@ export const ProfilePage = () => {
                                 <div className="flex-1">
                                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
                                         <div>
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <h1 className="text-3xl font-bold tracking-tight">
-                                                    {profile.name}
-                                                </h1>
-                                                {'role' in profile && (
-                                                    <Badge variant="secondary" className="text-xs uppercase tracking-wider">
-                                                        {profile.role.replace(/_/g, ' ')}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            
-                                            <p className="text-muted-foreground text-base mb-3 max-w-2xl leading-relaxed">
-                                                {profile.bio || 'No bio added yet'}
-                                            </p>
-
-                                            {'createdAt' in profile && (
-                                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Calendar className="h-4 w-4" />
-                                                        <span>Joined {formatDate(profile.createdAt)}</span>
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <h1 className="text-3xl font-bold tracking-tight">
+                                                            {profile.name}
+                                                        </h1>
+                                                        {'role' in profile && (
+                                                            <Badge variant="secondary" className="text-xs uppercase tracking-wider">
+                                                                {profile.role.replace(/_/g, ' ')}
+                                                            </Badge>
+                                                        )}
                                                     </div>
-                                                    {profile.location && (
-                                                        <div className="flex items-center gap-1.5">
-                                                            <MapPin className="h-4 w-4" />
-                                                            <span>{profile.location}</span>
+                                                    
+                                                    <p className="text-muted-foreground text-base mb-3 max-w-2xl leading-relaxed">
+                                                        {profile.bio || 'No bio added yet'}
+                                                    </p>
+
+                                                    {'createdAt' in profile && (
+                                                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Calendar className="h-4 w-4" />
+                                                                <span>Joined {formatDate(profile.createdAt)}</span>
+                                                            </div>
+                                                            {profile.location && (
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <MapPin className="h-4 w-4" />
+                                                                    <span>{profile.location}</span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
 
                                         {/* Action Buttons - Desktop */}
                                         {isOwnProfile && (
@@ -128,17 +143,38 @@ export const ProfilePage = () => {
                                     </div>
 
                                     {/* Skills */}
-                                    {'skills' in profile && profile.skills && profile.skills.size > 0 && (
-                                        <div className="mt-4 flex flex-wrap gap-2">
-                                            {Array.from(profile.skills).map((skill) => (
-                                                <Badge 
-                                                    key={skill} 
-                                                    variant="outline" 
-                                                    className="bg-muted/50 hover:bg-muted border-border/50"
-                                                >
-                                                    {skill}
-                                                </Badge>
-                                            ))}
+                                    {'skills' in profile && profile.skills && (Array.isArray(profile.skills) ? profile.skills.length > 0 : profile.skills.size > 0) && (
+                                        <div className="mt-4">
+                                            <p className="text-xs font-medium text-muted-foreground mb-2">SKILLS</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {(Array.isArray(profile.skills) ? profile.skills : Array.from(profile.skills)).map((skill) => (
+                                                    <Badge 
+                                                        key={skill} 
+                                                        variant="secondary" 
+                                                        className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20 hover:bg-blue-500/20"
+                                                    >
+                                                        {skill.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Interests */}
+                                    {'interests' in profile && profile.interests && (Array.isArray(profile.interests) ? profile.interests.length > 0 : profile.interests.size > 0) && (
+                                        <div className="mt-4">
+                                            <p className="text-xs font-medium text-muted-foreground mb-2">INTERESTS</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {(Array.isArray(profile.interests) ? profile.interests : Array.from(profile.interests)).map((interest) => (
+                                                    <Badge 
+                                                        key={interest} 
+                                                        variant="secondary" 
+                                                        className="bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20"
+                                                    >
+                                                        {interest.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                                                    </Badge>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 
@@ -168,42 +204,70 @@ export const ProfilePage = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Posts Section */}
-                    <div>
-                        <div className="flex items-center gap-2 mb-4 px-1">
-                            <h2 className="text-2xl font-semibold tracking-tight">
-                                {isOwnProfile ? 'My Posts' : 'Posts'}
-                            </h2>
-                            {posts.length > 0 && (
-                                <span className="text-sm text-muted-foreground">
-                                    ({posts.length})
-                                </span>
+                    {/* Posts Section - Hidden for private profiles */}
+                    {(!isPrivateProfile || isOwnProfile) ? (
+                        <div>
+                            <div className="flex items-center gap-2 mb-4 px-1">
+                                <h2 className="text-2xl font-semibold tracking-tight">
+                                    {isOwnProfile ? 'My Posts' : 'Posts'}
+                                </h2>
+                                {posts.length > 0 && (
+                                    <span className="text-sm text-muted-foreground">
+                                        ({posts.length})
+                                    </span>
+                                )}
+                            </div>
+                            
+                            {posts.length === 0 ? (
+                                <Card className="border-dashed">
+                                    <CardContent className="text-center py-16">
+                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                                            <MessageCircle className="h-8 w-8 text-muted-foreground/50" />
+                                        </div>
+                                        <p className="text-muted-foreground font-medium mb-1">No posts yet</p>
+                                        <p className="text-sm text-muted-foreground/60">
+                                            {isOwnProfile ? "Share your thoughts with your first post" : "This user hasn't posted anything yet"}
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                <>
+                                    <div className="space-y-4">
+                                        {posts.map((post) => (
+                                            <PostCard key={post.id} post={post} />
+                                        ))}
+                                    </div>
+                                    {hasMorePosts && (
+                                        <div className="flex justify-center mt-6">
+                                            <Button
+                                                variant="outline"
+                                                onClick={handleShowMore}
+                                                disabled={isLoadingMore}
+                                                className="min-w-[200px]"
+                                            >
+                                                {isLoadingMore ? 'Loading...' : 'Show More Posts'}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
-                        
-                        {posts.length === 0 ? (
-                            <Card className="border-dashed">
-                                <CardContent className="text-center py-16">
-                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
-                                        <MessageCircle className="h-8 w-8 text-muted-foreground/50" />
-                                    </div>
-                                    <p className="text-muted-foreground font-medium mb-1">No posts yet</p>
-                                    <p className="text-sm text-muted-foreground/60">
-                                        {isOwnProfile ? "Share your thoughts with your first post" : "This user hasn't posted anything yet"}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <div className="space-y-4">
-                                {posts.map((post) => (
-                                    <PostCard key={post.id} post={post} />
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    ) : (
+                        <Card className="border-dashed">
+                            <CardContent className="text-center py-16">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
+                                    <Lock className="h-8 w-8 text-muted-foreground/50" />
+                                </div>
+                                <p className="text-muted-foreground font-medium mb-1">Posts are private</p>
+                                <p className="text-sm text-muted-foreground/60">
+                                    This user has chosen to keep their posts private.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Modals */}
-                    {isOwnProfile && profile && (
+                    {isOwnProfile && profile && 'role' in profile && (
                         <EditProfileModal
                             open={isEditModalOpen}
                             onOpenChange={handleModalClose}
@@ -218,7 +282,6 @@ export const ProfilePage = () => {
                         />
                     )}
                 </div>
-            )}
-        </SkeletonTransition>
+            </AnimatedPage>
     );
 }

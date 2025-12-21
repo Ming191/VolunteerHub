@@ -46,12 +46,14 @@ function NotificationList() {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  // Fetch recent notifications (limit to 5 for the dropdown)
+  // Fetch unread notifications for the dropdown
   const { data: notifications, isLoading } = useQuery<NotificationResponse[]>({
     queryKey: ['recentNotifications'],
     queryFn: async () => {
-      const response = await notificationsApi.getRecentNotifications({ days: 7 });
-      return response.data.slice(0, 5); // Only show first 5
+      const response = await notificationsApi.getUnreadNotifications({ 
+        pageable: { page: 0, size: 10 } 
+      });
+      return response.data.content || [];
     },
     refetchInterval: 30000,
   });
