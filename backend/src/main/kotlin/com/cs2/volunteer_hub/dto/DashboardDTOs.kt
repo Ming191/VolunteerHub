@@ -57,7 +57,7 @@ data class DashboardTopEventItem(
 data class OrganizerDashboardResponse(
     val stats: Map<String, Long>,
     val eventsPendingAdminApproval: List<DashboardEventItem>,
-    val recentPendingRegistrations: List<DashboardActionItem>,
+    val recentPendingRegistrations: List<DashboardPendingRegistrationItem>,
     val topEventsByRegistration: List<DashboardTopEventItem>
 )
 

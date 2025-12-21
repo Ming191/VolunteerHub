@@ -23,6 +23,7 @@ export const useOrganizerDashboard = () => {
         navigate({ to: '/events/$eventId', params: { eventId: String(eventId) } });
     }, [navigate]);
     const handleNavigateToMyEvents = useCallback(() => navigate({ to: '/my-events' }), [navigate]);
+    const handleNavigateToNotifications = useCallback(() => navigate({ to: '/notifications' }), [navigate]);
     const handleNavigateToCreateEvent = useCallback(() => navigate({ to: '/my-events', search: { action: 'create' } }), [navigate]);
     const handleNavigateToAnalytics = useCallback(() => navigate({ to: '/organizer/analytics' }), [navigate]);
 
@@ -35,6 +36,7 @@ export const useOrganizerDashboard = () => {
         handleNavigateToEvent,
         handleNavigateToMyEvents,
         handleNavigateToCreateEvent,
+        handleNavigateToNotifications,
         handleNavigateToAnalytics
     };
 };
