@@ -41,17 +41,13 @@ const getRegistrationStatus = async (eventId: number): Promise<RegistrationStatu
  */
 const getMyRegistrationEvents = async (): Promise<Array<RegistrationResponse> | undefined> => {
   try {
-    const res = await userProfileApi.getMyRegistrations(
-      {
-        pageable: {},
-      } as any,
-      {
-        params: {
-          page: 0,
-          size: 100,
-        },
+    const res = await userProfileApi.getMyRegistrations({
+      pageable: {
+        page: 0,
+        size: 100,
+        sort: ['event.eventDateTime,desc']
       }
-    );
+    });
 
     return res.data.content;
   } catch (err: any) {

@@ -42,7 +42,7 @@ export function RegistrationCard({ registration, onClick }: RegistrationCardProp
     queryFn: () => eventService.getEventById(registration.eventId),
   });
 
-  const isApproved = registration.status === 'APPROVED';
+  const isApproved = registration.status === 'APPROVED' || registration.status === 'PENDING' ;
 
   // Check if event hasn't started yet
   const isUpcoming = eventDetail
