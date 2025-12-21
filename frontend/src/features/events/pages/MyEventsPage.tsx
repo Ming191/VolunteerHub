@@ -6,7 +6,7 @@ import { EventGrid } from '../components/EventGrid';
 import AnimatedPage from '@/components/common/AnimatedPage';
 import { SmartPagination } from '@/components/common/SmartPagination';
 import { useMyEventsPage } from '../hooks/useMyEventsPage';
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -161,15 +161,6 @@ export const MyEventsScreen = () => {
 
               </DropdownMenuContent>
             </DropdownMenu>
-
-                <SelectItem value="createdAt_DESC">
-                  🔽 Created At (Newest)
-                </SelectItem>
-                <SelectItem value="createdAt_ASC">
-                  🔼 Created At (Oldest)
-                </SelectItem>
-              </SelectContent>
-            </Select>
 
 
             <Button onClick={() => setIsCreateModalOpen(true)}>
