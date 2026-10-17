@@ -50,7 +50,7 @@ The application uses standard Spring Boot configuration. Key environment variabl
 | `SPRING_DATASOURCE_PASSWORD` | Database password | `mypassword` |
 | `SPRING_RABBITMQ_HOST` | RabbitMQ host | `localhost` |
 | `SPRING_DATA_REDIS_HOST` | Redis host | `localhost` |
-| `JWT_SECRET` | Secret key for JWT signing | (See `application.properties`) |
+| `JWT_SECRET` | Required Base64-encoded HMAC signing secret, minimum 32 random bytes | **Required, no default** |
 | `GCS_BUCKET_NAME` | Google Cloud Storage bucket | `volunteerhub-bucket` |
 
 ## Getting Started
@@ -62,7 +62,7 @@ The application uses standard Spring Boot configuration. Key environment variabl
 
 ### Quick Start (Docker)
 
-The easiest way to run the entire stack is using Docker Compose.
+The easiest way to run the entire stack is using Docker Compose. **Before starting, provision JWT_SECRET via a secure secret store or your local shell**, for example `export JWT_SECRET=$(openssl rand -base64 32)` for local development only. Never add this value to Git. Rotating the key invalidates existing access JWTs. Refer to `docs/security/VH-102-incident-response.md` for exposed-credential response.
 
 ```bash
 docker-compose up -d --build
@@ -90,6 +90,7 @@ Access at `http://localhost:5173`.
 
 #### Backend
 ```bash
+export JWT_SECRET=$(openssl rand -base64 32)
 cd backend
 ./gradlew bootRun
 ```

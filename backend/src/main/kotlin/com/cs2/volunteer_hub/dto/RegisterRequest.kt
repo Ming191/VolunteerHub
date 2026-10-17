@@ -7,6 +7,17 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
+/** Roles selectable by unauthenticated users. Never add privileged roles here. */
+enum class PublicRegistrationRole {
+    VOLUNTEER,
+    EVENT_ORGANIZER;
+
+    fun toRole(): Role = when (this) {
+        VOLUNTEER -> Role.VOLUNTEER
+        EVENT_ORGANIZER -> Role.EVENT_ORGANIZER
+    }
+}
+
 data class RegisterRequest(
     @field:NotBlank(message = "Username is required")
     @field:Size(min = 2, max = 100, message = "Username must be between 2 and 100 characters")
@@ -22,5 +33,5 @@ data class RegisterRequest(
     @field:StrongPassword
     val password: String,
 
-    val role: Role? = null
+    val role: PublicRegistrationRole? = null
 )
