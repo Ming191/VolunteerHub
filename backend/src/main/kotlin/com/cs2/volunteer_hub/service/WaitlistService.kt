@@ -1,6 +1,8 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.RegistrationResponse
+import com.cs2.volunteer_hub.exception.ConflictException
+import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
@@ -31,7 +33,11 @@ class WaitlistService(
      */
     @Transactional
     fun addToWaitlist(registration: Registration): Registration {
-        val event = registration.event
+        val event = eventRepository.findByIdWithLock(registration.event.id)
+            .orElseThrow { ResourceNotFoundException("Event", "id", registration.event.id) }
+        if (!event.isRegistrationOpen() || !event.waitlistEnabled) {
+            throw ConflictException("Waitlist is not open for this event.")
+        }
 
         // Get current max position in waitlist
         val currentMaxPosition = getWaitlistForEvent(event.id)
@@ -77,7 +83,13 @@ class WaitlistService(
      */
     @Transactional
     fun promoteFromWaitlist(eventId: Long): Registration? {
-        val event = eventRepository.findByIdOrThrow(eventId)
+        val event = eventRepository.findByIdWithLock(eventId)
+            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
+        // A released seat in a cancelled/started event must not trigger promotion.
+        if (!event.isRegistrationOpen()) {
+            logger.info("Skipping waitlist promotion for event $eventId: registration is closed")
+            return null
+        }
 
         // Check if event still has capacity
         if (eventCapacityService.isFull(eventId, event.maxParticipants)) {
@@ -120,8 +132,10 @@ class WaitlistService(
      */
     @Transactional
     fun reorderWaitlist(eventId: Long) {
+        eventRepository.findByIdWithLock(eventId)
+            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
         val waitlist = getWaitlistForEvent(eventId)
-        
+
         val updatedRegistrations = mutableListOf<Registration>()
         val notifications = mutableListOf<Triple<Long, String, String>>()
 
@@ -158,25 +172,6 @@ class WaitlistService(
         }
 
         logger.info("Reordered waitlist for event $eventId - ${waitlist.size} registrations")
-    }
-
-    /**
-     * Remove a registration from waitlist and reorder
-     */
-    @Transactional
-    fun removeFromWaitlist(registration: Registration) {
-        if (registration.status != RegistrationStatus.WAITLISTED) {
-            return
-        }
-
-        val eventId = registration.event.id
-        registration.waitlistPosition = null
-        registrationRepository.save(registration)
-
-        // Reorder remaining waitlist
-        reorderWaitlist(eventId)
-
-        logger.info("Removed registration ${registration.id} from waitlist for event $eventId")
     }
 
     /**
