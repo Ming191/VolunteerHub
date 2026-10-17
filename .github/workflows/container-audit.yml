@@ -1,0 +1,39 @@
+name: Container audit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-audit-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-image:
+    name: backend-image-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build runnable backend image (separate from unit tests)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          load: true
+          tags: volunteerhub-backend:ci
+          cache-from: type=gha,scope=backend-image
+          cache-to: type=gha,mode=max,scope=backend-image
+      - name: Report high and critical image vulnerabilities
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: volunteerhub-backend:ci
+          format: table
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          # Audit-only until existing findings are remediated in VH-301.
+          exit-code: '0'
