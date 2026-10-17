@@ -60,7 +60,18 @@ jobs:
           java-version: '23'
           cache: gradle
           cache-dependency-path: 'backend/**/*.gradle*'
-      - name: Run backend regression tests
+      - name: Run backend regression tests and business coverage
         run: |
           chmod +x gradlew
-          ./gradlew test --no-daemon
+          ./gradlew test jacocoTestReport --no-daemon
+      - name: Upload backend JUnit and JaCoCo reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: |
+            backend/build/test-results/test/*.xml
+            backend/build/reports/tests/test/**
+            backend/build/reports/jacoco/test/**
+          if-no-files-found: warn
+          retention-days: 14
