@@ -6,16 +6,18 @@ import com.cs2.volunteer_hub.dto.RegistrationResultResponse
 import com.cs2.volunteer_hub.dto.RegistrationStatusResponse
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
+import com.cs2.volunteer_hub.service.ProfilePrivacyService
 import org.springframework.stereotype.Component
 
 @Component
-class RegistrationMapper {
+class RegistrationMapper(private val privacy: ProfilePrivacyService) {
     fun toPublicAttendeeResponse(registration: Registration): PublicAttendeeResponse {
+        val author = privacy.toPublicAuthor(registration.user)
         return PublicAttendeeResponse(
                 volunteerId = registration.user.id,
-                name = registration.user.name,
-                profilePictureUrl = registration.user.profilePictureUrl,
-                bio = registration.user.bio,
+                name = author.name,
+                profilePictureUrl = author.profilePictureUrl,
+                bio = author.bio,
                 joinedAt = registration.registeredAt
         )
     }
