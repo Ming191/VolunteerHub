@@ -7,6 +7,16 @@ import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.model.User
 import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.EventStatus
+import com.cs2.volunteer_hub.model.Image
+import com.cs2.volunteer_hub.model.ImageStatus
+import com.cs2.volunteer_hub.dto.EventCreationMessage
+import com.cs2.volunteer_hub.dto.UpdateEventRequest
+import com.cs2.volunteer_hub.dto.ImageUploadSuccessMessage
+import com.cs2.volunteer_hub.dto.ImageUploadFailureMessage
+import com.cs2.volunteer_hub.worker.EventStatusUpdater
+import com.cs2.volunteer_hub.worker.ImageUploadWorker
+import com.cs2.volunteer_hub.service.TemporaryFileStorageService
+import java.util.concurrent.CompletableFuture
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
 import com.cs2.volunteer_hub.model.UserSettings
@@ -100,7 +110,7 @@ import java.time.ZoneOffset
 @EnableAutoConfiguration
 @EntityScan(basePackages = ["com.cs2.volunteer_hub.model"])
 @EnableJpaRepositories(basePackages = ["com.cs2.volunteer_hub.repository"])
-@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostService::class, EventService::class, EventMapper::class, PostMapper::class, CommentMapper::class, SettingsMapper::class)
+@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostService::class, EventService::class, EventMapper::class, ImageUploadWorker::class, EventStatusUpdater::class, PostMapper::class, CommentMapper::class, SettingsMapper::class)
 class InfraHarnessApplication {
     @Bean
     fun fixtureClock(): Clock =
@@ -139,6 +149,9 @@ class InfraHarnessApplication {
 
     @Bean
     fun imageUploadService(): ImageUploadService = Mockito.mock(ImageUploadService::class.java)
+
+    @Bean
+    fun temporaryFileStorageService(): TemporaryFileStorageService = Mockito.mock(TemporaryFileStorageService::class.java)
 }
 
 @Testcontainers
@@ -198,6 +211,10 @@ class InfrastructureIntegrationTest {
     @Autowired lateinit var postMapper: PostMapper
     @Autowired lateinit var postService: PostService
     @Autowired lateinit var eventService: EventService
+    @Autowired lateinit var eventStatusUpdater: EventStatusUpdater
+    @Autowired lateinit var imageUploadWorker: ImageUploadWorker
+    @Autowired lateinit var imageUploadService: ImageUploadService
+    @Autowired lateinit var temporaryFiles: TemporaryFileStorageService
     @Autowired lateinit var authorizationService: AuthorizationService
     @Autowired lateinit var posts: PostRepository
     @Autowired lateinit var commentMapper: CommentMapper
@@ -228,6 +245,10 @@ class InfrastructureIntegrationTest {
         rabbitAdmin.initialize()
         rabbitAdmin.purgeQueue(RabbitMQConfig.EMAIL_QUEUE, true)
         rabbitAdmin.purgeQueue(RabbitMQConfig.EMAIL_DLQ, true)
+        rabbitAdmin.purgeQueue(RabbitMQConfig.EVENT_CREATION_PENDING_QUEUE, true)
+        rabbitAdmin.purgeQueue(RabbitMQConfig.IMAGE_UPLOAD_SUCCEEDED_QUEUE, true)
+        rabbitAdmin.purgeQueue(RabbitMQConfig.IMAGE_UPLOAD_FAILED_QUEUE, true)
+        Mockito.reset(imageUploadService, temporaryFiles)
     }
 
     private fun newVolunteer(email: String) = User(
@@ -437,6 +458,166 @@ class InfrastructureIntegrationTest {
         assertEquals(1L, postService.getPostsByUserId(organizer.id, null, PageRequest.of(0, 10)).totalElements)
         assertEquals(2L, postService.getPostsByUserId(organizer.id, organizer.email, PageRequest.of(0, 10)).totalElements)
         assertEquals(2L, postService.getPostsByUserId(organizer.id, admin.email, PageRequest.of(0, 10)).totalElements)
+    }
+
+
+    private fun loadedEvent(eventId: Long): Event = requireNotNull(transactionTemplate.execute {
+        events.findById(eventId).orElseThrow().also { it.images.size }
+    })
+
+    private fun stagedImage(eventId: Long, path: String): Long =
+        requireNotNull(transactionTemplate.execute {
+            val event = events.findById(eventId).orElseThrow()
+            event.images.add(Image(
+                event = event,
+                originalFileName = "fixture.png",
+                contentType = "image/png",
+                temporaryFilePath = path
+            ))
+            events.saveAndFlush(event).images.last().id
+        })
+
+    @Test
+    fun `failed update image never deletes a published event or its registrations`() {
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid"))
+        val attendee = users.saveAndFlush(newVolunteer("attendee@example.invalid"))
+        val waitlisted = users.saveAndFlush(newVolunteer("waiting@example.invalid"))
+        val event = capacityEvent(organizer, 2)
+        val confirmed = registrations.saveAndFlush(
+            Registration(user = attendee, event = event, status = RegistrationStatus.APPROVED)
+        )
+        registrations.saveAndFlush(
+            Registration(user = waitlisted, event = event, status = RegistrationStatus.WAITLISTED, waitlistPosition = 1)
+        )
+        val oldImageId = stagedImage(event.id, "old-upload")
+        eventStatusUpdater.handleUploadSuccess(ImageUploadSuccessMessage(
+            event.id, mapOf(oldImageId to "https://example.invalid/original.png")
+        ))
+        val newImageId = stagedImage(event.id, "new-upload")
+        val failure = ImageUploadFailureMessage(
+            eventId = event.id,
+            uploadedUrls = emptyMap(),
+            error = "deliberate failure",
+            retryCount = RabbitMQConfig.MAX_RETRY_COUNT,
+            failedImageIds = listOf(newImageId)
+        )
+        eventStatusUpdater.handleUploadFailure(failure)
+        eventStatusUpdater.handleUploadFailure(failure) // at least once delivery
+        val saved = loadedEvent(event.id)
+        assertEquals(EventStatus.PUBLISHED, saved.status)
+        assertEquals("VH-202 concurrency fixture", saved.title)
+        assertTrue(registrations.existsById(confirmed.id))
+        assertEquals(2, registrations.count())
+        assertEquals(ImageStatus.UPLOADED, saved.images.single { it.id == oldImageId }.status)
+        assertEquals("https://example.invalid/original.png", saved.images.single { it.id == oldImageId }.url)
+        assertEquals(ImageStatus.UPLOAD_FAILED, saved.images.single { it.id == newImageId }.status)
+        assertNull(saved.images.single { it.id == newImageId }.url)
+        // Delayed duplicate success/failure must not alter a completed result.
+        eventStatusUpdater.handleUploadSuccess(ImageUploadSuccessMessage(
+            event.id, mapOf(oldImageId to "https://example.invalid/stale.png")
+        ))
+        eventStatusUpdater.handleUploadFailure(failure)
+        assertEquals("https://example.invalid/original.png",
+            loadedEvent(event.id).images.single { it.id == oldImageId }.url)
+    }
+
+    @Test
+    fun `initial creation upload failure preserves the draft event for retry`() {
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        event.status = EventStatus.PENDING
+        events.saveAndFlush(event)
+        val imageId = stagedImage(event.id, "initial-staged-file")
+        eventStatusUpdater.handleUploadFailure(ImageUploadFailureMessage(
+            event.id, emptyMap(), "initial failed", RabbitMQConfig.MAX_RETRY_COUNT, listOf(imageId)
+        ))
+        assertEquals(EventStatus.PENDING, loadedEvent(event.id).status)
+        assertEquals(ImageStatus.UPLOAD_FAILED,
+            loadedEvent(event.id).images.single { it.id == imageId }.status)
+        assertEquals(1L, events.count())
+    }
+
+    @Test
+    fun `upload worker preserves temp file for retry and updates only requested images`() {
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        val imageId = stagedImage(event.id, "retry-path")
+        val otherImageId = stagedImage(event.id, "unrelated-path")
+        val bytes = byteArrayOf(1, 2, 3)
+        Mockito.`when`(temporaryFiles.read("retry-path")).thenReturn(bytes)
+        Mockito.`when`(imageUploadService.uploadImageFromBytes(
+            bytes, "image/png", "fixture.png"
+        )).thenReturn(CompletableFuture.failedFuture(RuntimeException("temporary GCS failure")))
+        imageUploadWorker.handleEventCreation(EventCreationMessage(event.id, imageIds = listOf(imageId)))
+        val afterFirst = loadedEvent(event.id)
+        assertEquals(ImageStatus.PENDING_UPLOAD, afterFirst.images.single { it.id == imageId }.status)
+        assertEquals("retry-path", afterFirst.images.single { it.id == imageId }.temporaryFilePath)
+        assertEquals("unrelated-path", afterFirst.images.single { it.id == otherImageId }.temporaryFilePath)
+        Mockito.verify(temporaryFiles, Mockito.never()).delete("retry-path")
+
+        Mockito.`when`(imageUploadService.uploadImageFromBytes(
+            bytes, "image/png", "fixture.png"
+        )).thenReturn(CompletableFuture.completedFuture("https://example.invalid/retried.png"))
+        imageUploadWorker.handleEventCreation(EventCreationMessage(event.id, retryCount = 1, imageIds = listOf(imageId)))
+        val saved = loadedEvent(event.id)
+        assertEquals(ImageStatus.UPLOADED, saved.images.single { it.id == imageId }.status)
+        assertEquals("https://example.invalid/retried.png", saved.images.single { it.id == imageId }.url)
+        assertNull(saved.images.single { it.id == imageId }.temporaryFilePath)
+        assertEquals(ImageStatus.PENDING_UPLOAD, saved.images.single { it.id == otherImageId }.status)
+        Mockito.verify(temporaryFiles, Mockito.times(1)).delete("retry-path")
+        imageUploadWorker.handleEventCreation(EventCreationMessage(event.id, retryCount = 1, imageIds = listOf(imageId)))
+        // One read per actual attempt (initial failure + successful retry); duplicate is ignored.
+        Mockito.verify(temporaryFiles, Mockito.times(2)).read("retry-path")
+    }
+
+    @Test
+    fun `terminal upload failure marks only failed image and offers replacement on update`() {
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        val failedId = stagedImage(event.id, "terminal-path")
+        val unrelatedId = stagedImage(event.id, "another-batch")
+        val bytes = byteArrayOf(8)
+        Mockito.`when`(temporaryFiles.read("terminal-path")).thenReturn(bytes)
+        Mockito.`when`(imageUploadService.uploadImageFromBytes(
+            bytes, "image/png", "fixture.png"
+        )).thenReturn(CompletableFuture.failedFuture(RuntimeException("permanent GCS failure")))
+        imageUploadWorker.handleEventCreation(EventCreationMessage(
+            event.id, retryCount = RabbitMQConfig.MAX_RETRY_COUNT, imageIds = listOf(failedId)
+        ))
+        val reloaded = loadedEvent(event.id)
+        assertEquals(EventStatus.PUBLISHED, reloaded.status)
+        assertEquals(ImageStatus.UPLOAD_FAILED, reloaded.images.single { it.id == failedId }.status)
+        assertEquals(ImageStatus.PENDING_UPLOAD, reloaded.images.single { it.id == unrelatedId }.status)
+        assertNull(reloaded.images.single { it.id == failedId }.temporaryFilePath)
+        Mockito.verify(temporaryFiles).delete("terminal-path")
+    }
+
+
+    @Test
+    fun `organizer can remove failed media placeholder without deleting the event`() {
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid"))
+        val attendee = users.saveAndFlush(newVolunteer("attendee@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        registrations.saveAndFlush(Registration(user = attendee, event = event, status = RegistrationStatus.APPROVED))
+        val failedId = stagedImage(event.id, "replaceable-file")
+        eventStatusUpdater.handleUploadFailure(ImageUploadFailureMessage(
+            event.id, emptyMap(), "failed", RabbitMQConfig.MAX_RETRY_COUNT, listOf(failedId)
+        ))
+        val updated = eventService.updateEvent(
+            event.id,
+            UpdateEventRequest(
+                title = null, description = null, location = null, latitude = null,
+                longitude = null, eventDateTime = null, endDateTime = null,
+                registrationDeadline = null, maxParticipants = null, waitlistEnabled = null,
+                tags = null, existingImageUrls = emptyList()
+            ),
+            organizer.email,
+            null
+        )
+        assertEquals(event.id, updated.id)
+        assertEquals(0, loadedEvent(event.id).images.size)
+        assertEquals(1, registrations.count())
+        assertEquals(EventStatus.PUBLISHED, loadedEvent(event.id).status)
     }
 
     @Test

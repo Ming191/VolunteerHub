@@ -52,7 +52,8 @@ class EventMapper(
                         tags = event.tags.toSet(),
                         status = event.status,
                         rejectionReason = event.rejectionReason,
-                        imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD }
+                        imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD },
+                        failedImageCount = event.images.count { it.status == ImageStatus.UPLOAD_FAILED }
                 )
         }
 
@@ -104,7 +105,8 @@ class EventMapper(
                                 tags = event.tags.toSet(),
                                 status = event.status,
                                 rejectionReason = event.rejectionReason,
-                                imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD }
+                                imagesProcessing = event.images.any { it.status == ImageStatus.PENDING_UPLOAD },
+                        failedImageCount = event.images.count { it.status == ImageStatus.UPLOAD_FAILED }
                         )
                 }
         }
