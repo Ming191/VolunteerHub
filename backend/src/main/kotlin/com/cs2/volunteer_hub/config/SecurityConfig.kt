@@ -76,9 +76,12 @@ class SecurityConfig {
                             .authenticated()
                             .requestMatchers("/api/auth/**")
                             .permitAll()
-                            .requestMatchers("/api/events/*")
+                            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/events/my-events")
+                            .authenticated()
+                            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/events/*")
                             .permitAll()
                             .requestMatchers(
+                                    org.springframework.http.HttpMethod.GET,
                                     "/api/posts/event/**",
                                     "/api/posts/*/comments",
                                     "/api/posts/*/comments/**"
