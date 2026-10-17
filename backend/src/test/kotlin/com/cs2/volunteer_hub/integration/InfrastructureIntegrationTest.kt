@@ -14,9 +14,15 @@ import com.cs2.volunteer_hub.model.ProfileVisibility
 import com.cs2.volunteer_hub.model.Post
 import com.cs2.volunteer_hub.model.Comment
 import com.cs2.volunteer_hub.repository.UserSettingsRepository
+import com.cs2.volunteer_hub.repository.PostRepository
+import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
+import org.springframework.data.domain.PageRequest
 import com.cs2.volunteer_hub.service.ProfilePrivacyService
 import com.cs2.volunteer_hub.service.UserService
 import com.cs2.volunteer_hub.service.SettingsService
+import com.cs2.volunteer_hub.service.PostService
+import com.cs2.volunteer_hub.service.FileValidationService
+import com.cs2.volunteer_hub.service.ImageUploadService
 import com.cs2.volunteer_hub.mapper.PostMapper
 import com.cs2.volunteer_hub.mapper.CommentMapper
 import com.cs2.volunteer_hub.mapper.SettingsMapper
@@ -86,7 +92,7 @@ import java.time.ZoneOffset
 @EnableAutoConfiguration
 @EntityScan(basePackages = ["com.cs2.volunteer_hub.model"])
 @EnableJpaRepositories(basePackages = ["com.cs2.volunteer_hub.repository"])
-@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostMapper::class, CommentMapper::class, SettingsMapper::class)
+@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostService::class, PostMapper::class, CommentMapper::class, SettingsMapper::class)
 class InfraHarnessApplication {
     @Bean
     fun fixtureClock(): Clock =
@@ -106,6 +112,12 @@ class InfraHarnessApplication {
 
     @Bean
     fun passwordEncoder(): PasswordEncoder = Mockito.mock(PasswordEncoder::class.java)
+
+    @Bean
+    fun fileValidationService(): FileValidationService = Mockito.mock(FileValidationService::class.java)
+
+    @Bean
+    fun imageUploadService(): ImageUploadService = Mockito.mock(ImageUploadService::class.java)
 }
 
 @Testcontainers
@@ -163,6 +175,8 @@ class InfrastructureIntegrationTest {
     @Autowired lateinit var settingsService: SettingsService
     @Autowired lateinit var passwordEncoder: PasswordEncoder
     @Autowired lateinit var postMapper: PostMapper
+    @Autowired lateinit var postService: PostService
+    @Autowired lateinit var posts: PostRepository
     @Autowired lateinit var commentMapper: CommentMapper
     @Autowired lateinit var registrationMapper: RegistrationMapper
     @Autowired lateinit var events: EventRepository
@@ -238,18 +252,18 @@ class InfrastructureIntegrationTest {
         val anonymous = userService.getPublicUserProfile(owner.id)
         assertTrue(anonymous.isPrivate)
         assertNull(anonymous.bio)
-        assertNull(anonymous.profilePictureUrl)
+        assertEquals(owner.profilePictureUrl, anonymous.profilePictureUrl)
 
         authenticate(stranger.email)
         assertNull(userService.getPublicUserProfile(owner.id).bio)
         authenticate(admin.email)
         assertEquals("PRIVATE BIO", userService.getPublicUserProfile(owner.id).bio)
         SecurityContextHolder.clearContext()
-        assertNull(userService.getPublicUserProfile(owner.id).profilePictureUrl)
+        assertEquals(owner.profilePictureUrl, userService.getPublicUserProfile(owner.id).profilePictureUrl)
     }
 
     @Test
-    fun `changing a public profile to private immediately redacts all response types and clears cache`() {
+    fun `locking a profile hides bio while public posts comments and attendees keep avatar`() {
         val owner = visibleFixture("toggle@example.invalid", ProfileVisibility.PUBLIC)
         val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid"))
         val event = capacityEvent(organizer, 3)
@@ -269,17 +283,41 @@ class InfrastructureIntegrationTest {
         assertNull(cache.get(owner.id), "Privacy update must evict old user-ID cache entries")
 
         assertNull(userService.getPublicUserProfile(owner.id).bio)
-        assertNull(postMapper.toPostResponse(post).author.profilePictureUrl)
+        assertEquals(owner.name, postMapper.toPostResponse(post).author.name)
+        assertEquals(owner.profilePictureUrl, postMapper.toPostResponse(post).author.profilePictureUrl)
         assertNull(postMapper.toPostResponse(post).author.bio)
+        assertEquals(owner.profilePictureUrl, commentMapper.toCommentResponse(comment).author.profilePictureUrl)
         assertNull(commentMapper.toCommentResponse(comment).author.bio)
-        assertNull(commentMapper.toCommentResponseWithReplies(comment).author.profilePictureUrl)
+        assertEquals(owner.profilePictureUrl, commentMapper.toCommentResponseWithReplies(comment).author.profilePictureUrl)
+        assertNull(commentMapper.toCommentResponseWithReplies(comment).author.bio)
         assertNull(registrationMapper.toPublicAttendeeResponse(attendee).bio)
-        assertNull(registrationMapper.toPublicAttendeeResponse(attendee).profilePictureUrl)
+        assertEquals(owner.profilePictureUrl, registrationMapper.toPublicAttendeeResponse(attendee).profilePictureUrl)
 
         authenticate(owner.email)
         assertEquals("PRIVATE BIO", userService.getPublicUserProfile(owner.id).bio)
         SecurityContextHolder.clearContext()
         assertNull(userService.getPublicUserProfile(owner.id).bio)
+    }
+
+    @Test
+    fun `locked timeline is denied while public event posts retain author name and avatar`() {
+        val owner = visibleFixture("locked-author@example.invalid", ProfileVisibility.PRIVATE)
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid"))
+        val event = capacityEvent(organizer, 3)
+        posts.saveAndFlush(Post(content = "Public event discussion", author = owner, event = event))
+        val page = PageRequest.of(0, 10)
+
+        assertThrows(UnauthorizedAccessException::class.java) {
+            postService.getPostsByUserId(owner.id, null, page)
+        }
+        val eventPosts = postService.getPostsForEvent(event.id, null, page).content
+        assertEquals(1, eventPosts.size)
+        assertEquals("Public event discussion", eventPosts.single().content)
+        assertEquals(owner.name, eventPosts.single().author.name)
+        assertEquals(owner.profilePictureUrl, eventPosts.single().author.profilePictureUrl)
+        assertNull(eventPosts.single().author.bio)
+
+        assertEquals(1L, postService.getPostsByUserId(owner.id, owner.email, page).totalElements)
     }
 
     @Test

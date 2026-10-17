@@ -5,6 +5,7 @@ import com.cs2.volunteer_hub.dto.PostCreationMessage
 import com.cs2.volunteer_hub.dto.PostRequest
 import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.exception.BadRequestException
+import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.mapper.PostMapper
 import com.cs2.volunteer_hub.model.Post
@@ -38,6 +39,7 @@ class PostService(
         private val authorizationService: AuthorizationService,
         private val cacheEvictionService: CacheEvictionService,
         private val imageUploadService: ImageUploadService,
+        private val profilePrivacyService: ProfilePrivacyService,
         @Value("\${upload.max-files-per-post:5}") private val maxFilesPerPost: Int
 ) {
     private val logger = LoggerFactory.getLogger(PostService::class.java)
@@ -270,8 +272,19 @@ class PostService(
 
     @Transactional(readOnly = true)
     fun getPostsByUserId(userId: Long, requestingUserEmail: String?, pageable: Pageable): Page<PostResponse> {
-        // Verify the user exists
-        userRepository.findByIdOrThrow(userId)
+        // This endpoint builds a person's profile timeline, not an event discussion.
+        // A locked profile must be enforced by the API, not merely hidden in the UI.
+        // Posts remain visible individually in events where the caller has read access.
+        val author = userRepository.findByIdOrThrow(userId)
+        if (userRepository.findDeletionStatus(userId) != false) {
+            throw ResourceNotFoundException("User", "id", userId)
+        }
+        val viewer = requestingUserEmail?.let(userRepository::findByEmail)
+        val allowed = viewer != null && !viewer.isDeleted &&
+            (viewer.id == userId || viewer.role == com.cs2.volunteer_hub.model.Role.ADMIN)
+        if (profilePrivacyService.isPrivate(author) && !allowed) {
+            throw UnauthorizedAccessException("This profile is locked.")
+        }
 
         val postSpec = PostSpecifications.byAuthor(userId)
         val postPage = postRepository.findAll(postSpec, pageable)
@@ -283,10 +296,7 @@ class PostService(
         val postIds = postPage.content.map { it.id }
 
         // Get liked post IDs for the requesting user (if authenticated)
-        val likedPostIds = requestingUserEmail?.let { email ->
-            val requestingUser = userRepository.findByEmailOrThrow(email)
-            getLikedPostIdsByUser(requestingUser.id, postIds)
-        } ?: emptySet()
+        val likedPostIds = viewer?.let { getLikedPostIdsByUser(it.id, postIds) } ?: emptySet()
 
         val postResponses = postMapper.toPostResponseList(postPage.content, likedPostIds)
 

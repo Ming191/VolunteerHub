@@ -1,28 +1,37 @@
-# VH-220 — Private profile authorization and DTO redaction
+# VH-220 — Locked profile, not anonymous participation
 
-## Threat model and fix
+## Product rule
 
-Before VH-220, `UserService.getPublicUserProfile(id)` cached a request-dependent `PublicUserResponse` under the **target user's ID only**. A logged-in owner/admin could populate that shared Redis cache with the full private profile, and anonymous/unrelated viewers could receive the same cached object without rechecking authorization. `PostMapper`, `CommentMapper` and `RegistrationMapper` also copied avatar/bio directly from entities, irrespective of `UserSettings.profileVisibility`.
+`PRIVATE` means **lock my profile page**, similar to Facebook's locked-profile behavior. It does **not** mean that my posts or comments become anonymous, and it does not override the permissions of the event/discussion in which I participate.
 
-The full public-profile endpoint now **does not use a shared cache at all**. It resolves current authentication and target visibility on **every call**. Owner/admin can see their permitted full private profile; anonymous/other viewers receive only ID and name with null bio/avatar and `isPrivate=true`. Soft-deleted users return 404. Missing user-settings records are treated as PRIVATE (fail closed).
+| Context | When profile is PRIVATE |
+| --- | --- |
+| Public avatar and display name | Remain visible |
+| Bio/profile details on another person's profile page | Hidden; page displays "Locked profile" |
+| User's aggregated profile timeline | Hidden from non-owner/non-admin; API rejects listing |
+| Posts/comments inside an event or conversation already accessible to the viewer | Remain visible with author name/avatar and content |
+| Bio in public author and attendee DTOs | Hidden; avoid republishing profile-only information |
+| Own profile or explicitly authorized admin access | Full detail according to existing policy |
+| Soft-deleted accounts | Public profile 404, embedded author becomes "Deleted user" with null avatar/bio |
 
-`ProfilePrivacyService` supplies a central **public-only author projection** used in posts, comments (including replies), and public attendee DTOs. Private accounts have null bio/avatar; soft-deleted accounts are anonymized as "Deleted user" with null bio/avatar. Embedded authors are always public-safe even when a privileged viewer reads them; privileged private access is only on the explicitly authorized profile endpoint.
+Only content already authorized for the event/conversation is visible. Locking a profile never grants access to private events/posts; their access control is tracked separately under VH-221.
 
-Settings privacy transitions (including PUBLIC→PRIVATE), soft account deletion and completed avatar updates also evict the retired `publicUserProfiles` cache key. Profile updates already evicted this key in `MeService`. This protects against legacy entries while the cache is phased out; **cache eviction alone is not the authorization boundary**.
+## Security implementation
 
-## Verified / reproduction
+Previously `UserService.getPublicUserProfile(id)` cached a viewer-dependent full/private response under only the target user ID, risking privileged-to-anonymous disclosure. It now resolves viewer authorization and profile visibility on every call, with **no shared viewer-dependent cache**; missing settings fail closed. Profile avatar/name are public identity even if the page is locked, while bio is visible only to authorized users.
 
-The Testcontainers backend suite now contains regression cases against real PostgreSQL and Redis:
+`ProfilePrivacyService` builds embedded author projections across posts, comments, nested replies and attendee lists. It leaves name/avatar visible for active users regardless of profile lock, redacts private bio, and anonymizes soft-deleted users using a fresh DB deletion check. A locked user's **aggregated user timeline** is restricted at both frontend and `PostService.getPostsByUserId` API (403 for unrelated viewers); `PostService.getPostsForEvent` remains governed by event read permission rather than profile visibility.
 
-- Private owner views full bio/avatar, a stale full response is planted into Redis under the old vulnerable key, but subsequent anonymous and unrelated viewers still receive redacted profiles, irrespective of order. Admin still receives privileged response.
-- A PUBLIC profile is read via user endpoint, post author, comment author (including nested replies), and public attendee mapping; the settings service flips PUBLIC→PRIVATE, removes the old Redis cache entry, and all public DTOs immediately redact bio/avatar.
-- Soft deletion through `SettingsService.deleteAccount` evicts the retired profile cache key; deleted users are not retrievable from the public endpoint and display as anonymized authors.
+The profile UI displays a lock marker and explanatory notice without exposing the target's bio/posts list. The account owner still gets their full profile and own posts, including when navigating via their user ID. Settings explain that public discussions are unaffected.
 
-Run: `cd backend && ./gradlew test jacocoTestReport --no-daemon` (Windows: `.\gradlew.bat`). The same suite is required in CI under `registration-security-tests`.
+Legacy `publicUserProfiles` Redis entries are invalidated on privacy change, account soft deletion and avatar update, but eviction is not the authorization boundary.
 
-## Security boundaries and follow-ups
+## Regression tests and verification
 
-- Display names and stable user IDs remain visible for PRIVATE profiles, matching the existing public profile contract; a future stricter policy requires a product/privacy decision.
-- These mappers consult persisted settings for each mapped author (fail closed on missing settings). Large feed pages may incur N+1 lookups. An optimized batch public-visibility projection belongs in the performance backlog, but must never cache privileged DTOs across viewers.
-- Admin `UserResponse` and authenticated `/me` APIs are deliberately full-detail privileged responses, not safe for anonymous use. Access to their controllers is managed by existing security rules; broader endpoint authorization audit remains VH-221.
-- This ticket does **not** change event/posts read authorization (VH-221) or introduce global token/session invalidation after deletion. It addresses profile-field disclosure and cached view mixing.
+PostgreSQL/Redis Testcontainers tests cover owner/admin vs anonymous/stranger views after a full legacy response has been planted in Redis; PUBLIC-to-PRIVATE transition with cache invalidation; retained name/avatar in public post/comment/attendee DTOs and hidden bio; a locked aggregated timeline returning forbidden while the same author's public event post still renders; and deletion anonymization despite a stale in-memory entity.
+
+Run `cd backend && ./gradlew test jacocoTestReport --no-daemon` (Windows `gradlew.bat`) and frontend `npm run build && npm run lint`. Required GitHub checks must pass before merging.
+
+## Limits
+
+Public name/avatar are deliberately not secret, even on a locked profile. Admin access remains a privileged exception. Large feeds may need batch visibility lookups to avoid N+1 SQL queries. Media stored in external URLs is not retroactively made private by locking the profile. Full event/post visibility authorization is VH-221.

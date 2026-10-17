@@ -35,7 +35,8 @@ class UserService(
         return PublicUserResponse(
             id = user.id,
             name = user.name,
-            profilePictureUrl = if (isPrivate && !privileged) null else user.profilePictureUrl,
+            // Lock detailed profile fields, not the public identity/avatar used in the community.
+            profilePictureUrl = user.profilePictureUrl,
             bio = if (isPrivate && !privileged) null else user.bio,
             isPrivate = isPrivate
         )
