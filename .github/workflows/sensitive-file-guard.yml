@@ -1,0 +1,42 @@
+name: Sensitive file guard
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  reject-tracked-dumps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail on tracked database dumps or private env/credential files
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import re
+          import subprocess
+          import sys
+
+          tracked = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")
+          dump = re.compile(r"(^|/)(backup_[^/]*\\.sql|[^/]*\\.(?:dump|backup|bak|sql\\.gz|sql\\.zip))$", re.I)
+          env = re.compile(r"(^|/)\\.env(?:\\.[^/]+)?$", re.I)
+          credential = re.compile(r"(^|/)(?:fcm|gcp|firebase|service-account)[-_]credentials\\.json$", re.I)
+
+          bad = [
+              path for path in tracked if path and (
+                  dump.search(path)
+                  or (env.search(path) and not path.endswith(".example"))
+                  or credential.search(path)
+              )
+          ]
+          if bad:
+              print("Sensitive files tracked in Git. Remove and rotate exposed credentials:")
+              for path in bad:
+                  print(" -", path)
+              sys.exit(1)
+          print("No prohibited tracked dump/env/credential paths found.")
+          PY
