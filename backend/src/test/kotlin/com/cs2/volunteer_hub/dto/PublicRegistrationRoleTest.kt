@@ -17,9 +17,8 @@ class PublicRegistrationRoleTest {
           "username": "test volunteer",
           "gender": "OTHER",
           "email": "unit-test@example.invalid",
-          "password": "NotARealPassword123!",
           $roleField
-          "unused": null
+          "password": "NotARealPassword123!"
         }
     """.trimIndent()
 
