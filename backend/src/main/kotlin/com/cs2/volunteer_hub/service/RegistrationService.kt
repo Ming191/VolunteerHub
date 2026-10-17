@@ -37,15 +37,15 @@ class RegistrationService(
     fun registerForEvent(eventId: Long, userEmail: String): RegistrationResultResponse {
         val user = userRepository.findByEmailOrThrow(userEmail)
 
+        // Event row is the mutex for all capacity/waitlist writers. Acquire it BEFORE
+        // reading registration state so two concurrent requests cannot pass duplicate checks.
+        val event = eventRepository.findByIdWithLock(eventId)
+            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
         val spec = RegistrationSpecifications.forEvent(eventId)
             .and(RegistrationSpecifications.byUser(user.id))
-
         if (registrationRepository.exists(spec)) {
             throw ConflictException("You are already registered for this event.")
         }
-
-        val event = eventRepository.findByIdWithLock(eventId)
-            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
 
         if (!event.isRegistrationOpen()) {
             when {
@@ -65,13 +65,15 @@ class RegistrationService(
 
         val currentApproved = eventCapacityService.getApprovedCount(eventId)
         val isFull = event.maxParticipants?.let { currentApproved >= it } ?: false
+        // Never allow a new applicant to bypass an existing FIFO waitlist.
+        val hasWaitlist = eventCapacityService.getWaitlistCount(eventId) > 0
 
-        val savedRegistration = if (isFull && event.waitlistEnabled) {
+        val savedRegistration = if ((isFull || hasWaitlist) && event.waitlistEnabled) {
             val saved = waitlistService.addToWaitlist(registration)
             logger.info("User ${user.id} added to waitlist for event $eventId (capacity: $currentApproved/${event.maxParticipants})")
             saved
-        } else if (isFull) {
-            throw BadRequestException("Event is full and waitlist is not enabled.")
+        } else if (isFull || hasWaitlist) {
+            throw BadRequestException("Event is full or has an existing waitlist; new registrations are closed.")
         } else {
             registration.status = RegistrationStatus.PENDING
             val saved = registrationRepository.save(registration)
@@ -116,9 +118,11 @@ class RegistrationService(
     fun cancelRegistration(eventId: Long, userEmail: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
 
+        // Same lock order as register/organizer approval/manual promotion: event first.
+        eventRepository.findByIdWithLock(eventId)
+            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
         val spec = RegistrationSpecifications.forEvent(eventId)
             .and(RegistrationSpecifications.byUser(user.id))
-
         val registration = registrationRepository.findOne(spec)
             .orElseThrow { ResourceNotFoundException("Registration", "for this event and user", "not found") }
 
@@ -129,13 +133,13 @@ class RegistrationService(
         val wasApproved = registration.status == RegistrationStatus.APPROVED
         val wasWaitlisted = registration.status == RegistrationStatus.WAITLISTED
 
-        if (wasWaitlisted) {
-            waitlistService.removeFromWaitlist(registration)
-        }
-
         val organizerEmail = registration.event.creator.email
-        
         registrationRepository.delete(registration)
+        // SQL DELETE must be visible to the next waitlist/count query in this transaction.
+        registrationRepository.flush()
+        if (wasWaitlisted) {
+            waitlistService.reorderWaitlist(eventId)
+        }
         logger.info("User ${user.id} cancelled registration for event $eventId")
 
         // Evict caches for both volunteer and organizer

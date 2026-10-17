@@ -13,6 +13,12 @@ import java.time.LocalDateTime
 @Repository
 interface RegistrationRepository : JpaRepository<Registration, Long>, JpaSpecificationExecutor<Registration> {
 
+    /** Read only the event identifier BEFORE locking its row; never lock a registration first. */
+    @Query("SELECT r.event.id FROM Registration r WHERE r.id = :registrationId")
+    fun findEventIdByRegistrationId(@Param("registrationId") registrationId: Long): Long?
+
+    fun countByEventIdAndStatus(eventId: Long, status: RegistrationStatus): Int
+
     /**
      * Find registrations with eager loading of user and event associations
      */

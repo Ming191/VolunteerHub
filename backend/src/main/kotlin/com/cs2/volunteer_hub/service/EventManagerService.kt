@@ -4,6 +4,10 @@ import com.cs2.volunteer_hub.config.RabbitMQConfig
 import com.cs2.volunteer_hub.dto.RegistrationResponse
 import com.cs2.volunteer_hub.dto.RegistrationStatusUpdateMessage
 import com.cs2.volunteer_hub.exception.BadRequestException
+import com.cs2.volunteer_hub.exception.ConflictException
+import com.cs2.volunteer_hub.exception.ResourceNotFoundException
+import com.cs2.volunteer_hub.model.EventStatus
+import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
@@ -24,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class EventManagerService(
         private val registrationRepository: RegistrationRepository,
+        private val eventRepository: EventRepository,
         private val userRepository: UserRepository,
         private val rabbitTemplate: RabbitTemplate,
         private val registrationMapper: RegistrationMapper,
@@ -101,9 +106,12 @@ class EventManagerService(
             registrationId: Long,
             managerEmail: String
     ): RegistrationResponse {
+        val eventId = registrationRepository.findEventIdByRegistrationId(registrationId)
+            ?: throw ResourceNotFoundException("Registration", "id", registrationId)
+        eventRepository.findByIdWithLock(eventId)
+            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
+        authorizationService.requireEventOwnership(eventId, managerEmail)
         val registration = registrationRepository.findByIdOrThrow(registrationId)
-
-        authorizationService.requireEventOwnership(registration.event.id, managerEmail)
 
         if (registration.status != RegistrationStatus.APPROVED) {
             throw BadRequestException("Only approved registrations can be marked as completed.")
@@ -181,6 +189,8 @@ class EventManagerService(
     /** Manually promote someone from waitlist */
     @Transactional
     fun promoteFromWaitlist(eventId: Long, managerEmail: String): RegistrationResponse {
+        eventRepository.findByIdWithLock(eventId)
+            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
         authorizationService.requireEventOwnership(eventId, managerEmail)
 
         val promoted =
@@ -323,15 +333,39 @@ class EventManagerService(
             newStatus: RegistrationStatus,
             managerEmail: String
     ): RegistrationResponse {
+        // Only read the event ID first, then lock the event, then load mutable registration
+        // state. This order is shared by register/cancel/promote; it serializes all writers.
+        val eventId = registrationRepository.findEventIdByRegistrationId(registrationId)
+            ?: throw ResourceNotFoundException("Registration", "id", registrationId)
+        val event = eventRepository.findByIdWithLock(eventId)
+            .orElseThrow { ResourceNotFoundException("Event", "id", eventId) }
+        authorizationService.requireEventOwnership(eventId, managerEmail)
         val registration = registrationRepository.findByIdOrThrow(registrationId)
-
-        authorizationService.requireEventOwnership(registration.event.id, managerEmail)
+        val oldStatus = registration.status
 
         if (newStatus !in listOf(RegistrationStatus.APPROVED, RegistrationStatus.REJECTED)) {
             throw BadRequestException("Invalid status.")
         }
-
-        val oldStatus = registration.status
+        if (oldStatus == newStatus) {
+            return registrationMapper.toRegistrationResponse(registration)
+        }
+        val validTransition = when (oldStatus) {
+            RegistrationStatus.PENDING -> newStatus == RegistrationStatus.APPROVED || newStatus == RegistrationStatus.REJECTED
+            RegistrationStatus.APPROVED, RegistrationStatus.WAITLISTED -> newStatus == RegistrationStatus.REJECTED
+            else -> false // REJECTED, CANCELLED, COMPLETED are terminal
+        }
+        if (!validTransition) {
+            throw ConflictException("Cannot change registration from $oldStatus to $newStatus.")
+        }
+        if (newStatus == RegistrationStatus.APPROVED) {
+            if (event.status != EventStatus.PUBLISHED || !event.eventDateTime.isAfter(LocalDateTime.now())) {
+                throw ConflictException("Cannot approve a registration for an inactive or started event.")
+            }
+            // PENDING does not reserve capacity. Only APPROVED consumes a confirmed seat.
+            if (event.maxParticipants?.let { registrationRepository.countByEventIdAndStatus(eventId, RegistrationStatus.APPROVED) >= it } == true) {
+                throw ConflictException("Event is full; cannot approve another registration.")
+            }
+        }
 
         cacheEvictionService.evictRelatedCaches(registration)
         cacheEvictionService.evictEventRegistrations(registration.event.id)
@@ -339,7 +373,13 @@ class EventManagerService(
         cacheEvictionService.evictDashboardCaches(registration.event.creator.email)
 
         registration.status = newStatus
-        val savedRegistration = registrationRepository.save(registration)
+        if (oldStatus == RegistrationStatus.WAITLISTED) {
+            registration.waitlistPosition = null
+        }
+        val savedRegistration = registrationRepository.saveAndFlush(registration)
+        if (oldStatus == RegistrationStatus.WAITLISTED) {
+            waitlistService.reorderWaitlist(eventId)
+        }
 
         // Queue notification for status update
         queueRegistrationStatusUpdate(registrationId, newStatus)
