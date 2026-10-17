@@ -29,7 +29,7 @@ jobs:
           cache-from: type=gha,scope=backend-image
           cache-to: type=gha,mode=max,scope=backend-image
       - name: Report high and critical image vulnerabilities
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           image-ref: volunteerhub-backend:ci
           format: table
