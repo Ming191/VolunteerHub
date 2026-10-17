@@ -72,8 +72,8 @@ class RegistrationService(
             val saved = waitlistService.addToWaitlist(registration)
             logger.info("User ${user.id} added to waitlist for event $eventId (capacity: $currentApproved/${event.maxParticipants})")
             saved
-        } else if (isFull) {
-            throw BadRequestException("Event is full and waitlist is not enabled.")
+        } else if (isFull || hasWaitlist) {
+            throw BadRequestException("Event is full or has an existing waitlist; new registrations are closed.")
         } else {
             registration.status = RegistrationStatus.PENDING
             val saved = registrationRepository.save(registration)
