@@ -201,7 +201,8 @@ class EventManagerService(
         return registrationMapper.toRegistrationResponse(promoted)
     }
 
-    @Cacheable(value = ["eventRegistrations"], key = "#eventId")
+    // Never cache this authorization-dependent response by event ID: on a cache hit
+    // Spring skips the method body (including requireEventOwnership) entirely.
     @Transactional(readOnly = true)
     fun getRegistrationsForEvent(eventId: Long, managerEmail: String): List<RegistrationResponse> {
         authorizationService.requireEventOwnership(eventId, managerEmail)

@@ -44,7 +44,12 @@ class PostService(
 ) {
     private val logger = LoggerFactory.getLogger(PostService::class.java)
 
-    fun generateSignedUrl(contentType: String, fileName: String): Pair<String, String> {
+    @Transactional(readOnly = true)
+    fun generateSignedUrl(eventId: Long, userEmail: String, contentType: String, fileName: String): Pair<String, String> {
+        // A signed PUT URL is write access to object storage. Enforce the same
+        // object-level permission as creating a post BEFORE issuing that capability.
+        val user = userRepository.findByEmailOrThrow(userEmail)
+        authorizationService.requireEventPostPermission(eventId, user.id)
         return imageUploadService.generateSignedUrl(contentType, fileName)
     }
 

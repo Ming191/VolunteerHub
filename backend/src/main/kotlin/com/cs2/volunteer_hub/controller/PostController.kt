@@ -34,10 +34,11 @@ class PostController(private val postService: PostService) {
         @PostMapping(value = ["/events/{eventId}/posts/signed-url"])
         fun getSignedUrlForPost(
                 @PathVariable eventId: Long,
-                @RequestBody request: SignedUrlRequest
+                @RequestBody request: SignedUrlRequest,
+                @AuthenticationPrincipal currentUser: UserDetails
         ): ResponseEntity<SignedUrlResponse> {
                 val (signedUrl, publicUrl) =
-                        postService.generateSignedUrl(request.contentType, request.fileName)
+                        postService.generateSignedUrl(eventId, currentUser.username, request.contentType, request.fileName)
                 return ResponseEntity.ok(SignedUrlResponse(signedUrl, publicUrl))
         }
 
