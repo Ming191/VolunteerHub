@@ -98,13 +98,14 @@ class EventService(
                         fileValidationService.processFilesForEvent(files, newEvent)
                 }
 
-                val savedEvent = eventRepository.save(newEvent)
+                val savedEvent = eventRepository.saveAndFlush(newEvent)
                 logger.info(
                         "Created event ID: ${savedEvent.id} with ${savedEvent.images.size} images pending upload"
                 )
 
                 if (savedEvent.images.isNotEmpty()) {
-                        val message = EventCreationMessage(eventId = savedEvent.id)
+                        val message = EventCreationMessage(eventId = savedEvent.id,
+                                imageIds = savedEvent.images.filter { it.status == ImageStatus.PENDING_UPLOAD }.map { it.id })
 
                         TransactionSynchronizationManager.registerSynchronization(
                                 object : TransactionSynchronization {
@@ -249,11 +250,14 @@ class EventService(
 
                 request.existingImageUrls?.let { keepUrls ->
                         event.images.removeIf { image ->
-                                image.url != null && !keepUrls.contains(image.url)
+                                image.status == ImageStatus.UPLOAD_FAILED ||
+                                    (image.url != null && !keepUrls.contains(image.url))
                         }
                 }
 
                 if (!files.isNullOrEmpty()) {
+                        // Failed placeholders do not count against the replacement quota.
+                        event.images.removeIf { it.status == ImageStatus.UPLOAD_FAILED }
                         val currentImageCount = event.images.size
                         if (currentImageCount + files.size > maxFilesPerEvent) {
                                 throw IllegalArgumentException(
@@ -263,17 +267,18 @@ class EventService(
                         fileValidationService.validateFiles(files, maxFilesPerEvent)
                         fileValidationService.processFilesForEvent(files, event)
                 }
-                val updatedEvent = eventRepository.save(event)
+                val updatedEvent = eventRepository.saveAndFlush(event)
                 logger.info("Updated event ID: $id by user: $currentUserEmail")
 
-                val hasPendingImages =
-                        updatedEvent.images.any {
-                                it.status == com.cs2.volunteer_hub.model.ImageStatus.PENDING_UPLOAD
-                        }
+                // A metadata-only edit must not restart an unrelated, already queued batch.
+                val newImageIds = if (files.isNullOrEmpty()) emptyList() else
+                        updatedEvent.images.filter { it.status == ImageStatus.PENDING_UPLOAD }
+                                .takeLast(files.size).map { it.id }
 
-                if (hasPendingImages) {
+                if (newImageIds.isNotEmpty()) {
                         val message =
-                                EventCreationMessage(eventId = updatedEvent.id, retryCount = 0)
+                                EventCreationMessage(eventId = updatedEvent.id, retryCount = 0,
+                                        imageIds = newImageIds)
 
                         TransactionSynchronizationManager.registerSynchronization(
                                 object : TransactionSynchronization {
