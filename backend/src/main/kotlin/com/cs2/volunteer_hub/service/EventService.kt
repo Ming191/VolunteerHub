@@ -150,10 +150,11 @@ class EventService(
                 return PageImpl(eventResponses, pageable, eventPage.totalElements)
         }
 
-        @Cacheable(value = ["events"], key = "#id")
+        // Do not cache this viewer-dependent response under an event-ID-only key.
         @Transactional(readOnly = true)
-        fun getEventById(id: Long): EventResponse {
-                val event = eventRepository.findByIdOrThrow(id)
+        fun getEventById(id: Long, viewerEmail: String? = null): EventResponse {
+                val viewerId = viewerEmail?.let(userRepository::findByEmail)?.id
+                val event = authorizationService.requireEventReadPermission(id, viewerId)
                 return eventMapper.toEventResponse(event)
         }
 
@@ -349,10 +350,11 @@ class EventService(
         @Transactional(readOnly = true)
         fun getEventGallery(
                 eventId: Long,
-                pageable: Pageable
+                pageable: Pageable,
+                viewerEmail: String? = null
         ): com.cs2.volunteer_hub.dto.PageGalleryImageResponse {
-                // Ensure event exists
-                eventRepository.findByIdOrThrow(eventId)
+                val viewerId = viewerEmail?.let(userRepository::findByEmail)?.id
+                authorizationService.requireEventReadPermission(eventId, viewerId)
 
                 val imagePage =
                         imageRepository.findAllByEventIncludingPosts(
