@@ -44,7 +44,7 @@ class AuthService(
                 }
 
                 val hashedPassword = passwordEncoder.encode(request.password)
-                val assignedRole = request.role ?: Role.VOLUNTEER
+                val assignedRole = request.role?.toRole() ?: Role.VOLUNTEER
                 logger.info("Assigning role: $assignedRole to user: ${request.email}")
 
                 val user =
