@@ -25,7 +25,8 @@ class SettingsService(
         private val userSettingsRepository: UserSettingsRepository,
         private val refreshTokenRepository: RefreshTokenRepository,
         private val passwordEncoder: PasswordEncoder,
-        private val settingsMapper: SettingsMapper
+        private val settingsMapper: SettingsMapper,
+        private val cacheEvictionService: CacheEvictionService
 ) {
     private val logger = LoggerFactory.getLogger(SettingsService::class.java)
 
@@ -59,7 +60,13 @@ class SettingsService(
         request.eventUpdateNotifications?.let { settings.eventUpdateNotifications = it }
         request.commentNotifications?.let { settings.commentNotifications = it }
         request.theme?.let { settings.theme = it }
-        request.profileVisibility?.let { settings.profileVisibility = it }
+        request.profileVisibility?.let { visibility ->
+            if (settings.profileVisibility != visibility) {
+                settings.profileVisibility = visibility
+                // The retired user-ID-only cache may still have entries from a previous deploy.
+                cacheEvictionService.evictPublicUserProfile(user.id)
+            }
+        }
 
         // No explicit save needed - JPA dirty checking handles it within transaction
         logger.info("Updated settings for user: ${user.id}")
@@ -131,7 +138,9 @@ class SettingsService(
         // Soft delete
         user.isDeleted = true
         user.deletedAt = LocalDateTime.now()
-        // No explicit save needed - dirty checking handles it
+        // Persist deletion explicitly; public APIs must not race or read stale identity state.
+        userRepository.saveAndFlush(user)
+        cacheEvictionService.evictPublicUserProfile(user.id)
 
         // Revoke all sessions
         refreshTokenRepository.revokeAllUserTokens(user)

@@ -3,10 +3,11 @@ package com.cs2.volunteer_hub.mapper
 import com.cs2.volunteer_hub.dto.AuthorResponse
 import com.cs2.volunteer_hub.dto.PostResponse
 import com.cs2.volunteer_hub.model.Post
+import com.cs2.volunteer_hub.service.ProfilePrivacyService
 import org.springframework.stereotype.Component
 
 @Component
-class PostMapper {
+class PostMapper(private val privacy: ProfilePrivacyService) {
 
     fun toPostResponse(post: Post, isLikedByCurrentUser: Boolean = false): PostResponse {
         return PostResponse(
@@ -14,13 +15,7 @@ class PostMapper {
                 content = post.content,
                 createdAt = post.createdAt,
                 updatedAt = post.updatedAt,
-                author =
-                        AuthorResponse(
-                                id = post.author.id,
-                                name = post.author.name,
-                                profilePictureUrl = post.author.profilePictureUrl,
-                                bio = post.author.bio
-                        ),
+                author = privacy.toPublicAuthor(post.author),
                 totalLikes = post.totalLikesCount,
                 totalComments = post.totalCommentsCount,
                 isLikedByCurrentUser = isLikedByCurrentUser,

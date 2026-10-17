@@ -9,6 +9,24 @@ import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.model.Registration
 import com.cs2.volunteer_hub.model.RegistrationStatus
+import com.cs2.volunteer_hub.model.UserSettings
+import com.cs2.volunteer_hub.model.ProfileVisibility
+import com.cs2.volunteer_hub.model.Post
+import com.cs2.volunteer_hub.model.Comment
+import com.cs2.volunteer_hub.repository.UserSettingsRepository
+import com.cs2.volunteer_hub.service.ProfilePrivacyService
+import com.cs2.volunteer_hub.service.UserService
+import com.cs2.volunteer_hub.service.SettingsService
+import com.cs2.volunteer_hub.mapper.PostMapper
+import com.cs2.volunteer_hub.mapper.CommentMapper
+import com.cs2.volunteer_hub.mapper.SettingsMapper
+import com.cs2.volunteer_hub.dto.PublicUserResponse
+import com.cs2.volunteer_hub.dto.UpdateUserSettingsRequest
+import com.cs2.volunteer_hub.dto.DeleteAccountRequest
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.transaction.support.TransactionTemplate
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
@@ -68,7 +86,7 @@ import java.time.ZoneOffset
 @EnableAutoConfiguration
 @EntityScan(basePackages = ["com.cs2.volunteer_hub.model"])
 @EnableJpaRepositories(basePackages = ["com.cs2.volunteer_hub.repository"])
-@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class)
+@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostMapper::class, CommentMapper::class, SettingsMapper::class)
 class InfraHarnessApplication {
     @Bean
     fun fixtureClock(): Clock =
@@ -78,13 +96,16 @@ class InfraHarnessApplication {
     fun notificationService(): NotificationService = Mockito.mock(NotificationService::class.java)
 
     @Bean
-    fun registrationMapper(): RegistrationMapper = RegistrationMapper()
+    fun registrationMapper(privacy: ProfilePrivacyService): RegistrationMapper = RegistrationMapper(privacy)
 
     @Bean
     fun authorizationService(): AuthorizationService = Mockito.mock(AuthorizationService::class.java)
 
     @Bean
-    fun cacheEvictionService(): CacheEvictionService = Mockito.mock(CacheEvictionService::class.java)
+    fun cacheEvictionService(manager: CacheManager): CacheEvictionService = CacheEvictionService(manager)
+
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = Mockito.mock(PasswordEncoder::class.java)
 }
 
 @Testcontainers
@@ -136,6 +157,14 @@ class InfrastructureIntegrationTest {
     }
 
     @Autowired lateinit var users: UserRepository
+    @Autowired lateinit var userSettings: UserSettingsRepository
+    @Autowired lateinit var transactionTemplate: TransactionTemplate
+    @Autowired lateinit var userService: UserService
+    @Autowired lateinit var settingsService: SettingsService
+    @Autowired lateinit var passwordEncoder: PasswordEncoder
+    @Autowired lateinit var postMapper: PostMapper
+    @Autowired lateinit var commentMapper: CommentMapper
+    @Autowired lateinit var registrationMapper: RegistrationMapper
     @Autowired lateinit var events: EventRepository
     @Autowired lateinit var registrations: RegistrationRepository
     @Autowired lateinit var waitlistService: WaitlistService
@@ -150,8 +179,12 @@ class InfrastructureIntegrationTest {
     @Autowired lateinit var rabbitAdmin: RabbitAdmin
     @Autowired lateinit var clock: Clock
 
+    @org.junit.jupiter.api.AfterEach
+    fun clearPrincipal() = SecurityContextHolder.clearContext()
+
     @BeforeEach
     fun cleanState() {
+        SecurityContextHolder.clearContext()
         // Isolate test fixtures in ephemeral PostgreSQL / Redis / RabbitMQ containers.
         jdbc.execute("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
         redisTemplate.connectionFactory!!.connection.use { it.serverCommands().flushDb() }
@@ -167,6 +200,108 @@ class InfrastructureIntegrationTest {
         role = Role.VOLUNTEER,
         createdAt = LocalDateTime.ofInstant(clock.instant(), clock.zone)
     )
+
+
+    private fun authenticate(email: String) {
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+            email, "test-only", listOf(org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"))
+        )
+    }
+
+    private fun visibleFixture(email: String, visibility: ProfileVisibility): User =
+        requireNotNull(transactionTemplate.execute {
+            val volunteer = users.saveAndFlush(
+                newVolunteer(email).copy(
+                    bio = "PRIVATE BIO",
+                    profilePictureUrl = "https://invalid.example/avatar.png"
+                )
+            )
+            userSettings.saveAndFlush(UserSettings(user = volunteer, profileVisibility = visibility))
+            volunteer
+        })
+
+    @Test
+    fun `private owner profile never leaks through Redis cache to anonymous other user or admin order`() {
+        val owner = visibleFixture("private@example.invalid", ProfileVisibility.PRIVATE)
+        val stranger = users.saveAndFlush(newVolunteer("other@example.invalid"))
+        val admin = users.saveAndFlush(newVolunteer("admin@example.invalid").copy(role = Role.ADMIN))
+        val cache = requireNotNull(cacheManager.getCache("publicUserProfiles"))
+
+        authenticate(owner.email)
+        val privileged = userService.getPublicUserProfile(owner.id)
+        assertEquals("PRIVATE BIO", privileged.bio)
+        assertNotNull(privileged.profilePictureUrl)
+
+        // Simulate a full old-style entry from the vulnerable deployment.
+        cache.put(owner.id, privileged)
+        SecurityContextHolder.clearContext()
+        val anonymous = userService.getPublicUserProfile(owner.id)
+        assertTrue(anonymous.isPrivate)
+        assertNull(anonymous.bio)
+        assertNull(anonymous.profilePictureUrl)
+
+        authenticate(stranger.email)
+        assertNull(userService.getPublicUserProfile(owner.id).bio)
+        authenticate(admin.email)
+        assertEquals("PRIVATE BIO", userService.getPublicUserProfile(owner.id).bio)
+        SecurityContextHolder.clearContext()
+        assertNull(userService.getPublicUserProfile(owner.id).profilePictureUrl)
+    }
+
+    @Test
+    fun `changing a public profile to private immediately redacts all response types and clears cache`() {
+        val owner = visibleFixture("toggle@example.invalid", ProfileVisibility.PUBLIC)
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid"))
+        val event = capacityEvent(organizer, 3)
+        val post = Post(content = "Public post", author = owner, event = event)
+        val comment = Comment(content = "Reply", author = owner, post = post)
+        val attendee = Registration(user = owner, event = event, status = RegistrationStatus.APPROVED)
+        val cache = requireNotNull(cacheManager.getCache("publicUserProfiles"))
+
+        assertNotNull(userService.getPublicUserProfile(owner.id).bio)
+        assertNotNull(postMapper.toPostResponse(post).author.bio)
+        assertNotNull(commentMapper.toCommentResponse(comment).author.profilePictureUrl)
+        assertNotNull(registrationMapper.toPublicAttendeeResponse(attendee).bio)
+
+        cache.put(owner.id, userService.getPublicUserProfile(owner.id))
+        assertNotNull(cache.get(owner.id))
+        settingsService.updateUserSettings(owner.email, UpdateUserSettingsRequest(profileVisibility = ProfileVisibility.PRIVATE))
+        assertNull(cache.get(owner.id), "Privacy update must evict old user-ID cache entries")
+
+        assertNull(userService.getPublicUserProfile(owner.id).bio)
+        assertNull(postMapper.toPostResponse(post).author.profilePictureUrl)
+        assertNull(postMapper.toPostResponse(post).author.bio)
+        assertNull(commentMapper.toCommentResponse(comment).author.bio)
+        assertNull(commentMapper.toCommentResponseWithReplies(comment).author.profilePictureUrl)
+        assertNull(registrationMapper.toPublicAttendeeResponse(attendee).bio)
+        assertNull(registrationMapper.toPublicAttendeeResponse(attendee).profilePictureUrl)
+
+        authenticate(owner.email)
+        assertEquals("PRIVATE BIO", userService.getPublicUserProfile(owner.id).bio)
+        SecurityContextHolder.clearContext()
+        assertNull(userService.getPublicUserProfile(owner.id).bio)
+    }
+
+    @Test
+    fun `deleted profiles disappear from public endpoint and author projections are anonymized`() {
+        val owner = visibleFixture("deleted@example.invalid", ProfileVisibility.PUBLIC)
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        val authorPost = Post(content = "historical", author = owner, event = event)
+        val cache = requireNotNull(cacheManager.getCache("publicUserProfiles"))
+        cache.put(owner.id, userService.getPublicUserProfile(owner.id))
+        Mockito.`when`(passwordEncoder.matches("delete-me", owner.passwordHash)).thenReturn(true)
+        settingsService.deleteAccount(owner.email, DeleteAccountRequest("delete-me", "DELETE"))
+        assertNull(cache.get(owner.id), "Soft deletion must evict obsolete public profile entries")
+
+        assertThrows(com.cs2.volunteer_hub.exception.ResourceNotFoundException::class.java) {
+            userService.getPublicUserProfile(owner.id)
+        }
+        val projection = postMapper.toPostResponse(authorPost).author
+        assertEquals("Deleted user", projection.name)
+        assertNull(projection.bio)
+        assertNull(projection.profilePictureUrl)
+    }
 
     @Test
     fun `Flyway schema and JPA repository persist a volunteer fixture`() {

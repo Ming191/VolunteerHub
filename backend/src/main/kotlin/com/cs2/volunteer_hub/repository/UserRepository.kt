@@ -10,6 +10,10 @@ import org.springframework.stereotype.Repository
 interface UserRepository : JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
     fun findByEmail(email: String): User?
 
+    /** Scalar query avoids reading stale deletion state from an already-loaded User entity. */
+    @Query("SELECT u.isDeleted FROM User u WHERE u.id = :userId")
+    fun findDeletionStatus(@org.springframework.data.repository.query.Param("userId") userId: Long): Boolean?
+
     @Query("SELECT u.role, COUNT(u) FROM User u GROUP BY u.role")
     fun countUsersByRole(): List<Array<Any>>
 }
