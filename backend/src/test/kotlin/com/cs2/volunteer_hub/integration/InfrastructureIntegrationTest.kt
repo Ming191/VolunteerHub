@@ -15,6 +15,14 @@ import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.service.EmailQueueService
 import com.cs2.volunteer_hub.service.EventCapacityService
 import com.cs2.volunteer_hub.service.WaitlistService
+import com.cs2.volunteer_hub.service.RegistrationService
+import com.cs2.volunteer_hub.service.EventManagerService
+import com.cs2.volunteer_hub.service.AuthorizationService
+import com.cs2.volunteer_hub.service.CacheEvictionService
+import com.cs2.volunteer_hub.exception.ConflictException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import com.cs2.volunteer_hub.service.NotificationService
 import com.cs2.volunteer_hub.mapper.RegistrationMapper
 import org.mockito.Mockito
@@ -60,7 +68,7 @@ import java.time.ZoneOffset
 @EnableAutoConfiguration
 @EntityScan(basePackages = ["com.cs2.volunteer_hub.model"])
 @EnableJpaRepositories(basePackages = ["com.cs2.volunteer_hub.repository"])
-@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class)
+@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class)
 class InfraHarnessApplication {
     @Bean
     fun fixtureClock(): Clock =
@@ -71,6 +79,12 @@ class InfraHarnessApplication {
 
     @Bean
     fun registrationMapper(): RegistrationMapper = RegistrationMapper()
+
+    @Bean
+    fun authorizationService(): AuthorizationService = Mockito.mock(AuthorizationService::class.java)
+
+    @Bean
+    fun cacheEvictionService(): CacheEvictionService = Mockito.mock(CacheEvictionService::class.java)
 }
 
 @Testcontainers
@@ -125,6 +139,8 @@ class InfrastructureIntegrationTest {
     @Autowired lateinit var events: EventRepository
     @Autowired lateinit var registrations: RegistrationRepository
     @Autowired lateinit var waitlistService: WaitlistService
+    @Autowired lateinit var registrationService: RegistrationService
+    @Autowired lateinit var managerService: EventManagerService
     @Autowired lateinit var eventCapacityService: EventCapacityService
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var redisTemplate: StringRedisTemplate
@@ -267,6 +283,200 @@ class InfrastructureIntegrationTest {
         assertNull(promoted.waitlistPosition)
         assertEquals(listOf(1), waitlistService.getWaitlistForEvent(event.id).map { it.waitlistPosition })
         assertTrue(eventCapacityService.isFull(event.id, 1))
+    }
+
+
+    /** Run actual concurrent transactions against PostgreSQL, not a mocked in-memory repository. */
+    private fun concurrentRequests(count: Int, operation: (Int) -> Boolean): List<Boolean> {
+        val pool = Executors.newFixedThreadPool(count)
+        val start = CountDownLatch(1)
+        return try {
+            val tasks = (0 until count).map { index ->
+                pool.submit<Boolean> {
+                    start.await()
+                    operation(index)
+                }
+            }
+            start.countDown()
+            tasks.map { it.get(90, TimeUnit.SECONDS) }
+        } finally {
+            pool.shutdownNow()
+        }
+    }
+
+    private fun capacityEvent(organizer: User, cap: Int): Event =
+        events.saveAndFlush(
+            Event(
+                title = "VH-202 concurrency fixture",
+                description = "Isolated PostgreSQL test",
+                location = "Fixture",
+                eventDateTime = LocalDateTime.of(2027, 6, 1, 9, 0),
+                endDateTime = LocalDateTime.of(2027, 6, 1, 12, 0),
+                status = EventStatus.PUBLISHED,
+                creator = organizer,
+                maxParticipants = cap,
+                waitlistEnabled = true
+            )
+        )
+
+    @Test
+    fun `24 parallel organizer approvals cannot overbook three confirmed seats`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
+        val event = capacityEvent(organizer, 3)
+        val ids = (0 until 24).map { index ->
+            val user = users.saveAndFlush(newVolunteer("pending-$index@example.invalid"))
+            registrations.saveAndFlush(Registration(user = user, event = event)).id
+        }
+        val results = concurrentRequests(24) { index ->
+            try {
+                managerService.updateRegistrationStatus(ids[index], RegistrationStatus.APPROVED, organizer.email)
+                true
+            } catch (_: ConflictException) {
+                false
+            }
+        }
+        assertEquals(3, results.count { it }, "Exactly three organizer approvals should succeed")
+        assertEquals(3, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.APPROVED))
+        assertEquals(21, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.PENDING))
+    }
+
+    @Test
+    fun `20 concurrent identical registrations create only one row`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
+        val volunteer = users.saveAndFlush(newVolunteer("duplicate@example.invalid"))
+        val event = capacityEvent(organizer, 2)
+        val results = concurrentRequests(20) {
+            try {
+                registrationService.registerForEvent(event.id, volunteer.email)
+                true
+            } catch (_: ConflictException) {
+                false
+            }
+        }
+        assertEquals(1, results.count { it })
+        assertEquals(1, registrations.count())
+        assertEquals(1, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.PENDING))
+    }
+
+
+    @Test
+    fun `20 concurrent waitlist joins get unique FIFO positions and cancellation closes the gap`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
+        val confirmed = users.saveAndFlush(newVolunteer("confirmed@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        registrations.saveAndFlush(Registration(user = confirmed, event = event, status = RegistrationStatus.APPROVED))
+        val applicants = (0 until 20).map { i ->
+            users.saveAndFlush(newVolunteer("queue-$i@example.invalid"))
+        }
+        val accepted = concurrentRequests(20) { i ->
+            registrationService.registerForEvent(event.id, applicants[i].email)
+            true
+        }
+        assertEquals(20, accepted.count { it })
+        assertEquals(1, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.APPROVED))
+        val ordered = waitlistService.getWaitlistForEvent(event.id)
+        assertEquals((1..20).toList(), ordered.map { it.waitlistPosition })
+        val firstEmail = ordered.first().user.email
+        registrationService.cancelRegistration(event.id, firstEmail)
+        assertEquals((1..19).toList(), waitlistService.getWaitlistForEvent(event.id).map { it.waitlistPosition })
+        assertEquals(19, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.WAITLISTED))
+    }
+
+    @Test
+    fun `cancellation racing organizer promotion keeps FIFO and capacity`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
+        val approved = users.saveAndFlush(newVolunteer("approved@example.invalid"))
+        val first = users.saveAndFlush(newVolunteer("first@example.invalid"))
+        val second = users.saveAndFlush(newVolunteer("second@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        registrations.saveAndFlush(Registration(user = approved, event = event, status = RegistrationStatus.APPROVED))
+        waitlistService.addToWaitlist(Registration(user = first, event = event))
+        waitlistService.addToWaitlist(Registration(user = second, event = event))
+        concurrentRequests(2) { index ->
+            if (index == 0) registrationService.cancelRegistration(event.id, approved.email)
+            else waitlistService.promoteFromWaitlist(event.id)
+            true
+        }
+        assertEquals(1, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.APPROVED))
+        val firstRegistration = registrations.findWaitlistedRegistrationsByEventIdWithAssociations(event.id)
+        assertEquals(1, firstRegistration.size)
+        assertEquals(second.id, firstRegistration.single().user.id)
+        assertEquals(1, firstRegistration.single().waitlistPosition)
+        assertEquals(RegistrationStatus.APPROVED, registrations.findAllByEventIdWithAssociations(event.id).single { it.user.id == first.id }.status)
+    }
+
+
+
+    @Test
+    fun `disabling waitlist cannot let new applicants skip existing queue`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
+        val waiting = users.saveAndFlush(newVolunteer("waiting@example.invalid"))
+        val newcomer = users.saveAndFlush(newVolunteer("newcomer@example.invalid"))
+        val event = capacityEvent(organizer, 2)
+        registrations.saveAndFlush(
+            Registration(user = waiting, event = event, status = RegistrationStatus.WAITLISTED, waitlistPosition = 1)
+        )
+        event.waitlistEnabled = false
+        events.saveAndFlush(event)
+        org.junit.jupiter.api.Assertions.assertThrows(
+            com.cs2.volunteer_hub.exception.BadRequestException::class.java
+        ) {
+            registrationService.registerForEvent(event.id, newcomer.email)
+        }
+        assertEquals(0, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.PENDING))
+        assertEquals(1, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.WAITLISTED))
+    }
+
+    @Test
+    fun `organizer rejection of an approved volunteer promotes first waiter`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
+        val approved = users.saveAndFlush(newVolunteer("approved@example.invalid"))
+        val first = users.saveAndFlush(newVolunteer("first@example.invalid"))
+        val second = users.saveAndFlush(newVolunteer("second@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        val approvedRow = registrations.saveAndFlush(
+            Registration(user = approved, event = event, status = RegistrationStatus.APPROVED)
+        )
+        waitlistService.addToWaitlist(Registration(user = first, event = event))
+        waitlistService.addToWaitlist(Registration(user = second, event = event))
+        managerService.updateRegistrationStatus(approvedRow.id, RegistrationStatus.REJECTED, organizer.email)
+        assertEquals(RegistrationStatus.REJECTED, registrations.findById(approvedRow.id).get().status)
+        assertEquals(1, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.APPROVED))
+        assertEquals(first.id, registrations.findAllByEventIdWithAssociations(event.id)
+            .single { it.status == RegistrationStatus.APPROVED }.user.id)
+        assertEquals(listOf(1), waitlistService.getWaitlistForEvent(event.id).map { it.waitlistPosition })
+    }
+
+    @Test
+    fun `cancelled event blocks both organizer approval and manual waitlist promotion`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
+        val pending = users.saveAndFlush(newVolunteer("pending@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        val pendingRow = registrations.saveAndFlush(Registration(user = pending, event = event))
+        event.status = EventStatus.CANCELLED
+        events.saveAndFlush(event)
+        assertThrows(ConflictException::class.java) {
+            managerService.updateRegistrationStatus(pendingRow.id, RegistrationStatus.APPROVED, organizer.email)
+        }
+        assertNull(waitlistService.promoteFromWaitlist(event.id))
+    }
+
+    @Test
+    fun `waitlisted and terminal registrations cannot bypass organizer transition policy`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
+        val pending = users.saveAndFlush(newVolunteer("pending@example.invalid"))
+        val waiting = users.saveAndFlush(newVolunteer("waiting@example.invalid"))
+        val event = capacityEvent(organizer, 1)
+        val pendingRow = registrations.saveAndFlush(Registration(user = pending, event = event))
+        val waitingRow = registrations.saveAndFlush(Registration(user = waiting, event = event, status = RegistrationStatus.WAITLISTED, waitlistPosition = 1))
+        assertThrows(ConflictException::class.java) {
+            managerService.updateRegistrationStatus(waitingRow.id, RegistrationStatus.APPROVED, organizer.email)
+        }
+        managerService.updateRegistrationStatus(pendingRow.id, RegistrationStatus.REJECTED, organizer.email)
+        assertThrows(ConflictException::class.java) {
+            managerService.updateRegistrationStatus(pendingRow.id, RegistrationStatus.APPROVED, organizer.email)
+        }
+        assertEquals(0, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.APPROVED))
     }
 
     @Test

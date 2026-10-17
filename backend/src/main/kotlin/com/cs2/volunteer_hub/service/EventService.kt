@@ -202,7 +202,10 @@ class EventService(
                 currentUserEmail: String,
                 files: List<MultipartFile>?
         ): EventResponse {
-                val event = authorizationService.requireEventOwnership(id, currentUserEmail)
+                // Capacity edits share the same parent-event mutex as organizer approvals.
+                val event = eventRepository.findByIdWithLock(id)
+                        .orElseThrow { com.cs2.volunteer_hub.exception.ResourceNotFoundException("Event", "id", id) }
+                authorizationService.requireEventOwnership(id, currentUserEmail)
 
                 eventLifecycleValidator.validateUpdateAllowed(event)
                 request.maxParticipants?.let { eventCapacityService.validateCapacityChange(id, it) }
@@ -299,7 +302,9 @@ class EventService(
         )
         @Transactional
         fun deleteEvent(id: Long, currentUserEmail: String) {
-                val event = authorizationService.requireEventOwnership(id, currentUserEmail)
+                val event = eventRepository.findByIdWithLock(id)
+                        .orElseThrow { com.cs2.volunteer_hub.exception.ResourceNotFoundException("Event", "id", id) }
+                authorizationService.requireEventOwnership(id, currentUserEmail)
                 eventLifecycleValidator.validateDeletionAllowed(event)
                 eventRepository.delete(event)
                 logger.info("Deleted event ID: $id by user: $currentUserEmail")
@@ -314,7 +319,9 @@ class EventService(
         )
         @Transactional
         fun cancelEvent(id: Long, reason: String?, currentUserEmail: String): EventResponse {
-                val event = authorizationService.requireEventOwnership(id, currentUserEmail)
+                val event = eventRepository.findByIdWithLock(id)
+                        .orElseThrow { com.cs2.volunteer_hub.exception.ResourceNotFoundException("Event", "id", id) }
+                authorizationService.requireEventOwnership(id, currentUserEmail)
                 eventLifecycleValidator.validateCancellationAllowed(event, reason)
 
                 val from = event.status
