@@ -30,6 +30,25 @@ Expect version 1, type `SQL`, success `true`. Normal subsequent boot must not re
 4. Flyway records a `BASELINE` at version 1 (and intentionally does not run V1). Hibernate validates. Verify a representative sample of existing records and compare row counts to the backup.
 5. Remove the opt-in and restart normally; Flyway should report V1 current with no pending migrations.
 
+### Docker Compose: pass the one-time opt-in into the backend container
+
+After a backup and schema review, set the variable in the **same PowerShell session** that runs Compose. The backend service explicitly forwards it and defaults to `false` if omitted. Ensure `JWT_SECRET` and other usual Compose configuration are already set.
+
+```powershell
+$env:VH_FLYWAY_BASELINE_ON_MIGRATE = 'true'
+docker compose up -d --build --force-recreate backend
+docker compose logs --tail=100 backend
+```
+
+Verify that Flyway reports `Successfully baselined schema with version: 1`, Hibernate validates and existing rows remain. **Immediately** remove the opt-in and recreate the backend container (a `docker compose restart` will not update its environment):
+
+```powershell
+Remove-Item Env:VH_FLYWAY_BASELINE_ON_MIGRATE
+docker compose up -d --no-deps --force-recreate backend
+```
+
+Check the effective configuration without touching containers with `docker compose config --format json` (the backend `environment.VH_FLYWAY_BASELINE_ON_MIGRATE` field should be `false` by default). To check a first-run opt-in, set the host variable to `true` before running `docker compose config`. **Do not** leave it enabled in a committed `.env` file or permanent shell environment.
+
 Never permanently enable baseline-on-migrate or bypass mismatches with `ddl-auto=update` / `flyway repair`. For future model changes: implement a reviewed `V2__*.sql`, test on an empty database and a restored legacy copy, then deploy.
 
 ## Verification
