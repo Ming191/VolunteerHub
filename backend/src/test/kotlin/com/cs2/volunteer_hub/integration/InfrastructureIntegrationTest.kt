@@ -9,6 +9,14 @@ import com.cs2.volunteer_hub.model.Event
 import com.cs2.volunteer_hub.model.EventStatus
 import com.cs2.volunteer_hub.model.Image
 import com.cs2.volunteer_hub.model.ImageStatus
+import com.cs2.volunteer_hub.dto.ReportRequest
+import com.cs2.volunteer_hub.model.ReportType
+import com.cs2.volunteer_hub.model.ReportReason
+import com.cs2.volunteer_hub.repository.ReportRepository
+import com.cs2.volunteer_hub.repository.CommentRepository
+import com.cs2.volunteer_hub.service.ReportService
+import com.cs2.volunteer_hub.service.CommentService
+import com.cs2.volunteer_hub.mapper.ReportMapper
 import com.cs2.volunteer_hub.dto.EventCreationMessage
 import com.cs2.volunteer_hub.dto.UpdateEventRequest
 import com.cs2.volunteer_hub.dto.ImageUploadSuccessMessage
@@ -110,7 +118,7 @@ import java.time.ZoneOffset
 @EnableAutoConfiguration
 @EntityScan(basePackages = ["com.cs2.volunteer_hub.model"])
 @EnableJpaRepositories(basePackages = ["com.cs2.volunteer_hub.repository"])
-@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostService::class, EventService::class, EventMapper::class, ImageUploadWorker::class, EventStatusUpdater::class, PostMapper::class, CommentMapper::class, SettingsMapper::class)
+@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostService::class, EventService::class, EventMapper::class, ImageUploadWorker::class, EventStatusUpdater::class, PostMapper::class, CommentMapper::class, SettingsMapper::class, ReportMapper::class, ReportService::class, CommentService::class)
 class InfraHarnessApplication {
     @Bean
     fun fixtureClock(): Clock =
@@ -208,6 +216,10 @@ class InfrastructureIntegrationTest {
     @Autowired lateinit var userService: UserService
     @Autowired lateinit var settingsService: SettingsService
     @Autowired lateinit var passwordEncoder: PasswordEncoder
+    @Autowired lateinit var reportService: ReportService
+    @Autowired lateinit var commentService: CommentService
+    @Autowired lateinit var reports: ReportRepository
+    @Autowired lateinit var comments: CommentRepository
     @Autowired lateinit var postMapper: PostMapper
     @Autowired lateinit var postService: PostService
     @Autowired lateinit var eventService: EventService
@@ -1004,4 +1016,67 @@ class InfrastructureIntegrationTest {
         assertNotNull(deadLetter, "Rejected message must reach the real RabbitMQ dead-letter queue")
         assertNull(rabbitTemplate.receive(RabbitMQConfig.EMAIL_QUEUE, 100))
     }
+
+    @Test
+    fun vh10502HiddenPostAndCommentCannotBeReportedByUnrelatedUser() {
+        val organizer = users.saveAndFlush(newVolunteer("report-owner@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val outsider = users.saveAndFlush(newVolunteer("report-outsider@example.invalid"))
+        val event = capacityEvent(organizer, 3)
+        event.status = EventStatus.PENDING
+        events.saveAndFlush(event)
+        val post = posts.saveAndFlush(Post(content = "Private event post", author = organizer, event = event))
+        val comment = comments.saveAndFlush(Comment(content = "Private comment", author = organizer, post = post))
+
+        assertThrows(ResourceNotFoundException::class.java) {
+            reportService.createReport(ReportRequest(ReportType.POST, post.id, ReportReason.SPAM), outsider.email)
+        }
+        assertThrows(ResourceNotFoundException::class.java) {
+            reportService.createReport(ReportRequest(ReportType.COMMENT, comment.id, ReportReason.SPAM), outsider.email)
+        }
+        assertThrows(ResourceNotFoundException::class.java) {
+            reportService.createReport(ReportRequest(ReportType.POST, Long.MAX_VALUE, ReportReason.SPAM), outsider.email)
+        }
+        assertEquals(0L, reports.count(), "Denied reports must not persist")
+        assertEquals(post.id, reportService.createReport(
+            ReportRequest(ReportType.POST, post.id, ReportReason.SPAM), organizer.email
+        ).targetId)
+        assertEquals(comment.id, reportService.createReport(
+            ReportRequest(ReportType.COMMENT, comment.id, ReportReason.HARASSMENT), organizer.email
+        ).targetId)
+    }
+
+    @Test
+    fun vh10502CancelledEventRosterIsHiddenFromFormerApprovedAttendee() {
+        val organizer = users.saveAndFlush(newVolunteer("attendee-owner@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val attendee = users.saveAndFlush(newVolunteer("attendee-member@example.invalid"))
+        val admin = users.saveAndFlush(newVolunteer("attendee-admin@example.invalid").copy(role = Role.ADMIN))
+        val event = capacityEvent(organizer, 3)
+        registrations.saveAndFlush(Registration(user = attendee, event = event, status = RegistrationStatus.APPROVED))
+        assertEquals(1, eventService.getPublicAttendees(event.id, attendee.email).size)
+        event.status = EventStatus.CANCELLED
+        events.saveAndFlush(event)
+
+        assertThrows(ResourceNotFoundException::class.java) {
+            eventService.getPublicAttendees(event.id, attendee.email)
+        }
+        assertEquals(1, eventService.getPublicAttendees(event.id, organizer.email).size)
+        assertEquals(1, eventService.getPublicAttendees(event.id, admin.email).size)
+    }
+
+    @Test
+    fun vh10502WrongCommentAuthorIsDeniedWithAuthorizationExceptionAndNoMutation() {
+        val organizer = users.saveAndFlush(newVolunteer("comment-owner@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val outsider = users.saveAndFlush(newVolunteer("comment-outsider@example.invalid"))
+        val event = capacityEvent(organizer, 3)
+        val post = posts.saveAndFlush(Post(content = "Public event post", author = organizer, event = event))
+        val comment = comments.saveAndFlush(Comment(content = "Original", author = organizer, post = post))
+        assertThrows(UnauthorizedAccessException::class.java) {
+            commentService.updateComment(post.id, comment.id, "Unauthorized edit", outsider.email)
+        }
+        assertThrows(UnauthorizedAccessException::class.java) {
+            commentService.deleteComment(post.id, comment.id, outsider.email)
+        }
+        assertEquals("Original", comments.findById(comment.id).orElseThrow().content)
+    }
+
 }
