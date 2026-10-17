@@ -21,6 +21,14 @@ import com.cs2.volunteer_hub.service.ProfilePrivacyService
 import com.cs2.volunteer_hub.service.UserService
 import com.cs2.volunteer_hub.service.SettingsService
 import com.cs2.volunteer_hub.service.PostService
+import com.cs2.volunteer_hub.service.EventService
+import com.cs2.volunteer_hub.service.EventQueueService
+import com.cs2.volunteer_hub.mapper.EventMapper
+import com.cs2.volunteer_hub.validation.EventCoordinateValidator
+import com.cs2.volunteer_hub.validation.EventDateValidator
+import com.cs2.volunteer_hub.validation.EventLifecycleValidator
+import com.cs2.volunteer_hub.repository.ImageRepository
+import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.service.FileValidationService
 import com.cs2.volunteer_hub.service.ImageUploadService
 import com.cs2.volunteer_hub.mapper.PostMapper
@@ -92,7 +100,7 @@ import java.time.ZoneOffset
 @EnableAutoConfiguration
 @EntityScan(basePackages = ["com.cs2.volunteer_hub.model"])
 @EnableJpaRepositories(basePackages = ["com.cs2.volunteer_hub.repository"])
-@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostService::class, PostMapper::class, CommentMapper::class, SettingsMapper::class)
+@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostService::class, EventService::class, EventMapper::class, PostMapper::class, CommentMapper::class, SettingsMapper::class)
 class InfraHarnessApplication {
     @Bean
     fun fixtureClock(): Clock =
@@ -105,7 +113,20 @@ class InfraHarnessApplication {
     fun registrationMapper(privacy: ProfilePrivacyService): RegistrationMapper = RegistrationMapper(privacy)
 
     @Bean
-    fun authorizationService(): AuthorizationService = Mockito.mock(AuthorizationService::class.java)
+    fun authorizationService(events: EventRepository, registrations: RegistrationRepository, users: UserRepository): AuthorizationService =
+        AuthorizationService(events, registrations, users)
+
+    @Bean
+    fun eventDateValidator(): EventDateValidator = Mockito.mock(EventDateValidator::class.java)
+
+    @Bean
+    fun eventLifecycleValidator(): EventLifecycleValidator = Mockito.mock(EventLifecycleValidator::class.java)
+
+    @Bean
+    fun eventCoordinateValidator(): EventCoordinateValidator = Mockito.mock(EventCoordinateValidator::class.java)
+
+    @Bean
+    fun eventQueueService(): EventQueueService = Mockito.mock(EventQueueService::class.java)
 
     @Bean
     fun cacheEvictionService(manager: CacheManager): CacheEvictionService = CacheEvictionService(manager)
@@ -176,6 +197,8 @@ class InfrastructureIntegrationTest {
     @Autowired lateinit var passwordEncoder: PasswordEncoder
     @Autowired lateinit var postMapper: PostMapper
     @Autowired lateinit var postService: PostService
+    @Autowired lateinit var eventService: EventService
+    @Autowired lateinit var authorizationService: AuthorizationService
     @Autowired lateinit var posts: PostRepository
     @Autowired lateinit var commentMapper: CommentMapper
     @Autowired lateinit var registrationMapper: RegistrationMapper
@@ -339,6 +362,81 @@ class InfrastructureIntegrationTest {
         assertEquals("Deleted user", projection.name)
         assertNull(projection.bio)
         assertNull(projection.profilePictureUrl)
+    }
+
+
+    @Test
+    fun `unpublished event details and gallery deny strangers despite warmed cache`() {
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val visitor = users.saveAndFlush(newVolunteer("visitor@example.invalid"))
+        val admin = users.saveAndFlush(newVolunteer("admin@example.invalid").copy(role = Role.ADMIN))
+        val hidden = capacityEvent(organizer, 5)
+        val publicEvent = capacityEvent(organizer, 5)
+        publicEvent.title = "Public event"
+        events.saveAndFlush(publicEvent)
+        assertEquals(EventStatus.PUBLISHED, eventService.getEventById(publicEvent.id).status)
+
+        val cached = requireNotNull(cacheManager.getCache("events"))
+        for (status in listOf(EventStatus.DRAFT, EventStatus.PENDING, EventStatus.REJECTED, EventStatus.CANCELLED)) {
+            val current = events.findById(hidden.id).orElseThrow()
+            current.status = status
+            events.saveAndFlush(current)
+            // Reproduce a legacy cache entry populated by an authorized viewer.
+            cached.put(hidden.id, eventService.getEventById(hidden.id, organizer.email))
+
+            assertThrows(ResourceNotFoundException::class.java) { eventService.getEventById(hidden.id) }
+            assertThrows(ResourceNotFoundException::class.java) { eventService.getEventById(hidden.id, visitor.email) }
+            assertThrows(ResourceNotFoundException::class.java) {
+                eventService.getEventGallery(hidden.id, PageRequest.of(0, 10), visitor.email)
+            }
+            assertEquals(status, eventService.getEventById(hidden.id, organizer.email).status)
+            assertEquals(status, eventService.getEventById(hidden.id, admin.email).status)
+            assertEquals(0, eventService.getEventGallery(hidden.id, PageRequest.of(0, 10), admin.email).content.size)
+        }
+    }
+
+    @Test
+    fun `post by ID cannot bypass event visibility while public event posts remain accessible`() {
+        val organizer = users.saveAndFlush(newVolunteer("organizer@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val visitor = users.saveAndFlush(newVolunteer("visitor@example.invalid"))
+        val admin = users.saveAndFlush(newVolunteer("admin@example.invalid").copy(role = Role.ADMIN))
+        val hidden = capacityEvent(organizer, 2)
+        hidden.status = EventStatus.DRAFT
+        events.saveAndFlush(hidden)
+        val published = capacityEvent(organizer, 2)
+        val draftPost = posts.saveAndFlush(Post(content = "Unpublished details", author = organizer, event = hidden))
+        val publicPost = posts.saveAndFlush(Post(content = "Public discussion", author = organizer, event = published))
+
+        assertThrows(ResourceNotFoundException::class.java) {
+            postService.getPost(hidden.id, draftPost.id, visitor.email)
+        }
+        assertEquals(draftPost.id, postService.getPost(hidden.id, draftPost.id, organizer.email).id)
+        assertEquals(draftPost.id, postService.getPost(hidden.id, draftPost.id, admin.email).id)
+        assertEquals(publicPost.id, postService.getPost(published.id, publicPost.id, visitor.email).id)
+        assertThrows(ResourceNotFoundException::class.java) {
+            postService.getPostsForEvent(hidden.id, visitor.email, PageRequest.of(0, 10))
+        }
+        assertEquals(1, postService.getPostsForEvent(published.id, visitor.email, PageRequest.of(0, 10)).totalElements)
+    }
+
+    @Test
+    fun `author feed excludes hidden event posts before pagination and totals`() {
+        val organizer = visibleFixture("organizer@example.invalid", ProfileVisibility.PUBLIC)
+        val visitor = users.saveAndFlush(newVolunteer("visitor@example.invalid"))
+        val admin = users.saveAndFlush(newVolunteer("admin@example.invalid").copy(role = Role.ADMIN))
+        val hidden = capacityEvent(organizer, 2)
+        hidden.status = EventStatus.PENDING
+        events.saveAndFlush(hidden)
+        val publicEvent = capacityEvent(organizer, 2)
+        posts.saveAndFlush(Post(content = "Secret draft", author = organizer, event = hidden))
+        posts.saveAndFlush(Post(content = "Published content", author = organizer, event = publicEvent))
+
+        val visitorFeed = postService.getPostsByUserId(organizer.id, visitor.email, PageRequest.of(0, 10))
+        assertEquals(1L, visitorFeed.totalElements)
+        assertEquals(listOf("Published content"), visitorFeed.content.map { it.content })
+        assertEquals(1L, postService.getPostsByUserId(organizer.id, null, PageRequest.of(0, 10)).totalElements)
+        assertEquals(2L, postService.getPostsByUserId(organizer.id, organizer.email, PageRequest.of(0, 10)).totalElements)
+        assertEquals(2L, postService.getPostsByUserId(organizer.id, admin.email, PageRequest.of(0, 10)).totalElements)
     }
 
     @Test
