@@ -215,9 +215,10 @@ class EventController(
         )
         @GetMapping("/{id}")
         fun getEventById(
-                @Parameter(description = "Event ID", required = true) @PathVariable id: Long
+                @Parameter(description = "Event ID", required = true) @PathVariable id: Long,
+                @AuthenticationPrincipal currentUser: UserDetails?
         ): ResponseEntity<EventResponse> {
-                val event = eventService.getEventById(id)
+                val event = eventService.getEventById(id, currentUser?.username)
                 return ResponseEntity.ok(event)
         }
 
@@ -246,10 +247,11 @@ class EventController(
                 @Parameter(description = "Page number (0-based)")
                 @RequestParam(defaultValue = "0")
                 page: Int,
-                @Parameter(description = "Page size") @RequestParam(defaultValue = "20") size: Int
+                @Parameter(description = "Page size") @RequestParam(defaultValue = "20") size: Int,
+                @AuthenticationPrincipal currentUser: UserDetails?
         ): ResponseEntity<com.cs2.volunteer_hub.dto.PageGalleryImageResponse> {
                 val pageable = PageRequest.of(page, size)
-                val gallery = eventService.getEventGallery(id, pageable)
+                val gallery = eventService.getEventGallery(id, pageable, currentUser?.username)
                 return ResponseEntity.ok(gallery)
         }
 

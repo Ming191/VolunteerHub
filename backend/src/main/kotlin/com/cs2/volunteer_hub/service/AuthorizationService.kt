@@ -2,8 +2,11 @@ package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.model.Event
+import com.cs2.volunteer_hub.model.EventStatus
+import com.cs2.volunteer_hub.model.Role
 import com.cs2.volunteer_hub.repository.EventRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
+import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.findByIdOrThrow
 import com.cs2.volunteer_hub.specification.RegistrationSpecifications
 import org.springframework.stereotype.Service
@@ -15,7 +18,8 @@ import org.springframework.stereotype.Service
 @Service
 class AuthorizationService(
         private val eventRepository: EventRepository,
-        private val registrationRepository: RegistrationRepository
+        private val registrationRepository: RegistrationRepository,
+        private val userRepository: UserRepository
 ) {
     /**
      * Verify event ownership and return the event Throws UnauthorizedAccessException if user is not
@@ -66,9 +70,13 @@ class AuthorizationService(
     fun requireEventReadPermission(eventId: Long, userId: Long? = null): Event {
         val event = eventRepository.findByIdOrThrow(eventId)
 
-        // Allow access if event is approved OR if the user is the creator
-        if (!event.isApproved && (userId == null || event.creator.id != userId)) {
-            throw UnauthorizedAccessException("Cannot interact with unapproved events.")
+        // Only PUBLISHED events are public. Owner/admin can inspect unpublished events.
+        val privileged = userId != null && (
+            event.creator.id == userId || userRepository.findById(userId).orElse(null)?.role == Role.ADMIN
+        )
+        if (event.status != EventStatus.PUBLISHED && !privileged) {
+            // 404 semantics prevent probing hidden event IDs.
+            throw com.cs2.volunteer_hub.exception.ResourceNotFoundException("Event", "id", eventId)
         }
 
         return event
