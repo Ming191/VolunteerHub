@@ -11,6 +11,11 @@ import com.cs2.volunteer_hub.service.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
+import org.springframework.http.HttpMethod
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.core.annotation.AnnotatedElementUtils
 import org.mockito.Mockito
 import org.springframework.amqp.rabbit.core.RabbitAdmin
 import org.springframework.beans.factory.annotation.Autowired
@@ -62,6 +67,9 @@ class VH10503HttpSecurity {
         RegistrationController::class, ReportController::class,
         AdminReportController::class, AdminController::class, AdminUserController::class, ExportController::class,
         DashboardController::class, SettingsController::class, UserController::class,
+        AdminMetricsController::class, AdminPendingMessagesController::class,
+        AuthController::class, EnumController::class, MeController::class,
+        NotificationController::class, TestNotificationController::class,
         GlobalExceptionHandler::class
     ],
     webEnvironment = SpringBootTest.WebEnvironment.MOCK,
@@ -104,6 +112,16 @@ class AuthorizationHttpIntegrationTest {
         }
     }
 
+    @Autowired @org.springframework.beans.factory.annotation.Qualifier("requestMappingHandlerMapping") lateinit var handlerMapping: RequestMappingHandlerMapping
+    @MockitoBean lateinit var metricsService: MetricsService
+    @MockitoBean lateinit var pendingMessageService: PendingMessageService
+    @MockitoBean lateinit var meService: MeService
+    @MockitoBean lateinit var authService: AuthService
+    @MockitoBean lateinit var emailVerificationService: EmailVerificationService
+    @MockitoBean lateinit var emailQueueService: EmailQueueService
+    @MockitoBean lateinit var loginMapper: com.cs2.volunteer_hub.mapper.LoginMapper
+    @MockitoBean lateinit var registerMapper: com.cs2.volunteer_hub.mapper.RegisterMapper
+    @MockitoBean lateinit var verifyEmailMapper: com.cs2.volunteer_hub.mapper.VerifyEmailMapper
     @Autowired lateinit var mvc: MockMvc
     @Autowired lateinit var jwt: JwtTokenProvider
     @Autowired lateinit var userDetails: CustomUserDetailsService
@@ -376,6 +394,133 @@ class AuthorizationHttpIntegrationTest {
         val p = posts.saveAndFlush(Post(content = "Private post", author = owner, event = e))
         mvc.perform(asActor(post("/api/posts/" + p.id + "/like"), outsider))
             .andExpect(status().isForbidden)
+    }
+
+
+    /**
+     * Frozen, reviewed inventory. CI fails if an endpoint is added/removed or a role guard
+     * changes without an explicit update to the corresponding authorization policy.
+     */
+    private data class RouteContract(val method: String, val path: String, val policy: String) {
+        val key: String get() = method + " " + path
+    }
+
+    private fun fullMatrix(): List<RouteContract> {
+        val text = checkNotNull(
+            javaClass.classLoader.getResourceAsStream("vh105-authorization-matrix.csv")
+        ) { "Authorization inventory missing" }.bufferedReader().use { it.readText() }
+        return text.lineSequence().filter { it.isNotBlank() && !it.startsWith("#") && !it.startsWith("method,") }
+            .map { line ->
+                val cells = line.split(",")
+                require(cells.size == 3) { "Invalid policy row: " + line }
+                RouteContract(cells[0], cells[1], cells[2])
+            }.toList()
+    }
+
+    private fun actualControllerRoutes(): Map<String, org.springframework.web.method.HandlerMethod> =
+        handlerMapping.handlerMethods.entries.flatMap { (mapping, handler) ->
+            if (!handler.beanType.packageName.startsWith("com.cs2.volunteer_hub.controller")) {
+                emptyList<Pair<String, org.springframework.web.method.HandlerMethod>>()
+            } else {
+                val paths: Collection<String> = mapping.pathPatternsCondition?.patternValues
+                    ?: mapping.patternsCondition?.patterns ?: emptySet<String>()
+                mapping.methodsCondition.methods.flatMap { verb: org.springframework.web.bind.annotation.RequestMethod ->
+                    paths.map { path: String -> (verb.name + " " + path) to handler }
+                }
+            }
+        }.toMap()
+
+    private fun substituteRouteParams(path: String): String =
+        Regex("""\{([^}]+)}""").replace(path) { match ->
+            when (match.groupValues[1]) {
+                "status" -> "APPROVED"
+                else -> "99999999"
+            }
+        }
+
+    private fun routeRequest(contract: RouteContract): MockHttpServletRequestBuilder {
+        val path = substituteRouteParams(contract.path)
+        return request(HttpMethod.valueOf(contract.method), path)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{}")
+            .param("q", "fixture")
+            .param("type", "POST")
+            .param("targetId", "99999999")
+            .param("fromDate", "2026-01-01")
+            .param("toDate", "2026-01-31")
+    }
+
+    @Test
+    fun all112InventoryHandlersExistAndDeclaredRolePoliciesHaveNotDrifted() {
+        val policies = fullMatrix()
+        assertEquals(112, policies.size, "Original VH-105 inventory had 112 controllers routes")
+        assertEquals(112, policies.map { it.key }.toSet().size, "Duplicate method+path in policy")
+        val routes = actualControllerRoutes()
+        assertEquals(policies.map { it.key }.toSet(), routes.keys, "Uninventoried/removed HTTP handlers")
+
+        for (entry in policies) {
+            val handler = checkNotNull(routes[entry.key])
+            val methodGuard = AnnotatedElementUtils.findMergedAnnotation(handler.method, PreAuthorize::class.java)
+            val classGuard = AnnotatedElementUtils.findMergedAnnotation(handler.beanType, PreAuthorize::class.java)
+            val declared = methodGuard?.value ?: classGuard?.value
+            when (entry.policy) {
+                "ADMIN", "EVENT_ORGANIZER", "VOLUNTEER" ->
+                    assertEquals("hasRole('" + entry.policy + "')", declared, entry.key)
+                "AUTH" -> {
+                    // The global filter requires authentication on non-permitAll endpoints,
+                    // and method-level PreAuthorize handles public filter route overrides.
+                    assertTrue(declared == "isAuthenticated()" ||
+                        !entry.path.startsWith("/api/auth/"), "Missing auth guard on " + entry.key)
+                }
+                "PUBLIC" ->
+                    assertNull(declared, "Public endpoint accidentally role-restricted: " + entry.key)
+                else -> fail<Nothing>("Unknown policy for " + entry.key + ": " + entry.policy)
+            }
+        }
+    }
+
+    @Test
+    fun everyProtectedRouteRejectsMissingOrMalformedBearerTokenWith401() {
+        val policies = fullMatrix()
+        val protected = policies.filter { it.policy != "PUBLIC" }
+        assertEquals(95, protected.size)
+        for (entry in protected) {
+            val unauth = mvc.perform(routeRequest(entry)).andReturn().response.status
+            assertEquals(401, unauth, "Anonymous must fail on " + entry.key)
+            val malformed = mvc.perform(
+                routeRequest(entry).header("Authorization", "Bearer invalid.signature.payload")
+            ).andReturn().response.status
+            assertEquals(401, malformed, "Invalid JWT must fail on " + entry.key)
+        }
+    }
+
+    @Test
+    fun allRoleGuardedReadEndpointsRejectOtherRolesWith403() {
+        val entries = fullMatrix().filter {
+            it.policy in setOf("ADMIN", "EVENT_ORGANIZER", "VOLUNTEER") && it.method == "GET"
+        }
+        val actors = listOf(
+            Role.ADMIN to actor("matrix-admin@example.invalid", Role.ADMIN),
+            Role.EVENT_ORGANIZER to actor("matrix-organizer@example.invalid", Role.EVENT_ORGANIZER),
+            Role.VOLUNTEER to actor("matrix-volunteer@example.invalid", Role.VOLUNTEER)
+        )
+        for (entry in entries) {
+            for ((role, actor) in actors) {
+                if (role.name == entry.policy) continue
+                val code = mvc.perform(asActor(routeRequest(entry), actor)).andReturn().response.status
+                assertEquals(403, code, "Wrong role " + role.name + " on " + entry.key)
+            }
+        }
+    }
+
+    @Test
+    fun publicReadRoutesRemainAccessibleWithoutAuthentication() {
+        val entries = fullMatrix().filter { it.policy == "PUBLIC" && it.method == "GET" }
+        for (entry in entries) {
+            val code = mvc.perform(routeRequest(entry)).andReturn().response.status
+            assertNotEquals(401, code, "Public route unexpectedly protected: " + entry.key)
+            assertNotEquals(403, code, "Public route unexpectedly forbidden: " + entry.key)
+        }
     }
 
 }
