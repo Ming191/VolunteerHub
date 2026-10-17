@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.*
 import com.cs2.volunteer_hub.exception.ResourceNotFoundException
+import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
 import com.cs2.volunteer_hub.mapper.CommentMapper
 import com.cs2.volunteer_hub.model.Comment
 import com.cs2.volunteer_hub.repository.CommentRepository
@@ -164,7 +165,7 @@ class CommentService(
 
         // Verify the user is the author of the comment
         if (comment.author.id != user.id) {
-            throw IllegalAccessException("You are not authorized to update this comment")
+            throw UnauthorizedAccessException("You are not authorized to update this comment")
         }
 
         comment.content = newContent
@@ -189,7 +190,7 @@ class CommentService(
 
         // Verify the user is the author of the comment
         if (comment.author.id != user.id) {
-            throw IllegalAccessException("You are not authorized to delete this comment")
+            throw UnauthorizedAccessException("You are not authorized to delete this comment")
         }
 
         // Evict cache for the post

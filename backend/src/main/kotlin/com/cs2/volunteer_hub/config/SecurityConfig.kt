@@ -61,11 +61,20 @@ class SecurityConfig {
                 .cors { cors ->
                     cors.configurationSource(corsConfigurationSource())
                 } // Enable CORS with explicit configuration
+                .exceptionHandling { exceptions ->
+                    exceptions.authenticationEntryPoint(
+                        org.springframework.security.web.authentication.HttpStatusEntryPoint(
+                            org.springframework.http.HttpStatus.UNAUTHORIZED
+                        )
+                    )
+                }
                 .sessionManagement { session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 }
                 .authorizeHttpRequests { auth ->
-                    auth.requestMatchers("/api/auth/**")
+                    auth.requestMatchers(org.springframework.http.HttpMethod.POST, "/api/auth/logout-all")
+                            .authenticated()
+                            .requestMatchers("/api/auth/**")
                             .permitAll()
                             .requestMatchers("/api/events/*")
                             .permitAll()
