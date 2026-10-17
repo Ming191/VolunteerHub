@@ -32,7 +32,7 @@ export const PrivacySection = ({ settings, updateSettings, disabled }: PrivacySe
                 <SettingRow
                     id="profile-visibility"
                     title="Profile Visibility"
-                    description="Control who can see your profile"
+                    description="Lock your profile page and timeline from others. Your name, avatar and public comments or posts stay visible where shared."
                 >
                     <Select
                         value={settings?.profileVisibility ?? 'PUBLIC'}

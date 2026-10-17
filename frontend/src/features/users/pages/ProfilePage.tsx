@@ -55,8 +55,9 @@ export const ProfilePage = () => {
         .join('')
         .toUpperCase() ?? '';
 
-    // Check if profile is private
+    // A locked profile hides its timeline/details, not the person's public interactions.
     const isPrivateProfile = profile && 'isPrivate' in profile && profile.isPrivate === true;
+    const isLockedForViewer = Boolean(isPrivateProfile && !isOwnProfile);
 
     // Show skeleton while loading or no profile
     if (loading || !profile) {
@@ -97,11 +98,19 @@ export const ProfilePage = () => {
                                                                 {profile.role.replace(/_/g, ' ')}
                                                             </Badge>
                                                         )}
+                                                        {isLockedForViewer && (
+                                                            <Badge variant="outline" className="inline-flex items-center gap-1.5">
+                                                                <Lock className="h-3 w-3" />
+                                                                Locked profile
+                                                            </Badge>
+                                                        )}
                                                     </div>
                                                     
-                                                    <p className="text-muted-foreground text-base mb-3 max-w-2xl leading-relaxed">
-                                                        {profile.bio || 'No bio added yet'}
-                                                    </p>
+                                                    {!isLockedForViewer && (
+                                                        <p className="text-muted-foreground text-base mb-3 max-w-2xl leading-relaxed">
+                                                            {profile.bio || 'No bio added yet'}
+                                                        </p>
+                                                    )}
 
                                                     {'createdAt' in profile && (
                                                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -204,8 +213,8 @@ export const ProfilePage = () => {
                         </CardContent>
                     </Card>
 
-                    {/* Posts Section - Hidden for private profiles */}
-                    {(!isPrivateProfile || isOwnProfile) ? (
+                    {/* The owner's timeline is visible to them; others see a locked profile. */}
+                    {!isLockedForViewer ? (
                         <div>
                             <div className="flex items-center gap-2 mb-4 px-1">
                                 <h2 className="text-2xl font-semibold tracking-tight">
@@ -258,9 +267,10 @@ export const ProfilePage = () => {
                                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted/50 mb-4">
                                     <Lock className="h-8 w-8 text-muted-foreground/50" />
                                 </div>
-                                <p className="text-muted-foreground font-medium mb-1">Posts are private</p>
+                                <p className="text-muted-foreground font-medium mb-1">This profile is locked</p>
                                 <p className="text-sm text-muted-foreground/60">
-                                    This user has chosen to keep their posts private.
+                                    You can't view this person's profile timeline. Their public posts and comments
+                                    remain visible in the conversations where they were shared.
                                 </p>
                             </CardContent>
                         </Card>

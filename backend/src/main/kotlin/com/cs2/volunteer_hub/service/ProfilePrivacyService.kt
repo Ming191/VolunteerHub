@@ -24,13 +24,15 @@ class ProfilePrivacyService(
 
     fun toPublicAuthor(user: User): AuthorResponse {
         val deleted = userRepository.findDeletionStatus(user.id) != false
-        val hidden = deleted ||
+        val locked = deleted ||
             settingsRepository.findById(user.id).orElse(null)?.profileVisibility != ProfileVisibility.PUBLIC
+        // A locked PROFILE does not mean anonymous public participation. Names and avatars
+        // remain visible on posts, comments and attendee lists; private bio stays hidden.
         return AuthorResponse(
             id = user.id,
             name = if (deleted) "Deleted user" else user.name,
-            profilePictureUrl = if (hidden) null else user.profilePictureUrl,
-            bio = if (hidden) null else user.bio
+            profilePictureUrl = if (deleted) null else user.profilePictureUrl,
+            bio = if (locked) null else user.bio
         )
     }
 }
