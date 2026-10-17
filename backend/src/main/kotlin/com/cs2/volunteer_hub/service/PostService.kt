@@ -39,18 +39,22 @@ class PostService(
         private val authorizationService: AuthorizationService,
         private val cacheEvictionService: CacheEvictionService,
         private val imageUploadService: ImageUploadService,
+        private val postUploadGrantService: PostUploadGrantService,
         private val profilePrivacyService: ProfilePrivacyService,
         @Value("\${upload.max-files-per-post:5}") private val maxFilesPerPost: Int
 ) {
     private val logger = LoggerFactory.getLogger(PostService::class.java)
 
     @Transactional(readOnly = true)
-    fun generateSignedUrl(eventId: Long, userEmail: String, contentType: String, fileName: String): Pair<String, String> {
+    fun generateSignedUrl(eventId: Long, userEmail: String, contentType: String, fileName: String, sizeBytes: Long = 0L): Pair<String, String> {
         // A signed PUT URL is write access to object storage. Enforce the same
         // object-level permission as creating a post BEFORE issuing that capability.
         val user = userRepository.findByEmailOrThrow(userEmail)
         authorizationService.requireEventPostPermission(eventId, user.id)
-        return imageUploadService.generateSignedUrl(contentType, fileName)
+        if (sizeBytes !in 1L..10_485_760L) throw BadRequestException("Upload exceeds allowed 10MB size or has no size")
+        val urls = imageUploadService.generateSignedUrl(contentType, fileName)
+        postUploadGrantService.register(urls.second, user.id, eventId, contentType)
+        return urls
     }
 
     @CacheEvict(value = ["posts"], key = "#eventId")
@@ -75,6 +79,11 @@ class PostService(
             }
         }
 
+        // Verify each issued upload capability and the actual GCS object before saving.
+        // Do not trust arbitrary caller-supplied public image URLs.
+        request.imageUrls?.forEach { url ->
+            postUploadGrantService.verifyAndConsume(url, author.id, eventId)
+        }
         val post = Post(content = request.content, author = author, event = event)
 
         val savedPost = postRepository.save(post)

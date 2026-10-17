@@ -16,7 +16,8 @@ import org.springframework.stereotype.Service
 @Service
 class ImageUploadService(
         private val storage: Storage,
-        @Value("\${gcs.bucket.name}") private val bucketName: String
+        @Value("\${gcs.bucket.name}") private val bucketName: String,
+        private val fileValidationService: FileValidationService
 ) {
         private val logger = LoggerFactory.getLogger(ImageUploadService::class.java)
         private val executor = Executors.newCachedThreadPool()
@@ -48,6 +49,16 @@ class ImageUploadService(
         }
 
         fun generateSignedUrl(contentType: String, originalFilename: String): Pair<String, String> {
+
+                if (contentType !in setOf("image/jpeg", "image/png", "image/webp")) {
+                    throw BadRequestException("Unsupported upload image Content-Type")
+                }
+                if (originalFilename.isBlank() || originalFilename.length > 100 ||
+                    originalFilename.contains("..") ||
+                    originalFilename.any { it == '/' || it == '\\' || it.isISOControl() }) {
+                    throw BadRequestException("Unsafe upload filename")
+                }
+
                 val fileName = "images/${UUID.randomUUID()}-${originalFilename.replace(" ", "_")}"
                 val blobInfo =
                         BlobInfo.newBuilder(BlobId.of(bucketName, fileName))
@@ -55,7 +66,8 @@ class ImageUploadService(
                                 .build()
 
                 val extensionHeaders = mapOf(
-                        "Content-Type" to contentType
+                        "Content-Type" to contentType,
+                        "x-goog-if-generation-match" to "0"
                 )
 
                 val url =
@@ -72,6 +84,24 @@ class ImageUploadService(
 
                 val publicUrl = "https://storage.googleapis.com/$bucketName/$fileName"
                 return Pair(url.toString(), publicUrl)
+        }
+
+
+        fun verifyUploadedObject(publicUrl: String, contentType: String) {
+                val prefix = "https://storage.googleapis.com/$bucketName/"
+                if (!publicUrl.startsWith(prefix)) throw BadRequestException("Unknown upload origin")
+                val objectName = publicUrl.removePrefix(prefix)
+                if (!objectName.startsWith("images/") || objectName.contains("..") ||
+                    objectName.contains("?") || objectName.contains("#") || objectName.contains("%")) {
+                    throw BadRequestException("Malformed image object reference")
+                }
+                val blob = storage.get(BlobId.of(bucketName, objectName))
+                    ?: throw BadRequestException("Uploaded object does not exist")
+                if (blob.size <= 0 || blob.size > 10L * 1024 * 1024 ||
+                    blob.contentType != contentType) {
+                    throw BadRequestException("Uploaded image size or type is invalid")
+                }
+                fileValidationService.validateUploadedBytes(blob.getContent(), blob.contentType)
         }
 
         private fun uploadImageFallback(

@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit
 @Component
 class RateLimitingFilter(
     private val proxyManager: ProxyManager<String>,
-    private val rateLimitProperties: RateLimitProperties
+    private val rateLimitProperties: RateLimitProperties,
+    private val clientIpResolver: ClientIpResolver
 ) : Filter {
 
     private val pathMatcher = AntPathMatcher()
@@ -75,6 +76,6 @@ class RateLimitingFilter(
     }
 
     private fun getClientIdentifier(request: HttpServletRequest): String {
-        return request.userPrincipal?.name ?: request.getHeader("X-Forwarded-For") ?: request.remoteAddr
+        return request.userPrincipal?.name ?: clientIpResolver.resolve(request)
     }
 }
