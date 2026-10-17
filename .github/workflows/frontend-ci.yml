@@ -5,14 +5,18 @@ on:
   push:
     branches:
       - main
-      - fix/vh-frontend-build-e2e
 
 permissions:
   contents: read
 
+concurrency:
+  group: frontend-quality-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: frontend
