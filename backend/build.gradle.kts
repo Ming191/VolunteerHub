@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.2.0"
+    kotlin("jvm") version "2.4.21"
     kotlin("plugin.spring") version "1.9.25"
 	id("org.springframework.boot") version "3.5.6"
 	id("io.spring.dependency-management") version "1.1.7"
@@ -54,31 +54,31 @@ dependencies {
     // https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
-	implementation("org.apache.commons:commons-csv:1.10.0")
+	implementation("org.apache.commons:commons-csv:1.14.1")
     // https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage
-    implementation("com.google.cloud:google-cloud-storage:2.59.0")
+    implementation("com.google.cloud:google-cloud-storage:2.75.0")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
 
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     // Bucket4j for rate limiting with Redis support
-    implementation("com.bucket4j:bucket4j_jdk17-core:8.15.0")
-    implementation("com.bucket4j:bucket4j_jdk17-redis-common:8.15.0")
-    implementation("com.bucket4j:bucket4j_jdk17-lettuce:8.15.0")
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.21.0")
+    implementation("com.bucket4j:bucket4j_jdk17-redis-common:8.21.0")
+    implementation("com.bucket4j:bucket4j_jdk17-lettuce:8.21.0")
 
     // https://mvnrepository.com/artifact/com.google.firebase/firebase-admin
-    implementation("com.google.firebase:firebase-admin:9.7.0")
+    implementation("com.google.firebase:firebase-admin:9.11.0")
     implementation("org.springframework.boot:spring-boot-starter-aop")
 
     // Resilience4j for Circuit Breaker pattern
-    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.3.0")
-    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.3.0")
-    implementation("io.github.resilience4j:resilience4j-timelimiter:2.3.0")
-    implementation("io.github.resilience4j:resilience4j-micrometer:2.3.0")
+    implementation("io.github.resilience4j:resilience4j-spring-boot3:2.4.0")
+    implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.4.0")
+    implementation("io.github.resilience4j:resilience4j-timelimiter:2.4.0")
+    implementation("io.github.resilience4j:resilience4j-micrometer:2.4.0")
 
     // https://mvnrepository.com/artifact/org.webjars/swagger-ui
-    implementation("org.webjars:swagger-ui:5.30.1")
+    implementation("org.webjars:swagger-ui:5.33.2")
 
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-api
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.13")
@@ -89,10 +89,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     // https://mvnrepository.com/artifact/io.mailtrap/mailtrap-java
-    implementation("io.mailtrap:mailtrap-java:1.1.0")
+    implementation("io.mailtrap:mailtrap-java:1.9.0")
 
     // https://mvnrepository.com/artifact/com.google.guava/guava
-    implementation("com.google.guava:guava:33.0.0-jre")
+    implementation("com.google.guava:guava:33.7.2-jre")
 }
 
 kotlin {
