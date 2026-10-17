@@ -46,7 +46,7 @@ export const NotificationsSection = ({ settings, updateSettings, disabled }: Not
                     setIsPushEnabled(false); // Revert on denial
                     toast.error('Notification permission denied by browser');
                 }
-            } catch (error) {
+            } catch {
                 setIsPushEnabled(false); // Revert on error
                 toast.error('Failed to enable push notifications');
             } finally {

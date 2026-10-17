@@ -5,18 +5,6 @@ import { IconUpload } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
 import { X } from "lucide-react";
 
-const mainVariant = {
-  initial: {
-    x: 0,
-    y: 0,
-  },
-  animate: {
-    x: 20,
-    y: -20,
-    opacity: 0.9,
-  },
-};
-
 const secondaryVariant = {
   initial: {
     opacity: 0,

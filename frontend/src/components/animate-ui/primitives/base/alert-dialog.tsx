@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- route and UI modules deliberately share exports */
 'use client';
 
 import * as React from 'react';

@@ -88,7 +88,6 @@ export const SignUpScreen = ({ isTabbed = false }: SignUpScreenProps) => {
                                         <SelectContent>
                                             <SelectItem value="VOLUNTEER">Volunteer</SelectItem>
                                             <SelectItem value="EVENT_ORGANIZER">Event Organizer</SelectItem>
-                                            <SelectItem value="ADMIN">Admin</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

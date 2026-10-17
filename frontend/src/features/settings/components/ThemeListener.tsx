@@ -27,7 +27,7 @@ export const ThemeListener = () => {
         if (backendTheme && backendTheme !== theme) {
             setTheme(backendTheme);
         }
-    }, [settings?.theme, mounted, setTheme]); // Sync only one way here to avoid loops
+    }, [settings?.theme, mounted, setTheme, theme]); // Sync only one way here to avoid loops
 
     return null;
 };

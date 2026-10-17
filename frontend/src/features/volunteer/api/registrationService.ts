@@ -41,13 +41,14 @@ const getRegistrationStatus = async (eventId: number): Promise<RegistrationStatu
  */
 const getMyRegistrationEvents = async (): Promise<RegistrationResponse[]> => {
   try {
-    const res = await userProfileApi.getMyRegistrations();
-    return res.data;
-  } catch (err: any) {
+    const res = await userProfileApi.getMyRegistrations({ pageable: { page: 0, size: 100 } });
+    return res.data.content ?? [];
+  } catch (err: unknown) {
+    const detail = err as { code?: string; response?: {status?:number;data?:unknown} };
     console.error('Failed to get my registrations:', {
-      code: err.code,
-      status: err.response?.status,
-      data: err.response?.data,
+      code: detail.code,
+      status: detail.response?.status,
+      data: detail.response?.data,
     });
     throw err;
   }

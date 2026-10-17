@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- route and UI modules deliberately share exports */
 import { createRoute, redirect } from '@tanstack/react-router';
 import { Suspense } from 'react';
 import { rootRoute } from './root.route';

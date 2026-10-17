@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- route and UI modules deliberately share exports */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
