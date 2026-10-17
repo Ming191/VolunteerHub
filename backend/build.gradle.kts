@@ -81,10 +81,10 @@ dependencies {
     implementation("org.webjars:swagger-ui:5.30.1")
 
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-api
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.13")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:3.1.1")
 
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
 
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
