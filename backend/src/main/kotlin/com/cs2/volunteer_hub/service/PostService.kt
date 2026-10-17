@@ -172,6 +172,7 @@ class PostService(
                     "Post does not belong to the specified event."
             )
         }
+        authorizationService.requireEventReadPermission(eventId, user.id)
 
         val isLiked = isPostLikedByUser(user.id, post.id)
         return postMapper.toPostResponse(post, isLiked)
@@ -231,6 +232,7 @@ class PostService(
 
         val postSpec =
                 PostSpecifications.forEvents(eventIds)
+                        .and(PostSpecifications.visibleInEventsTo(user.id, user.role == com.cs2.volunteer_hub.model.Role.ADMIN))
                         .and(
                                 PostSpecifications.createdAfter(
                                         LocalDateTime.now().minusDays(daysBack)
@@ -256,6 +258,7 @@ class PostService(
         val user = userRepository.findByEmailOrThrow(userEmail)
 
         val postSpec = PostSpecifications.byAuthor(user.id)
+            .and(PostSpecifications.visibleInEventsTo(user.id, user.role == com.cs2.volunteer_hub.model.Role.ADMIN))
         val postPage = postRepository.findAll(postSpec, pageable)
 
         if (postPage.isEmpty) {
@@ -287,6 +290,7 @@ class PostService(
         }
 
         val postSpec = PostSpecifications.byAuthor(userId)
+            .and(PostSpecifications.visibleInEventsTo(viewer?.id, viewer?.role == com.cs2.volunteer_hub.model.Role.ADMIN))
         val postPage = postRepository.findAll(postSpec, pageable)
 
         if (postPage.isEmpty) {
