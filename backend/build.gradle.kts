@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
+    jacoco
     kotlin("jvm") version "2.2.0"
     kotlin("plugin.spring") version "1.9.25"
 	id("org.springframework.boot") version "3.5.6"
@@ -43,6 +44,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:rabbitmq")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("org.springframework.security:spring-security-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -113,4 +115,26 @@ tasks.withType<Test> {
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.compilerOptions {
     freeCompilerArgs.set(listOf("-Xannotation-default-target=param-property"))
+}
+
+jacoco {
+    toolVersion = "0.8.13"
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+    // Business logic coverage only; exclude DTOs, JPA entities and accessors.
+    classDirectories.setFrom(files(classDirectories.files.map { output ->
+        fileTree(output) {
+            include(
+                "com/cs2/volunteer_hub/service/**",
+                "com/cs2/volunteer_hub/worker/**",
+                "com/cs2/volunteer_hub/listener/**"
+            )
+        }
+    }))
 }
