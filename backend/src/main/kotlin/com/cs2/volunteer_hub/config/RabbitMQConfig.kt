@@ -10,6 +10,7 @@ import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFacto
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
+import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer
 import org.springframework.context.annotation.Bean
@@ -84,7 +85,12 @@ class RabbitMQConfig {
 
     @Bean
     fun messageConverter(): Jackson2JsonMessageConverter {
-        return Jackson2JsonMessageConverter()
+        // Restrict polymorphic AMQP deserialization to this application's DTOs.
+        // Never use trust-all ('*') for messages received from a broker.
+        val typeMapper = DefaultJackson2JavaTypeMapper().apply {
+            setTrustedPackages("com.cs2.volunteer_hub.dto")
+        }
+        return Jackson2JsonMessageConverter().apply { setJavaTypeMapper(typeMapper) }
     }
 
     @Bean
