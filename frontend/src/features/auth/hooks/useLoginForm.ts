@@ -1,6 +1,5 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { loginSchema } from '../schemas/loginSchema';
@@ -8,7 +7,6 @@ import type { LoginFormValues } from '../types/ui-login';
 
 export function useLoginForm() {
     const { login } = useAuth();
-    const navigate = useNavigate();
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),

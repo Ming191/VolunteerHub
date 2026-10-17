@@ -21,7 +21,7 @@ export const useAdminPendingEvents = () => {
             setError(null);
             const response = await adminApi.getPendingEvents();
             // API returns a Page object with content array
-            const eventsData = response.data as any;
+            const eventsData = response.data;
             setEvents(eventsData.content || []);
         } catch (error) {
             console.error('Failed to fetch pending events:', error);
