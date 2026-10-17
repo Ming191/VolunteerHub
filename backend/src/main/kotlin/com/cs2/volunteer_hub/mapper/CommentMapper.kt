@@ -3,10 +3,11 @@ package com.cs2.volunteer_hub.mapper
 import com.cs2.volunteer_hub.dto.AuthorResponse
 import com.cs2.volunteer_hub.dto.CommentResponse
 import com.cs2.volunteer_hub.model.Comment
+import com.cs2.volunteer_hub.service.ProfilePrivacyService
 import org.springframework.stereotype.Component
 
 @Component
-class CommentMapper {
+class CommentMapper(private val privacy: ProfilePrivacyService) {
     /**
      * Map Comment entity to CommentResponse DTO (without replies for flat structure)
      */
@@ -15,11 +16,7 @@ class CommentMapper {
             id = comment.id,
             content = comment.content,
             createdAt = comment.createdAt,
-            author = AuthorResponse(
-              id = comment.author.id,
-              name = comment.author.name,
-              profilePictureUrl = comment.author.profilePictureUrl,
-              bio = comment.author.bio),
+            author = privacy.toPublicAuthor(comment.author),
             parentCommentId = comment.parentComment?.id,
             replyCount = comment.replies.size,
             replies = emptyList()
@@ -38,11 +35,7 @@ class CommentMapper {
             id = comment.id,
             content = comment.content,
             createdAt = comment.createdAt,
-            author = AuthorResponse(
-              id = comment.author.id,
-              name = comment.author.name,
-              profilePictureUrl = comment.author.profilePictureUrl,
-              bio = comment.author.bio),
+            author = privacy.toPublicAuthor(comment.author),
             parentCommentId = comment.parentComment?.id,
             replyCount = comment.replies.size,
             replies = replies
