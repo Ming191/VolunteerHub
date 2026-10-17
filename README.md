@@ -114,6 +114,10 @@ cd backend
 - `monitoring/` - Prometheus & Grafana configuration
 - `docker-compose.yml` - Container orchestration
 
+## Database migrations
+
+Flyway manages PostgreSQL schema changes; Hibernate runs with `ddl-auto=validate` and does not create/alter tables. Fresh databases migrate automatically. Existing Hibernate-managed databases require a reviewed one-time baseline: see [VH-201 migration guide](docs/database/VH-201-flyway.md). Never set `VH_FLYWAY_BASELINE_ON_MIGRATE=true` permanently.
+
 ## Environment Variables
 
 Check `backend/src/main/resources/application.properties` and `docker-compose.yml` for configuration details (Database credentials, API keys, etc).
