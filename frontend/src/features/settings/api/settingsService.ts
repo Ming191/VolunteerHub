@@ -7,6 +7,7 @@ import {
     type DeleteAccountRequest,
 } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
+import { authStorage } from '@/features/auth/utils/authStorage';
 const config = new Configuration({ basePath: '' });
 const settingsApi = new UserSettingsApi(config, undefined, axiosInstance);
 
@@ -47,7 +48,7 @@ export const revokeSession = async (sessionId: number): Promise<void> => {
  * Revoke all other sessions
  */
 export const revokeAllOtherSessions = async (): Promise<void> => {
-    await settingsApi.revokeAllOtherSessions({});
+    await settingsApi.revokeAllOtherSessions({ authorization: `Bearer ${authStorage.getAccessToken() || ""}` });
 };
 
 /**

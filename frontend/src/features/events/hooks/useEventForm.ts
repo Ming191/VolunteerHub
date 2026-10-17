@@ -52,7 +52,7 @@ export const useEventForm = ({
         if (initialImages) {
             setExistingImages(initialImages);
         }
-    }, [defaultValues, initialImages,]);
+    }, [defaultValues, initialImages, form]);
 
     const validateFile = (file: File): boolean => {
         if (!file.type.startsWith('image/')) {
@@ -115,7 +115,7 @@ export const useEventForm = ({
     };
 
     const handleSubmit = async (values: EventFormValues) => {
-        const { isValid, userRole } = validateUserPermissions();
+        const { isValid } = validateUserPermissions();
 
         if (!isValid) {
             toast.error('Authentication required', {

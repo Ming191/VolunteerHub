@@ -10,7 +10,7 @@ interface AppearanceSectionProps {
     disabled: boolean;
 }
 
-export const AppearanceSection = ({ settings, updateSettings, disabled }: AppearanceSectionProps) => {
+export const AppearanceSection = ({ updateSettings, disabled }: AppearanceSectionProps) => {
     return (
         <Card>
             <CardHeader>

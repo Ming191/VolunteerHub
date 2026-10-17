@@ -6,7 +6,6 @@ import type { CreateEventRequest } from '@/api-client';
 import { EventForm, type EventFormValues } from './EventForm';
 import { RippleButton } from '@/components/animate-ui/components/buttons/ripple';
 import { Loader2 } from 'lucide-react';
-import { useMemo } from "react";
 import { formatDateForBackend } from '@/lib/dateUtils';
 
 interface AddEventModalProps {
@@ -89,8 +88,6 @@ export const AddEventModal = ({ open, onOpenChange, onSuccess }: AddEventModalPr
             setIsSubmitting(false);
         }
     };
-  const defaultValues = useMemo(() => ({} as Partial<EventFormValues>), []); // Stable empty object
-  const initialImages = useMemo(() => [], []); // Stable empty array
 
 
     return (

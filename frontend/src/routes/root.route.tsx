@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- route module exports routing metadata */
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router';
 import { type AuthContextType } from '@/features/auth/context/AuthContext';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -13,7 +14,11 @@ export interface RouterContext {
 }
 
 export const rootRoute = createRootRouteWithContext<RouterContext>()({
-    component: () => {
+    component: RootLayout,
+    notFoundComponent: () => <div className="p-4 text-white">Page Not Found <Link to="/" className="underline">Go Home</Link></div>,
+});
+
+function RootLayout() {
         const queryClient = useQueryClient();
 
         // Setup FCM foreground message listener
@@ -62,6 +67,4 @@ export const rootRoute = createRootRouteWithContext<RouterContext>()({
                 </ErrorBoundary>
             </>
         );
-    },
-    notFoundComponent: () => <div className="p-4 text-white">Page Not Found <Link to="/" className="underline">Go Home</Link></div>,
-});
+    }

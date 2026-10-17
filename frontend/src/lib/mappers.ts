@@ -6,8 +6,8 @@ export function mapToUiEvent(apiEvent: EventResponse): UiEvent {
 
     if (Array.isArray(apiEvent.tags)) {
         safeTags = apiEvent.tags as unknown as string[];
-    } else if (apiEvent.tags && typeof (apiEvent.tags as any)[Symbol.iterator] === 'function') {
-        safeTags = Array.from(apiEvent.tags as any);
+    } else if (apiEvent.tags) {
+        safeTags = Array.from(apiEvent.tags).map(String);
     }
 
     const availableSpotsText = apiEvent.maxParticipants

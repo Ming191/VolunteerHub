@@ -3,7 +3,7 @@ import { Calendar, MapPin, Edit, MessageCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ProfilePageSkeleton } from '@/features/users/components/ProfilePageSkeleton';
 import { EditProfileModal } from '@/features/users/components/EditProfileModal';
 import { ChangePasswordModal } from "@/features/users/components/ChangePasswordModal";
@@ -153,7 +153,7 @@ export const ProfilePage = () => {
                                                         variant="secondary" 
                                                         className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20 hover:bg-blue-500/20"
                                                     >
-                                                        {skill.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                                                        {skill.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                                     </Badge>
                                                 ))}
                                             </div>
@@ -171,7 +171,7 @@ export const ProfilePage = () => {
                                                         variant="secondary" 
                                                         className="bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20"
                                                     >
-                                                        {interest.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                                                        {interest.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                                     </Badge>
                                                 ))}
                                             </div>
