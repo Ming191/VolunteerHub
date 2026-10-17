@@ -50,7 +50,11 @@ jobs:
         shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew clean classes --no-daemon
+          # CodeQL instrumentation increases Kotlin compiler memory pressure.
+          # Compile in-process instead of starting a second memory-constrained daemon.
+          ./gradlew clean classes --no-daemon --max-workers=2 \
+            -Pkotlin.compiler.execution.strategy=in-process \
+            -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8"
       - name: Analyze
         uses: github/codeql-action/analyze@v4
         with:
