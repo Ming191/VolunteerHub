@@ -1,28 +1,93 @@
+# VH-111 follow-up: keep routine dependency maintenance reviewable.
+# Version PRs: one grouped minor/patch update per ecosystem, once each week.
+# Major version upgrades are deliberately manual; security updates are still allowed
+# (including major security fixes) and grouped separately where GitHub supports it.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /frontend
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+      time: "08:00"
+      timezone: Asia/Bangkok
+    open-pull-requests-limit: 1
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     groups:
       npm-nonmajor:
+        applies-to: version-updates
+        patterns: ["*"]
         update-types: [minor, patch]
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
   - package-ecosystem: gradle
     directory: /backend
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+      time: "08:15"
+      timezone: Asia/Bangkok
+    open-pull-requests-limit: 1
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
     groups:
       gradle-nonmajor:
+        applies-to: version-updates
+        patterns: ["*"]
         update-types: [minor, patch]
+      gradle-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+      time: "08:30"
+      timezone: Asia/Bangkok
+    open-pull-requests-limit: 1
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+    groups:
+      actions-nonmajor:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      actions-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
   - package-ecosystem: docker
     directory: /backend
     schedule:
       interval: weekly
-    open-pull-requests-limit: 3
+      day: monday
+      time: "08:45"
+      timezone: Asia/Bangkok
+    open-pull-requests-limit: 1
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+    groups:
+      docker-nonmajor:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      docker-security:
+        applies-to: security-updates
+        patterns: ["*"]
