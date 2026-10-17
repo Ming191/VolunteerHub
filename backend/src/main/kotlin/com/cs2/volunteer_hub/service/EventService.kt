@@ -165,7 +165,9 @@ class EventService(
                 currentUserEmail: String
         ): List<PublicAttendeeResponse> {
                 val user = userRepository.findByEmailOrThrow(currentUserEmail)
-                val event = eventRepository.findByIdOrThrow(eventId)
+                // Membership previously survived cancellation and bypassed event visibility.
+                // Follow the same PUBLISHED/owner/admin read contract as event detail.
+                val event = authorizationService.requireEventReadPermission(eventId, user.id)
 
                 // 1. Get all approved registrations
                 val approvedRegistrations =
