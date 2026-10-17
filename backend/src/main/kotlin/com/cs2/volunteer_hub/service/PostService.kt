@@ -79,7 +79,7 @@ class PostService(
             }
         }
 
-        // Verify each issued upload capability and the actual GCS object before saving.
+        // Verify each issued upload capability and the actual stored object before saving.
         // Do not trust arbitrary caller-supplied public image URLs.
         request.imageUrls?.forEach { url ->
             postUploadGrantService.verifyAndConsume(url, author.id, eventId)

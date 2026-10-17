@@ -66,6 +66,7 @@ class VH10503HttpSecurity {
         CommentController::class, LikeController::class, LikeService::class,
         RegistrationController::class, ReportController::class,
         AdminReportController::class, AdminController::class, AdminUserController::class, ExportController::class,
+        MediaController::class,
         DashboardController::class, SettingsController::class, UserController::class,
         AdminMetricsController::class, AdminPendingMessagesController::class,
         AuthController::class, EnumController::class, MeController::class,
@@ -453,8 +454,8 @@ class AuthorizationHttpIntegrationTest {
     @Test
     fun all112InventoryHandlersExistAndDeclaredRolePoliciesHaveNotDrifted() {
         val policies = fullMatrix()
-        assertEquals(112, policies.size, "Original VH-105 inventory had 112 controllers routes")
-        assertEquals(112, policies.map { it.key }.toSet().size, "Duplicate method+path in policy")
+        assertEquals(113, policies.size, "Original VH-105 inventory had 112 controllers routes")
+        assertEquals(113, policies.map { it.key }.toSet().size, "Duplicate method+path in policy")
         val routes = actualControllerRoutes()
         assertEquals(policies.map { it.key }.toSet(), routes.keys, "Uninventoried/removed HTTP handlers")
 
