@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { UserProfileApi, PostsApi, UserApi, Configuration, type UserResponse, type PostResponse, type PublicUserResponse } from '@/api-client';
 import axiosInstance from '@/utils/axiosInstance';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const config = new Configuration({ basePath: '' });
 const userProfileApi = new UserProfileApi(config, undefined, axiosInstance);
@@ -8,6 +9,8 @@ const postsApi = new PostsApi(config, undefined, axiosInstance);
 const userApi = new UserApi(config, undefined, axiosInstance);
 
 export const useProfileData = (userId?: number) => {
+    const { user } = useAuth();
+    const viewingSomeoneElse = Boolean(userId && user?.userId !== userId);
     const [profile, setProfile] = useState<UserResponse | PublicUserResponse | null>(null);
     const [posts, setPosts] = useState<PostResponse[]>([]);
     const [loading, setLoading] = useState(true);
@@ -21,7 +24,7 @@ export const useProfileData = (userId?: number) => {
                 setProfile(null); // Clear profile while loading
             }
 
-            if (userId) {
+            if (viewingSomeoneElse && userId) {
                 // Fetch another user's public profile first
                 const profileRes = await userApi.getUserById({ id: userId });
                 setProfile(profileRes.data);
@@ -58,12 +61,12 @@ export const useProfileData = (userId?: number) => {
         } finally {
             if (showLoading) setLoading(false);
         }
-    }, [userId]);
+    }, [userId, viewingSomeoneElse]);
 
     const loadMorePosts = useCallback(async () => {
         try {
             const nextPage = currentPage + 1;
-            if (userId) {
+            if (viewingSomeoneElse && userId) {
                 const postsRes = await postsApi.getPostsByUserId({ 
                     userId,
                     page: nextPage,
@@ -88,7 +91,7 @@ export const useProfileData = (userId?: number) => {
         } catch (error) {
             console.error('Failed to load more posts:', error);
         }
-    }, [userId, currentPage]);
+    }, [userId, currentPage, viewingSomeoneElse]);
 
     useEffect(() => {
         fetchProfileData();

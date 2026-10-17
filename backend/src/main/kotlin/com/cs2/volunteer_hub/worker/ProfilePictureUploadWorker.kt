@@ -5,6 +5,7 @@ import com.cs2.volunteer_hub.dto.ProfilePictureUploadFailureMessage
 import com.cs2.volunteer_hub.dto.ProfilePictureUploadMessage
 import com.cs2.volunteer_hub.dto.ProfilePictureUploadSuccessMessage
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.service.CacheEvictionService
 import com.cs2.volunteer_hub.service.ImageUploadService
 import com.cs2.volunteer_hub.service.NotificationService
 import com.cs2.volunteer_hub.service.TemporaryFileStorageService
@@ -22,7 +23,8 @@ class ProfilePictureUploadWorker(
     private val tempFileService: TemporaryFileStorageService,
     private val userRepository: UserRepository,
     private val rabbitTemplate: RabbitTemplate,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val cacheEvictionService: CacheEvictionService
 ) {
     private val logger = LoggerFactory.getLogger(ProfilePictureUploadWorker::class.java)
 
@@ -81,6 +83,7 @@ class ProfilePictureUploadWorker(
 
             user.profilePictureUrl = uploadedUrl
             userRepository.save(user)
+            cacheEvictionService.evictPublicUserProfile(userId)
 
             logger.info("Successfully uploaded profile picture for User ID: $userId")
             val successMessage = ProfilePictureUploadSuccessMessage(
