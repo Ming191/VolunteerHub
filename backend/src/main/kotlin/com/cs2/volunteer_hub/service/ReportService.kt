@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.dto.*
 import com.cs2.volunteer_hub.exception.BadRequestException
+import com.cs2.volunteer_hub.exception.ResourceNotFoundException
 import com.cs2.volunteer_hub.mapper.ReportMapper
 import com.cs2.volunteer_hub.model.Report
 import com.cs2.volunteer_hub.model.ReportStatus
@@ -25,6 +26,7 @@ class ReportService(
         private val postRepository: PostRepository,
         private val commentRepository: CommentRepository,
         private val userRepository: UserRepository,
+        private val authorizationService: AuthorizationService,
         private val reportMapper: ReportMapper,
         private val notificationService: NotificationService,
         @org.springframework.context.annotation.Lazy private val postService: PostService,
@@ -36,18 +38,18 @@ class ReportService(
     fun createReport(reportRequest: ReportRequest, reporterEmail: String): ReportResponse {
         val reporter = userRepository.findByEmailOrThrow(reporterEmail)
 
-        when (reportRequest.type) {
-            ReportType.POST -> {
-                if (!postRepository.existsById(reportRequest.targetId)) {
-                    throw BadRequestException("Post with id ${reportRequest.targetId} not found")
-                }
-            }
-            ReportType.COMMENT -> {
-                if (!commentRepository.existsById(reportRequest.targetId)) {
-                    throw BadRequestException("Comment with id ${reportRequest.targetId} not found")
-                }
-            }
+        // A report is not a bypass for reading or probing hidden community content.
+        // Resolve the parent event from the real target and apply the same read policy
+        // used by direct post/comment reads, before writing a report or notifying admin.
+        val eventId = when (reportRequest.type) {
+            ReportType.POST -> postRepository.findById(reportRequest.targetId)
+                .orElseThrow { ResourceNotFoundException("Content", "id", reportRequest.targetId) }
+                .event.id
+            ReportType.COMMENT -> commentRepository.findById(reportRequest.targetId)
+                .orElseThrow { ResourceNotFoundException("Content", "id", reportRequest.targetId) }
+                .post.event.id
         }
+        authorizationService.requireEventReadPermission(eventId, reporter.id)
 
         if (reportRepository.existsByReporterAndTypeAndTarget(
                         reporter.id,
