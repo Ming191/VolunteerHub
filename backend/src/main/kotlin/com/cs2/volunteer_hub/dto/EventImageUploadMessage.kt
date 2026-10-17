@@ -4,7 +4,9 @@ import java.io.Serializable
 
 data class EventCreationMessage(
     val eventId: Long,
-    val retryCount: Int = 0
+    val retryCount: Int = 0,
+    /** Snapshot of image IDs belonging to this upload batch; empty for legacy messages. */
+    val imageIds: List<Long> = emptyList()
 ) : Serializable
 
 data class ImageUploadSuccessMessage(
@@ -16,7 +18,8 @@ data class ImageUploadFailureMessage(
     val eventId: Long,
     val uploadedUrls: Map<Long, String>,
     val error: String,
-    val retryCount: Int = 0
+    val retryCount: Int = 0,
+    val failedImageIds: List<Long> = emptyList()
 ) : Serializable
 
 // Post-related messages

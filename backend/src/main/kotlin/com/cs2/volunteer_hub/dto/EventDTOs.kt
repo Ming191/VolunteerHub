@@ -63,7 +63,9 @@ data class EventResponse(
         val rejectionReason: String?,
         val isInProgress: Boolean,
         val tags: Set<EventTag>,
-        val imagesProcessing: Boolean
+        val imagesProcessing: Boolean,
+        /** Terminal upload failures; organizer can replace them with a new upload. */
+        val failedImageCount: Int = 0
 )
 
 data class GalleryImageResponse(
