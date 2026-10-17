@@ -1,4 +1,4 @@
-FROM eclipse-temurin:23-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /workspace/app
 
 # Copy gradle wrapper and build files first (for better layer caching)
@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/root/.gradle \
     sh ./gradlew bootJar -x test --no-daemon --build-cache --parallel
 
 # Production stage with optimized JRE
-FROM eclipse-temurin:23-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 # Add non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
