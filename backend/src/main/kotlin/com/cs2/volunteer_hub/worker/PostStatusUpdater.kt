@@ -56,15 +56,15 @@ class PostStatusUpdater(
 
         logger.warn("Processing upload failure for Post ID: $postId. Error: $error")
 
-        // Clean up successfully uploaded files from GCS
+        // Clean up successfully uploaded files from object storage
         if (uploadedUrls.isNotEmpty()) {
-            logger.info("Cleaning up ${uploadedUrls.size} successfully uploaded images from GCS for Post ID: $postId")
+            logger.info("Cleaning up ${uploadedUrls.size} successfully uploaded images from object storage for Post ID: $postId")
             uploadedUrls.values.forEach { url ->
                 try {
                     imageUploadService.deleteImageByUrl(url)
-                    logger.info("Successfully deleted image from GCS: $url")
+                    logger.info("Successfully deleted image from object storage: $url")
                 } catch (e: Exception) {
-                    logger.error("Failed to delete image from GCS: $url. Error: ${e.message}", e)
+                    logger.error("Failed to delete image from object storage: $url. Error: ${e.message}", e)
                     // Continue cleanup even if one fails
                 }
             }

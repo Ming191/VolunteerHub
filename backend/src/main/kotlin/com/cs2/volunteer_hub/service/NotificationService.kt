@@ -24,6 +24,7 @@ import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -37,6 +38,9 @@ class NotificationService(
     private val rabbitTemplate: RabbitTemplate
 ) {
     private val logger = LoggerFactory.getLogger(NotificationService::class.java)
+
+    @Value("\${fcm.enabled:false}")
+    private var fcmEnabled = false
 
     @Transactional(readOnly = true)
     fun getNotificationsForUser(userEmail: String, pageable: Pageable): Page<NotificationResponse> {
@@ -149,6 +153,7 @@ class NotificationService(
      */
     @Async
     fun sendFcmPushNotificationToUser(userId: Long, title: String, body: String, link: String? = null, data: Map<String, String> = emptyMap()) {
+        if (!fcmEnabled) return
         val fcmTokens = fcmTokenRepository.findAllByUserId(userId)
 
         if (fcmTokens.isEmpty()) {
@@ -172,6 +177,7 @@ class NotificationService(
         exclude = [FirebaseMessagingException::class] // Don't retry FCM-specific errors
     )
     fun sendPushNotificationWithRetry(token: String, tokenId: Long, title: String, body: String, link: String? = null, data: Map<String, String> = emptyMap()) {
+        if (!fcmEnabled) return
         try {
             val notification = com.google.firebase.messaging.Notification.builder()
                 .setTitle(title)

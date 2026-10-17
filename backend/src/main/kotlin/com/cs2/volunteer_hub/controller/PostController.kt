@@ -28,7 +28,7 @@ class PostController(private val postService: PostService) {
 
         @Operation(
                 summary = "Get signed URL for image upload",
-                description = "Get a pre-signed URL to upload an image directly to GCS."
+                description = "Get a pre-signed URL for S3-compatible local object storage."
         )
         @PreAuthorize("isAuthenticated()")
         @PostMapping(value = ["/events/{eventId}/posts/signed-url"])
