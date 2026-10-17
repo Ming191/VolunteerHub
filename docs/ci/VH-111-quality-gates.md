@@ -31,6 +31,7 @@ To test enforcement without changing `main`, open a disposable PR branch that de
 
 ## Limitations and future work
 
+- Container audit uses Trivy action **v0.36.0 pinned to an immutable commit** and Trivy binary **v0.76.0**; previous action versions were affected by a March 2026 supply-chain compromise. Keep the scanner pinned to vetted releases.
 - Container vulnerabilities are initially inventoried rather than used as a gate because current Docker base images have not been remediated. Once VH-301 hardens the images, change Trivy to nonzero exit for high/critical advisories and make the check mandatory.
 - Existing dependency vulnerabilities are tracked separately. Dependency Review prevents newly introduced vulnerable packages rather than retroactively blocking unrelated changes.
 - CodeQL catches code patterns but cannot establish absence of exploitable vulnerabilities.
