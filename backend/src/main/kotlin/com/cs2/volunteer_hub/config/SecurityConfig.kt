@@ -87,6 +87,8 @@ class SecurityConfig {
                                     "/api/posts/*/comments/**"
                             )
                             .permitAll()
+                            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/media/images/*")
+                            .permitAll()
                             .requestMatchers("/api/enums/**")
                             .permitAll()
                             .requestMatchers(

@@ -112,3 +112,4 @@ DELETE,/api/me/account,AUTH
 GET,/api/test/notifications/send,AUTH
 POST,/api/test/notifications/send-to-user,ADMIN
 GET,/api/users/{id},AUTH
+GET,/api/media/images/{fileName},PUBLIC

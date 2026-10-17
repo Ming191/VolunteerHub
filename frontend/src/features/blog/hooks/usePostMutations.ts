@@ -24,14 +24,14 @@ export const usePostMutations = (eventId?: number) => {
                 const uploadPromises = files.map(async (file) => {
                     const { signedUrl, publicUrl } = await blogService.getSignedUrl(targetEventId, file.type, file.name, file.size);
 
-                    // Upload to GCS using the signed URL
-                    // Note: fetch is used here to avoid attaching API auth headers which might confuse GCS
+                    // Upload directly to local MinIO using its S3-compatible presigned PUT URL
+                    // Do not send application JWT headers: the PUT URL is already signed
                     const response = await fetch(signedUrl, {
                         method: 'PUT',
                         body: file,
                         headers: {
                             'Content-Type': file.type,
-                            'x-goog-if-generation-match': '0',
+                            'If-None-Match': '*',
                         },
                     });
 
