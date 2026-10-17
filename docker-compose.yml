@@ -67,6 +67,8 @@ services:
       - SPRING_MAIL_PASSWORD=xxxx xxxx xxxx xxxx
       - PROMETHEUS_URL=http://prometheus:9090
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET before running Docker Compose}
+      # One-time opt-in when adopting a verified legacy database; disabled otherwise.
+      - VH_FLYWAY_BASELINE_ON_MIGRATE=${VH_FLYWAY_BASELINE_ON_MIGRATE:-false}
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_JPA_SHOW_SQL=false
       - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
