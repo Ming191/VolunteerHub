@@ -38,6 +38,7 @@ import org.springframework.data.domain.PageRequest
 import com.cs2.volunteer_hub.service.ProfilePrivacyService
 import com.cs2.volunteer_hub.service.UserService
 import com.cs2.volunteer_hub.service.SettingsService
+import com.cs2.volunteer_hub.service.PostUploadGrantService
 import com.cs2.volunteer_hub.service.PostService
 import com.cs2.volunteer_hub.service.EventService
 import com.cs2.volunteer_hub.service.EventQueueService
@@ -118,7 +119,7 @@ import java.time.ZoneOffset
 @EnableAutoConfiguration
 @EntityScan(basePackages = ["com.cs2.volunteer_hub.model"])
 @EnableJpaRepositories(basePackages = ["com.cs2.volunteer_hub.repository"])
-@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostService::class, EventService::class, EventMapper::class, ImageUploadWorker::class, EventStatusUpdater::class, PostMapper::class, CommentMapper::class, SettingsMapper::class, ReportMapper::class, ReportService::class, CommentService::class)
+@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostUploadGrantService::class, PostService::class, EventService::class, EventMapper::class, ImageUploadWorker::class, EventStatusUpdater::class, PostMapper::class, CommentMapper::class, SettingsMapper::class, ReportMapper::class, ReportService::class, CommentService::class)
 class InfraHarnessApplication {
     @Bean
     fun fixtureClock(): Clock =
@@ -222,6 +223,7 @@ class InfrastructureIntegrationTest {
     @Autowired lateinit var comments: CommentRepository
     @Autowired lateinit var postMapper: PostMapper
     @Autowired lateinit var postService: PostService
+    @Autowired lateinit var postUploadGrants: PostUploadGrantService
     @Autowired lateinit var eventService: EventService
     @Autowired lateinit var eventStatusUpdater: EventStatusUpdater
     @Autowired lateinit var imageUploadWorker: ImageUploadWorker
@@ -666,7 +668,7 @@ class InfrastructureIntegrationTest {
         val event = capacityEvent(organizer, 3)
 
         assertThrows(UnauthorizedAccessException::class.java) {
-            postService.generateSignedUrl(event.id, intruder.email, "image/png", "no-access.png")
+            postService.generateSignedUrl(event.id, intruder.email, "image/png", "no-access.png", 1024L)
         }
         Mockito.verify(imageUploadService, Mockito.never()).generateSignedUrl(
             Mockito.anyString(), Mockito.anyString()
@@ -676,7 +678,7 @@ class InfrastructureIntegrationTest {
             .thenReturn(Pair("https://example.invalid/signed-put", "https://example.invalid/public"))
         assertEquals(
             "https://example.invalid/signed-put",
-            postService.generateSignedUrl(event.id, organizer.email, "image/png", "valid.png").first
+            postService.generateSignedUrl(event.id, organizer.email, "image/png", "valid.png", 1024L).first
         )
 
         registrations.saveAndFlush(
@@ -684,10 +686,10 @@ class InfrastructureIntegrationTest {
         )
         assertEquals(
             "https://example.invalid/signed-put",
-            postService.generateSignedUrl(event.id, approvedMember.email, "image/png", "valid.png").first
+            postService.generateSignedUrl(event.id, approvedMember.email, "image/png", "valid.png", 1024L).first
         )
         assertThrows(UnauthorizedAccessException::class.java) {
-            postService.generateSignedUrl(event.id, intruder.email, "image/png", "valid.png")
+            postService.generateSignedUrl(event.id, intruder.email, "image/png", "valid.png", 1024L)
         }
         Mockito.verify(imageUploadService, Mockito.times(2))
             .generateSignedUrl("image/png", "valid.png")
@@ -1077,6 +1079,43 @@ class InfrastructureIntegrationTest {
             commentService.deleteComment(post.id, comment.id, outsider.email)
         }
         assertEquals("Original", comments.findById(comment.id).orElseThrow().content)
+    }
+
+
+    @Test
+    fun vh107SignedUploadIsBoundToUserEventAndSingleUse() {
+        val owner = users.saveAndFlush(newVolunteer("upload-grant-owner@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val foreign = users.saveAndFlush(newVolunteer("upload-grant-foreign@example.invalid"))
+        val event = capacityEvent(owner, 3)
+        val url = "https://storage.googleapis.com/fixture/images/authorized.png"
+        postUploadGrants.register(url, owner.id, event.id, "image/png")
+        assertThrows(UnauthorizedAccessException::class.java) {
+            postUploadGrants.verifyAndConsume(url, foreign.id, event.id)
+        }
+        // Wrong caller must not consume rightful owner's grant.
+        postUploadGrants.verifyAndConsume(url, owner.id, event.id)
+        Mockito.verify(imageUploadService).verifyUploadedObject(url, "image/png")
+        assertThrows(UnauthorizedAccessException::class.java) {
+            postUploadGrants.verifyAndConsume(url, owner.id, event.id)
+        }
+    }
+
+    @Test
+    fun vh107ForgedOrCrossEventImageUrlDoesNotCreatePost() {
+        val owner = users.saveAndFlush(newVolunteer("upload-foreign-event@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val first = capacityEvent(owner, 3)
+        val second = capacityEvent(owner, 3)
+        val foreignUrl = "https://storage.googleapis.com/fixture/images/foreign.png"
+        postUploadGrants.register(foreignUrl, owner.id, first.id, "image/png")
+        val before = posts.count()
+        assertThrows(UnauthorizedAccessException::class.java) {
+            postService.createPost(second.id, com.cs2.volunteer_hub.dto.PostRequest("foreign", listOf(foreignUrl)), owner.email)
+        }
+        assertThrows(UnauthorizedAccessException::class.java) {
+            postService.createPost(first.id, com.cs2.volunteer_hub.dto.PostRequest("fake", listOf("https://evil.invalid/image.png")), owner.email)
+        }
+        assertEquals(before, posts.count())
+        Mockito.verify(imageUploadService, Mockito.never()).verifyUploadedObject("https://evil.invalid/image.png", "image/png")
     }
 
 }

@@ -22,7 +22,7 @@ export const usePostMutations = (eventId?: number) => {
             const imageUrls: string[] = [];
             if (files && files.length > 0) {
                 const uploadPromises = files.map(async (file) => {
-                    const { signedUrl, publicUrl } = await blogService.getSignedUrl(targetEventId, file.type, file.name);
+                    const { signedUrl, publicUrl } = await blogService.getSignedUrl(targetEventId, file.type, file.name, file.size);
 
                     // Upload to GCS using the signed URL
                     // Note: fetch is used here to avoid attaching API auth headers which might confuse GCS
@@ -31,6 +31,7 @@ export const usePostMutations = (eventId?: number) => {
                         body: file,
                         headers: {
                             'Content-Type': file.type,
+                            'x-goog-if-generation-match': '0',
                         },
                     });
 

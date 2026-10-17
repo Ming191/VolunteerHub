@@ -35,10 +35,10 @@ export const blogService = {
     return response.data;
   },
 
-  getSignedUrl: async (eventId: number, contentType: string, fileName: string) => {
+  getSignedUrl: async (eventId: number, contentType: string, fileName: string, sizeBytes: number) => {
     const response = await axiosInstance.post<{ signedUrl: string; publicUrl: string }>(
       `api/events/${eventId}/posts/signed-url`,
-      { contentType, fileName }
+      { contentType, fileName, sizeBytes }
     );
     return response.data;
   },

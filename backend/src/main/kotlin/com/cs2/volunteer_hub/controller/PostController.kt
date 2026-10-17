@@ -38,7 +38,7 @@ class PostController(private val postService: PostService) {
                 @AuthenticationPrincipal currentUser: UserDetails
         ): ResponseEntity<SignedUrlResponse> {
                 val (signedUrl, publicUrl) =
-                        postService.generateSignedUrl(eventId, currentUser.username, request.contentType, request.fileName)
+                        postService.generateSignedUrl(eventId, currentUser.username, request.contentType, request.fileName, request.sizeBytes)
                 return ResponseEntity.ok(SignedUrlResponse(signedUrl, publicUrl))
         }
 
