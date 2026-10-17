@@ -17,9 +17,9 @@ const config = new Configuration({ basePath: '' });
 const adminReportsApi = new AdminReportsApi(config, '', axiosInstance);
 
 // Extended interface to include deleteContent
-export interface ExtendedReviewReportRequest extends ReviewReportRequest {
+export type ExtendedReviewReportRequest = Omit<ReviewReportRequest, "deleteContent"> & {
     deleteContent?: boolean;
-}
+};
 
 export const adminReportsService = {
     getAllReports: async (params?: { status?: ReportResponseStatusEnum; page?: number; size?: number }) => {
@@ -42,7 +42,7 @@ export const adminReportsService = {
     reviewReport: async (reportId: number, request: ExtendedReviewReportRequest) => {
         const response = await adminReportsApi.reviewReport({
             reportId,
-            reviewReportRequest: request as ReviewReportRequest
+            reviewReportRequest: { ...request, deleteContent: request.deleteContent ?? false }
         });
         return response.data;
     },

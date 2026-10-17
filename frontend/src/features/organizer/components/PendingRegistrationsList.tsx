@@ -40,7 +40,7 @@ export const PendingRegistrationsList = ({ registrations, onRegistrationClick }:
                                             const date = registration.registeredAt ? new Date(registration.registeredAt) : new Date();
                                             if (isNaN(date.getTime())) return 'Recently';
                                             return formatDistanceToNowUTC(registration.registeredAt, { addSuffix: true });
-                                        } catch (e) {
+                                        } catch {
                                             return 'Recently';
                                         }
                                     })()}

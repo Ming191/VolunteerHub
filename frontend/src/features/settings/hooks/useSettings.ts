@@ -1,3 +1,4 @@
+import { apiErrorMessage } from '@/lib/apiErrors';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { settingsService } from '../api/settingsService';
 import type { UpdateUserSettingsRequest, UserSettingsResponse } from '@/api-client';
@@ -26,11 +27,11 @@ export const useSettings = () => {
             setHasChanges(false);
             toast.success('Settings saved successfully');
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
             // Refetch on error to get latest state
             queryClient.invalidateQueries({ queryKey: SETTINGS_QUERY_KEY });
 
-            const errorMessage = error?.response?.data?.message || 'Failed to save settings';
+            const errorMessage = apiErrorMessage(error, 'Failed to save settings');
             toast.error(errorMessage);
         },
     });
@@ -62,7 +63,7 @@ export const useSettings = () => {
             return;
         }
         updateMutation.mutate(pendingUpdates);
-    }, [pendingUpdates, updateMutation, updateMutation.isPending]);
+    }, [pendingUpdates, updateMutation]);
 
     const discardChanges = useCallback(() => {
         setPendingUpdates({});

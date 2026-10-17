@@ -1,3 +1,4 @@
+import { apiErrorMessage } from '@/lib/apiErrors';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { eventService } from "../api/eventService";
 import { UpdateStatusRequestStatusEnum } from '@/api-client';
@@ -20,9 +21,9 @@ export const useUpdateRegistrationStatus = () => {
             toast.success("Registration status updated");
             queryClient.invalidateQueries({ queryKey: ['event-registrations'] });
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
             toast.error("Failed to update status", {
-                description: error.response?.data?.message || "Unknown error occurred"
+                description: apiErrorMessage(error, "Unknown error occurred")
             });
         }
     });

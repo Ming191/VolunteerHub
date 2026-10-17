@@ -42,9 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                             ...profileRes.data,
                             // Ensure mapping is correct if field names differ
                         };
-                        // @ts-ignore - profilePictureUrl might be missing in type definition if unrelated
                         if (profileRes.data.profilePictureUrl) {
-                            // @ts-ignore
                             freshUser.profilePictureUrl = profileRes.data.profilePictureUrl;
                         }
 
@@ -87,7 +85,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             let profilePictureUrl: string | undefined;
             try {
                 const profileRes = await userProfileApi.getMyProfile();
-                // @ts-ignore
                 profilePictureUrl = profileRes.data.profilePictureUrl;
             } catch (e) {
                 console.warn("Failed to fetch profile after login", e);

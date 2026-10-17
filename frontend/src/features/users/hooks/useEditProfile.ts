@@ -1,3 +1,5 @@
+import type { Area } from 'react-easy-crop';
+import { apiErrorMessage } from '@/lib/apiErrors';
 import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,7 +37,7 @@ export const useEditProfile = ({ currentProfile, open, onOpenChange }: UseEditPr
     const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -87,7 +89,7 @@ export const useEditProfile = ({ currentProfile, open, onOpenChange }: UseEditPr
         e.target.value = '';
     };
 
-    const onCropComplete = (_: any, croppedAreaPixels: any) => {
+    const onCropComplete = (_: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels);
     };
 
@@ -131,10 +133,10 @@ export const useEditProfile = ({ currentProfile, open, onOpenChange }: UseEditPr
                 location: data.location || undefined,
                 dateOfBirth: data.dateOfBirth || undefined,
                 skills: data.skills && data.skills.length > 0
-                    ? (data.skills as unknown as UpdateProfileRequestSkillsEnum[])
+                    ? new Set(data.skills as unknown as UpdateProfileRequestSkillsEnum[])
                     : undefined,
                 interests: data.interests && data.interests.length > 0
-                    ? (data.interests as unknown as UpdateProfileRequestInterestsEnum[])
+                    ? new Set(data.interests as unknown as UpdateProfileRequestInterestsEnum[])
                     : undefined,
             };
 
@@ -143,9 +145,9 @@ export const useEditProfile = ({ currentProfile, open, onOpenChange }: UseEditPr
             queryClient.invalidateQueries({ queryKey: ['profile'] });
             toast.success('Profile updated successfully');
             onOpenChange(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to update profile:', error);
-            toast.error(error.response?.data?.message || 'Failed to update profile');
+            toast.error(apiErrorMessage(error, 'Failed to update profile'));
         } finally {
             setIsSubmitting(false);
         }

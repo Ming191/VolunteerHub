@@ -1,3 +1,4 @@
+import { apiErrorMessage } from '@/lib/apiErrors';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { registrationService } from "@/features/volunteer/api/registrationService.ts";
 import { toast } from "sonner";
@@ -26,9 +27,9 @@ export const useRegisterForEvent = () => {
         queryKey: [EVENTS_QUERY_KEY, variables],
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error("Registration Failed", {
-        description: error.response?.data?.message || "Unable to register for this event",
+        description: apiErrorMessage(error, "Unable to register for this event"),
       });
     },
   });
@@ -57,9 +58,9 @@ export const useCancelRegistration = () => {
       queryClient.invalidateQueries({ queryKey: [REGISTRATION_QUERY_KEY] });
       queryClient.invalidateQueries({ queryKey: [CHECK_REGISTRATION_QUERY_KEY, variables] });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error("Cancellation Failed", {
-        description: error.response?.data?.message || "Unable to cancel registration",
+        description: apiErrorMessage(error, "Unable to cancel registration"),
       });
     },
   });
