@@ -1,7 +1,8 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import { authStorage, type AuthUser } from '@/features/auth/utils/authStorage';
 
-const API_BASE_URL = 'http://localhost:8080';
+// The default remains unchanged in production; E2E uses a disposable local API port.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
