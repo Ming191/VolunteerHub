@@ -42,3 +42,11 @@ out/
 ### Secrets ###
 src/main/resources/fcm-credentials.json
 src/main/resources/gcp-credentials.json
+
+# Database exports are never source files. Keep versioned migration SQL under db/migration/.
+backup_*.sql
+*.dump
+*.backup
+*.bak
+*.sql.gz
+*.sql.zip
