@@ -406,6 +406,27 @@ class InfrastructureIntegrationTest {
     }
 
 
+
+    @Test
+    fun `disabling waitlist cannot let new applicants skip existing queue`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
+        val waiting = users.saveAndFlush(newVolunteer("waiting@example.invalid"))
+        val newcomer = users.saveAndFlush(newVolunteer("newcomer@example.invalid"))
+        val event = capacityEvent(organizer, 2)
+        registrations.saveAndFlush(
+            Registration(user = waiting, event = event, status = RegistrationStatus.WAITLISTED, waitlistPosition = 1)
+        )
+        event.waitlistEnabled = false
+        events.saveAndFlush(event)
+        org.junit.jupiter.api.Assertions.assertThrows(
+            com.cs2.volunteer_hub.exception.BadRequestException::class.java
+        ) {
+            registrationService.registerForEvent(event.id, newcomer.email)
+        }
+        assertEquals(0, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.PENDING))
+        assertEquals(1, registrations.countByEventIdAndStatus(event.id, RegistrationStatus.WAITLISTED))
+    }
+
     @Test
     fun `organizer rejection of an approved volunteer promotes first waiter`() {
         val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid"))
