@@ -58,7 +58,9 @@ class ReportController(private val reportService: ReportService) {
         description = "Retrieve details of a specific report"
     )
     @GetMapping(path = ["/{reportId}"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'EVENT_ORGANIZER')")
+    // Individual reports can contain cross-user moderation evidence. Without a
+    // scoped organizer ownership rule, only admins may open arbitrary report IDs.
+    @PreAuthorize("hasRole('ADMIN')")
     fun getReportById(
         @PathVariable reportId: Long
     ): ResponseEntity<ReportResponse> {

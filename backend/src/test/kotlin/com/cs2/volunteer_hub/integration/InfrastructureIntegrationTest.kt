@@ -621,6 +621,67 @@ class InfrastructureIntegrationTest {
     }
 
     @Test
+    fun `organizer registrations stay protected after the owner warms the legacy Redis cache`() {
+        val owner = users.saveAndFlush(newVolunteer("owner@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val stranger = users.saveAndFlush(newVolunteer("intruder@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val volunteer = users.saveAndFlush(newVolunteer("member@example.invalid"))
+        val event = capacityEvent(owner, 3)
+        registrations.saveAndFlush(Registration(user = volunteer, event = event, status = RegistrationStatus.APPROVED))
+
+        val ownerList = managerService.getRegistrationsForEvent(event.id, owner.email)
+        assertEquals(1, ownerList.size)
+        assertEquals(volunteer.id, ownerList.single().volunteerId)
+
+        // Reproduce the vulnerable event-ID-only cache entry. Authorized/unauthorized calls
+        // must still pass the service-level ownership check, even if that key exists.
+        val cache = requireNotNull(cacheManager.getCache("eventRegistrations"))
+        cache.put(event.id, ownerList)
+        assertNotNull(cache.get(event.id))
+        assertThrows(UnauthorizedAccessException::class.java) {
+            managerService.getRegistrationsForEvent(event.id, stranger.email)
+        }
+        assertThrows(UnauthorizedAccessException::class.java) {
+            managerService.getRegistrationsForEvent(event.id, volunteer.email)
+        }
+        assertEquals(1, managerService.getRegistrationsForEvent(event.id, owner.email).size)
+    }
+
+    @Test
+    fun `signed upload URLs require the same event permission as creating posts`() {
+        val organizer = users.saveAndFlush(newVolunteer("owner@example.invalid").copy(role = Role.EVENT_ORGANIZER))
+        val intruder = users.saveAndFlush(newVolunteer("intruder@example.invalid"))
+        val approvedMember = users.saveAndFlush(newVolunteer("member@example.invalid"))
+        val event = capacityEvent(organizer, 3)
+
+        assertThrows(UnauthorizedAccessException::class.java) {
+            postService.generateSignedUrl(event.id, intruder.email, "image/png", "no-access.png")
+        }
+        Mockito.verify(imageUploadService, Mockito.never()).generateSignedUrl(
+            Mockito.anyString(), Mockito.anyString()
+        )
+
+        Mockito.`when`(imageUploadService.generateSignedUrl("image/png", "valid.png"))
+            .thenReturn(Pair("https://example.invalid/signed-put", "https://example.invalid/public"))
+        assertEquals(
+            "https://example.invalid/signed-put",
+            postService.generateSignedUrl(event.id, organizer.email, "image/png", "valid.png").first
+        )
+
+        registrations.saveAndFlush(
+            Registration(user = approvedMember, event = event, status = RegistrationStatus.APPROVED)
+        )
+        assertEquals(
+            "https://example.invalid/signed-put",
+            postService.generateSignedUrl(event.id, approvedMember.email, "image/png", "valid.png").first
+        )
+        assertThrows(UnauthorizedAccessException::class.java) {
+            postService.generateSignedUrl(event.id, intruder.email, "image/png", "valid.png")
+        }
+        Mockito.verify(imageUploadService, Mockito.times(2))
+            .generateSignedUrl("image/png", "valid.png")
+    }
+
+    @Test
     fun `Flyway schema and JPA repository persist a volunteer fixture`() {
         val saved = users.saveAndFlush(newVolunteer("fixture@example.invalid"))
         assertNotNull(saved.id)
