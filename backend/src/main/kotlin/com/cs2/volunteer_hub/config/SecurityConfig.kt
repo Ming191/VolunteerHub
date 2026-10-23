@@ -1,6 +1,8 @@
 package com.cs2.volunteer_hub.config
 
-import com.cs2.volunteer_hub.config.jwt.JwtAuthenticationFilter
+import com.cs2.volunteer_hub.service.CustomUserDetailsService
+import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -12,7 +14,6 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
@@ -50,7 +51,7 @@ class SecurityConfig {
     @Bean
     fun securityFilterChain(
             http: HttpSecurity,
-            jwtAuthenticationFilter: JwtAuthenticationFilter
+            userDetailsService: CustomUserDetailsService
     ): SecurityFilterChain {
         http
                 // CSRF protection is disabled because this application uses stateless JWT
@@ -101,10 +102,19 @@ class SecurityConfig {
                             .anyRequest()
                             .authenticated()
                 }
-                .addFilterBefore(
-                        jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter::class.java
-                )
+                .oauth2ResourceServer { resourceServer ->
+                    resourceServer.jwt { jwt ->
+                        jwt.jwtAuthenticationConverter { token ->
+                            // Keep UserDetails principals and current database-backed roles for existing controllers.
+                            val user = userDetailsService.loadUserByUsername(token.subject)
+                            if (!user.isAccountNonLocked || !user.isEnabled ||
+                                !user.isAccountNonExpired || !user.isCredentialsNonExpired) {
+                                throw BadCredentialsException("Account is unavailable")
+                            }
+                            UsernamePasswordAuthenticationToken(user, null, user.authorities)
+                        }
+                    }
+                }
 
         return http.build()
     }
