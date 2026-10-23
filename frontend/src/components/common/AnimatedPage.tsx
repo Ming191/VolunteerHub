@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import type { Variants } from 'framer-motion';
+import { motion } from 'motion/react';
+import type { Variants } from 'motion/react';
 import type {ReactNode} from 'react';
 import { fadeOnly, fadeTransition } from '@/lib/fadeAnimations';
 
