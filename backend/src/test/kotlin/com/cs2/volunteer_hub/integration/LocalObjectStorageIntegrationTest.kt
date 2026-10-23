@@ -4,6 +4,7 @@ import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.service.FileValidationService
 import com.cs2.volunteer_hub.service.ImageUploadService
 import com.cs2.volunteer_hub.service.TemporaryFileStorageService
+import com.cs2.volunteer_hub.storage.S3ObjectStorageAdapter
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
@@ -81,13 +82,19 @@ class LocalObjectStorageIntegrationTest {
                     .build())
                 val validator = FileValidationService(10_485_760L,
                     Mockito.mock(TemporaryFileStorageService::class.java))
-                val service = ImageUploadService(s3, presigner, "volunteerhub",
-                    "http://localhost:8080", validator)
+                val adapter = S3ObjectStorageAdapter(s3, presigner, "volunteerhub")
+                val service = ImageUploadService(adapter, "http://localhost:8080", validator)
                 val picture = validPng()
                 val (putUrl, publicUrl) = service.generateSignedUrl("image/png", "avatar.png")
                 assertTrue(putUrl.startsWith(endpoint.toString()))
+                assertThrows(BadRequestException::class.java) {
+                    service.verifyUploadedObject(publicUrl, "image/png")
+                }
                 assertTrue(putSigned(putUrl, picture) in 200..299, "Initial signed PUT must succeed")
                 service.verifyUploadedObject(publicUrl, "image/png")
+                assertThrows(BadRequestException::class.java) {
+                    service.verifyUploadedObject(publicUrl, "image/jpeg")
+                }
                 val fileName = publicUrl.substringAfterLast("/")
                 val retrieved = requireNotNull(service.readPublicImage(fileName))
                 assertArrayEquals(picture, retrieved.first)
@@ -101,6 +108,10 @@ class LocalObjectStorageIntegrationTest {
                 }
                 assertTrue(service.deleteImageByUrl(publicUrl).get())
                 assertNull(service.readPublicImage(fileName))
+                val directUrl = service.uploadImageFromBytes(picture, "image/png", "direct.png").get()
+                val directFile = directUrl.substringAfterLast("/")
+                assertArrayEquals(picture, requireNotNull(service.readPublicImage(directFile)).first)
+                assertTrue(service.deleteImageByUrl(directUrl).get())
             }
         }
     }
