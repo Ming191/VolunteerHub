@@ -50,7 +50,6 @@
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "firebase": "^12.6.0",
-    "framer-motion": "^12.23.24",
     "leaflet": "^1.9.4",
     "leaflet-defaulticon-compatibility": "^0.1.2",
     "lucide-react": "^0.552.0",

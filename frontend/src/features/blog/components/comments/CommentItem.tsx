@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'motion/react';
 import { formatDistanceToNowUTC } from '@/lib/dateUtils';
 import type { CommentResponse } from "@/api-client";
 import { CommentReplyForm } from './CommentReplyForm';
