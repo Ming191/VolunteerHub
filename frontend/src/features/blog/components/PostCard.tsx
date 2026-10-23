@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils.ts';
 import type { PostResponse } from "@/api-client";
 import { PostImages } from './PostImages';
 import { PostComments } from './comments/PostComments';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { useLikeMutation } from '@/features/blog/hooks/useLikeMutation';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {

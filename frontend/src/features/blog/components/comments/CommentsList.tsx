@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button.tsx';
 import { Loader2, MessageSquare } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import type { CommentResponse } from "@/api-client";
 import { CommentItem } from './CommentItem';
 

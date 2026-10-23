@@ -79,12 +79,6 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-timelimiter:2.4.0")
     implementation("io.github.resilience4j:resilience4j-micrometer:2.4.0")
 
-    // https://mvnrepository.com/artifact/org.webjars/swagger-ui
-    implementation("org.webjars:swagger-ui:5.33.2")
-
-    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-api
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.9.1")
-
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.9.1")
 
