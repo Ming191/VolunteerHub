@@ -3,6 +3,7 @@ package com.cs2.volunteer_hub.config
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.boot.ApplicationRunner
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
@@ -24,6 +25,7 @@ import java.net.URI
  * switching to a future S3-compatible provider does not change domain services.
  */
 @Configuration
+@ConditionalOnProperty(prefix = "storage", name = ["provider"], havingValue = "s3", matchIfMissing = true)
 class S3StorageConfig(
     @Value("\${storage.endpoint:http://localhost:9000}") private val internalEndpoint: String,
     @Value("\${storage.presign-endpoint:http://localhost:9000}") private val browserEndpoint: String,
@@ -46,6 +48,7 @@ class S3StorageConfig(
     // RustFS is addressed by "rustfs" inside Compose and by localhost in the browser.
     // SigV4 signs the Host header, so the presigner MUST use the browser-accessible URL.
     @Bean
+    @ConditionalOnProperty(prefix = "storage", name = ["bootstrap-bucket"], havingValue = "true", matchIfMissing = true)
     fun localBucketProvisioner(
         client: S3Client,
         @Value("\${storage.bucket:volunteerhub}") bucket: String
