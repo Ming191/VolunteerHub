@@ -1,7 +1,7 @@
 package com.cs2.volunteer_hub.integration
 
 import com.cs2.volunteer_hub.config.SecurityConfig
-import com.cs2.volunteer_hub.config.jwt.JwtAuthenticationFilter
+import com.cs2.volunteer_hub.config.jwt.JwtResourceServerConfig
 import com.cs2.volunteer_hub.config.jwt.JwtTokenProvider
 import com.cs2.volunteer_hub.controller.*
 import com.cs2.volunteer_hub.exception.GlobalExceptionHandler
@@ -52,8 +52,8 @@ import java.time.LocalDateTime
 @EnableMethodSecurity
 class VH10503HttpSecurity {
     @Bean
-    fun httpSecurityChain(http: HttpSecurity, jwtFilter: JwtAuthenticationFilter): SecurityFilterChain =
-        SecurityConfig().securityFilterChain(http, jwtFilter)
+    fun httpSecurityChain(http: HttpSecurity, users: CustomUserDetailsService): SecurityFilterChain =
+        SecurityConfig().securityFilterChain(http, users)
 }
 
 @Testcontainers
@@ -61,7 +61,7 @@ class VH10503HttpSecurity {
 @SpringBootTest(
     classes = [
         InfraHarnessApplication::class, VH10503HttpSecurity::class,
-        JwtTokenProvider::class, JwtAuthenticationFilter::class, CustomUserDetailsService::class,
+        JwtTokenProvider::class, JwtResourceServerConfig::class, CustomUserDetailsService::class,
         EventController::class, EventManagerController::class, PostController::class,
         CommentController::class, LikeController::class, LikeService::class,
         RegistrationController::class, ReportController::class,
@@ -167,6 +167,54 @@ class AuthorizationHttpIntegrationTest {
 
     private fun asActor(request: MockHttpServletRequestBuilder, actor: User): MockHttpServletRequestBuilder =
         request.header("Authorization", "Bearer " + jwt.generateToken(userDetails.loadUserByUsername(actor.email)))
+
+    private fun signedAccessToken(
+        subject: String,
+        expiresAt: java.time.Instant,
+        key: ByteArray = ByteArray(32) { i -> (i + 23).toByte() },
+        roles: List<String> = listOf("ROLE_VOLUNTEER")
+    ): String {
+        val token = com.nimbusds.jwt.SignedJWT(
+            com.nimbusds.jose.JWSHeader(com.nimbusds.jose.JWSAlgorithm.HS256),
+            com.nimbusds.jwt.JWTClaimsSet.Builder()
+                .subject(subject)
+                .issueTime(java.util.Date.from(java.time.Instant.now().minusSeconds(10)))
+                .expirationTime(java.util.Date.from(expiresAt))
+                .claim("roles", roles)
+                .build()
+        )
+        token.sign(com.nimbusds.jose.crypto.MACSigner(key))
+        return token.serialize()
+    }
+
+    @Test
+    fun resourceServerRejectsExpiredWrongSignatureWrongAlgorithmAndForgedRole() {
+        val volunteer = actor("jwt-volunteer@example.invalid", Role.VOLUNTEER)
+        val valid = signedAccessToken(volunteer.email, java.time.Instant.now().plusSeconds(300))
+        mvc.perform(post("/api/auth/logout-all").header("Authorization", "Bearer " + valid))
+            .andExpect(status().isOk)
+
+        val expired = signedAccessToken(volunteer.email, java.time.Instant.now().minusSeconds(30))
+        val badSignature = signedAccessToken(volunteer.email, java.time.Instant.now().plusSeconds(300), ByteArray(32) { 3 })
+        val parts = valid.split(".")
+        val noneHeader = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString("""{"alg":"none"}""".toByteArray())
+        val wrongAlgorithm = noneHeader + "." + parts[1] + "." + parts[2]
+        listOf(expired, badSignature, wrongAlgorithm).forEach { token ->
+            mvc.perform(get("/api/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized)
+        }
+
+        val forgedAdminRole = signedAccessToken(volunteer.email, java.time.Instant.now().plusSeconds(300),
+            roles = listOf("ROLE_ADMIN"))
+        mvc.perform(get("/api/admin/reports").header("Authorization", "Bearer " + forgedAdminRole))
+            .andExpect(status().isForbidden)
+
+        volunteer.isLocked = true
+        users.saveAndFlush(volunteer)
+        mvc.perform(get("/api/me").header("Authorization", "Bearer " + valid))
+            .andExpect(status().isUnauthorized)
+    }
 
     @Test
     fun anonymousAndInvalidJwtNeverReachProtectedResources() {
