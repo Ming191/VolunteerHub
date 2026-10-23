@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { CommentInput } from './CommentInput';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
