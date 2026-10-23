@@ -1,4 +1,4 @@
-import type { Variants } from 'framer-motion';
+import type { Variants } from 'motion/react';
 
 // Simple fade-only variant (no movement - prevents scrollbar issues)
 export const fadeOnly: Variants = {

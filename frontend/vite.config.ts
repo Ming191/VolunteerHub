@@ -18,7 +18,7 @@ export default defineConfig({
                     // Vendor chunks for better caching
                     'react-vendor': ['react', 'react-dom', '@tanstack/react-router'],
                     'query-vendor': ['@tanstack/react-query'],
-                    'ui-vendor': ['framer-motion', 'lucide-react'],
+                    'ui-vendor': ['motion/react', 'lucide-react'],
                     'form-vendor': ['react-hook-form', 'zod'],
                     'date-vendor': ['date-fns'],
                     // Lazy-loaded heavy libraries
@@ -38,7 +38,7 @@ export default defineConfig({
             'react-dom',
             '@tanstack/react-router',
             '@tanstack/react-query',
-            'framer-motion',
+            'motion/react',
             'lucide-react',
         ],
     },
