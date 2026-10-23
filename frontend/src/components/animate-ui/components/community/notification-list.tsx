@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { ArrowUpRight, Bell, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { NotificationsApi, Configuration, type NotificationResponse } from '@/api-client';
