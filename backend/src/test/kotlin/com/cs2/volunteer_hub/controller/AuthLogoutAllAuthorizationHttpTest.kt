@@ -5,8 +5,7 @@ import com.cs2.volunteer_hub.config.ratelimit.RateLimitingFilter
 import com.cs2.volunteer_hub.config.ratelimit.RateLimitingInterceptor
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.FilterType
-import com.cs2.volunteer_hub.config.jwt.JwtAuthenticationFilter
-import com.cs2.volunteer_hub.config.jwt.JwtTokenProvider
+import org.springframework.security.oauth2.jwt.JwtDecoder
 import com.cs2.volunteer_hub.mapper.LoginMapper
 import com.cs2.volunteer_hub.mapper.RegisterMapper
 import com.cs2.volunteer_hub.mapper.VerifyEmailMapper
@@ -26,7 +25,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @WebMvcTest(controllers = [AuthController::class], excludeFilters = [ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = [RateLimitingFilter::class, RateLimitingInterceptor::class])])
-@Import(SecurityConfig::class, JwtAuthenticationFilter::class)
+@Import(SecurityConfig::class)
 class AuthLogoutAllAuthorizationHttpTest {
     @Autowired lateinit var mvc: MockMvc
 
@@ -36,7 +35,7 @@ class AuthLogoutAllAuthorizationHttpTest {
     @MockitoBean lateinit var loginMapper: LoginMapper
     @MockitoBean lateinit var registerMapper: RegisterMapper
     @MockitoBean lateinit var verifyEmailMapper: VerifyEmailMapper
-    @MockitoBean lateinit var jwtTokenProvider: JwtTokenProvider
+    @MockitoBean lateinit var jwtDecoder: JwtDecoder
     @MockitoBean lateinit var userDetailsService: CustomUserDetailsService
 
     @Test
