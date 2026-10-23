@@ -67,6 +67,34 @@ try {
    const r=await context.request.get(API+'/api/admin/users',{headers:{Authorization:'Bearer '+access}});
    assert.equal(r.status(),403,'Volunteer must be forbidden from accessing admin users API');
  });
+ await run('refresh rotates token and rejects replay',async()=>{
+   const previous=await page.evaluate(()=>localStorage.getItem('refreshToken'));
+   assert.ok(previous,'browser refresh token expected');
+   const response=await context.request.post(API+'/api/auth/refresh',{data:{refreshToken:previous}});
+   assert.equal(response.status(),200,'refresh HTTP status');
+   const fresh=await response.json();
+   assert.ok(fresh.accessToken);
+   assert.ok(fresh.refreshToken);
+   assert.notEqual(fresh.refreshToken,previous,'refresh token must rotate');
+   const replay=await context.request.post(API+'/api/auth/refresh',{data:{refreshToken:previous}});
+   assert.equal(replay.status(),401,'rotated refresh token must be invalid');
+   await page.evaluate(({accessToken,refreshToken})=>{
+     localStorage.setItem('accessToken',accessToken);
+     localStorage.setItem('refreshToken',refreshToken);
+   },{accessToken:fresh.accessToken,refreshToken:fresh.refreshToken});
+ });
+ await run('browser logout revokes refresh token',async()=>{
+   const token=await page.evaluate(()=>localStorage.getItem('refreshToken'));
+   assert.ok(token);
+   await page.locator('header button').last().click();
+   const logoutResponse=page.waitForResponse(x=>x.url().includes('/api/auth/logout') && x.request().method()==='POST',{timeout:12000});
+   await page.getByRole('menuitem',{name:'Log Out'}).click();
+   assert.equal((await logoutResponse).status(),200);
+   await page.waitForURL(url=>url.pathname.startsWith('/signin'),{timeout:12000});
+   assert.equal(await page.evaluate(()=>localStorage.getItem('accessToken')),null);
+   const revoked=await context.request.post(API+'/api/auth/refresh',{data:{refreshToken:token}});
+   assert.equal(revoked.status(),401,'logout refresh token must be revoked');
+ });
 } finally {
  await context.close(); await browser.close();
 }
