@@ -52,7 +52,7 @@ dependencies {
 
 	implementation("org.apache.commons:commons-csv:1.14.1")
     // https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage
-    implementation("software.amazon.awssdk:s3:2.31.0")
+    implementation("software.amazon.awssdk:s3:2.57.0")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
 
     implementation("org.springframework.boot:spring-boot-starter-cache")
