@@ -225,6 +225,27 @@ class LocalObjectStorageIntegrationTest {
                     val (putUrl, publicUrl) = service.generateSignedUrl("image/png", "ingress.png")
                     assertTrue(putUrl.startsWith(endpoint))
                     assertTrue(putSigned(putUrl, picture) in 200..299)
+                    val (corsUrl, _) = service.generateSignedUrl("image/png", "cors.png")
+                    val signed = URI.create(corsUrl)
+                    val corsResponse = Socket(proxy.host, proxy.getMappedPort(9000)).use { socket ->
+                        socket.soTimeout = 10_000
+                        val requestPath = signed.rawPath + "?" + signed.rawQuery
+                        val requestHeaders = "PUT $requestPath HTTP/1.1\r\n" +
+                            "Host: ${signed.rawAuthority}\r\n" +
+                            "Origin: http://localhost:5173\r\n" +
+                            "Content-Type: image/png\r\nIf-None-Match: *\r\n" +
+                            "Content-Length: ${picture.size}\r\nConnection: close\r\n\r\n"
+                        socket.getOutputStream().write(requestHeaders.toByteArray(Charsets.US_ASCII))
+                        socket.getOutputStream().write(picture)
+                        socket.getInputStream().bufferedReader().readText()
+                    }
+                    assertTrue(corsResponse.startsWith("HTTP/1.1 2"), corsResponse)
+                    val corsOrigins = corsResponse.lineSequence()
+                        .filter { it.startsWith("Access-Control-Allow-Origin:", ignoreCase = true) }
+                        .map { it.substringAfter(":").trim() }
+                        .toList()
+                    assertEquals(listOf("http://localhost:5173"), corsOrigins, corsResponse)
+
                     service.verifyUploadedObject(publicUrl, "image/png")
                     assertTrue(putSigned(putUrl, picture) in setOf(409, 412),
                         "Signed URL replay must not overwrite an existing object")
