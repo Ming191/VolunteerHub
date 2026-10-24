@@ -46,4 +46,4 @@ The first two checks require no Docker daemon and a running stack, respectively.
 python3 docker/verify-vh106-exposure.py --external-host <deployment-host-IP>
 ```
 
-This TCP scan checks 8080, 8081, 3001 and the formerly published DB, MQ, cache, and monitoring ports. All should reject inbound connections to the host's non-loopback address. If the host already runs unrelated services on these ports, inspect them individually before interpreting the scan. For production, also verify equivalent ingress/firewall rules from outside the trusted network.
+This TCP scan checks 8080, 8081, 3001, the storage UI ports, and the formerly published DB, MQ, cache, and monitoring ports. Add `--extra-port 13001` if you overrode `GRAFANA_HOST_PORT`. All should reject inbound connections to the host's non-loopback address. If the host already runs unrelated services on these ports, inspect them individually before interpreting the scan. For production, also verify equivalent ingress/firewall rules from outside the trusted network.

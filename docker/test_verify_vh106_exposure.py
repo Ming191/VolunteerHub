@@ -18,20 +18,21 @@ class BindingTests(unittest.TestCase):
         self.assertTrue(verifier.binding_errors("postgres-db", [{"host_ip": "127.0.0.1"}], "config"))
 
     def test_local_services_must_bind_ipv4_loopback(self):
-        self.assertEqual([], verifier.binding_errors("backend", [{"host_ip": "127.0.0.1"}], "runtime"))
+        self.assertEqual([], verifier.binding_errors("backend", [{"host_ip": "127.0.0.1", "target": 8080}], "runtime"))
+        self.assertTrue(verifier.binding_errors("backend", [{"host_ip": "127.0.0.1", "target": 8081}], "runtime"))
         for host_ip in ("", "0.0.0.0", "::", "::1"):
             with self.subTest(host_ip=host_ip):
-                self.assertTrue(verifier.binding_errors("backend", [{"host_ip": host_ip}], "runtime"))
+                self.assertTrue(verifier.binding_errors("backend", [{"host_ip": host_ip, "target": 8080}], "runtime"))
 
     @patch.object(verifier, "docker")
     def test_compose_config_requires_internal_networks(self, docker):
         import json
 
         config = {
-            "services": {name: {"ports": []} for name in verifier.PRIVATE},
+            "services": {name: {"ports": [], "networks": ["data", "observability"]} for name in verifier.PRIVATE},
             "networks": {"data": {"internal": True}, "observability": {"internal": True}},
         }
-        config["services"].update({name: {"ports": [{"host_ip": "127.0.0.1"}]}
+        config["services"].update({name: {"ports": [{"host_ip": "127.0.0.1", "target": 8080}], "networks": ["data", "observability"]}
                                    for name in verifier.LOCAL})
         docker.return_value = json.dumps(config)
         self.assertEqual([], verifier.verify_compose())
