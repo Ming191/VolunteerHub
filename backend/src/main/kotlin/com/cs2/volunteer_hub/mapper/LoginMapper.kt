@@ -21,7 +21,6 @@ class LoginMapper {
             role = user.role,
             isEmailVerified = user.isEmailVerified,
             accessToken = tokenResponse.accessToken,
-            refreshToken = tokenResponse.refreshToken,
             accessTokenExpiresIn = tokenResponse.accessTokenExpiresIn,
             refreshTokenExpiresIn = tokenResponse.refreshTokenExpiresIn,
             tokenType = tokenResponse.tokenType

@@ -20,6 +20,7 @@ class CustomUserDetailsService(
             .password(user.passwordHash)
             .roles(user.role.name)
             .accountLocked(user.isLocked)
+            .disabled(user.isDeleted)
             .build()
         return userDetails
     }
