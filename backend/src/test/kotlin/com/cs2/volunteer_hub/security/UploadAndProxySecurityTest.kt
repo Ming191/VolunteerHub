@@ -30,6 +30,11 @@ class UploadAndProxySecurityTest {
         malformed.remoteAddr = "10.0.0.10"
         malformed.addHeader("X-Forwarded-For", "forged.invalid, 192.0.2.7")
         assertEquals("10.0.0.10", resolver.resolve(malformed))
+        val duplicated = MockHttpServletRequest()
+        duplicated.remoteAddr = "10.0.0.10"
+        duplicated.addHeader("X-Forwarded-For", "203.0.113.10")
+        duplicated.addHeader("X-Forwarded-For", "198.51.100.20")
+        assertEquals("10.0.0.10", resolver.resolve(duplicated))
     }
     private fun validator() = FileValidationService(10_485_760,
         Mockito.mock(TemporaryFileStorageService::class.java))
@@ -57,6 +62,15 @@ class UploadAndProxySecurityTest {
             validator().validateFiles(listOf(
                 MockMultipartFile("file","large.png","image/png",ByteArray(10_485_761))
             ), 5)
+        }
+    }
+    @Test fun webpHeaderWithoutDecodableImageIsRejected() {
+        val fake = ByteArray(30)
+        "RIFF".toByteArray().copyInto(fake, 0)
+        "WEBP".toByteArray().copyInto(fake, 8)
+        "VP8X".toByteArray().copyInto(fake, 12)
+        assertThrows(BadRequestException::class.java) {
+            validator().validateUploadedBytes(fake, "image/webp")
         }
     }
     private fun png(): ByteArray {

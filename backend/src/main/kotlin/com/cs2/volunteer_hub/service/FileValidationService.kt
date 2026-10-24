@@ -76,37 +76,29 @@ class FileValidationService(
             else -> throw BadRequestException("Unsupported or corrupted image header")
         }
         if (actual != declared) throw BadRequestException("Image payload does not match declared Content-Type")
-        val dimensions: Pair<Int, Int> = if (webp) {
-            // Accept only WebP VP8X extended headers, whose dimensions can be bounded.
-            // Other WebP variants require a dedicated decoder before being accepted.
-            if (String(bytes, 12, 4, Charsets.US_ASCII) != "VP8X") {
-                throw BadRequestException("Unsupported WebP encoding")
-            }
-            val width = 1 + (bytes[24].toInt() and 255) +
-                ((bytes[25].toInt() and 255) shl 8) + ((bytes[26].toInt() and 255) shl 16)
-            val height = 1 + (bytes[27].toInt() and 255) +
-                ((bytes[28].toInt() and 255) shl 8) + ((bytes[29].toInt() and 255) shl 16)
-            Pair(width, height)
-        } else {
-            ImageIO.createImageInputStream(ByteArrayInputStream(bytes)).use { input ->
-                if (input == null) throw BadRequestException("Unreadable image")
-                val readers = ImageIO.getImageReaders(input)
-                if (!readers.hasNext()) throw BadRequestException("Unrecognized image data")
-                val reader = readers.next()
-                try {
-                    reader.input = input
-                    Pair(reader.getWidth(0), reader.getHeight(0))
-                } catch (_: Exception) {
-                    throw BadRequestException("Malformed image")
-                } finally {
-                    reader.dispose()
+        ImageIO.createImageInputStream(ByteArrayInputStream(bytes)).use { input ->
+            if (input == null) throw BadRequestException("Unreadable image")
+            val readers = ImageIO.getImageReaders(input)
+            if (!readers.hasNext()) throw BadRequestException("Unrecognized image data")
+            val reader = readers.next()
+            try {
+                reader.input = input
+                val width = reader.getWidth(0)
+                val height = reader.getHeight(0)
+                if (width < 1 || height < 1 || width > 8192 || height > 8192 ||
+                    width.toLong() * height.toLong() > 20_000_000L) {
+                    throw BadRequestException("Image dimensions exceed allowed limits")
                 }
+                // A valid signature and dimensions alone do not prove the payload is decodable.
+                // This also exercises the WebP decoder for the complete upload.
+                if (reader.read(0) == null) throw BadRequestException("Unreadable image")
+            } catch (e: BadRequestException) {
+                throw e
+            } catch (_: Exception) {
+                throw BadRequestException("Malformed image")
+            } finally {
+                reader.dispose()
             }
-        }
-        val (width, height) = dimensions
-        if (width < 1 || height < 1 || width > 8192 || height > 8192 ||
-            width.toLong() * height.toLong() > 20_000_000L) {
-            throw BadRequestException("Image dimensions exceed allowed limits")
         }
     }
 
