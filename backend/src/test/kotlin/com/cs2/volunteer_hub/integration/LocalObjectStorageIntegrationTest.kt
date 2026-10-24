@@ -98,58 +98,58 @@ class LocalObjectStorageIntegrationTest {
         }
         proxy.start()
         try {
-        val credentials = StaticCredentialsProvider.create(
-            AwsBasicCredentials.create("localtestaccess", "localtestsecret123"))
-        val endpoint = URI.create("http://${proxy.host}:${proxy.getMappedPort(9000)}")
-        val options = S3Configuration.builder().pathStyleAccessEnabled(true).build()
-        S3Client.builder().credentialsProvider(credentials).endpointOverride(endpoint)
-            .region(Region.US_EAST_1).serviceConfiguration(options).build().use { s3 ->
-                S3Presigner.builder().credentialsProvider(credentials).endpointOverride(endpoint)
-                    .region(Region.US_EAST_1).serviceConfiguration(options).build().use { presigner ->
-                    val bucket = "vh-orphan-${UUID.randomUUID().toString().take(16)}"
-                    s3.createBucket(CreateBucketRequest.builder().bucket(bucket).build())
-                    val adapter = S3ObjectStorageAdapter(s3, presigner,
-                        StorageProperties().apply { this.bucket = bucket })
-                    val orphan = "images/${UUID.randomUUID()}-orphan.png"
-                    val claimed = "images/${UUID.randomUUID()}-post.png"
-                    val profile = "images/${UUID.randomUUID()}-profile.png"
-                    val png = validPng()
-                    for (key in listOf(orphan, claimed, profile)) {
-                        adapter.putIfAbsent(key, "image/png", png)
-                    }
-
-                    // Restart RustFS alone while ingress remains up, as Compose does.
-                    DockerClientFactory.instance().client()
-                        .restartContainerCmd(rustfs.containerId).exec()
-                    var recovered = false
-                    var lastFailure = "No response received"
-                    repeat(30) {
-                        if (!recovered) {
-                            try {
-                                recovered = adapter.read(orphan)?.contentEquals(png) == true
-                                if (!recovered) lastFailure = "Object not found after restart"
-                            } catch (e: RuntimeException) {
-                                lastFailure = e.message ?: e.javaClass.simpleName
-                            }
-                            if (!recovered) Thread.sleep(1_000)
+            val credentials = StaticCredentialsProvider.create(
+                AwsBasicCredentials.create("localtestaccess", "localtestsecret123"))
+            val endpoint = URI.create("http://${proxy.host}:${proxy.getMappedPort(9000)}")
+            val options = S3Configuration.builder().pathStyleAccessEnabled(true).build()
+            S3Client.builder().credentialsProvider(credentials).endpointOverride(endpoint)
+                .region(Region.US_EAST_1).serviceConfiguration(options).build().use { s3 ->
+                    S3Presigner.builder().credentialsProvider(credentials).endpointOverride(endpoint)
+                        .region(Region.US_EAST_1).serviceConfiguration(options).build().use { presigner ->
+                        val bucket = "vh-orphan-${UUID.randomUUID().toString().take(16)}"
+                        s3.createBucket(CreateBucketRequest.builder().bucket(bucket).build())
+                        val adapter = S3ObjectStorageAdapter(s3, presigner,
+                            StorageProperties().apply { this.bucket = bucket })
+                        val orphan = "images/${UUID.randomUUID()}-orphan.png"
+                        val claimed = "images/${UUID.randomUUID()}-post.png"
+                        val profile = "images/${UUID.randomUUID()}-profile.png"
+                        val png = validPng()
+                        for (key in listOf(orphan, claimed, profile)) {
+                            adapter.putIfAbsent(key, "image/png", png)
                         }
+    
+                        // Restart RustFS alone while ingress remains up, as Compose does.
+                        DockerClientFactory.instance().client()
+                            .restartContainerCmd(rustfs.containerId).exec()
+                        var recovered = false
+                        var lastFailure = "No response received"
+                        repeat(30) {
+                            if (!recovered) {
+                                try {
+                                    recovered = adapter.read(orphan)?.contentEquals(png) == true
+                                    if (!recovered) lastFailure = "Object not found after restart"
+                                } catch (e: RuntimeException) {
+                                    lastFailure = e.message ?: e.javaClass.simpleName
+                                }
+                                if (!recovered) Thread.sleep(1_000)
+                            }
+                        }
+                        assertTrue(recovered, "RustFS did not retain image after restart: $lastFailure")
+    
+                        val imageRepo = Mockito.mock(ImageRepository::class.java)
+                        val userRepo = Mockito.mock(UserRepository::class.java)
+                        Mockito.`when`(imageRepo.findReferencedUrls()).thenReturn(
+                            listOf("http://localhost:8080/api/media/$claimed"))
+                        Mockito.`when`(userRepo.findReferencedProfilePictureUrls()).thenReturn(
+                            listOf("http://localhost:8080/api/media/$profile"))
+                        val cleanup = OrphanImageCleanupService(adapter, imageRepo, userRepo, 48, 100)
+                        val result = cleanup.cleanupAt(Instant.now().plus(Duration.ofDays(3)))
+                        assertEquals(1, result.deleted)
+                        assertEquals(0, result.failed)
+                        assertNull(adapter.read(orphan))
+                        assertArrayEquals(png, adapter.read(claimed))
+                        assertArrayEquals(png, adapter.read(profile))
                     }
-                    assertTrue(recovered, "RustFS did not retain image after restart: $lastFailure")
-
-                    val imageRepo = Mockito.mock(ImageRepository::class.java)
-                    val userRepo = Mockito.mock(UserRepository::class.java)
-                    Mockito.`when`(imageRepo.findReferencedUrls()).thenReturn(
-                        listOf("http://localhost:8080/api/media/$claimed"))
-                    Mockito.`when`(userRepo.findReferencedProfilePictureUrls()).thenReturn(
-                        listOf("http://localhost:8080/api/media/$profile"))
-                    val cleanup = OrphanImageCleanupService(adapter, imageRepo, userRepo, 48, 100)
-                    val result = cleanup.cleanupAt(Instant.now().plus(Duration.ofDays(3)))
-                    assertEquals(1, result.deleted)
-                    assertEquals(0, result.failed)
-                    assertNull(adapter.read(orphan))
-                    assertArrayEquals(png, adapter.read(claimed))
-                    assertArrayEquals(png, adapter.read(profile))
-                }
             }
         } finally {
             proxy.stop()
