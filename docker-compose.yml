@@ -196,7 +196,7 @@ services:
     image: grafana/grafana:latest
     container_name: volunteerhub_grafana
     ports:
-      - "127.0.0.1:3001:3000"
+      - "127.0.0.1:${GRAFANA_HOST_PORT:-3001}:3000"
     networks:
       - observability
       - edge

@@ -16,6 +16,8 @@ Supply the following environment variables before `docker compose up -d --build`
 
 Optional: `SPRING_DATASOURCE_USERNAME` and `SPRING_RABBITMQ_USERNAME` default to `vh_local`. Passwords have **no defaults**. For JWT use `openssl rand -base64 32`; for each infrastructure password use `openssl rand -hex 32` and inject it through your local environment or secret manager. The existing PostgreSQL/RabbitMQ volumes may still contain the former credentials; rotate those accounts or provision fresh disposable *local* volumes separately. Do not delete a persisted volume without checking its data.
 
+If port `3001` is already occupied by another local application, set `GRAFANA_HOST_PORT` to a free loopback port before starting Compose. Do not change the `127.0.0.1` host binding.
+
 ## Actuator boundary
 
 - Spring management endpoints are on port **8081**, separate from the application port **8080**.
