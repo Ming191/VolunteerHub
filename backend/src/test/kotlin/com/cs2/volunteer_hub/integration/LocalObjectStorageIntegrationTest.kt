@@ -13,7 +13,7 @@ import org.testcontainers.containers.Network
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.utility.MountableFile
+import org.testcontainers.utility.Transferable
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
@@ -31,6 +31,7 @@ import java.net.URI
 import java.net.URL
 import java.net.Socket
 import java.nio.file.Path
+import java.nio.file.Files
 import javax.imageio.ImageIO
 
 /** No GCS credentials: real RustFS Docker image, S3 SigV4 signed PUT and private reads. */
@@ -74,10 +75,15 @@ class LocalObjectStorageIntegrationTest {
     @Test
     fun composeIngressEnforcesCorsSizeLimitAndSignedPutImmutability() {
         val config = Path.of("..", "docker", "storage-proxy", "default.conf").toAbsolutePath()
+        // Testcontainers' standalone network does not supply Compose service-name DNS.
+        // Keep the real proxy rules, but use RustFS's test-network IP for the upstream.
+        val rustfsIp = rustfs.containerInfo.networkSettings.networks.values.first().ipAddress
+        require(!rustfsIp.isNullOrBlank()) { "RustFS test-network address is unavailable" }
+        val nginxConfigText = Files.readString(config).replace("rustfs:9000", "$rustfsIp:9000")
         val proxy = GenericContainer<Nothing>("nginx:1.27-alpine").apply {
             withNetwork(network)
             withExposedPorts(9000)
-            withCopyFileToContainer(MountableFile.forHostPath(config),
+            withCopyToContainer(Transferable.of(nginxConfigText.toByteArray(Charsets.UTF_8)),
                 "/etc/nginx/conf.d/default.conf")
             waitingFor(Wait.forListeningPort())
         }
