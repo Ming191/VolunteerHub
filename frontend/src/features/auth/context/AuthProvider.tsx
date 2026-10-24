@@ -6,6 +6,7 @@ import { fcmService } from "@/features/notifications/services/fcmService.ts";
 import { AuthContext } from "./AuthContext.ts";
 import { authStorage, type AuthUser } from "../utils/authStorage";
 import axiosInstance from '@/utils/axiosInstance';
+import { refreshAccessToken } from '@/utils/axiosInstance';
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -27,36 +28,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         const initializeAuth = async () => {
             try {
-                const accessToken = authStorage.getAccessToken();
-                const storedUser = authStorage.getUser();
-
-                if (accessToken && storedUser) {
-                    // Optimistically set stored user
-                    setUser(storedUser);
-
-                    try {
-                        // Refresh profile data to get latest avatar
-                        const profileRes = await userProfileApi.getMyProfile();
-                        const freshUser = {
-                            ...storedUser,
-                            ...profileRes.data,
-                            // Ensure mapping is correct if field names differ
-                        };
-                        if (profileRes.data.profilePictureUrl) {
-                            freshUser.profilePictureUrl = profileRes.data.profilePictureUrl;
-                        }
-
-                        setUser(freshUser);
-                        authStorage.setUser(freshUser);
-                    } catch (err) {
-                        console.warn("Failed to refresh profile on init:", err);
-                    }
-
-                    // Register FCM token for already logged-in users
-                    fcmService.registerDeviceForNotifications().catch(err =>
-                        console.error("FCM registration failed on init:", err)
-                    );
-                }
+                authStorage.clearLegacyTokens();
+                const token = await refreshAccessToken();
+                if (!token) return;
+                const profileRes = await userProfileApi.getMyProfile();
+                const profile = profileRes.data;
+                const freshUser: AuthUser = {
+                    userId: profile.id,
+                    email: profile.email,
+                    name: profile.name,
+                    role: profile.role,
+                    isEmailVerified: profile.isEmailVerified,
+                    profilePictureUrl: profile.profilePictureUrl || undefined,
+                };
+                setUser(freshUser);
+                authStorage.setUser(freshUser);
+                fcmService.registerDeviceForNotifications().catch(err =>
+                    console.error("FCM registration failed on init:", err)
+                );
             } catch (error) {
                 console.error("Failed to initialize auth:", error);
                 setUser(null);
@@ -73,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const response = await authService.login(data);
 
             // Set token first so axios interceptor picks it up
-            authStorage.setAuth(response.accessToken, response.refreshToken, {
+            authStorage.setAuth(response.accessToken, {
                 userId: response.userId,
                 email: response.email,
                 name: response.name,
@@ -124,10 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const logout = useCallback(() => {
-        const refreshToken = authStorage.getRefreshToken();
-        if (refreshToken) {
-            authService.logout(refreshToken).catch(err => console.error("Server logout failed", err));
-        }
+        authService.logout().catch(err => console.error("Server logout failed", err));
         setUser(null);
         authStorage.clearAuth();
         router.navigate({ to: '/signin' });

@@ -38,6 +38,7 @@ import org.springframework.data.domain.PageRequest
 import com.cs2.volunteer_hub.service.ProfilePrivacyService
 import com.cs2.volunteer_hub.service.UserService
 import com.cs2.volunteer_hub.service.SettingsService
+import com.cs2.volunteer_hub.service.RefreshTokenService
 import com.cs2.volunteer_hub.service.PostUploadGrantService
 import com.cs2.volunteer_hub.service.PostService
 import com.cs2.volunteer_hub.service.EventService
@@ -119,7 +120,7 @@ import java.time.ZoneOffset
 @EnableAutoConfiguration
 @EntityScan(basePackages = ["com.cs2.volunteer_hub.model"])
 @EnableJpaRepositories(basePackages = ["com.cs2.volunteer_hub.repository"])
-@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, PostUploadGrantService::class, PostService::class, EventService::class, EventMapper::class, ImageUploadWorker::class, EventStatusUpdater::class, PostMapper::class, CommentMapper::class, SettingsMapper::class, ReportMapper::class, ReportService::class, CommentService::class)
+@Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, RefreshTokenService::class, PostUploadGrantService::class, PostService::class, EventService::class, EventMapper::class, ImageUploadWorker::class, EventStatusUpdater::class, PostMapper::class, CommentMapper::class, SettingsMapper::class, ReportMapper::class, ReportService::class, CommentService::class)
 class InfraHarnessApplication {
     @Bean
     fun fixtureClock(): Clock =
@@ -216,6 +217,8 @@ class InfrastructureIntegrationTest {
     @Autowired lateinit var transactionTemplate: TransactionTemplate
     @Autowired lateinit var userService: UserService
     @Autowired lateinit var settingsService: SettingsService
+    @Autowired lateinit var refreshService: RefreshTokenService
+    @Autowired lateinit var refreshTokens: com.cs2.volunteer_hub.repository.RefreshTokenRepository
     @Autowired lateinit var passwordEncoder: PasswordEncoder
     @Autowired lateinit var reportService: ReportService
     @Autowired lateinit var commentService: CommentService
@@ -272,6 +275,51 @@ class InfrastructureIntegrationTest {
         role = Role.VOLUNTEER,
         createdAt = LocalDateTime.ofInstant(clock.instant(), clock.zone)
     )
+
+    @Test
+    fun `refresh secrets are hashed and replay revokes the rotated session family`() {
+        val user = users.saveAndFlush(newVolunteer("rotation@example.invalid"))
+        val issued = refreshService.createRefreshToken(user)
+        val stored = requireNotNull(refreshTokens.findByToken(refreshService.tokenHash(issued.value)))
+        assertNotEquals(issued.value, stored.token)
+        val rotated = refreshService.rotateRefreshToken(issued.value)
+        assertNotEquals(issued.value, rotated.value)
+        assertThrows(RefreshTokenService.RefreshTokenReplayException::class.java) {
+            refreshService.rotateRefreshToken(issued.value)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            refreshService.validateRefreshToken(rotated.value)
+        }
+    }
+
+    @Test
+    fun `locked or deleted users cannot rotate refresh sessions`() {
+        val user = users.saveAndFlush(newVolunteer("account-state@example.invalid"))
+        val issued = refreshService.createRefreshToken(user)
+        user.isLocked = true
+        users.saveAndFlush(user)
+        assertThrows(IllegalArgumentException::class.java) {
+            refreshService.rotateRefreshToken(issued.value)
+        }
+    }
+
+    @Test
+    fun `revoke other sessions keeps current cookie session and rejects unknown cookie`() {
+        val user = users.saveAndFlush(newVolunteer("sessions@example.invalid"))
+        val current = refreshService.createRefreshToken(user)
+        val other = refreshService.createRefreshToken(user)
+        assertThrows(BadRequestException::class.java) {
+            settingsService.revokeAllOtherSessions(user.email, "unrecognized-cookie")
+        }
+        assertNotNull(refreshService.validateRefreshToken(other.value))
+        settingsService.revokeAllOtherSessions(user.email, current.value)
+        assertNotNull(refreshService.validateRefreshToken(current.value))
+        assertThrows(IllegalArgumentException::class.java) {
+            refreshService.validateRefreshToken(other.value)
+        }
+        val sessions = settingsService.getActiveSessions(user.email, current.value)
+        assertEquals(1, sessions.count { it.isCurrent })
+    }
 
 
     private fun authenticate(email: String) {

@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.controller
 
 import com.cs2.volunteer_hub.config.SecurityConfig
+import com.cs2.volunteer_hub.config.RefreshSessionCookies
 import com.cs2.volunteer_hub.config.ratelimit.RateLimitingFilter
 import com.cs2.volunteer_hub.config.ratelimit.RateLimitingInterceptor
 import org.springframework.context.annotation.ComponentScan
@@ -30,6 +31,7 @@ class AuthLogoutAllAuthorizationHttpTest {
     @Autowired lateinit var mvc: MockMvc
 
     @MockitoBean lateinit var authService: AuthService
+    @MockitoBean lateinit var refreshCookies: RefreshSessionCookies
     @MockitoBean lateinit var emailVerificationService: EmailVerificationService
     @MockitoBean lateinit var emailQueueService: EmailQueueService
     @MockitoBean lateinit var loginMapper: LoginMapper

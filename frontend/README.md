@@ -90,7 +90,7 @@ The obsolete `@omergulcicek/password-input` dependency was removed because its p
 
 Run the backend against a **disposable test** PostgreSQL, Redis and RabbitMQ environment, without production data or credentials. Configure a fresh local JWT secret and test-only cloud credentials to allow the server to start. Never commit secrets or DB backups.
 
-Start the frontend with `npm run dev` on `http://localhost:5173` and ensure the API is available at `http://127.0.0.1:8080`. Use `localhost` for the frontend origin: the backend's current development CORS allowlist does not include `127.0.0.1:5173`.
+Start the frontend with `npm run dev` on `http://localhost:5173` and ensure the API is available at `http://localhost:8080`. Use the same `localhost` hostname for both services so the HttpOnly refresh cookie is accepted. The local Docker Compose backend configures `AUTH_COOKIE_SECURE=false` for plain HTTP; TLS deployments must use secure cookies. Set `FRONTEND_ALLOWED_ORIGINS` to exact trusted frontend origins when deploying elsewhere.
 
 ```bash
 npm run test:e2e

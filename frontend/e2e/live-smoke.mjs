@@ -2,13 +2,16 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
 const WEB=process.env.E2E_WEB_URL ?? 'http://localhost:5173';
-const API=process.env.E2E_API_URL ?? 'http://127.0.0.1:8080';
+const API=process.env.E2E_API_URL ?? 'http://localhost:8080';
 const PASS='LocalE2ETest2026!';
 const email='volunteer-e2e-'+Date.now().toString(36)+'@example.invalid';
 const browser=await chromium.launch(process.platform==='win32' ? {channel:'msedge',headless:true} : {headless:true});
 const context=await browser.newContext({viewport:{width:1365,height:900}});
 const page=await context.newPage();
 const results=[];
+let browserAccessToken='';
+const sessionHeaders={Origin:WEB,'X-VH-Session':'1'};
+const refreshCookie=async()=> (await context.cookies(API)).find(cookie=>cookie.name==='vh_refresh');
 async function run(name,fn){
  try{await fn();results.push({name,result:'PASS'});console.log('PASS '+name)}
  catch(error){results.push({name,result:'FAIL',reason:error.message});console.error('FAIL '+name+' '+error.message);console.error('PAGE_URL '+page.url());console.error('PAGE_TEXT '+(await page.locator('body').innerText().catch(()=>'')).slice(0,650));}
@@ -59,32 +62,37 @@ try {
    const user=await response.json();
    assert.equal(user.role,'VOLUNTEER');
    assert.ok(user.accessToken);
+   assert.equal(user.refreshToken,undefined,'refresh token must not be in JSON');
+   browserAccessToken=user.accessToken;
+   const cookie=await refreshCookie();
+   assert.ok(cookie?.httpOnly,'refresh token must be HttpOnly');
+   assert.equal(await page.evaluate(()=>localStorage.getItem('refreshToken')),null);
+   assert.equal(await page.evaluate(()=>localStorage.getItem('accessToken')),null);
    await page.waitForURL(url=>url.pathname.startsWith('/dashboard'),{timeout:12000});
  });
  await run('volunteer denied admin endpoint by real backend',async()=>{
-   const access=await page.evaluate(()=>localStorage.getItem('accessToken'));
-   assert.ok(access,'browser auth token expected');
-   const r=await context.request.get(API+'/api/admin/users',{headers:{Authorization:'Bearer '+access}});
+   const r=await context.request.get(API+'/api/admin/users',{headers:{Authorization:'Bearer '+browserAccessToken}});
    assert.equal(r.status(),403,'Volunteer must be forbidden from accessing admin users API');
  });
  await run('refresh rotates token and rejects replay',async()=>{
-   const previous=await page.evaluate(()=>localStorage.getItem('refreshToken'));
-   assert.ok(previous,'browser refresh token expected');
-   const response=await context.request.post(API+'/api/auth/refresh',{data:{refreshToken:previous}});
+   const previous=(await refreshCookie())?.value;
+   assert.ok(previous,'browser refresh cookie expected');
+   const response=await context.request.post(API+'/api/auth/refresh',{headers:sessionHeaders,data:{}});
    assert.equal(response.status(),200,'refresh HTTP status');
    const fresh=await response.json();
    assert.ok(fresh.accessToken);
-   assert.ok(fresh.refreshToken);
-   assert.notEqual(fresh.refreshToken,previous,'refresh token must rotate');
-   const replay=await context.request.post(API+'/api/auth/refresh',{data:{refreshToken:previous}});
+   assert.equal(fresh.refreshToken,undefined);
+   assert.notEqual((await refreshCookie())?.value,previous,'refresh cookie must rotate');
+   const replay=await context.request.post(API+'/api/auth/refresh',{
+     headers:{...sessionHeaders,Cookie:`vh_refresh=${previous}`},data:{}});
    assert.equal(replay.status(),401,'rotated refresh token must be invalid');
-   await page.evaluate(({accessToken,refreshToken})=>{
-     localStorage.setItem('accessToken',accessToken);
-     localStorage.setItem('refreshToken',refreshToken);
-   },{accessToken:fresh.accessToken,refreshToken:fresh.refreshToken});
+   // Replay kills that token family. Start a fresh session for the browser logout case.
+   const renewed=await context.request.post(API+'/api/auth/login',{
+     headers:sessionHeaders,data:{email,password:PASS}});
+   assert.equal(renewed.status(),200);
  });
  await run('browser logout revokes refresh token',async()=>{
-   const token=await page.evaluate(()=>localStorage.getItem('refreshToken'));
+   const token=(await refreshCookie())?.value;
    assert.ok(token);
    await page.locator('header button').last().click();
    const logoutResponse=page.waitForResponse(x=>x.url().includes('/api/auth/logout') && x.request().method()==='POST',{timeout:12000});
@@ -92,7 +100,8 @@ try {
    assert.equal((await logoutResponse).status(),200);
    await page.waitForURL(url=>url.pathname.startsWith('/signin'),{timeout:12000});
    assert.equal(await page.evaluate(()=>localStorage.getItem('accessToken')),null);
-   const revoked=await context.request.post(API+'/api/auth/refresh',{data:{refreshToken:token}});
+   const revoked=await context.request.post(API+'/api/auth/refresh',{
+     headers:{...sessionHeaders,Cookie:`vh_refresh=${token}`},data:{}});
    assert.equal(revoked.status(),401,'logout refresh token must be revoked');
  });
 } finally {
