@@ -18,8 +18,7 @@ class RateLimitConfig(
 
     @Bean(destroyMethod = "shutdown")
     fun redisClient(): RedisClient {
-        val connectionString = rateLimitProperties.redis.getConnectionString()
-        return RedisClient.create(connectionString)
+        return RedisClient.create(rateLimitProperties.redis.getRedisUri())
     }
 
     @Bean(destroyMethod = "close")

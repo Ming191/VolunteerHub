@@ -1,6 +1,5 @@
 package com.cs2.volunteer_hub.storage
 
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.core.sync.RequestBody
@@ -19,8 +18,9 @@ import java.time.Duration
 class S3ObjectStorageAdapter(
     private val client: S3Client,
     private val presigner: S3Presigner,
-    @Value("\${storage.bucket:volunteerhub}") private val bucket: String
+    private val storageProperties: com.cs2.volunteer_hub.config.StorageProperties
 ) : ObjectStoragePort {
+    private val bucket get() = storageProperties.bucket
     override fun putIfAbsent(key: String, contentType: String, bytes: ByteArray) {
         client.putObject(putRequest(key, contentType), RequestBody.fromBytes(bytes))
     }

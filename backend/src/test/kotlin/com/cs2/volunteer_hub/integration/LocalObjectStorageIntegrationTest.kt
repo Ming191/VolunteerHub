@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.integration
 
 import com.cs2.volunteer_hub.exception.BadRequestException
+import com.cs2.volunteer_hub.config.StorageProperties
 import com.cs2.volunteer_hub.service.FileValidationService
 import com.cs2.volunteer_hub.service.ImageUploadService
 import com.cs2.volunteer_hub.service.TemporaryFileStorageService
@@ -135,7 +136,7 @@ class LocalObjectStorageIntegrationTest {
                     val validator = FileValidationService(10_485_760L,
                         Mockito.mock(TemporaryFileStorageService::class.java))
                     val service = ImageUploadService(
-                        S3ObjectStorageAdapter(s3, presigner, "volunteerhub-ingress"),
+                        S3ObjectStorageAdapter(s3, presigner, StorageProperties().apply { bucket = "volunteerhub-ingress" }),
                         "http://localhost:8080", validator)
                     val picture = validPng()
                     val (putUrl, publicUrl) = service.generateSignedUrl("image/png", "ingress.png")
@@ -171,7 +172,7 @@ class LocalObjectStorageIntegrationTest {
                     .build())
                 val validator = FileValidationService(10_485_760L,
                     Mockito.mock(TemporaryFileStorageService::class.java))
-                val adapter = S3ObjectStorageAdapter(s3, presigner, "volunteerhub")
+                val adapter = S3ObjectStorageAdapter(s3, presigner, StorageProperties().apply { bucket = "volunteerhub" })
                 val service = ImageUploadService(adapter, "http://localhost:8080", validator)
                 val picture = validPng()
                 val (putUrl, publicUrl) = service.generateSignedUrl("image/png", "avatar.png")

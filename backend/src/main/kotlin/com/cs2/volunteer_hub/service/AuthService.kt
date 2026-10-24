@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.service
 
 import com.cs2.volunteer_hub.config.jwt.JwtTokenProvider
+import com.cs2.volunteer_hub.config.jwt.JwtProperties
 import com.cs2.volunteer_hub.dto.LoginRequest
 import com.cs2.volunteer_hub.dto.RegisterRequest
 import com.cs2.volunteer_hub.dto.TokenResponse
@@ -11,7 +12,6 @@ import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.repository.UserSettingsRepository
 import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -28,9 +28,9 @@ class AuthService(
         private val userDetailsService: CustomUserDetailsService,
         private val emailVerificationService: EmailVerificationService,
         private val refreshTokenService: RefreshTokenService,
-        @Value("\${jwt.refresh-token.expiration:2592000000}") // Default: 30 days
-        private val refreshTokenExpiration: Long
+        private val jwtProperties: JwtProperties
 ) {
+        private val refreshTokenExpiration get() = jwtProperties.refreshToken.expiration
         private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
         @Transactional

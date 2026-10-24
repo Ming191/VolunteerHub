@@ -1,7 +1,6 @@
 package com.cs2.volunteer_hub.config.jwt
 
 import java.time.Instant
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
@@ -13,19 +12,19 @@ import org.springframework.stereotype.Component
 class JwtTokenProvider(
     private val encoder: JwtEncoder,
     private val hmac: JwtHmacKey,
-    @param:Value("\${jwt.expiration}") private val expiration: Long
+    private val jwtProperties: JwtProperties
 ) {
     fun generateToken(userDetails: UserDetails): String {
         val now = Instant.now()
         val claims = JwtClaimsSet.builder()
             .subject(userDetails.username)
             .issuedAt(now)
-            .expiresAt(now.plusMillis(expiration))
+            .expiresAt(now.plusMillis(jwtProperties.expiration))
             .claim("roles", userDetails.authorities.map { it.authority })
             .build()
         val header = JwsHeader.with(hmac.algorithm).build()
         return encoder.encode(JwtEncoderParameters.from(header, claims)).tokenValue
     }
 
-    fun getExpirationMillis(): Long = expiration
+    fun getExpirationMillis(): Long = jwtProperties.expiration
 }

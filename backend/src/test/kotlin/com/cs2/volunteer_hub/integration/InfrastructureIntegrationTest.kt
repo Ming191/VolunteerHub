@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.integration
 
 import com.cs2.volunteer_hub.config.RabbitMQConfig
+import com.cs2.volunteer_hub.config.jwt.JwtProperties
 import com.cs2.volunteer_hub.config.RedisConfig
 import com.cs2.volunteer_hub.dto.VerificationEmailMessage
 import com.cs2.volunteer_hub.model.Role
@@ -88,6 +89,7 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringBootConfiguration
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.autoconfigure.domain.EntityScan
@@ -119,6 +121,7 @@ import java.time.ZoneOffset
  */
 @SpringBootConfiguration
 @EnableAutoConfiguration
+@EnableConfigurationProperties(JwtProperties::class)
 @EntityScan(basePackages = ["com.cs2.volunteer_hub.model"])
 @EnableJpaRepositories(basePackages = ["com.cs2.volunteer_hub.repository"])
 @Import(RabbitMQConfig::class, RedisConfig::class, EmailQueueService::class, EventCapacityService::class, WaitlistService::class, RegistrationService::class, EventManagerService::class, ProfilePrivacyService::class, UserService::class, SettingsService::class, RefreshTokenService::class, PostUploadGrantService::class, PostService::class, EventService::class, EventMapper::class, ImageUploadWorker::class, EventStatusUpdater::class, PostMapper::class, CommentMapper::class, SettingsMapper::class, ReportMapper::class, ReportService::class, CommentService::class)
@@ -201,6 +204,7 @@ class InfrastructureIntegrationTest {
         @DynamicPropertySource
         @JvmStatic
         fun services(registry: DynamicPropertyRegistry) {
+            registry.add("jwt.secret") { java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 19 }) }
             registry.add("spring.datasource.url") { postgres.jdbcUrl }
             registry.add("spring.datasource.username") { postgres.username }
             registry.add("spring.datasource.password") { postgres.password }

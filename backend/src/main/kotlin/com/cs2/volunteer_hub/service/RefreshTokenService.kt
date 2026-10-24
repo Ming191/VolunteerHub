@@ -1,5 +1,6 @@
 package com.cs2.volunteer_hub.service
 
+import com.cs2.volunteer_hub.config.jwt.JwtProperties
 import com.cs2.volunteer_hub.model.RefreshToken
 import com.cs2.volunteer_hub.model.User
 import com.cs2.volunteer_hub.repository.RefreshTokenRepository
@@ -7,16 +8,16 @@ import java.time.LocalDateTime
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class RefreshTokenService(
         private val refreshTokenRepository: RefreshTokenRepository,
-        @Value("\${jwt.refresh-token.expiration:2592000000}") // Default: 30 days
-        private val refreshTokenExpiration: Long
+        private val jwtProperties: JwtProperties
 ) {
+    private val refreshTokenExpiration get() = jwtProperties.refreshToken.expiration
+
     data class IssuedRefreshToken(val value: String, val user: User)
 
     class RefreshTokenReplayException : IllegalArgumentException("Refresh token replay detected")
