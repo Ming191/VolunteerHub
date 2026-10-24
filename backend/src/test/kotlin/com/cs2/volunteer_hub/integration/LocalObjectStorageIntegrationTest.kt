@@ -82,9 +82,23 @@ class LocalObjectStorageIntegrationTest {
 
     @Test
     fun unclaimedObjectsAreCollectedButReferencedImagesSurviveContainerRestart() {
+        // Keep a stable ingress connection while RustFS restarts. Docker Desktop can
+        // withdraw the restarted container's ephemeral published localhost port.
+        // Compose uses the same topology: nginx persists while RustFS restarts.
+        val proxy = GenericContainer<Nothing>("nginx:1.27-alpine").apply {
+            withNetwork(network)
+            withExposedPorts(9000)
+            withCopyToContainer(Transferable.of((
+                "server { listen 9000; location / { proxy_pass http://rustfs:9000; " +
+                    "proxy_set_header Host \$http_host; } }\n"
+            ).toByteArray(Charsets.UTF_8)), "/etc/nginx/conf.d/default.conf")
+            waitingFor(Wait.forListeningPort())
+        }
+        proxy.start()
+        try {
         val credentials = StaticCredentialsProvider.create(
             AwsBasicCredentials.create("localtestaccess", "localtestsecret123"))
-        val endpoint = URI.create("http://${rustfs.host}:${rustfs.getMappedPort(9000)}")
+        val endpoint = URI.create("http://${proxy.host}:${proxy.getMappedPort(9000)}")
         val options = S3Configuration.builder().pathStyleAccessEnabled(true).build()
         S3Client.builder().credentialsProvider(credentials).endpointOverride(endpoint)
             .region(Region.US_EAST_1).serviceConfiguration(options).build().use { s3 ->
@@ -102,7 +116,7 @@ class LocalObjectStorageIntegrationTest {
                         adapter.putIfAbsent(key, "image/png", png)
                     }
 
-                    // Restart the same container, as `docker compose restart rustfs` does.
+                    // Restart RustFS alone while ingress remains up, as Compose does.
                     DockerClientFactory.instance().client()
                         .restartContainerCmd(rustfs.containerId).exec()
                     var recovered = false
@@ -135,6 +149,9 @@ class LocalObjectStorageIntegrationTest {
                     assertArrayEquals(png, adapter.read(profile))
                 }
             }
+        } finally {
+            proxy.stop()
+        }
     }
 
     @Test
