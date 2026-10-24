@@ -85,11 +85,13 @@ class LocalObjectStorageIntegrationTest {
         // Keep a stable ingress connection while RustFS restarts. Docker Desktop can
         // withdraw the restarted container's ephemeral published localhost port.
         // Compose uses the same topology: nginx persists while RustFS restarts.
+        val rustfsIp = rustfs.containerInfo.networkSettings.networks.values.first().ipAddress
+        require(!rustfsIp.isNullOrBlank()) { "RustFS test-network address is unavailable" }
         val proxy = GenericContainer<Nothing>("nginx:1.27-alpine").apply {
             withNetwork(network)
             withExposedPorts(9000)
             withCopyToContainer(Transferable.of((
-                "server { listen 9000; location / { proxy_pass http://rustfs:9000; " +
+                "server { listen 9000; location / { proxy_pass http://$rustfsIp:9000; " +
                     "proxy_set_header Host \$http_host; } }\n"
             ).toByteArray(Charsets.UTF_8)), "/etc/nginx/conf.d/default.conf")
             waitingFor(Wait.forListeningPort())
