@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.storage
 
 import java.time.Duration
+import java.time.Instant
 
 /**
  * Provider-neutral boundary for private image objects.
@@ -12,6 +13,8 @@ interface ObjectStoragePort {
     fun metadata(key: String): StoredObjectMetadata?
     fun read(key: String): ByteArray?
     fun delete(key: String)
+    fun list(prefix: String): List<StoredObjectReference>
 }
 
 data class StoredObjectMetadata(val contentLength: Long, val contentType: String)
+data class StoredObjectReference(val key: String, val lastModified: Instant)

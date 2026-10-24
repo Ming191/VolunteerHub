@@ -120,6 +120,7 @@ services:
       - STORAGE_PRESIGN_ENDPOINT=http://localhost:9000
       - STORAGE_PUBLIC_BASE_URL=http://localhost:8080
       - STORAGE_BUCKET=volunteerhub
+      - STORAGE_ORPHAN_CLEANUP_ENABLED=${STORAGE_ORPHAN_CLEANUP_ENABLED:-false}
       - STORAGE_ACCESS_KEY=${LOCAL_STORAGE_ACCESS_KEY:-localdevaccess}
       - STORAGE_SECRET_KEY=${LOCAL_STORAGE_SECRET_KEY:-localdevsecret123}
       - SPRING_PROFILES_ACTIVE=docker

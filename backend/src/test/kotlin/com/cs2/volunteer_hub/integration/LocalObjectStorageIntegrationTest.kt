@@ -4,12 +4,16 @@ import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.config.StorageProperties
 import com.cs2.volunteer_hub.service.FileValidationService
 import com.cs2.volunteer_hub.service.ImageUploadService
+import com.cs2.volunteer_hub.service.OrphanImageCleanupService
+import com.cs2.volunteer_hub.repository.ImageRepository
+import com.cs2.volunteer_hub.repository.UserRepository
 import com.cs2.volunteer_hub.service.TemporaryFileStorageService
 import com.cs2.volunteer_hub.storage.S3ObjectStorageAdapter
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.Network
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -33,6 +37,9 @@ import java.net.URL
 import java.net.Socket
 import java.nio.file.Path
 import java.nio.file.Files
+import java.time.Duration
+import java.time.Instant
+import java.util.UUID
 import javax.imageio.ImageIO
 
 /** No GCS credentials: real RustFS Docker image, S3 SigV4 signed PUT and private reads. */
@@ -71,6 +78,82 @@ class LocalObjectStorageIntegrationTest {
         conn.setRequestProperty("If-None-Match", "*")
         conn.outputStream.use { it.write(image) }
         return try { conn.responseCode } finally { conn.disconnect() }
+    }
+
+    @Test
+    fun unclaimedObjectsAreCollectedButReferencedImagesSurviveContainerRestart() {
+        // Keep a stable ingress connection while RustFS restarts. Docker Desktop can
+        // withdraw the restarted container's ephemeral published localhost port.
+        // Compose uses the same topology: nginx persists while RustFS restarts.
+        val rustfsIp = rustfs.containerInfo.networkSettings.networks.values.first().ipAddress
+        require(!rustfsIp.isNullOrBlank()) { "RustFS test-network address is unavailable" }
+        val proxy = GenericContainer<Nothing>("nginx:1.27-alpine").apply {
+            withNetwork(network)
+            withExposedPorts(9000)
+            withCopyToContainer(Transferable.of((
+                "server { listen 9000; location / { proxy_pass http://$rustfsIp:9000; " +
+                    "proxy_set_header Host \$http_host; } }\n"
+            ).toByteArray(Charsets.UTF_8)), "/etc/nginx/conf.d/default.conf")
+            waitingFor(Wait.forListeningPort())
+        }
+        proxy.start()
+        try {
+            val credentials = StaticCredentialsProvider.create(
+                AwsBasicCredentials.create("localtestaccess", "localtestsecret123"))
+            val endpoint = URI.create("http://${proxy.host}:${proxy.getMappedPort(9000)}")
+            val options = S3Configuration.builder().pathStyleAccessEnabled(true).build()
+            S3Client.builder().credentialsProvider(credentials).endpointOverride(endpoint)
+                .region(Region.US_EAST_1).serviceConfiguration(options).build().use { s3 ->
+                    S3Presigner.builder().credentialsProvider(credentials).endpointOverride(endpoint)
+                        .region(Region.US_EAST_1).serviceConfiguration(options).build().use { presigner ->
+                        val bucket = "vh-orphan-${UUID.randomUUID().toString().take(16)}"
+                        s3.createBucket(CreateBucketRequest.builder().bucket(bucket).build())
+                        val adapter = S3ObjectStorageAdapter(s3, presigner,
+                            StorageProperties().apply { this.bucket = bucket })
+                        val orphan = "images/${UUID.randomUUID()}-orphan.png"
+                        val claimed = "images/${UUID.randomUUID()}-post.png"
+                        val profile = "images/${UUID.randomUUID()}-profile.png"
+                        val png = validPng()
+                        for (key in listOf(orphan, claimed, profile)) {
+                            adapter.putIfAbsent(key, "image/png", png)
+                        }
+    
+                        // Restart RustFS alone while ingress remains up, as Compose does.
+                        DockerClientFactory.instance().client()
+                            .restartContainerCmd(rustfs.containerId).exec()
+                        var recovered = false
+                        var lastFailure = "No response received"
+                        repeat(30) {
+                            if (!recovered) {
+                                try {
+                                    recovered = adapter.read(orphan)?.contentEquals(png) == true
+                                    if (!recovered) lastFailure = "Object not found after restart"
+                                } catch (e: RuntimeException) {
+                                    lastFailure = e.message ?: e.javaClass.simpleName
+                                }
+                                if (!recovered) Thread.sleep(1_000)
+                            }
+                        }
+                        assertTrue(recovered, "RustFS did not retain image after restart: $lastFailure")
+    
+                        val imageRepo = Mockito.mock(ImageRepository::class.java)
+                        val userRepo = Mockito.mock(UserRepository::class.java)
+                        Mockito.`when`(imageRepo.findReferencedUrls()).thenReturn(
+                            listOf("http://localhost:8080/api/media/$claimed"))
+                        Mockito.`when`(userRepo.findReferencedProfilePictureUrls()).thenReturn(
+                            listOf("http://localhost:8080/api/media/$profile"))
+                        val cleanup = OrphanImageCleanupService(adapter, imageRepo, userRepo, 48, 100)
+                        val result = cleanup.cleanupAt(Instant.now().plus(Duration.ofDays(3)))
+                        assertEquals(1, result.deleted)
+                        assertEquals(0, result.failed)
+                        assertNull(adapter.read(orphan))
+                        assertArrayEquals(png, adapter.read(claimed))
+                        assertArrayEquals(png, adapter.read(profile))
+                    }
+            }
+        } finally {
+            proxy.stop()
+        }
     }
 
     @Test

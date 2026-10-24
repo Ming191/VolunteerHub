@@ -7,6 +7,7 @@ import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
@@ -47,6 +48,13 @@ class S3ObjectStorageAdapter(
     override fun delete(key: String) {
         client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build())
     }
+
+    override fun list(prefix: String): List<StoredObjectReference> =
+        client.listObjectsV2Paginator(
+            ListObjectsV2Request.builder().bucket(bucket).prefix(prefix).build()
+        ).contents().mapNotNull { item ->
+            item.lastModified()?.let { StoredObjectReference(item.key(), it) }
+        }
 
     private fun putRequest(key: String, contentType: String): PutObjectRequest =
         PutObjectRequest.builder().bucket(bucket).key(key)
