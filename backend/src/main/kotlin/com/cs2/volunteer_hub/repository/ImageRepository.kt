@@ -10,6 +10,9 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ImageRepository : JpaRepository<Image, Long> {
 
+    @Query("SELECT i.url FROM Image i WHERE i.url IS NOT NULL")
+    fun findReferencedUrls(): List<String>
+
     /**
      * Fetch all uploaded images from an event and its associated posts. Returns images from both
      * event.images and event.posts[*].images where status = UPLOADED. Results are ordered by upload

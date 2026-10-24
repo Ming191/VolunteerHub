@@ -24,3 +24,45 @@
 6. Rate limits are per IP as implemented before authentication. For networks behind a common NAT, tune quota and documented proxy trust appropriately; do not blindly trust forwarded headers.
 
 Release disposition: code-level hardening can merge with passing tests; VH-107 as a full P0 release gate remains pending actual storage ingress controls, GCS lifecycle/CORS and deployed proxy verification. No production secrets are included.
+
+## Local-first follow-up after RustFS migration
+
+The GCS-only gates above are historical. PRs #92 and #103 moved local uploads to
+RustFS and verified the actual Nginx 10 MiB limit, CORS preflight, and signed
+PUT create-only semantics with Testcontainers. Production cloud deployment remains
+deferred. Local persistence and abandoned object retention are separate concerns.
+
+### Orphan image retention (opt-in)
+
+`OrphanImageCleanupService` lists only randomized `images/` keys older than 48
+hours, cross-checks persisted event/post image URLs and user profile-picture URLs,
+and removes at most 100 *unreferenced* objects per daily pass. Failed deletions
+are retried on the next run. It aborts without deleting anything if the database
+reference query fails. The delay is longer than the 20-minute one-use upload
+grant, so an object eligible for removal can no longer be attached to a post.
+
+This deletion job is **disabled by default** to protect pre-existing local data:
+
+```bash
+STORAGE_ORPHAN_CLEANUP_ENABLED=true docker compose up -d
+```
+
+Enable it only after taking a storage backup, inspecting historic object
+references, and confirming that existing objects use the `images/` naming
+convention. Operators can set `storage.orphan-cleanup.retention-hours` (minimum
+24) and `storage.orphan-cleanup.max-deletes` (1..1000). The scheduler is at 04:00
+server time by default, overridable through `storage.orphan-cleanup.cron`.
+Signed PUTs abandoned before post creation cannot be reclaimed instantly because
+their Redis grant may still be valid. This policy provides bounded eventual
+cleanup without deleting referenced images.
+
+### Remaining evidence
+
+- Verify an uploaded object persists after a real `docker compose restart rustfs`
+  while its named `rustfs_data` volume is retained, then verify it disappears
+  only after explicit deletion. Never use `down -v` on persistent user data.
+- Verify the opt-in cleanup job against a **disposable** RustFS bucket with an old
+  orphan, a referenced image, a referenced profile picture, and a simulated
+  deletion failure; verify retry on the next scheduled/manual run.
+- Multi-process message-worker crash recovery is tracked in VH-205 rather than
+  being silently claimed here.

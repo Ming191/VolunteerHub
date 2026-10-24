@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface UserRepository : JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
+
+    @Query("SELECT u.profilePictureUrl FROM User u WHERE u.profilePictureUrl IS NOT NULL")
+    fun findReferencedProfilePictureUrls(): List<String>
     fun findByEmail(email: String): User?
 
     /** Scalar query avoids reading stale deletion state from an already-loaded User entity. */
