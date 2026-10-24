@@ -93,21 +93,24 @@ class LocalObjectStorageIntegrationTest {
             val nginxConfig = proxy.execInContainer("nginx", "-t")
             assertEquals(0, nginxConfig.exitCode, "nginx config invalid: ${nginxConfig.stderr}")
             val endpoint = "http://${proxy.host}:${proxy.getMappedPort(9000)}"
-            fun preflight(origin: String): HttpURLConnection =
-                (URL("$endpoint/volunteerhub-ingress/images/preflight.png").openConnection() as HttpURLConnection).apply {
-                    requestMethod = "OPTIONS"
-                    setRequestProperty("Origin", origin)
-                    setRequestProperty("Access-Control-Request-Method", "PUT")
-                    setRequestProperty("Access-Control-Request-Headers", "Content-Type, If-None-Match")
+            // Raw HTTP avoids JDK HttpURLConnection suppressing browser-only Origin headers.
+            fun preflight(origin: String): String =
+                Socket(proxy.host, proxy.getMappedPort(9000)).use { socket ->
+                    socket.soTimeout = 5_000
+                    val header = "OPTIONS /volunteerhub-ingress/images/preflight.png HTTP/1.1\r\n" +
+                        "Host: ${proxy.host}:${proxy.getMappedPort(9000)}\r\n" +
+                        "Origin: $origin\r\nAccess-Control-Request-Method: PUT\r\n" +
+                        "Access-Control-Request-Headers: Content-Type, If-None-Match\r\n" +
+                        "Connection: close\r\n\r\n"
+                    socket.getOutputStream().write(header.toByteArray(Charsets.US_ASCII))
+                    socket.getInputStream().bufferedReader().readText()
                 }
-            preflight("http://localhost:5173").useConnection { conn ->
-                assertEquals(204, conn.responseCode)
-                assertEquals("http://localhost:5173", conn.getHeaderField("Access-Control-Allow-Origin"))
-            }
-            preflight("https://attacker.example").useConnection { conn ->
-                assertEquals(204, conn.responseCode)
-                assertNull(conn.getHeaderField("Access-Control-Allow-Origin"))
-            }
+            val allowed = preflight("http://localhost:5173")
+            assertTrue(allowed.startsWith("HTTP/1.1 204"), allowed)
+            assertTrue(allowed.contains("Access-Control-Allow-Origin: http://localhost:5173", ignoreCase = true), allowed)
+            val denied = preflight("https://attacker.example")
+            assertTrue(denied.startsWith("HTTP/1.1 204"), denied)
+            assertFalse(denied.contains("Access-Control-Allow-Origin:", ignoreCase = true), denied)
 
             // Content-Length exceeds 10 MiB: nginx rejects before any body reaches RustFS.
             Socket(proxy.host, proxy.getMappedPort(9000)).use { socket ->
@@ -148,9 +151,6 @@ class LocalObjectStorageIntegrationTest {
             proxy.stop()
         }
     }
-
-    private inline fun <T> HttpURLConnection.useConnection(block: (HttpURLConnection) -> T): T =
-        try { block(this) } finally { disconnect() }
 
     @Test
     fun signedPutIsScopedToNewObjectAndImageRoundTripsThroughPrivateS3() {
