@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.multipart.MaxUploadSizeExceededException
 import org.springframework.web.servlet.NoHandlerFoundException
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 /**
  * Global exception handler for all REST controllers.
@@ -104,6 +105,15 @@ class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(mapOf("error" to "Endpoint not found: ${ex.requestURL}"))
+    }
+
+    /** Spring MVC may route an unknown URL through the static resource handler. */
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleStaticResourceNotFound(ex: NoResourceFoundException): ResponseEntity<Map<String, String>> {
+        logger.warn("Static resource not found: ${ex.resourcePath}")
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(mapOf("error" to "Endpoint not found"))
     }
 
     /** Handle method not allowed (405) */

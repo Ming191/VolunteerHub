@@ -45,6 +45,16 @@ jobs:
               sys.exit(1)
           print("No prohibited tracked dump/env/credential paths found.")
           PY
+      - name: Assert private Compose networks and loopback-only host bindings
+        env:
+          JWT_SECRET: ci-placeholder-not-a-real-key
+          SPRING_DATASOURCE_PASSWORD: ci-placeholder
+          SPRING_RABBITMQ_PASSWORD: ci-placeholder
+          RATE_LIMIT_REDIS_PASSWORD: ci-placeholder
+          GF_SECURITY_ADMIN_PASSWORD: ci-placeholder
+        run: |
+          python3 -m unittest discover -s docker -p 'test_verify_vh106_exposure.py'
+          python3 docker/verify-vh106-exposure.py --config-only
 
   registration-security-tests:
     runs-on: ubuntu-latest
