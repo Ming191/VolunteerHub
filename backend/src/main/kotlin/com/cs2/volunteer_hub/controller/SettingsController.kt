@@ -52,13 +52,10 @@ class SettingsController(private val settingsService: SettingsService) {
     )
     @GetMapping("/sessions", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getActiveSessions(
-        @RequestHeader("Authorization") authorization: String?,
+        @CookieValue(name = "vh_refresh", required = false) refreshToken: String?,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<List<ActiveSessionResponse>> {
-        // Extract current token from Authorization header
-        val currentToken = authorization?.takeIf { it.startsWith("Bearer ") }
-            ?.removePrefix("Bearer ")?.trim()
-        val sessions = settingsService.getActiveSessions(currentUser.username, currentToken)
+        val sessions = settingsService.getActiveSessions(currentUser.username, refreshToken)
         return ResponseEntity.ok(sessions)
     }
 
@@ -78,11 +75,11 @@ class SettingsController(private val settingsService: SettingsService) {
     )
     @DeleteMapping("/sessions")
     fun revokeAllOtherSessions(
-        @RequestHeader("Authorization") authorization: String,
+        @CookieValue(name = "vh_refresh", required = false) refreshToken: String?,
         @AuthenticationPrincipal currentUser: UserDetails
     ): ResponseEntity<Map<String, String>> {
-        val currentToken = authorization.removePrefix("Bearer ").trim()
-        settingsService.revokeAllOtherSessions(currentUser.username, currentToken)
+        settingsService.revokeAllOtherSessions(currentUser.username,
+            refreshToken ?: throw com.cs2.volunteer_hub.exception.BadRequestException("Current session cookie is missing"))
         return ResponseEntity.ok(mapOf("message" to "All other sessions revoked successfully"))
     }
 

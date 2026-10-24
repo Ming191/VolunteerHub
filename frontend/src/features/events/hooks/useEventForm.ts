@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { authStorage } from '@/features/auth/utils/authStorage';
 import { useGetEventTags } from '../hooks/useEventTags';
 import { eventFormSchema, type EventFormValues, MAX_IMAGES, MAX_IMAGE_SIZE } from '../schemas/eventFormSchema';
 
@@ -98,20 +99,12 @@ export const useEventForm = ({
     };
 
     const validateUserPermissions = (): { isValid: boolean; userRole?: string } => {
-        const storedUser = localStorage.getItem('user');
-        const accessToken = localStorage.getItem('accessToken');
-
-        if (!storedUser || !accessToken) {
+        const user = authStorage.getUser();
+        if (!user || !authStorage.getAccessToken()) {
             return { isValid: false };
         }
-
-        try {
-            const user = JSON.parse(storedUser);
-            const isValid = user.role === 'EVENT_ORGANIZER' || user.role === 'ADMIN';
-            return { isValid, userRole: user.role };
-        } catch {
-            return { isValid: false };
-        }
+        const isValid = user.role === 'EVENT_ORGANIZER' || user.role === 'ADMIN';
+        return { isValid, userRole: user.role };
     };
 
     const handleSubmit = async (values: EventFormValues) => {
