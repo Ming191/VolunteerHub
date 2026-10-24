@@ -15,7 +15,10 @@ class ClientIpResolver(
     fun resolve(request: HttpServletRequest): String {
         val peer = request.remoteAddr ?: return "unknown"
         if (peer !in trusted) return peer
-        val hops = request.getHeader("X-Forwarded-For")?.split(",")?.map(String::trim) ?: return peer
+        val forwardedHeaders = request.getHeaders("X-Forwarded-For").toList()
+        // Ambiguous repeated headers can be interpreted differently by upstream proxies.
+        if (forwardedHeaders.size != 1) return peer
+        val hops = forwardedHeaders.single().split(",").map(String::trim)
         if (hops.isEmpty() || hops.size > 16 || hops.any { !numericAddress(it) }) return peer
         // Read right-to-left: only an explicitly trusted reverse proxy may append the client IP.
         return hops.asReversed().firstOrNull { it !in trusted } ?: hops.first()
