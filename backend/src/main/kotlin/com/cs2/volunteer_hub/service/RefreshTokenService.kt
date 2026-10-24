@@ -64,6 +64,7 @@ class RefreshTokenService(
     }
 
     /** Validate and retrieve a refresh token */
+    @Transactional(readOnly = true)
     fun validateRefreshToken(token: String): RefreshToken {
         val refreshToken =
                 refreshTokenRepository.findByToken(hash(token))
