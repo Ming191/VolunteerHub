@@ -34,6 +34,7 @@ import com.cs2.volunteer_hub.model.Comment
 import com.cs2.volunteer_hub.repository.UserSettingsRepository
 import com.cs2.volunteer_hub.repository.PostRepository
 import com.cs2.volunteer_hub.exception.UnauthorizedAccessException
+import com.cs2.volunteer_hub.exception.BadRequestException
 import org.springframework.data.domain.PageRequest
 import com.cs2.volunteer_hub.service.ProfilePrivacyService
 import com.cs2.volunteer_hub.service.UserService

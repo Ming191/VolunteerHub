@@ -1,5 +1,6 @@
 package com.cs2.volunteer_hub.controller
 
+import com.cs2.volunteer_hub.config.RefreshSessionCookies
 import com.cs2.volunteer_hub.dto.RegisterRequest
 import com.cs2.volunteer_hub.mapper.LoginMapper
 import com.cs2.volunteer_hub.mapper.RegisterMapper
@@ -50,7 +51,8 @@ class PublicRegistrationHttpTest {
             Mockito.mock(EmailQueueService::class.java),
             LoginMapper(),
             RegisterMapper(),
-            VerifyEmailMapper()
+            VerifyEmailMapper(),
+            Mockito.mock(RefreshSessionCookies::class.java)
         )
     )
         .setMessageConverters(MappingJackson2HttpMessageConverter(jacksonObjectMapper()))
