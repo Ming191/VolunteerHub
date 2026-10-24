@@ -83,6 +83,9 @@ class LocalObjectStorageIntegrationTest {
         }
         proxy.start()
         try {
+            val nginxConfig = proxy.execInContainer("nginx", "-t")
+            assertEquals(0, nginxConfig.exitCode, "nginx config invalid: ${nginxConfig.stderr}")
+            assertTrue(proxy.isRunning, "nginx exited before ingress test: ${proxy.logs}")
             val endpoint = "http://${proxy.host}:${proxy.getMappedPort(9000)}"
             fun preflight(origin: String): HttpURLConnection =
                 (URL("$endpoint/volunteerhub-ingress/images/preflight.png").openConnection() as HttpURLConnection).apply {
