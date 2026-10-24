@@ -45,11 +45,10 @@ const register = async (registerData: RegisterRequest) => {
 
 /**
  * Logs out a user by revoking their refresh token.
- * @param refreshToken - The user's current refresh token.
  */
-const logout = async (refreshToken: string) => {
+const logout = async () => {
     try {
-        await authApi.logout({ requestBody: { refreshToken } });
+        await axiosInstance.post('/api/auth/logout', {});
     } catch (error) {
         console.error('Server logout failed:', error);
     }

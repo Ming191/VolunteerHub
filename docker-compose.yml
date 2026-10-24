@@ -95,6 +95,8 @@ services:
       - SPRING_MAIL_PASSWORD=xxxx xxxx xxxx xxxx
       - PROMETHEUS_URL=http://prometheus:9090
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET before running Docker Compose}
+      # This Compose stack serves HTTP on loopback only. TLS deployments keep Secure=true.
+      - AUTH_COOKIE_SECURE=false
       # One-time opt-in when adopting a verified legacy database; disabled otherwise.
       - VH_FLYWAY_BASELINE_ON_MIGRATE=${VH_FLYWAY_BASELINE_ON_MIGRATE:-false}
       - STORAGE_ENDPOINT=http://rustfs:9000

@@ -2,6 +2,7 @@ package com.cs2.volunteer_hub.migration
 
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.FlywayException
+import org.flywaydb.core.api.MigrationVersion
 import org.junit.jupiter.api.*
 import org.testcontainers.containers.PostgreSQLContainer
 import java.sql.DriverManager
@@ -27,13 +28,16 @@ class FlywayBaselineIntegrationTest {
         }
     }
 
-    private fun migrator(legacy: Boolean = false) = Flyway.configure()
+    private fun migrator(legacy: Boolean = false, targetVersion: String? = null): Flyway {
+        val configuration = Flyway.configure()
         .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
         .locations("classpath:db/migration")
         .baselineVersion("1")
         .baselineOnMigrate(legacy)
         .validateOnMigrate(true)
-        .load()
+        if (targetVersion != null) configuration.target(MigrationVersion.fromVersion(targetVersion))
+        return configuration.load()
+    }
 
     private fun execute(sql: String) {
         DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password).use { conn ->
@@ -49,9 +53,10 @@ class FlywayBaselineIntegrationTest {
 
     @Test fun `fresh database migrates exactly once`() {
         val flyway = migrator()
-        Assertions.assertEquals(1, flyway.migrate().migrationsExecuted)
+        Assertions.assertEquals(2, flyway.migrate().migrationsExecuted)
         Assertions.assertEquals(17, count("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_name <> 'flyway_schema_history'"))
         Assertions.assertEquals(1, count("SELECT COUNT(*) FROM flyway_schema_history WHERE version='1' AND type='SQL' AND success"))
+        Assertions.assertEquals(1, count("SELECT COUNT(*) FROM flyway_schema_history WHERE version='2' AND type='SQL' AND success"))
         Assertions.assertTrue(count("SELECT COUNT(*) FROM information_schema.table_constraints WHERE table_schema='public' AND constraint_type='FOREIGN KEY'") > 0)
         Assertions.assertEquals(0, flyway.migrate().migrationsExecuted)
         Assertions.assertTrue(flyway.validateWithResult().validationSuccessful)
@@ -59,14 +64,15 @@ class FlywayBaselineIntegrationTest {
 
     @Test fun `legacy database requires explicit baseline and preserves rows`() {
         // Simulate a V1-equivalent pre-Flyway schema, including data.
-        migrator().migrate()
+        migrator(targetVersion = "1").migrate()
         execute("DROP TABLE flyway_schema_history")
         execute("INSERT INTO users(name,email,password_hash,role,is_locked,is_email_verified,is_deleted,created_at) VALUES ('Test Legacy','legacy@example.invalid','TEST_ONLY_HASH','VOLUNTEER',false,false,false,now())")
         Assertions.assertThrows(FlywayException::class.java) { migrator().migrate() }
         Assertions.assertEquals(1, count("SELECT COUNT(*) FROM users WHERE email='legacy@example.invalid'"))
 
-        Assertions.assertEquals(0, migrator(legacy = true).migrate().migrationsExecuted)
+        Assertions.assertEquals(1, migrator(legacy = true).migrate().migrationsExecuted)
         Assertions.assertEquals(1, count("SELECT COUNT(*) FROM flyway_schema_history WHERE version='1' AND type='BASELINE' AND success"))
+        Assertions.assertEquals(1, count("SELECT COUNT(*) FROM flyway_schema_history WHERE version='2' AND type='SQL' AND success"))
         Assertions.assertEquals(1, count("SELECT COUNT(*) FROM users WHERE email='legacy@example.invalid'"))
         Assertions.assertEquals(0, migrator().migrate().migrationsExecuted)
         Assertions.assertTrue(migrator().validateWithResult().validationSuccessful)

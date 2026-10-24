@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.controller
 
 import com.cs2.volunteer_hub.dto.*
+import com.cs2.volunteer_hub.config.RefreshSessionCookies
 import com.cs2.volunteer_hub.mapper.LoginMapper
 import com.cs2.volunteer_hub.mapper.RegisterMapper
 import com.cs2.volunteer_hub.mapper.VerifyEmailMapper
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.http.HttpStatus
@@ -33,7 +35,8 @@ class AuthController (
     private val emailQueueService: EmailQueueService,
     private val loginMapper: LoginMapper,
     private val registerMapper: RegisterMapper,
-    private val verifyEmailMapper: VerifyEmailMapper
+    private val verifyEmailMapper: VerifyEmailMapper,
+    private val refreshCookies: RefreshSessionCookies
 ) {
 
     @Operation(
@@ -70,7 +73,7 @@ class AuthController (
 
     @Operation(
         summary = "Login",
-        description = "Authenticate user and receive JWT access token and refresh token"
+        description = "Authenticate user and receive a JWT access token. The rotating refresh session is sent in an HttpOnly cookie."
     )
     @ApiResponses(
         value = [
@@ -79,7 +82,7 @@ class AuthController (
                 description = "Login successful",
                 content = [Content(
                     mediaType = "application/json",
-                    examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "refreshToken": "550e8400-e29b-41d4-a716-446655440000", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")],
+                    examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")],
                     schema = Schema(implementation = LoginResponse::class)
                     )]
             ),
@@ -93,11 +96,14 @@ class AuthController (
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody request: LoginRequest,
-        httpRequest: HttpServletRequest
+        httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse
     ): ResponseEntity<LoginResponse> {
+        refreshCookies.requireSameOrigin(httpRequest)
         val ipAddress = httpRequest.remoteAddr
         val userAgent = httpRequest.getHeader("User-Agent")
         val tokenResponse = authService.loginUser(request, ipAddress, userAgent)
+        refreshCookies.issue(httpResponse, tokenResponse.refreshToken, tokenResponse.refreshTokenExpiresIn)
         val user = authService.getUserByEmail(request.email)
         val response = loginMapper.toLoginResponse(user, tokenResponse)
         return ResponseEntity.ok(response)
@@ -105,7 +111,7 @@ class AuthController (
 
     @Operation(
         summary = "Refresh access token",
-        description = "Use refresh token to obtain a new access token without re-authentication. The refresh token will be rotated (old one invalidated, new one issued) for security."
+        description = "Rotate the HttpOnly refresh cookie and obtain a new access token. Requires a permitted Origin and X-VH-Session header."
     )
     @ApiResponses(
         value = [
@@ -114,7 +120,7 @@ class AuthController (
                 description = "Token refreshed successfully",
                 content = [Content(
                     mediaType = "application/json",
-                    examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "refreshToken": "650e8400-e29b-41d4-a716-446655440001", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")],
+                    examples = [ExampleObject(value = """{"accessToken": "eyJhbGc...", "accessTokenExpiresIn": 900000, "refreshTokenExpiresIn": 2592000000, "tokenType": "Bearer"}""")],
                     schema = Schema(implementation = TokenResponse::class)
                     )]
             ),
@@ -127,15 +133,20 @@ class AuthController (
     )
     @PostMapping("/refresh")
     fun refreshToken(
-        @Valid @RequestBody request: RefreshTokenRequest,
-        httpRequest: HttpServletRequest
+        @CookieValue(name = RefreshSessionCookies.NAME, required = false) refreshToken: String?,
+        httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse
     ): ResponseEntity<Any> {
+        refreshCookies.requireSameOrigin(httpRequest)
         return try {
             val ipAddress = httpRequest.remoteAddr
             val userAgent = httpRequest.getHeader("User-Agent")
-            val tokenResponse = authService.refreshAccessToken(request.refreshToken, ipAddress, userAgent)
+            val tokenResponse = authService.refreshAccessToken(
+                refreshToken ?: throw IllegalArgumentException("Missing refresh session"), ipAddress, userAgent)
+            refreshCookies.issue(httpResponse, tokenResponse.refreshToken, tokenResponse.refreshTokenExpiresIn)
             ResponseEntity.ok(tokenResponse)
         } catch (e: IllegalArgumentException) {
+            refreshCookies.clear(httpResponse)
             ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(mapOf("error" to (e.message ?: "Invalid refresh token")))
         }
@@ -155,11 +166,16 @@ class AuthController (
         ]
     )
     @PostMapping("/logout")
-    fun logout(@RequestBody request: Map<String, String>): ResponseEntity<Map<String, String>> {
-        val refreshToken = request["refreshToken"]
+    fun logout(
+        @CookieValue(name = RefreshSessionCookies.NAME, required = false) refreshToken: String?,
+        httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse
+    ): ResponseEntity<Map<String, String>> {
+        refreshCookies.requireSameOrigin(httpRequest)
         if (refreshToken != null) {
             authService.logout(refreshToken)
         }
+        refreshCookies.clear(httpResponse)
         return ResponseEntity.ok(mapOf("message" to "Logged out successfully"))
     }
 
@@ -178,8 +194,10 @@ class AuthController (
     )
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout-all")
-    fun logoutAll(@AuthenticationPrincipal currentUser: UserDetails): ResponseEntity<Map<String, String>> {
+    fun logoutAll(@AuthenticationPrincipal currentUser: UserDetails,
+                  httpResponse: HttpServletResponse): ResponseEntity<Map<String, String>> {
         authService.logoutAllDevices(currentUser.username)
+        refreshCookies.clear(httpResponse)
         return ResponseEntity.ok(mapOf("message" to "Logged out from all devices"))
     }
 

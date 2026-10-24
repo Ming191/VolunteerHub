@@ -13,21 +13,16 @@ const STORAGE_KEYS = {
     USER: 'user',
 };
 
+// Access tokens live only in this JavaScript context. Refresh tokens are HttpOnly cookies.
+let accessToken: string | null = null;
+
 export const authStorage = {
     getAccessToken: (): string | null => {
-        return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        return accessToken;
     },
 
     setAccessToken: (token: string): void => {
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-    },
-
-    getRefreshToken: (): string | null => {
-        return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-    },
-
-    setRefreshToken: (token: string): void => {
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
+        accessToken = token;
     },
 
     getUser: (): AuthUser | null => {
@@ -45,6 +40,7 @@ export const authStorage = {
     },
 
     clearAuth: (): void => {
+        accessToken = null;
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
@@ -52,9 +48,14 @@ export const authStorage = {
     },
 
     // Helper to set all at once and avoid inconsistency
-    setAuth: (accessToken: string, refreshToken: string, user: AuthUser): void => {
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+    setAuth: (token: string, user: AuthUser): void => {
+        accessToken = token;
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-    }
+    },
+    clearLegacyTokens: (): void => {
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    },
 };
