@@ -69,7 +69,7 @@ class VH10503HttpSecurity {
         MediaController::class,
         DashboardController::class, SettingsController::class, UserController::class,
         AdminMetricsController::class, AdminPendingMessagesController::class,
-        AuthController::class, EnumController::class, MeController::class,
+        AuthController::class, com.cs2.volunteer_hub.config.RefreshSessionCookies::class, EnumController::class, MeController::class,
         NotificationController::class, TestNotificationController::class,
         GlobalExceptionHandler::class
     ],

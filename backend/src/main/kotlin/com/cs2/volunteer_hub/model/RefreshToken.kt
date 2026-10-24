@@ -35,6 +35,9 @@ data class RefreshToken(
     @Column(length = 500)
     var replacedByToken: String? = null,
 
+    @Column(name = "family_id", nullable = false, length = 36)
+    var familyId: String = java.util.UUID.randomUUID().toString(),
+
     /**
      * IP address from which the token was created
      */
