@@ -106,15 +106,19 @@ class LocalObjectStorageIntegrationTest {
                     DockerClientFactory.instance().client()
                         .restartContainerCmd(rustfs.containerId).exec()
                     var recovered = false
+                    var lastFailure = "No response received"
                     repeat(30) {
                         if (!recovered) {
                             try {
                                 recovered = adapter.read(orphan)?.contentEquals(png) == true
-                            } catch (_: RuntimeException) { /* RustFS is restarting. */ }
+                                if (!recovered) lastFailure = "Object not found after restart"
+                            } catch (e: RuntimeException) {
+                                lastFailure = e.message ?: e.javaClass.simpleName
+                            }
                             if (!recovered) Thread.sleep(1_000)
                         }
                     }
-                    assertTrue(recovered, "RustFS did not retain image after restart")
+                    assertTrue(recovered, "RustFS did not retain image after restart: $lastFailure")
 
                     val imageRepo = Mockito.mock(ImageRepository::class.java)
                     val userRepo = Mockito.mock(UserRepository::class.java)
