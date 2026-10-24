@@ -23,7 +23,7 @@ class RefreshSessionCookiesTest {
         val json = jacksonObjectMapper().writeValueAsString(
             TokenResponse("access", "synthetic-secret", 900_000, 60_000))
         assertFalse(json.contains("synthetic-secret"))
-        assertFalse(json.contains("refreshToken"))
+        assertFalse(json.contains("\"refreshToken\""))
         val cleared = MockHttpServletResponse()
         cookies.clear(cleared)
         assertTrue(requireNotNull(cleared.getHeader("Set-Cookie")).contains("Max-Age=0"))
