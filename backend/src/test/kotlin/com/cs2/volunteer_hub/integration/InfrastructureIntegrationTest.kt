@@ -294,6 +294,32 @@ class InfrastructureIntegrationTest {
     }
 
     @Test
+    fun `parallel refresh requests cannot each rotate the same token`() {
+        val user = users.saveAndFlush(newVolunteer("parallel-refresh@example.invalid"))
+        val original = refreshService.createRefreshToken(user)
+        val executor = Executors.newFixedThreadPool(2)
+        val begin = CountDownLatch(1)
+        try {
+            val results = (1..2).map {
+                executor.submit<String> {
+                    check(begin.await(5, TimeUnit.SECONDS))
+                    try {
+                        refreshService.rotateRefreshToken(original.value)
+                        "rotated"
+                    } catch (_: RefreshTokenService.RefreshTokenReplayException) {
+                        "replay-revoked"
+                    }
+                }
+            }
+            begin.countDown()
+            assertEquals(listOf("replay-revoked", "rotated"),
+                results.map { it.get(15, TimeUnit.SECONDS) }.sorted())
+        } finally {
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
     fun `locked or deleted users cannot rotate refresh sessions`() {
         val user = users.saveAndFlush(newVolunteer("account-state@example.invalid"))
         val issued = refreshService.createRefreshToken(user)
