@@ -26,7 +26,8 @@ class SettingsService(
         private val refreshTokenRepository: RefreshTokenRepository,
         private val passwordEncoder: PasswordEncoder,
         private val settingsMapper: SettingsMapper,
-        private val cacheEvictionService: CacheEvictionService
+        private val cacheEvictionService: CacheEvictionService,
+        private val refreshTokenService: RefreshTokenService
 ) {
     private val logger = LoggerFactory.getLogger(SettingsService::class.java)
 
@@ -79,7 +80,8 @@ class SettingsService(
         val user = userRepository.findByEmailOrThrow(userEmail)
         val sessions =
                 refreshTokenRepository.findAllByUserAndRevokedAtIsNullOrderByCreatedAtDesc(user)
-        return sessions.map { token -> settingsMapper.toActiveSessionResponse(token, currentToken) }
+        val currentHash = currentToken?.let(refreshTokenService::tokenHash)
+        return sessions.map { token -> settingsMapper.toActiveSessionResponse(token, currentHash) }
     }
 
     /** Revoke a specific session */
@@ -107,12 +109,17 @@ class SettingsService(
     @Transactional
     fun revokeAllOtherSessions(userEmail: String, currentToken: String) {
         val user = userRepository.findByEmailOrThrow(userEmail)
+        val currentHash = refreshTokenService.tokenHash(currentToken)
+        val current = refreshTokenRepository.findByToken(currentHash)
+        if (current == null || current.user.id != user.id || current.isRevoked || current.isExpired) {
+            throw BadRequestException("Current session is unavailable")
+        }
         val sessions =
                 refreshTokenRepository.findAllByUserAndRevokedAtIsNullOrderByCreatedAtDesc(user)
         var revokedCount = 0
 
         sessions.forEach { token ->
-            if (token.token != currentToken) {
+            if (token.token != currentHash) {
                 token.revokedAt = LocalDateTime.now()
                 revokedCount++
             }

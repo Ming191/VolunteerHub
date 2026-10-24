@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.config
 
 import com.cs2.volunteer_hub.service.CustomUserDetailsService
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.context.annotation.Bean
@@ -21,7 +22,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-class SecurityConfig {
+class SecurityConfig(
+    @Value("\${app.cors.allowed-origins:http://localhost:5173,http://localhost:5174}")
+    private val allowedOrigins: String = "http://localhost:5173,http://localhost:5174"
+) {
     @Bean
     fun passwordEncoder(): PasswordEncoder {
         return BCryptPasswordEncoder()
@@ -36,7 +40,7 @@ class SecurityConfig {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("http://localhost:5173", "http://localhost:5174")
+        configuration.allowedOrigins = allowedOrigins.split(',').map(String::trim).filter(String::isNotEmpty)
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
         configuration.allowedHeaders = listOf("*")
         configuration.exposedHeaders = listOf("Content-Disposition")
@@ -54,10 +58,8 @@ class SecurityConfig {
             userDetailsService: CustomUserDetailsService
     ): SecurityFilterChain {
         http
-                // CSRF protection is disabled because this application uses stateless JWT
-                // authentication for all endpoints.
-                // Since JWTs are sent in the Authorization header and not as cookies, CSRF attacks
-                // are not a concern.
+                // Protected domain APIs require bearer JWTs, never cookie authentication.
+                // Cookie-bearing auth endpoints enforce exact Origin + a non-simple custom header.
                 .csrf { it.disable() }
                 .cors { cors ->
                     cors.configurationSource(corsConfigurationSource())

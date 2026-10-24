@@ -18,7 +18,6 @@ data class LoginResponse(
     val role: Role,
     val isEmailVerified: Boolean,
     val accessToken: String,
-    val refreshToken: String,
     val accessTokenExpiresIn: Long,  // milliseconds
     val refreshTokenExpiresIn: Long, // milliseconds
     val tokenType: String = "Bearer"

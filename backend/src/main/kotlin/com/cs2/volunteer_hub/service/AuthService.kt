@@ -100,7 +100,7 @@ class AuthService(
 
                 return TokenResponse(
                         accessToken = accessToken,
-                        refreshToken = refreshToken.token,
+                        refreshToken = refreshToken.value,
                         accessTokenExpiresIn = jwtTokenProvider.getExpirationMillis(),
                         refreshTokenExpiresIn = refreshTokenExpiration
                 )
@@ -121,7 +121,7 @@ class AuthService(
 
                 return TokenResponse(
                         accessToken = accessToken,
-                        refreshToken = newRefreshToken.token,
+                        refreshToken = newRefreshToken.value,
                         accessTokenExpiresIn = jwtTokenProvider.getExpirationMillis(),
                         refreshTokenExpiresIn = refreshTokenExpiration
                 )

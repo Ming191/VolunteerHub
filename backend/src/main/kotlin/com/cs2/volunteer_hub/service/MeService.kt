@@ -12,6 +12,7 @@ import com.cs2.volunteer_hub.model.FcmToken
 import com.cs2.volunteer_hub.repository.FcmTokenRepository
 import com.cs2.volunteer_hub.repository.RegistrationRepository
 import com.cs2.volunteer_hub.repository.UserRepository
+import com.cs2.volunteer_hub.repository.RefreshTokenRepository
 import com.cs2.volunteer_hub.repository.findByEmailOrThrow
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -35,7 +36,8 @@ class MeService(
     private val tempFileService: TemporaryFileStorageService,
     private val fileValidationService: FileValidationService,
     private val userMapper: UserMapper,
-    private val cacheEvictionService: CacheEvictionService
+    private val cacheEvictionService: CacheEvictionService,
+    private val refreshTokenRepository: RefreshTokenRepository
 ) {
     private val logger = LoggerFactory.getLogger(MeService::class.java)
 
@@ -128,6 +130,7 @@ class MeService(
         }
         user.passwordHash = passwordEncoder.encode(request.newPassword)
         userRepository.save(user)
+        refreshTokenRepository.revokeAllUserTokens(user)
     }
 
     @Transactional
