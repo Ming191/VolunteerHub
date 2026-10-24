@@ -1,6 +1,7 @@
 package com.cs2.volunteer_hub.service
 
 import jakarta.mail.internet.MimeMessage
+import com.cs2.volunteer_hub.config.MailSettings
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.javamail.JavaMailSender
@@ -13,7 +14,7 @@ import org.thymeleaf.context.Context
 class EmailService(
     private val javaMailSender: JavaMailSender,
     private val templateEngine: TemplateEngine,
-    @Value($$"${spring.mail.username}") private val fromEmail: String,
+    private val mailSettings: MailSettings,
     @Value($$"${app.frontend-url:http://localhost:3000}") private val frontendUrl: String
 ) {
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
@@ -23,7 +24,7 @@ class EmailService(
             val message: MimeMessage = javaMailSender.createMimeMessage()
             val helper = MimeMessageHelper(message, true, "UTF-8")
 
-            helper.setFrom(fromEmail, "VolunteerHub")
+            helper.setFrom(mailSettings.username, "VolunteerHub")
             helper.setTo(to)
             helper.setSubject(subject)
             helper.setText(htmlBody, true)

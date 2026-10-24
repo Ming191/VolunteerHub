@@ -32,12 +32,12 @@ VolunteerHub is a modern application connecting volunteers with opportunities. I
 - **Authentication & Authorization**: JWT-based auth with secure password hashing.
 - **Volunteer Management**: Create and manage volunteer profiles and opportunities.
 - **Real-time Notifications**: Firebase Cloud Messaging (FCM) integration for push notifications.
-- **Resiliency**: Circuit breakers and time limiters for external services (GCS, RabbitMQ, Prometheus).
+- **Resiliency**: Circuit breakers and time limiters for external services (object storage, RabbitMQ, Prometheus).
 - **Rate Limiting**: Intelligent rate limiting using Bucket4j and Redis to prevent abuse.
 - **Monitoring**: Comprehensive metrics with Prometheus and Grafana dashboards.
 - **Distributed Tracing**: Full request tracing (Frontend -> Backend -> DB) with Grafana Tempo.
 - **Centralized Logging**: Structured logs with Loki and Promtail.
-- **File Storage**: Secure image upload to Google Cloud Storage.
+- **File Storage**: Secure image uploads through an S3-compatible adapter (RustFS for local development).
 
 ## Configuration
 
@@ -46,12 +46,16 @@ The application uses standard Spring Boot configuration. Key environment variabl
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `SPRING_DATASOURCE_URL` | PostgreSQL connection URL | `jdbc:postgresql://localhost:5432/volunteerhub` |
-| `SPRING_DATASOURCE_USERNAME` | Database username | `myuser` |
-| `SPRING_DATASOURCE_PASSWORD` | Database password | `mypassword` |
-| `SPRING_RABBITMQ_HOST` | RabbitMQ host | `localhost` |
-| `SPRING_DATA_REDIS_HOST` | Redis host | `localhost` |
-| `JWT_SECRET` | Required Base64-encoded HMAC signing secret, minimum 32 random bytes | **Required, no default** |
-| `GCS_BUCKET_NAME` | Google Cloud Storage bucket | `volunteerhub-bucket` |
+| `SPRING_DATASOURCE_USERNAME` | Database username | Demo only in `dev/test` |
+| `SPRING_DATASOURCE_PASSWORD` | Database password | Required in `prod` |
+| `SPRING_RABBITMQ_HOST` | RabbitMQ host | Localhost only outside `prod` |
+| `SPRING_RABBITMQ_PASSWORD` | RabbitMQ password | Required in `prod` |
+| `SPRING_MAIL_PASSWORD` | SMTP password | Required in `prod` |
+| `SPRING_DATA_REDIS_HOST`, `RATE_LIMIT_REDIS_PASSWORD` | Redis endpoint and password | Required in `prod` |
+| `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY` | S3-compatible storage credentials | Required in `prod` |
+| `JWT_SECRET` | Base64 HMAC key, at least 32 random bytes | Required in all profiles |
+
+Choose `SPRING_PROFILES_ACTIVE=dev` for a locally started backend, `docker` for the local Compose stack, or `prod` for deployment. See [VH-103 environment matrix and rotation instructions](docs/security/VH-103-configuration.md). Do not use local demo credentials or Docker Compose in production.
 
 ## Getting Started
 

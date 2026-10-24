@@ -1,9 +1,9 @@
 package com.cs2.volunteer_hub.config
 
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
@@ -26,20 +26,16 @@ import java.net.URI
  */
 @Configuration
 @ConditionalOnProperty(prefix = "storage", name = ["provider"], havingValue = "s3", matchIfMissing = true)
-class S3StorageConfig(
-    @Value("\${storage.endpoint:http://localhost:9000}") private val internalEndpoint: String,
-    @Value("\${storage.presign-endpoint:http://localhost:9000}") private val browserEndpoint: String,
-    @Value("\${storage.access-key:localdevaccess}") private val accessKey: String,
-    @Value("\${storage.secret-key:localdevsecret123}") private val secretKey: String
-) {
+@EnableConfigurationProperties(StorageProperties::class)
+class S3StorageConfig(private val storage: StorageProperties) {
     private fun credentials() =
-        StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey))
+        StaticCredentialsProvider.create(AwsBasicCredentials.create(storage.accessKey, storage.secretKey))
 
     private fun s3Options() = S3Configuration.builder().pathStyleAccessEnabled(true).build()
 
     @Bean
     fun s3Client(): S3Client = S3Client.builder()
-        .endpointOverride(URI.create(internalEndpoint))
+        .endpointOverride(URI.create(storage.endpoint))
         .credentialsProvider(credentials())
         .region(Region.US_EAST_1)
         .serviceConfiguration(s3Options())
@@ -49,10 +45,8 @@ class S3StorageConfig(
     // SigV4 signs the Host header, so the presigner MUST use the browser-accessible URL.
     @Bean
     @ConditionalOnProperty(prefix = "storage", name = ["bootstrap-bucket"], havingValue = "true", matchIfMissing = true)
-    fun localBucketProvisioner(
-        client: S3Client,
-        @Value("\${storage.bucket:volunteerhub}") bucket: String
-    ): ApplicationRunner = ApplicationRunner {
+    fun localBucketProvisioner(client: S3Client): ApplicationRunner = ApplicationRunner {
+        val bucket = storage.bucket
         // RustFS may need a few seconds on the first local run.
         var lastError: Exception? = null
         for (attempt in 1..20) {
@@ -84,7 +78,7 @@ class S3StorageConfig(
 
     @Bean
     fun s3Presigner(): S3Presigner = S3Presigner.builder()
-        .endpointOverride(URI.create(browserEndpoint))
+        .endpointOverride(URI.create(storage.presignEndpoint))
         .credentialsProvider(credentials())
         .region(Region.US_EAST_1)
         .serviceConfiguration(s3Options())

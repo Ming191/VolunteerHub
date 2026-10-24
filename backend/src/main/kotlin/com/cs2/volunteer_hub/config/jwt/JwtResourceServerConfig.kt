@@ -6,7 +6,6 @@ import java.time.Duration
 import java.util.Base64
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
@@ -23,8 +22,12 @@ class JwtHmacKey(val secretKey: SecretKey, val algorithm: MacAlgorithm)
 @Configuration
 class JwtResourceServerConfig {
     @Bean
-    fun jwtHmacKey(@Value("\${jwt.secret}") encodedSecret: String): JwtHmacKey {
-        val secret = Base64.getDecoder().decode(encodedSecret)
+    fun jwtHmacKey(properties: JwtProperties): JwtHmacKey {
+        val secret = try {
+            Base64.getDecoder().decode(properties.secret)
+        } catch (ex: IllegalArgumentException) {
+            throw IllegalArgumentException("JWT_SECRET must be valid Base64", ex)
+        }
         require(secret.size >= 32) { "JWT secret must contain at least 32 bytes" }
         val algorithm = when {
             secret.size >= 64 -> MacAlgorithm.HS512
