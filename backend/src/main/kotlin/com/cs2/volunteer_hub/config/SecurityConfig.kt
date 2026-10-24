@@ -97,10 +97,19 @@ class SecurityConfig(
                             .requestMatchers(
                                     "/swagger-ui/**",
                                     "/v3/api-docs/**",
-                                    "/swagger-ui.html",
-                                    "/actuator/**"
+                                    "/swagger-ui.html"
                             )
                             .permitAll()
+                            // Actuator is served on its own management port, bound to
+                            // loopback by default and unpublished by local Compose.
+                            .requestMatchers("/actuator/health", "/actuator/health/**")
+                            .permitAll()
+                            // Prometheus reaches the management port on the private
+                            // observability network. It is never an internet route.
+                            .requestMatchers("/actuator/prometheus")
+                            .permitAll()
+                            .requestMatchers("/actuator/**")
+                            .denyAll()
                             .anyRequest()
                             .authenticated()
                 }

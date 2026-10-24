@@ -66,20 +66,20 @@ Choose `SPRING_PROFILES_ACTIVE=dev` for a locally started backend, `docker` for 
 
 ### Quick Start (Docker)
 
-The easiest way to run the entire stack is using Docker Compose. **Before starting, provision JWT_SECRET via a secure secret store or your local shell**, for example `export JWT_SECRET=$(openssl rand -base64 32)` for local development only. Never add this value to Git. Rotating the key invalidates existing access JWTs. Refer to `docs/security/VH-102-incident-response.md` for exposed-credential response.
+The easiest way to run the entire stack is using Docker Compose. **Before starting, provision JWT_SECRET and the local infrastructure passwords in your shell.** See [VH-106 exposure hardening](docs/security/VH-106-internal-exposure.md) for the required variables and port verification. Never add these values to Git. Rotating the JWT key invalidates existing access JWTs. Refer to `docs/security/VH-102-incident-response.md` for exposed-credential response.
 
 ```bash
 docker-compose up -d --build
 ```
 This will start:
-- Backend API (`http://localhost:8080`)
+- Backend API (`http://localhost:8080`, loopback only)
 - Frontend is not currently in docker-compose, run locally (see below)
 - PostgreSQL
 - RabbitMQ
 - Redis
-- Prometheus (`http://localhost:9090`)
-- Grafana (`http://localhost:3001` - user/pass: admin/admin)
-- Loki (Logs) & Tempo (Traces) - Integrated into Grafana
+- Prometheus (private Docker network, no host port)
+- Grafana (`http://localhost:3001`, loopback only, password from `GF_SECURITY_ADMIN_PASSWORD`)
+- Loki (Logs) & Tempo (Traces), private Docker network, integrated into Grafana
 - Promtail (Log Shipper)
 
 ### Local Development

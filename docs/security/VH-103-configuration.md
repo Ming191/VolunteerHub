@@ -13,7 +13,7 @@ Spring profiles are explicit. **Never activate `dev`, `test`, or `docker` in a p
 
 - Local Kotlin backend: set `SPRING_PROFILES_ACTIVE=dev` and supply a new `JWT_SECRET`.
 - Tests: `cd backend && ./gradlew test`; Gradle selects `test`.
-- Docker Compose: set `JWT_SECRET` in the shell before `docker compose up --build`. Compose activates `docker` + `dev` locally.
+- Docker Compose: set `JWT_SECRET` and the infrastructure passwords in the shell before `docker compose up --build`. Compose activates `docker` + `dev` locally. See [VH-106](VH-106-internal-exposure.md) for the required passwords and private network verification.
 - Production: `SPRING_PROFILES_ACTIVE=prod` and inject every variable below before deployment. `prod` refuses missing secrets, local profiles, non-HTTPS public/storage endpoints, and HTTP CORS origins.
 
 Generate your own JWT secret, minimum 32 random bytes, Base64 encoded: `openssl rand -base64 32`. Do not commit its output.
@@ -55,4 +55,4 @@ Use your runtime secret provider's injection facility. No Vault/cloud infrastruc
 3. Test `prod` with a required variable absent, with insecure HTTP storage URL, with `prod,dev` together, and with invalid JWT Base64. All must reject startup/config validation.
 4. Run `./gradlew test` and a secret scanner against the diff/history before merge.
 
-Production `storage.bootstrap-bucket=false`: bucket ownership, CORS, TLS, and credentials must be provisioned outside this application. The Docker Compose stack is **local-only** and includes intentionally weak demo infrastructure passwords.
+Production `storage.bootstrap-bucket=false`: bucket ownership, CORS, TLS, and credentials must be provisioned outside this application. The Docker Compose stack is **local-only** and requires user-generated infrastructure passwords; it is not a production TLS deployment.
