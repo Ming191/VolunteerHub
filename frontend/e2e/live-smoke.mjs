@@ -11,7 +11,7 @@ const page=await context.newPage();
 const results=[];
 let browserAccessToken='';
 const sessionHeaders={Origin:WEB,'X-VH-Session':'1'};
-const refreshCookie=async()=> (await context.cookies(API)).find(cookie=>cookie.name==='vh_refresh');
+const refreshCookie=async()=> (await context.cookies(API+'/api/auth/refresh')).find(cookie=>cookie.name==='vh_refresh');
 async function run(name,fn){
  try{await fn();results.push({name,result:'PASS'});console.log('PASS '+name)}
  catch(error){results.push({name,result:'FAIL',reason:error.message});console.error('FAIL '+name+' '+error.message);console.error('PAGE_URL '+page.url());console.error('PAGE_TEXT '+(await page.locator('body').innerText().catch(()=>'')).slice(0,650));}
