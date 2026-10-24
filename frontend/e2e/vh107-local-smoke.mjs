@@ -1,4 +1,4 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 const API='http://localhost:8080', WEB='http://localhost:5173';
 const browser=await chromium.launch({channel:'msedge',headless:true});
@@ -46,8 +46,3 @@ try {
  assert.equal(oversized.status,413,'nginx oversized PUT rejection');
  console.log('VH107_EDGE_E2E_PASS '+JSON.stringify({register:201,login:200,event:eventId,signedPut:first.status,replay:replay.status,post:201,read:200,oversized:413}));
 } finally {await ctx.close();await browser.close();}
-
-
-
-
-

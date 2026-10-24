@@ -1,4 +1,4 @@
-﻿package com.cs2.volunteer_hub.integration
+package com.cs2.volunteer_hub.integration
 
 import com.cs2.volunteer_hub.exception.BadRequestException
 import com.cs2.volunteer_hub.config.StorageProperties
@@ -310,4 +310,3 @@ class LocalObjectStorageIntegrationTest {
         }
     }
 }
-
