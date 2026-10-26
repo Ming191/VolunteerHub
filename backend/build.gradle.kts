@@ -52,7 +52,7 @@ dependencies {
 
 	implementation("org.apache.commons:commons-csv:1.14.1")
     // https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage
-    implementation("software.amazon.awssdk:s3:2.31.0")
+    implementation("software.amazon.awssdk:s3:2.57.3")
     // ImageIO WebP decoder: validate the full payload, not just untrusted VP8X dimensions.
     implementation("com.twelvemonkeys.imageio:imageio-webp:3.15.3")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
