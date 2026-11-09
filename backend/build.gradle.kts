@@ -52,7 +52,7 @@ dependencies {
 
 	implementation("org.apache.commons:commons-csv:1.14.1")
     // https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage
-    implementation("software.amazon.awssdk:s3:2.31.0")
+    implementation("software.amazon.awssdk:s3:2.57.10")
     // ImageIO WebP decoder: validate the full payload, not just untrusted VP8X dimensions.
     implementation("com.twelvemonkeys.imageio:imageio-webp:3.15.3")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
@@ -61,9 +61,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     // Bucket4j for rate limiting with Redis support
-    implementation("com.bucket4j:bucket4j_jdk17-core:8.21.0")
-    implementation("com.bucket4j:bucket4j_jdk17-redis-common:8.21.0")
-    implementation("com.bucket4j:bucket4j_jdk17-lettuce:8.21.0")
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.22.0")
+    implementation("com.bucket4j:bucket4j_jdk17-redis-common:8.22.0")
+    implementation("com.bucket4j:bucket4j_jdk17-lettuce:8.22.0")
 
     // https://mvnrepository.com/artifact/com.google.firebase/firebase-admin
     implementation("com.google.firebase:firebase-admin:9.11.0")
@@ -76,13 +76,13 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-micrometer:2.4.0")
 
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.9.1")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.10.0")
 
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     // https://mvnrepository.com/artifact/com.google.guava/guava
-    implementation("com.google.guava:guava:33.7.2-jre")
+    implementation("com.google.guava:guava:33.8.0-jre")
 }
 
 kotlin {
